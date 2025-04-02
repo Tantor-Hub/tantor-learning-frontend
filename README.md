@@ -1,6 +1,6 @@
 # Tantor-Learning-frontend
 
-Définit les fonctionnalités et exigences pour le développement de la plateforme en ligne Tantor Learning, permettant la gestion des formations, des inscriptions, des utilisateurs et des documents administratifs de manière automatisée.
+Defines the features and requirements for the development of the online platform Tantor Learning, enabling the automated management of training, registrations, users, and administrative documents.
 
 ## Run Locally
 
