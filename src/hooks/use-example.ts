@@ -1,13 +1,6 @@
-import { useAppDispatch, useAppSelector } from '@/store/store';
-import { increment, decrement } from '@/features/example-slice';
+"use client";
+import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "@/store/store";
 
-export default function useExample() {
-  const dispatch = useAppDispatch();
-  const value = useAppSelector((state) => state.example.value);
-
-  return {
-    value,
-    increment: () => dispatch(increment()),
-    decrement: () => dispatch(decrement()),
-  };
-}
+export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

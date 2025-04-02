@@ -1,21 +1,18 @@
 'use client';
-
-import useExample from '@/hooks/use-example';
 import { Button } from '@/components/ui/button';
+import { useAppDispatch, useAppSelector } from '@/hooks/use-example';
+import { increment, decrement } from '@/features/example-slice';
 
 export default function Counter() {
-  const { value, increment, decrement } = useExample();
+  const count = useAppSelector((state) => state.counter.value);
+  const dispatch = useAppDispatch();
 
   return (
-    <div className="flex flex-col items-center gap-4 p-4 border rounded-lg shadow-md">
-      <h2 className="text-xl font-bold">Counter: {value}</h2>
+    <div className="flex flex-col items-center gap-4">
+      <h2 className="text-2xl font-bold">Count: {count}</h2>
       <div className="flex gap-2">
-        <Button onClick={decrement} variant="outline">
-          -
-        </Button>
-        <Button onClick={increment} variant="default">
-          +
-        </Button>
+        <Button onClick={() => dispatch(increment())}>Increment</Button>
+        <Button onClick={() => dispatch(decrement())}>Decrement</Button>
       </div>
     </div>
   );
