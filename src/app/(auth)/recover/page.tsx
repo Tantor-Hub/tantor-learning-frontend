@@ -75,7 +75,7 @@ export default function RecoverPage() {
 
           <Button
             type="submit"
-            className="w-full bg-blue-800 text-white font-poppins hover:bg-blue-800"
+            className="w-full bg-blue-900 text-white font-poppins hover:bg-blue-900"
           >
             Continuer
           </Button>
@@ -88,7 +88,7 @@ export default function RecoverPage() {
 
           <Button
             variant="outline"
-            className="w-full border-blue-800 text-blue-800 font-poppins hover:bg-blue-50"
+            className="w-full border-blue-900 text-blue-900 font-poppins hover:bg-blue-50"
           >
             Annuler
           </Button>
