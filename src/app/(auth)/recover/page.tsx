@@ -1,24 +1,24 @@
-'use client'
+"use client";
 
-import Image from 'next/image'
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import Image from "next/image";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function RecoverPage() {
-  const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    e.preventDefault();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('Veuillez entrer une adresse email valide.')
+      setError("Veuillez entrer une adresse email valide.");
     } else {
-      setError('')
+      setError("");
       // here , will Handle form submission
     }
-  }
+  };
 
   return (
     <div className="max-h-screen grid grid-cols-1 md:grid-cols-2">
@@ -26,10 +26,10 @@ export default function RecoverPage() {
       <div className="hidden md:flex items-center justify-center bg-white">
         <div className="text-center p-8">
           <Image src="/kids_studying.svg" alt="kids_studying" width={1000} height={1000} />
-          <p className="mt-6 text-blue-700 font-semibold text-lg">Accédez à des formations </p>
-          <p className="mt-6 text-blue-700 font-semibold font-poppins text-lg">
-            de qualité, où que vous soyez.
+          <p className="mt-6 text-blue-700 font-semibold text-lg">
+            Accédez à des formations de qualité, où
           </p>
+          <p className="mt-6 text-blue-700 font-semibold font-poppins text-lg">que vous soyez.</p>
         </div>
       </div>
 
@@ -95,5 +95,5 @@ export default function RecoverPage() {
         </form>
       </div>
     </div>
-  )
+  );
 }
