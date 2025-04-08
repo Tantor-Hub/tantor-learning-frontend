@@ -20,7 +20,8 @@ import { Eye, EyeOff } from "lucide-react";
 import { signUpSchema, SignUpFormValues } from "@/lib/validators/signup-schema";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-export default function SignUp() {
+
+export default function SignIn() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -80,8 +81,8 @@ export default function SignUp() {
             src="/sign-in-img.svg"
             alt="Learning illustration"
             className="max-w-full object-contain"
-            width={450}
-            height={450}
+            width={300}
+            height={300}
           />
           <h2 className="text-2xl font-bold text-primary">
             Accédez à des formations de qualité, où que vous soyez.
@@ -158,29 +159,24 @@ export default function SignUp() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="termsAccepted"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        id="terms"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="h-5 w-5 text-primary rounded mt-1"
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel htmlFor="terms" className="text-sm font-normal">
-                        J'accepte <span className="text-primary">les termes</span> et{" "}
-                        <span className="text-primary">les conditions</span>
-                      </FormLabel>
-                    </div>
-                    {/* <FormMessage /> */}
-                  </FormItem>
-                )}
-              />
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                  />
+                  <label htmlFor="remember-me" className="ml-3 block text-sm text-slate-500">
+                    Remember me
+                  </label>
+                </div>
+                <div className="text-sm">
+                  <Link href="/recover" className="text-blue-600 hover:text-blue-500 font-medium">
+                    Forgot your password?
+                  </Link>
+                </div>
+              </div>
 
               <Button className="w-full rounded-full" type="submit" size="lg" disabled={isLoading}>
                 {isLoading ? "Inscription en cours..." : "S'inscrire"}
