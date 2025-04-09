@@ -1,10 +1,11 @@
+import { ReactNode } from "react";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
+import { Poppins } from "next/font/google";
 import { ReduxProvider } from "@/components/provider";
+import { Toaster } from "@/components/ui/sonner";
+import "./globals.css";
 
-
-const inter = Inter({
+const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
   style: ["normal"],
   subsets: ["latin"],
@@ -19,14 +20,15 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${inter.className} antialiased`}
-      >
-        <ReduxProvider>{children}</ReduxProvider>
+      <body className={`${poppins.className} antialiased`}>
+        <ReduxProvider>
+          {children}
+          <Toaster />
+        </ReduxProvider>
       </body>
     </html>
   );
