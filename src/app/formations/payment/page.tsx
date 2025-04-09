@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LockIcon } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import PaymentForm from "@/components/payment-form";
 import {
   Dialog,
@@ -13,9 +14,21 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import CourseModal from "@/components/course-modal"; // Import the CourseModal component
 
 export default function PaymentPage() {
   const [open, setOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false); // State for CourseModal
+  const router = useRouter();
+
+  // Function to handle success
+  const handlePaymentSuccess = () => {
+    setOpen(true);
+    // Show confirmation dialog briefly then redirect
+    setTimeout(() => {
+      router.push("/formations/payment/success-payment");
+    }, 2000);
+  };
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -31,7 +44,7 @@ export default function PaymentPage() {
               <p className="text-sm font-medium text-gray-700 mb-3">Formation sélectionnée :</p>
 
               <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 overflow-hidden">
-                <div className="h-2 bg-gradient-to-r from-blue-400 to-blue-600"></div>
+                <div className="h-2 bg-gradient-to-r from-blue-400 to-blue-800"></div>
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div>
@@ -42,7 +55,7 @@ export default function PaymentPage() {
                         Comptabilité et Finance • Bac+3
                       </p>
                     </div>
-                    <div className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    <div className="bg-blue-800 text-white text-xs font-bold px-2 py-1 rounded-full">
                       RNCP35526
                     </div>
                   </div>
@@ -61,9 +74,9 @@ export default function PaymentPage() {
                         {/* calendar icon */}
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          className="text-blue-600"
-                          width="16"
-                          height="16"
+                          className="text-blue-800"
+                          width="24"
+                          height="24"
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="2"
@@ -84,9 +97,9 @@ export default function PaymentPage() {
                         {/* clock icon */}
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          className="text-blue-600"
-                          width="16"
-                          height="16"
+                          className="text-blue-800"
+                          width="24"
+                          height="24"
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="2"
@@ -105,9 +118,9 @@ export default function PaymentPage() {
                         {/* info icon */}
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          className="text-blue-600"
-                          width="16"
-                          height="16"
+                          className="text-blue-800"
+                          width="24"
+                          height="24"
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="2"
@@ -130,28 +143,13 @@ export default function PaymentPage() {
                     </div>
                   </div>
 
-                  <Link href="/formations/payment/success-payment">
-                    <Button
-                      variant="outline"
-                      className="mt-6 w-full border-blue-600 text-blue-600 hover:bg-blue-50"
-                    >
-                      Plus de détails
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="ml-2"
-                        width="16"
-                        height="16"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M5 12h14" />
-                        <path d="m12 5 7 7-7 7" />
-                      </svg>
-                    </Button>
-                  </Link>
+                  <Button
+                    variant="outline"
+                    className="mt-6 w-full border-blue-800 text-blue-800 hover:bg-blue-50"
+                    onClick={() => setModalOpen(true)}
+                  >
+                    Plus de détails
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -166,14 +164,14 @@ export default function PaymentPage() {
           <div>
             <Card className="shadow-lg border-gray-200">
               <CardContent className="p-6">
-                <PaymentForm onSuccess={() => setOpen(true)} />
+                <PaymentForm onSuccess={handlePaymentSuccess} />
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
 
-      {/* ✅ Modal de confirmation */}
+      {/*  Modal de confirmation */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -187,6 +185,9 @@ export default function PaymentPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Course Details Modal */}
+      <CourseModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 }
