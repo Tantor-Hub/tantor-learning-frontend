@@ -1,17 +1,17 @@
-'use client'
+"use client";
 
-import Image from 'next/image'
-import Link from 'next/link'
-import { useState } from 'react'
-import { Menu, X } from 'lucide-react'
-import { Button } from './ui/button'
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
+import { Button } from "./ui/button";
 
 const navLinks = [
-  { href: '#', label: 'Formation' },
-  { href: '#', label: 'Bibliothèque' },
-  { href: '#', label: 'Candidater' },
-  { href: '#', label: 'À propos' },
-]
+  { href: "#", label: "Formation" },
+  { href: "#", label: "Bibliothèque" },
+  { href: "#", label: "Candidater" },
+  { href: "#", label: "À propos" },
+];
 
 const NavLinks = ({ className }: { className?: string }) => (
   <nav className={className}>
@@ -21,26 +21,26 @@ const NavLinks = ({ className }: { className?: string }) => (
       </Link>
     ))}
   </nav>
-)
+);
 
-const AuthButtons = ({ direction = 'row' }: { direction?: 'row' | 'col' }) => {
+const AuthButtons = ({ direction = "row" }: { direction?: "row" | "col" }) => {
   const baseStyle =
-    'px-2 py-6 rounded-[12px] border border-[#0353A4] text-[16px] lg:text-xl cursor-pointer'
-  const spacing = direction === 'row' ? 'flex gap-2 xl:gap-4' : 'flex flex-col gap-4'
+    "px-2 py-6 rounded-[12px] border border-[#0353A4] text-[16px] lg:text-xl cursor-pointer";
+  const spacing = direction === "row" ? "flex gap-2 xl:gap-4" : "flex flex-col gap-4";
 
   return (
     <div className={spacing}>
       <Button className={`${baseStyle} bg-white text-[#0353A4]`}>S'inscrire</Button>
       <Button className={`${baseStyle} bg-[#0353A4] text-white`}>Se connecter</Button>
     </div>
-  )
-}
+  );
+};
 
 const Header = () => {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="text-[#0353A4] font-medium text-base lg:text-[22px] sticky top-0 z-30 backdrop-blur-2xl bg-white">
+    <header className="text-[#0353A4] font-medium text-base lg:text-[22px] sticky top-0 z-30 backdrop-blur-xl bg-[#FFFFFFCC]">
       <div className="max-w-[1440px] flex justify-between lg:justify-start md:gap-[5%] xl:gap-[10%] items-center m-auto py-5 lg:py-8 px-5 md:px-10">
         <Link href="/" className="flex gap-1 lg:gap-4 items-center ">
           <Image
@@ -74,7 +74,7 @@ const Header = () => {
         </div>
       )}
     </header>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;
