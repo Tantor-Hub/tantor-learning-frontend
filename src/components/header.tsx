@@ -24,21 +24,14 @@ const NavLinks = ({ className }: { className?: string }) => (
 )
 
 const AuthButtons = ({ direction = 'row' }: { direction?: 'row' | 'col' }) => {
-  const baseStyle = 'px-2 py-6 rounded-[12px] border border-[#0353A4] text-[16px] lg:text-xl'
+  const baseStyle =
+    'px-2 py-6 rounded-[12px] border border-[#0353A4] text-[16px] lg:text-xl cursor-pointer'
   const spacing = direction === 'row' ? 'flex gap-2 xl:gap-4' : 'flex flex-col gap-4'
 
   return (
     <div className={spacing}>
-      <Button
-        className={`${baseStyle} bg-white text-[#0353A4] hover:bg-[#0353a4d3] hover:text-white`}
-      >
-        S'inscrire
-      </Button>
-      <Button
-        className={`${baseStyle} bg-[#0353A4] text-white hover:bg-white hover:text-[#0353A4]`}
-      >
-        Se connecter
-      </Button>
+      <Button className={`${baseStyle} bg-white text-[#0353A4]`}>S'inscrire</Button>
+      <Button className={`${baseStyle} bg-[#0353A4] text-white`}>Se connecter</Button>
     </div>
   )
 }
@@ -47,8 +40,8 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <header className="text-[#0353A4] font-medium text-[16px] lg:text-[22px] sticky top-0 ">
-      <div className="max-w-[1440px] flex justify-between lg:justify-start md:gap-[5%] xl:gap-[10%] items-center m-auto py-5 lg:py-11 px-5 md:px-10">
+    <header className="text-[#0353A4] font-medium text-base lg:text-[22px] sticky top-0 z-30 backdrop-blur-2xl bg-white">
+      <div className="max-w-[1440px] flex justify-between lg:justify-start md:gap-[5%] xl:gap-[10%] items-center m-auto py-5 lg:py-8 px-5 md:px-10">
         <Link href="/" className="flex gap-1 lg:gap-4 items-center ">
           <Image
             src="/tantor-logo.svg"

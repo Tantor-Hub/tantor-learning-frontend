@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { ReduxProvider } from '@/components/provider'
 import Header from '@/components/header'
+import Footer from '@/components/footer'
 
 const inter = Inter({
   weight: ['400', '500', '600', '700'],
@@ -24,9 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <Header />
       <body className={`${inter.className} antialiased`}>
+        <Header />
         <ReduxProvider>{children}</ReduxProvider>
+        <Footer />
       </body>
     </html>
   )
