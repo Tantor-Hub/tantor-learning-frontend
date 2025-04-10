@@ -5,7 +5,7 @@ const Teaching = () => {
   return (
     <section className="flex flex-col md:flex-row justify-between items-center">
       <div className="max-w-[1440px] md:m-auto px-5 md:px-10 flex flex-col lg:flex-row gap-10 lg:gap-28">
-        <div className="flex-[1] relative font-semibold text-[28px] my-auto justify-center flex flex-col py-7">
+        <div className="flex-[1] relative font-semibold text-xl md:text-2xl my-auto justify-center flex flex-col py-7">
           <h2 className="ml-20">Formation en ligne ou en presentiel,</h2>
           <p className="text-[#0353A4] ml-20">c’est possible avec Tantor Learning</p>
           <Image

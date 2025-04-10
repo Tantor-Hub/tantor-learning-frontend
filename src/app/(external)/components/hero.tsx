@@ -8,18 +8,18 @@ const Hero = () => {
     <section className=" relative h-[680px] bg-[#00000033]">
       <div className="relative max-w-[1440px]  px-5 md:px-10 h-full m-auto">
         <div className="max-w-fit flex flex-col gap-10 h-full justify-center">
-          <h1 className="text-[58px] relative z-20 text-white font-bold">
+          <h1 className="text-[28px] md:text-[40px] lg:text-[58px] relative z-20 text-white font-bold">
             Bienvenue sur Tantor Learning
           </h1>
-          <p className="text-white text-2xl relative z-20 max-w-[750px] mx-auto text-center">
+          <p className="text-white text-xl md:text-2xl relative z-20 max-w-[750px] mx-auto text-center">
             Votre plateforme de formation en ligne professionnelle. Accedez a des formations de
             qualite, ou que vous soyez.
           </p>
-          <div className="border border-white flex gap-2.5 items-center p-2.5 relative z-20 rounded-full w-full max-w-[500px] mx-auto">
+          <div className="border border-white flex gap-2.5 items-center p-1.5 md:p-2.5 relative z-20 rounded-full w-full max-w-[500px] mx-auto">
             <Input
               id="searchInput"
               type="text"
-              className=" text-white font-semibold text-xl border-none shadow-none outline-0"
+              className=" text-white font-semibold text-base md:text-xl border-none shadow-none outline-0"
               placeholder="trouver votre formation"
             />
             <label

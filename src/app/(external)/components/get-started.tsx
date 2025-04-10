@@ -45,7 +45,7 @@ const GetStarted = () => {
   return (
     <section>
       <div className="max-w-[1440px] m-auto px-5 md:px-10 mb-10">
-        <h2 className="text-center text-2xl md:text-3xl font-bold text-[#023E7D] my-20">
+        <h2 className="text-center text-xl md:text-2xl lg:text-3xl font-bold text-[#023E7D] my-20">
           Démarrez en trois Étapes Simples
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-15">
@@ -61,7 +61,9 @@ const GetStarted = () => {
                 alt={`step ${step.id} icon`}
                 className="size-[100px] relative -top-20"
               />
-              <h3 className="text-[24px] font-semibold -mt-10 text-gray-800">{step.title}</h3>
+              <h3 className="text-[18px] md:text-[24px] font-semibold -mt-10 text-gray-800">
+                {step.title}
+              </h3>
               <p className="text-[#979DAC] mt-2 leading-8">{step.description}</p>
             </div>
           ))}
