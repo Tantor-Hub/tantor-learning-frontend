@@ -1,3 +1,9 @@
 "use client";
-import Error from "../../../components/shared/error";
-export default Error;
+
+export default function Error() {
+  return (
+    <div>
+      <p>Error Page</p>
+    </div>
+  );
+}

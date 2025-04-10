@@ -1,2 +1,7 @@
-import Loading from "../../../components/shared/loading";
-export default Loading;
+export default function Loading() {
+  return (
+    <div>
+      <p>Loading...</p>
+    </div>
+  );
+}
