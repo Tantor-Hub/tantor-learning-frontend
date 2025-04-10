@@ -4,8 +4,6 @@ import { Poppins } from "next/font/google";
 import { ReduxProvider } from "@/components/provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -28,12 +26,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.className} antialiased`}>
-        <Header />
         <ReduxProvider>
           {children}
           <Toaster />
         </ReduxProvider>
-        <Footer />
       </body>
     </html>
   );
