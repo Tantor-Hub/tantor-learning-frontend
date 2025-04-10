@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,7 +12,9 @@ import {
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import NewsLetter from "../(external)/components/newsletter";
+import NewsLetter from "../components/newsletter";
+import CourseModal from "@/components/course-modal";
+import { useState } from "react";
 
 export const dcgData = {
   title: "Diplôme de Comptabilité et de Gestion (DCG)",
@@ -38,6 +41,8 @@ const filters = [
 const dcgArray = Array.from({ length: 9 }, () => ({ ...dcgData }));
 
 export default function Dashboard() {
+  const [modalOpen, setModalOpen] = useState(false);
+
   return (
     <section>
       <div className="max-w-[1440px] m-auto px-5 md:px-10">
@@ -121,7 +126,10 @@ export default function Dashboard() {
                   {dcgData.price}
                 </div>
 
-                <Button className="bg-transparent border border-[#0466C8] hover:shadow-sm hover:shadow-blue-300 h-fit">
+                <Button
+                  className="bg-transparent border border-[#0466C8] hover:shadow-sm hover:shadow-blue-300 h-fit"
+                  onClick={() => setModalOpen(true)}
+                >
                   <Link
                     href={dcgData.link}
                     className="text-[#5C677D] font-semibold flex justify-between w-full items-center p-[7px_12px]"
@@ -138,6 +146,7 @@ export default function Dashboard() {
       <div className="bg-[#0466C8]">
         <NewsLetter />
       </div>
+      <CourseModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </section>
   );
 }
