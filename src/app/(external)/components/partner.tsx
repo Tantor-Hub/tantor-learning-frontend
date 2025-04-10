@@ -27,7 +27,7 @@ const Partners = () => {
           </div>
         </div>
         <div className="flex flex-col items-center">
-          <h2 className="text-center text-[#001845] text-3xl px-5 md:px-10 pb-5 pt-6 font-semibold">
+          <h2 className="text-center text-[#001845] text-[28px] md:text-3xl px-5 md:px-10 pb-5 pt-6 font-semibold">
             "Une plateforme complète pour une formation simplifiée."
           </h2>
           <p className="max-w-[700px] pb-6 px-5 md:px-10 text-center text-base text-[#23BDEE]">

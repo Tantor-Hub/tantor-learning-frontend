@@ -6,7 +6,7 @@ import Learn from "./components/learn";
 import Partners from "./components/partner";
 import Teaching from "./components/teaching";
 
-export default function External() {
+export default function HomePage() {
   return (
     <main className="flex flex-col">
       <Hero />

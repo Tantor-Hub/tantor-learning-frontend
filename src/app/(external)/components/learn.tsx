@@ -24,7 +24,7 @@ const Learn = () => {
           />
         </picture>
         <div className="flex-[1] font-semibold flex flex-col gap-4 py-7">
-          <h2 className="text-[32px] text-[#0353A4]">{learningContent.title}</h2>
+          <h2 className="text-2xl md:text-3xl text-[#0353A4]">{learningContent.title}</h2>
           <p>{learningContent.description}</p>
           <ul className="list-disc marker:text-[#23BDEE] marker:text-xl">
             {learningContent.features.map((feature) => (
