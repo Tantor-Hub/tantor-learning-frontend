@@ -69,37 +69,37 @@ export default function VerifyCodePage() {
                           <InputOTPSlot
                             index={0}
                             className={`flex-[1] h-[25px] md:h-[60px]  rounded-[8px] ${
-                              !isFormValid && field.value !== "" && "border-red-400"
+                              !isFormValid && field.value && "border-red-400"
                             }`}
                           />
                           <InputOTPSlot
                             index={1}
                             className={`flex-[1] h-[30px] md:h-[60px]  rounded-[8px] ${
-                              !isFormValid && field.value !== "" && "border-red-400"
+                              !isFormValid && field.value && "border-red-400"
                             }`}
                           />
                           <InputOTPSlot
                             index={2}
                             className={`flex-[1] h-[30px] md:h-[60px]  rounded-[8px] ${
-                              !isFormValid && field.value !== "" && "border-red-400"
+                              !isFormValid && field.value && "border-red-400"
                             }`}
                           />
                           <InputOTPSlot
                             index={3}
                             className={`flex-[1] h-[30px] md:h-[60px]  rounded-[8px] ${
-                              !isFormValid && field.value !== "" && "border-red-400"
+                              !isFormValid && field.value && "border-red-400"
                             }`}
                           />
                           <InputOTPSlot
                             index={4}
                             className={`flex-[1] h-[30px] md:h-[60px]  rounded-[8px] ${
-                              !isFormValid && field.value !== "" && "border-red-400"
+                              !isFormValid && field.value && "border-red-400"
                             }`}
                           />
                           <InputOTPSlot
                             index={5}
                             className={`flex-[1] h-[30px] md:h-[60px]  rounded-[8px] ${
-                              !isFormValid && field.value !== "" && "border-red-400"
+                              !isFormValid && field.value && "border-red-400"
                             }`}
                           />
                         </InputOTPGroup>
