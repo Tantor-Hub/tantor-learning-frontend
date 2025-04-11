@@ -1,11 +1,12 @@
 "use client";
-
 import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
 
 export default function RecoverPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
 
@@ -18,6 +19,7 @@ export default function RecoverPage() {
       setError("");
       // here , will Handle form submission
     }
+    router.push("/verify-code");
   };
 
   return (

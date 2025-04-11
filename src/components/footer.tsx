@@ -3,9 +3,9 @@ import { Facebook, Instagram, LinkedIn, X, Youtube } from "./social-icons";
 
 const footerLinks = [
   [
-    { href: "#", label: "À propos" },
+    { href: "/about-us", label: "À propos" },
     { href: "#", label: "FAQ" },
-    { href: "#", label: "Contacts" },
+    { href: "/contact-us", label: "Contacts" },
   ],
   [
     { href: "#", label: "Nos partenires" },
@@ -13,7 +13,7 @@ const footerLinks = [
     { href: "#", label: "Termes & Conditions" },
   ],
   [
-    { href: "#", label: "Nos Formations" },
+    { href: "/trainings", label: "Nos Formations" },
     { href: "#", label: "Qui sommes-nous?" },
     { href: "#", label: "Nos objectifs" },
   ],
