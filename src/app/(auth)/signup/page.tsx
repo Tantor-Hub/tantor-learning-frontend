@@ -95,16 +95,16 @@ export default function SignUp() {
             <h1 className="text-[28px] font-bold text-primary">Bienvenue sur TANTOR-LEARNING</h1>
           </div>
 
-          <div className="flex items-center justify-between mb-8 gap-4 bg-[#8FAEF9] rounded-full p-2">
+          <div className="flex items-center justify-between mb-8 gap-4 bg-[#8FAEF9] rounded-full py-2 px-6">
             <Button
               size="sm"
               variant="ghost"
-              className="rounded-full flex-1"
+              className="rounded-full flex-1 text-white"
               onClick={() => router.push("/signin")}
             >
               Se Connecter
             </Button>
-            <Button className="rounded-full flex-1" size="sm">
+            <Button className="rounded-full flex-1 bg-[#0466C8]" size="sm">
               S'inscrire
             </Button>
           </div>
@@ -120,7 +120,7 @@ export default function SignUp() {
                     <FormControl>
                       <Input
                         placeholder="Entrer votre Nom et Post-nom"
-                        className="rounded-full"
+                        className="rounded-full p-6 border border-[#0466C8]"
                         {...field}
                       />
                     </FormControl>
@@ -139,7 +139,7 @@ export default function SignUp() {
                       <Input
                         type="email"
                         placeholder="Entrer votre addresse mail"
-                        className="rounded-full"
+                        className="rounded-full p-6 border border-[#0466C8]"
                         {...field}
                       />
                     </FormControl>
@@ -157,7 +157,7 @@ export default function SignUp() {
                     <FormControl>
                       <Input
                         placeholder="Entrer votre nom d'utilisateur"
-                        className="rounded-full"
+                        className="rounded-full p-6 border border-[#0466C8]"
                         {...field}
                       />
                     </FormControl>
@@ -177,7 +177,7 @@ export default function SignUp() {
                         <Input
                           type={showPassword ? "text" : "password"}
                           placeholder="Entrer votre mot de passe"
-                          className="rounded-full pr-12"
+                          className="rounded-full pr-12 p-6 border border-[#0466C8]"
                           {...field}
                         />
                         <button
@@ -205,7 +205,7 @@ export default function SignUp() {
                         <Input
                           type={showConfirmPassword ? "text" : "password"}
                           placeholder="Confirmer le mot de passe"
-                          className="rounded-full pr-12"
+                          className="rounded-full pr-12 p-6 border border-[#0466C8]"
                           {...field}
                         />
                         <Button
@@ -247,7 +247,7 @@ export default function SignUp() {
                 )}
               />
 
-              <Button className="w-full rounded-full" type="submit" size="lg" disabled={isLoading}>
+              <Button className="w-full bg-[#0466C8]" type="submit" size="lg" disabled={isLoading}>
                 {isLoading ? "Inscription en cours..." : "S'inscrire"}
               </Button>
             </form>
@@ -270,7 +270,7 @@ export default function SignUp() {
 
           <Button
             variant="outline"
-            className="w-full rounded-full"
+            className="w-full"
             type="button"
             size="lg"
             onClick={signInWithGoogle}
