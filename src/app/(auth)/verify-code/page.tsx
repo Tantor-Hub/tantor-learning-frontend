@@ -1,39 +1,36 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 
 export default function VerifyCodePage() {
-  const [code, setCode] = useState("      ");
-  const [error, setError] = useState("");
   const router = useRouter();
-  const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
-  const handleVerify = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (code.trim().length !== 6 || code.includes(" ")) {
-      setError("Code invalide. Veuillez entrer les 6 chiffres.");
-    } else {
-      setError("");
-      router.push("/recover/success");
-    }
+  const formSchema = z
+    .object({
+      pin: z.string().min(6, { message: "OTP code must 6 letters" }),
+    })
+    .refine((data) => data.pin == "123456", {
+      message: "Invalid OTP code, Please try again.",
+      path: ["pin"],
+    });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    mode: "onChange",
+  });
+
+  const isFormValid = form.formState.isValid;
+
+  const handleSubmit = () => {
+    router.push("/recover/tstttts");
   };
-
-  const handleInputChange = (val: string, index: number) => {
-    if (/^[0-9]?$/.test(val)) {
-      const newCode = code.substring(0, index) + val + code.substring(index + 1);
-      setCode(newCode);
-      if (val && index < 5) {
-        inputsRef.current[index + 1]?.focus();
-      }
-    }
-  };
-
-  useEffect(() => {
-    inputsRef.current[0]?.focus();
-  }, []);
 
   return (
     <div className="max-h-screen grid grid-cols-1 md:grid-cols-2">
@@ -48,40 +45,80 @@ export default function VerifyCodePage() {
       </div>
 
       <div className="flex items-center justify-center p-6">
-        <form onSubmit={handleVerify} className="w-full max-w-md space-y-6">
-          <h2 className="text-center text-2xl font-extrabold poppins text-blue-800">
+        <div className="w-full max-w-md space-y-6">
+          <h2 className="text-center text-3xl font-extrabold poppins text-[#0353A4]">
             TANTOR–LEARNING
           </h2>
-          <h3 className="text-center text-md font-bold text-blue-950">
+          <h3 className="text-center text-xl font-bold text-[#001845]">
             Entrer le Code de vérification
           </h3>
-          <p className="text-center text-sm text-blue-500">
+          <p className="text-center text-[12px] -mt-3.5 text-blue-500">
             Nous avons envoyé un code à votre adresse email
           </p>
 
-          <div className="flex justify-center gap-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <input
-                key={i}
-                ref={(el) => {
-                  inputsRef.current[i] = el;
-                }}
-                maxLength={1}
-                value={code[i]}
-                onChange={(e) => handleInputChange(e.target.value, i)}
-                className="w-10 h-12 text-center text-xl border rounded-md"
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col gap-10">
+              <FormField
+                control={form.control}
+                name="pin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <InputOTP maxLength={6} {...field} className="w-full">
+                        <InputOTPGroup className="flex gap-2 w-full">
+                          <InputOTPSlot
+                            index={0}
+                            className={`flex-[1] h-[25px] md:h-[60px]  rounded-[8px] ${
+                              !isFormValid && field.value && "border-red-400"
+                            }`}
+                          />
+                          <InputOTPSlot
+                            index={1}
+                            className={`flex-[1] h-[30px] md:h-[60px]  rounded-[8px] ${
+                              !isFormValid && field.value && "border-red-400"
+                            }`}
+                          />
+                          <InputOTPSlot
+                            index={2}
+                            className={`flex-[1] h-[30px] md:h-[60px]  rounded-[8px] ${
+                              !isFormValid && field.value && "border-red-400"
+                            }`}
+                          />
+                          <InputOTPSlot
+                            index={3}
+                            className={`flex-[1] h-[30px] md:h-[60px]  rounded-[8px] ${
+                              !isFormValid && field.value && "border-red-400"
+                            }`}
+                          />
+                          <InputOTPSlot
+                            index={4}
+                            className={`flex-[1] h-[30px] md:h-[60px]  rounded-[8px] ${
+                              !isFormValid && field.value && "border-red-400"
+                            }`}
+                          />
+                          <InputOTPSlot
+                            index={5}
+                            className={`flex-[1] h-[30px] md:h-[60px]  rounded-[8px] ${
+                              !isFormValid && field.value && "border-red-400"
+                            }`}
+                          />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            ))}
-          </div>
 
-          {error && <p className="text-red-600 text-sm text-center">{error}</p>}
-
-          <Button
-            type="submit"
-            className="w-full bg-blue-900 text-white font-poppins hover:bg-blue-900"
-          >
-            Vérifier
-          </Button>
+              <Button
+                className="h-10 bg-[#0466C8] rounded-[15px] hover:cursor-pointer hover:bg-[#1E3A8A]"
+                type="submit"
+                disabled={!isFormValid}
+              >
+                Sign in
+              </Button>
+            </form>
+          </Form>
 
           <p className="text-center text-sm text-gray-500">
             Vous n'avez pas reçu le code ?{" "}
@@ -89,7 +126,7 @@ export default function VerifyCodePage() {
               Renvoyer le Code
             </a>
           </p>
-        </form>
+        </div>
       </div>
     </div>
   );
