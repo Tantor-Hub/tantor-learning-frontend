@@ -95,13 +95,13 @@ export default function SignIn() {
             <h1 className="text-[28px] font-bold text-primary">Bienvenue sur TANTOR-LEARNING</h1>
           </div>
 
-          <div className="flex items-center justify-between mb-8 gap-4 bg-[#8FAEF9] rounded-full p-2">
-            <Button size="sm" className="rounded-full flex-1">
+          <div className="flex items-center justify-between mb-8 gap-4 bg-[#8FAEF9] rounded-full py-2 px-6">
+            <Button size="sm" className="rounded-full flex-1 bg-[#0466C8]">
               Se Connecter
             </Button>
             <Button
               variant="ghost"
-              className="rounded-full flex-1"
+              className="rounded-full flex-1 text-white"
               size="sm"
               onClick={() => router.push("/signup")}
             >
@@ -121,7 +121,7 @@ export default function SignIn() {
                       <Input
                         type="email"
                         placeholder="Entrer votre addresse mail"
-                        className="rounded-full"
+                        className="rounded-full p-6 border border-[#0466C8]"
                         {...field}
                       />
                     </FormControl>
@@ -141,7 +141,7 @@ export default function SignIn() {
                         <Input
                           type={showPassword ? "text" : "password"}
                           placeholder="Entrer votre mot de passe"
-                          className="rounded-full pr-12"
+                          className="rounded-full pr-12 p-6 border border-[#0466C8]"
                           {...field}
                         />
                         <Button
@@ -159,7 +159,7 @@ export default function SignIn() {
                 )}
               />
 
-              <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
                 <div className="flex items-center">
                   <input
                     id="remember-me"
@@ -168,17 +168,22 @@ export default function SignIn() {
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
                   />
                   <label htmlFor="remember-me" className="ml-3 block text-sm text-slate-500">
-                    Remember me
+                    Se rappeler de moi
                   </label>
                 </div>
                 <div className="text-sm">
-                  <Link href="/recover" className="text-blue-600 hover:text-blue-500 font-medium">
-                    Forgot your password?
+                  <Link href="/recover" className="text-[#0466C8] hover:underline font-medium">
+                    Mot de passe Oublié?
                   </Link>
                 </div>
               </div>
 
-              <Button className="w-full rounded-full" type="submit" size="lg" disabled={isLoading}>
+              <Button
+                className="w-full bg-[#0466C8] mt-4"
+                type="submit"
+                size="lg"
+                disabled={isLoading}
+              >
                 {isLoading ? "Inscription en cours..." : "S'inscrire"}
               </Button>
             </form>
@@ -186,9 +191,9 @@ export default function SignIn() {
 
           <div className="text-center mt-6">
             <p className="text-sm text-gray-600">
-              Avez-vous déjà un compte?{" "}
-              <Link href="/login" className="text-blue-600 hover:underline">
-                Connectez-vous ici
+              Vous n’avez pas encore de compte?{" "}
+              <Link href="/signup" className="text-blue-600 hover:underline">
+                Inscrivez-vous ici
               </Link>
             </p>
           </div>
@@ -201,7 +206,7 @@ export default function SignIn() {
 
           <Button
             variant="outline"
-            className="w-full rounded-full"
+            className="w-full"
             type="button"
             size="lg"
             onClick={signInWithGoogle}
