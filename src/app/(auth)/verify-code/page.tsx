@@ -29,7 +29,7 @@ export default function VerifyCodePage() {
   const isFormValid = form.formState.isValid;
 
   const handleSubmit = () => {
-    router.push("/recover/tstttts");
+    router.push("/success");
   };
 
   return (
