@@ -1,5 +1,7 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const stepsData = [
   {
@@ -42,6 +44,7 @@ export const features = [
 ];
 
 const GetStarted = () => {
+  const router = useRouter();
   return (
     <section>
       <div className="max-w-[1440px] m-auto px-5 md:px-10 mb-10">
@@ -91,7 +94,10 @@ const GetStarted = () => {
           <p className="font-semibold text-[#0466C8]">
             Prêt à apprendre ? Rejoignez-nous aujourd'hui !{" "}
           </p>
-          <Button className="px-[100px] text-[12px] text-white rounded-b-2xl py-3.5 bg-[#0466C8] cursor-pointer">
+          <Button
+            className="px-[100px] text-[12px] text-white rounded-xl py-3.5 bg-[#0466C8] cursor-pointer"
+            onClick={() => router.push("/signup")}
+          >
             S'inscrire
           </Button>
         </div>

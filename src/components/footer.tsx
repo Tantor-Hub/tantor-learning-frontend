@@ -8,13 +8,13 @@ const footerLinks = [
     { href: "/contact-us", label: "Contacts" },
   ],
   [
-    { href: "#", label: "Nos partenires" },
+    { href: "#partners", label: "Nos partenaires" },
     { href: "#", label: "Politiques de Confidentialite" },
     { href: "#", label: "Termes & Conditions" },
   ],
   [
     { href: "/trainings", label: "Nos Formations" },
-    { href: "#", label: "Qui sommes-nous?" },
+    { href: "/about-us", label: "Qui sommes-nous?" },
     { href: "#", label: "Nos objectifs" },
   ],
 ];
@@ -35,7 +35,7 @@ const Footer = () => {
           {footerLinks.map((links) => (
             <div key={links[0].label} className="flex flex-col h-32 md:h-44 justify-between">
               {links.map((link) => (
-                <Link key={link.label} href={link.href} className="md:max-w-[200px]">
+                <Link key={link.label} href={link.href} className="md:max-w-[200px] ">
                   {link.label}
                 </Link>
               ))}
@@ -45,7 +45,7 @@ const Footer = () => {
             <p>Nous Suivre</p>
             <div className="flex gap-2.5">
               {socialsIcons.map((social) => (
-                <div key={social.id} className="hover:text-blue-300 bg-none">
+                <div key={social.id} className="hover:text-blue-300 cursor-pointer bg-none">
                   {social.icon}
                 </div>
               ))}
@@ -53,7 +53,7 @@ const Footer = () => {
           </div>
         </section>
         <section>
-          <p className="text-center">© 2025 Tantor Learning. Tous droits reserves</p>
+          <p className="text-center mt-5 md:mt-10">© 2025 Tantor Learning. Tous droits reserves</p>
         </section>
       </div>
     </footer>

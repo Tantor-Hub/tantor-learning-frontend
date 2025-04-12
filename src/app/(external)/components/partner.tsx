@@ -3,7 +3,7 @@ import Image from "next/image";
 const partners = ["france travail", "lk paie", "qualiopi", "voltaire", "mon compe", "la region"];
 const Partners = () => {
   return (
-    <section>
+    <section id="partners">
       <div className="max-w-[1440px] m-auto">
         <h1 className="text-center text-[#001845] text-2xl px-5 md:px-10 pb-15 md:pb-10 pt-6 font-semibold">
           Nos partenaires
