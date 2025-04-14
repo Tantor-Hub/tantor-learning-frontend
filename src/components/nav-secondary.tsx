@@ -1,6 +1,5 @@
 import * as React from "react";
 import { type LucideIcon } from "lucide-react";
-
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -8,6 +7,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 export function NavSecondary({
   items,
@@ -24,13 +24,11 @@ export function NavSecondary({
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild size="sm">
-                <a href={item.url}>
-                  <item.icon />
-                  <span>{item.title}</span>
-                </a>
-              </SidebarMenuButton>
+            <SidebarMenuItem key={item.title} className="m-2">
+              <Link href={item.url} className="flex items-center gap-6">
+                <item.icon size={24} />
+                <p>{item.title}</p>
+              </Link>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
