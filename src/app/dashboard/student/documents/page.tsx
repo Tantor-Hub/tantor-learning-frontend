@@ -38,7 +38,12 @@ export default function DocumentsPage() {
                 </div>
               </div>
               <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </div>
           </div>
@@ -119,19 +124,19 @@ export default function DocumentsPage() {
           <div className="w-full">
             {/* Custom Tabs */}
             <div className="flex mb-4">
-              <button 
+              <button
                 className={`px-6 py-3 font-medium ${activeTab === "all" ? "bg-blue-600 text-white" : "bg-white"} rounded-l-md`}
                 onClick={() => setActiveTab("all")}
               >
                 Tous les documents
               </button>
-              <button 
+              <button
                 className={`px-6 py-3 font-medium ${activeTab === "shared" ? "bg-blue-600 text-white" : "bg-white"}`}
                 onClick={() => setActiveTab("shared")}
               >
                 Partages avec moi
               </button>
-              <button 
+              <button
                 className={`px-6 py-3 font-medium ${activeTab === "recent" ? "bg-blue-600 text-white" : "bg-white"} rounded-r-md`}
                 onClick={() => setActiveTab("recent")}
               >
@@ -162,7 +167,9 @@ export default function DocumentsPage() {
                   <div className="grid grid-cols-6 px-6 py-4 border-t items-center text-sm">
                     <div>Cours d'introduction au management</div>
                     <div>
-                      <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded">PDF</span>
+                      <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded">
+                        PDF
+                      </span>
                     </div>
                     <div>2.6MB</div>
                     <div>12/04/2025</div>
@@ -181,7 +188,9 @@ export default function DocumentsPage() {
                   <div className="grid grid-cols-6 px-6 py-4 border-t items-center text-sm">
                     <div>TPI - Recherche sur l'impact du mgt1</div>
                     <div>
-                      <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded">DOCX</span>
+                      <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded">
+                        DOCX
+                      </span>
                     </div>
                     <div>1.8MB</div>
                     <div>15/04/2025</div>
