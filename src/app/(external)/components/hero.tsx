@@ -1,9 +1,12 @@
+"use client";
 import Image from "next/image";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 const Hero = () => {
+  const router = useRouter();
   return (
     <section className=" relative h-[680px] bg-[#00000033]">
       <div className="relative max-w-[1440px]  px-5 md:px-10 h-full m-auto">
@@ -30,10 +33,16 @@ const Hero = () => {
             </label>
           </div>
           <div className="relative z-20 flex flex-col md:flex-row gap-5 max-w-[500px] mx-auto">
-            <Button className=" bg-white text-[#0353A4] text-[18px] cursor-pointer">
+            <Button
+              className=" bg-white text-[#0353A4] text-[18px] cursor-pointer"
+              onClick={() => router.push("/trainings")}
+            >
               Decouvrir nos formations
             </Button>
-            <Button className="bg-[#0353A4] text-white  text-[18px] cursor-pointer">
+            <Button
+              className="bg-[#0353A4] text-white  text-[18px] cursor-pointer"
+              onClick={() => router.push("/signup")}
+            >
               S'inscrire maintenant
             </Button>
           </div>

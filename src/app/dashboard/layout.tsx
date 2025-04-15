@@ -1,7 +1,5 @@
 import { ReactNode } from "react";
 import type { Metadata } from "next";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
   title: "TanTor Learning | Formations en ligne certifiantes partout en France",
@@ -14,11 +12,5 @@ export default function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  return (
-    <>
-      <Header />
-      {children}
-      <Footer />
-    </>
-  );
+  return <>{children}</>;
 }

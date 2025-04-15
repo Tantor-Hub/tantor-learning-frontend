@@ -16,7 +16,7 @@ const navLinks = [
 const NavLinks = ({ className }: { className?: string }) => (
   <nav className={className}>
     {navLinks.map(({ href, label }) => (
-      <Link href={href} key={label} className="p-2 text-nowrap">
+      <Link href={href} key={label} className="p-2 text-nowrap hover:text-shadow-sm">
         {label}
       </Link>
     ))}
@@ -63,7 +63,7 @@ const Header = () => {
             alt="Tantor logo"
             className="h-8 w-auto lg:w-12"
           />
-          <h1 className="text-nowrap">Tantor Learning</h1>
+          <h1 className="text-nowrap border-b-2 border-red-500">Tantor Learning</h1>
         </Link>
 
         <div className="hidden lg:flex lg:flex-[1] justify-between items-center gap-2 xl:gap-6">
@@ -84,7 +84,7 @@ const Header = () => {
       </div>
 
       {isOpen && (
-        <div className="lg:hidden bg-white pb-5 shadow-md border-t absolute z-50 w-full left-0 mt-4 px-5">
+        <div className="lg:hidden bg-white pb-5 shadow-md border-t absolute z-50 w-full left-0 px-5">
           <NavLinks className="flex flex-col items-center py-4 space-y-4" />
           <AuthButtons
             direction="col"

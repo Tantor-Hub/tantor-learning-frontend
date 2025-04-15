@@ -91,6 +91,8 @@ export default function RecoverPage() {
           <Button
             variant="outline"
             className="w-full border-blue-900 text-blue-900 font-poppins hover:bg-blue-50"
+            type="button"
+            onClick={() => router.push("/signin")}
           >
             Annuler
           </Button>

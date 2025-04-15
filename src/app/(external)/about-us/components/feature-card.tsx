@@ -13,14 +13,16 @@ export function FeatureCard({
   title,
   description,
   action,
+  className,
 }: {
   icon: any;
   title: string;
   description: string;
   action?: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <Card>
+    <Card className={className}>
       <CardContent>
         <Icon size={40} />
       </CardContent>

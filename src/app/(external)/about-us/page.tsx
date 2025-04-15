@@ -1,11 +1,13 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { FeatureCard } from "./components/feature-card";
 import { StepCard } from "./components/step-card";
 import { courseTypes, registrationSteps, accountingCourses } from "./data";
 import { Pricing } from "./components/pricing";
+import { useRouter } from "next/navigation";
 
 export default function AboutUs() {
-  // max-w-[1440px] m-auto px-5 md:px-10
+  const router = useRouter();
   return (
     <main>
       <div className="max-w-[1440px] m-auto flex flex-col gap-4 lg:flex-row px-5 md:px-10 py-12">
@@ -17,19 +19,31 @@ export default function AboutUs() {
             Rejoignez TANTOR Learning Hub pour une carrière réussie dans le monde de la finance et
             de la comptabilité.
           </p>
-          <div className="flex items-center gap-4">
-            <Button variant="outline">Decourvir nos formations</Button>
-            <Button>Nous Contacter</Button>
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <Button
+              variant="outline"
+              onClick={() => router.push("/trainings")}
+              className="cursor-pointer"
+            >
+              Decourvir nos formations
+            </Button>
+            <Button onClick={() => router.push("/contact-us")} className="cursor-pointer">
+              Nous Contacter
+            </Button>
           </div>
         </div>
 
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 border border-border rounded-md p-4">
+        <div
+          style={{ boxShadow: "0 0 8px #0466C8" }}
+          className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 border border-border rounded-md p-4"
+        >
           {courseTypes.map((course, index) => (
             <FeatureCard
               key={index}
               icon={course.icon}
               title={course.title}
               description={course.description}
+              className={"bg-[#8FAEF94D]"}
             />
           ))}
         </div>
@@ -52,7 +66,9 @@ export default function AboutUs() {
           ))}
         </div>
 
-        <Button size="lg">S'inscrire maintenant</Button>
+        <Button size="lg" className="cursor-pointer" onClick={() => router.push("/signup")}>
+          S'inscrire maintenant
+        </Button>
       </div>
 
       <div className="bg-[#B3D9FFB2] text-secondary-foreground mt-4">
@@ -64,7 +80,7 @@ export default function AboutUs() {
             domaine de la comptabilité et de la gestion.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
             {accountingCourses.map((course, index) => (
               <FeatureCard
                 key={index}
@@ -76,12 +92,12 @@ export default function AboutUs() {
             ))}
           </div>
         </div>
-        <div className="bg-white max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
+        <div className=" max-w-[1440px] m-auto text-center">
           <Pricing />
         </div>
       </div>
 
-      <div className="bg-[#B3D9FFB2] text-secondary-foreground mt-4">
+      <div className="bg-[#B3D9FFB2] text-secondary-foreground">
         <div className="max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
           <h2 className="font-bold text-4xl mb-4">Nos Formations Bac +5 en Comptabilité</h2>
           <p className="leading-12 text-xl text-muted-foreground">
@@ -90,7 +106,7 @@ export default function AboutUs() {
             domaine de la comptabilité et de la gestion.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
             {accountingCourses.map((course, index) => (
               <FeatureCard
                 key={index}
@@ -102,12 +118,12 @@ export default function AboutUs() {
             ))}
           </div>
         </div>
-        <div className="bg-white max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
+        <div className=" max-w-[1440px] m-auto text-center">
           <Pricing />
         </div>
       </div>
 
-      <div className="bg-[#B3D9FFB2] text-secondary-foreground mt-4 mb-12">
+      <div className="bg-[#B3D9FFB2] text-secondary-foreground">
         <div className="max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
           <h2 className="font-bold text-4xl mb-4">Nos Formations en continu</h2>
           <p className="leading-12 text-xl text-muted-foreground">
@@ -128,7 +144,7 @@ export default function AboutUs() {
             ))}
           </div>
         </div>
-        <div className="bg-white max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
+        <div className=" max-w-[1440px] m-auto text-center">
           <Pricing />
         </div>
       </div>
