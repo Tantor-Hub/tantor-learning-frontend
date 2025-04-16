@@ -33,32 +33,31 @@ const data = {
   navMain: [
     {
       title: "Tableau de bord",
-      url: "#",
+      url: "student",
       icon: LayoutDashboard,
       isActive: true,
-      items: [],
     },
     {
       title: "Mes Cours",
-      url: "#",
+      url: "student/courses",
       icon: FileText,
       items: [],
     },
     {
       title: "Formateur",
-      url: "#",
+      url: "student/instructors",
       icon: Users,
       items: [],
     },
     {
       title: "Mes Documents",
-      url: "#",
+      url: "student/documents",
       icon: ChartColumn,
       items: [],
     },
     {
       title: "Planning",
-      url: "#",
+      url: "student/planning",
       icon: CalendarDays,
       items: [],
     },
@@ -66,12 +65,12 @@ const data = {
   navSecondary: [
     {
       title: "Paramètres",
-      url: "#",
+      url: "student/settings",
       icon: Settings,
     },
     {
       title: "Support",
-      url: "#",
+      url: "student/support",
       icon: CircleHelp,
     },
   ],
@@ -79,11 +78,11 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar variant="inset" {...props} className="p-0 border-r border-border">
+    <Sidebar variant="inset" {...props} className="p-0 border-r border-border px-2">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 py-4">
               <div className="flex aspect-square size-8 items-center justify-center">
                 <Image
                   src="/tantor-logo.svg"
@@ -100,13 +99,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent className="bg-white">
+      <SidebarContent style={{ marginTop: 5 }}>
         <NavMain items={data.navMain} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
-      {/* <SidebarFooter className="bg-white">
+      <SidebarFooter>
         <NavUser user={data.user} />
-      </SidebarFooter> */}
+      </SidebarFooter>
     </Sidebar>
   );
 }
