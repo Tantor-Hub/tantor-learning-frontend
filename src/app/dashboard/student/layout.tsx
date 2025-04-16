@@ -26,7 +26,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
                 </Avatar>
               </div>
             </header>
-            <div className=" bg-[#EFEEEE] px-6 py-2.5 h-full w-full">{children}</div>
+            <div className=" bg-[#EFEEEE] p-3.5 h-full w-full">{children}</div>
           </SidebarInset>
         </SidebarProvider>
       </div>
