@@ -2,24 +2,22 @@
 import * as React from "react";
 import {
   FileText,
-  Users,
   LayoutDashboard,
   ChartColumn,
   CalendarDays,
   Settings,
   CircleHelp,
+  MessageCircleMore,
 } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
-
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Image from "next/image";
@@ -41,25 +39,21 @@ const data = {
       title: "Mes Cours",
       url: "student/courses",
       icon: FileText,
-      items: [],
     },
     {
-      title: "Formateur",
-      url: "student/instructors",
-      icon: Users,
-      items: [],
+      title: "Messages",
+      url: "student/messages",
+      icon: MessageCircleMore,
     },
     {
       title: "Mes Documents",
       url: "student/documents",
       icon: ChartColumn,
-      items: [],
     },
     {
       title: "Planning",
       url: "student/planning",
       icon: CalendarDays,
-      items: [],
     },
   ],
   navSecondary: [

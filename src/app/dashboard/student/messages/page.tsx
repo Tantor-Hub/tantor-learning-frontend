@@ -1,7 +1,7 @@
 export default function Page() {
   return (
     <div>
-      <h1>Trainer Page</h1>
+      <h1>Messages Page</h1>
     </div>
   );
 }
