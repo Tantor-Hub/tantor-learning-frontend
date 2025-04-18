@@ -58,8 +58,8 @@ const data = {
   ],
   navSecondary: [
     {
-      title: "Paramètres",
-      url: "student/settings",
+      title: "Profile",
+      url: "student/profile",
       icon: Settings,
     },
     {
