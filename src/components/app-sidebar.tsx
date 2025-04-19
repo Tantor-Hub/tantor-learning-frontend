@@ -5,7 +5,7 @@ import {
   LayoutDashboard,
   ChartColumn,
   CalendarDays,
-  Settings,
+  CircleUserRound,
   CircleHelp,
   MessageCircleMore,
 } from "lucide-react";
@@ -60,7 +60,7 @@ const data = {
     {
       title: "Profile",
       url: "student/profile",
-      icon: Settings,
+      icon: CircleUserRound,
     },
     {
       title: "Support",

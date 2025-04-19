@@ -7,6 +7,7 @@ import { Pricing } from "./components/pricing";
 import { useRouter } from "next/navigation";
 
 export default function AboutUs() {
+  const bgColor = "#B3D9FFB2";
   const router = useRouter();
   return (
     <main>
@@ -71,25 +72,27 @@ export default function AboutUs() {
         </Button>
       </div>
 
-      <div className="bg-[#B3D9FFB2] text-secondary-foreground mt-4">
-        <div className="max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
-          <h2 className="font-bold text-4xl mb-4">Nos Formations Bac +3 en Comptabilité</h2>
-          <p className="leading-12 text-xl text-muted-foreground">
-            TANTOR Learning vous propose des formations Bac +3 en comptabilité, adaptées à tous les
-            profils d'étudiants et professionnels souhaitant approfondir leurs compétences dans le
-            domaine de la comptabilité et de la gestion.
-          </p>
+      <div className="text-secondary-foreground mt-4">
+        <div className={`bg-[#B3D9FFB2] `}>
+          <div className="max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
+            <h2 className="font-bold text-4xl mb-4">Nos Formations Bac +3 en Comptabilité</h2>
+            <p className="leading-12 text-xl text-muted-foreground">
+              TANTOR Learning vous propose des formations Bac +3 en comptabilité, adaptées à tous
+              les profils d'étudiants et professionnels souhaitant approfondir leurs compétences
+              dans le domaine de la comptabilité et de la gestion.
+            </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
-            {accountingCourses.map((course, index) => (
-              <FeatureCard
-                key={index}
-                icon={course.icon}
-                title={course.title}
-                description={course.description}
-                action={course.action}
-              />
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
+              {accountingCourses.map((course, index) => (
+                <FeatureCard
+                  key={index}
+                  icon={course.icon}
+                  title={course.title}
+                  description={course.description}
+                  action={course.action}
+                />
+              ))}
+            </div>
           </div>
         </div>
         <div className=" max-w-[1440px] m-auto text-center">
@@ -97,25 +100,27 @@ export default function AboutUs() {
         </div>
       </div>
 
-      <div className="bg-[#B3D9FFB2] text-secondary-foreground">
-        <div className="max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
-          <h2 className="font-bold text-4xl mb-4">Nos Formations Bac +5 en Comptabilité</h2>
-          <p className="leading-12 text-xl text-muted-foreground">
-            TANTOR Learning vous propose des formations Bac +3 en comptabilité, adaptées à tous les
-            profils d'étudiants et professionnels souhaitant approfondir leurs compétences dans le
-            domaine de la comptabilité et de la gestion.
-          </p>
+      <div className="text-secondary-foreground">
+        <div className={`bg-[#B3D9FFB2] `}>
+          <div className="max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
+            <h2 className="font-bold text-4xl mb-4">Nos Formations Bac +5 en Comptabilité</h2>
+            <p className="leading-12 text-xl text-muted-foreground">
+              TANTOR Learning vous propose des formations Bac +3 en comptabilité, adaptées à tous
+              les profils d'étudiants et professionnels souhaitant approfondir leurs compétences
+              dans le domaine de la comptabilité et de la gestion.
+            </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
-            {accountingCourses.map((course, index) => (
-              <FeatureCard
-                key={index}
-                icon={course.icon}
-                title={course.title}
-                description={course.description}
-                action={course.action}
-              />
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
+              {accountingCourses.map((course, index) => (
+                <FeatureCard
+                  key={index}
+                  icon={course.icon}
+                  title={course.title}
+                  description={course.description}
+                  action={course.action}
+                />
+              ))}
+            </div>
           </div>
         </div>
         <div className=" max-w-[1440px] m-auto text-center">
@@ -123,25 +128,27 @@ export default function AboutUs() {
         </div>
       </div>
 
-      <div className="bg-[#B3D9FFB2] text-secondary-foreground">
-        <div className="max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
-          <h2 className="font-bold text-4xl mb-4">Nos Formations en continu</h2>
-          <p className="leading-12 text-xl text-muted-foreground">
-            TANTOR Learning vous propose des formations Bac +3 en comptabilité, adaptées à tous les
-            profils d'étudiants et professionnels souhaitant approfondir leurs compétences dans le
-            domaine de la comptabilité et de la gestion.
-          </p>
+      <div className="text-secondary-foreground">
+        <div className={`bg-[#B3D9FFB2] `}>
+          <div className="max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
+            <h2 className="font-bold text-4xl mb-4">Nos Formations en continu</h2>
+            <p className="leading-12 text-xl text-muted-foreground">
+              TANTOR Learning vous propose des formations Bac +3 en comptabilité, adaptées à tous
+              les profils d'étudiants et professionnels souhaitant approfondir leurs compétences
+              dans le domaine de la comptabilité et de la gestion.
+            </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-            {accountingCourses.map((course, index) => (
-              <FeatureCard
-                key={index}
-                icon={course.icon}
-                title={course.title}
-                description={course.description}
-                action={course.action}
-              />
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+              {accountingCourses.map((course, index) => (
+                <FeatureCard
+                  key={index}
+                  icon={course.icon}
+                  title={course.title}
+                  description={course.description}
+                  action={course.action}
+                />
+              ))}
+            </div>
           </div>
         </div>
         <div className=" max-w-[1440px] m-auto text-center">
