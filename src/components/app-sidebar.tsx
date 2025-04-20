@@ -72,7 +72,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar variant="inset" {...props} className="p-0 border-r border-border px-2">
+    <Sidebar variant="inset" {...props} className="p-0 border-r border-border px-2 static">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

@@ -28,7 +28,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
                   className="pl-10 pr-4 py-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <div className="flex items-center gap-4">
+              {/* <div className="flex items-center gap-4">
                 <button className="p-2">
                   <Bell className="h-5 w-5" />
                 </button>
@@ -55,7 +55,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
                     />
                   </svg>
                 </div>
-              </div>
+              </div> */}
             </header>
             <div className=" bg-[#EFEEEE] p-3.5 h-full w-full">{children}</div>
           </SidebarInset>
