@@ -1,5 +1,12 @@
 "use client";
+import { useDispatch } from "react-redux";
+import { useSigninMutation, useAuthWithGoogleMutation } from "@/lib/api";
+import { setCredentials } from "@/features/auth/auth-slice";
+
 import { useState } from "react";
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { selectIsAuthenticated } from "@/features/auth/auth-slice";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { GoogleIcon } from "@/components/icons/google";
@@ -13,13 +20,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
-import { signUpSchema, SignUpFormValues } from "@/lib/validators/signup-schema";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { SignInFormValues, signInSchema } from "@/lib/validators/signin-schema";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function SignIn() {
   const router = useRouter();
@@ -27,50 +34,99 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const form = useForm<SignUpFormValues>({
-    resolver: zodResolver(signUpSchema),
+  const form = useForm<SignInFormValues>({
+    resolver: zodResolver(signInSchema),
     defaultValues: {
-      fullName: "",
       email: "",
-      username: "",
       password: "",
-      confirmPassword: "",
-      termsAccepted: false,
+      rememberMe: false,
     },
   });
 
-  async function onSubmit(values: SignUpFormValues) {
+  async function onSubmit(values: SignInFormValues) {
     try {
       setIsLoading(true);
+      // Call the signin API
+      const result = await signin({
+        user_name: values.email,
+        password: values.password,
+      }).unwrap();
 
-      // Simulate API call with timeout
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Store credentials in Redux
+      dispatch(
+        setCredentials({
+          token: result.access_token,
+          refreshToken: result.refresh_token,
+          expiresIn: result.expires_in,
+          // Add user info if available in the response
+        })
+      );
 
-      // Success notification
-      toast("Compte créé avec succès!");
+      toast.success("Connexion réussie!");
 
-      // Redirect to login page or dashboard
-      // router.push('/login');
-    } catch (error) {
+      // Save to localStorage if "remember me" is checked
+      if (values.rememberMe) {
+        localStorage.setItem("refreshToken", result.refresh_token);
+      }
+
+      // Redirect to dashboard
+      router.push("/dashboard");
+    } catch (error: any) {
       console.error(error);
-      toast("Erreur lors de l'inscription");
+      toast.error(
+        error.data?.message || "Échec de la connexion. Veuillez vérifier vos identifiants."
+      );
     } finally {
       setIsLoading(false);
     }
-  }
-
-  function signInWithGoogle() {
-    // Implement Google authentication logic here
-    toast("Connexion avec Google");
   }
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
-  };
+  async function signInWithGoogle() {
+    try {
+      setIsLoading(true);
+
+      // Use the mutation trigger function
+      const result = await triggerGoogleAuth().unwrap();
+
+      // Rest remains the same
+      dispatch(
+        setCredentials({
+          token: result.access_token,
+          refreshToken: result.refresh_token,
+          expiresIn: result.expires_in,
+        })
+      );
+
+      toast.success("Connexion avec Google réussie!");
+      router.push("/dashboard");
+    } catch (error) {
+      console.error(error);
+      toast.error("Échec de la connexion avec Google");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const dispatch = useDispatch();
+  const [signin, { isLoading: isSigningIn }] = useSigninMutation();
+  const [triggerGoogleAuth, { isLoading: isGoogleAuthLoading }] = useAuthWithGoogleMutation();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+
+    // Check for stored refresh token
+    const storedToken = localStorage.getItem("refreshToken");
+    if (storedToken && !isAuthenticated) {
+      // You could dispatch a token refresh action here
+    }
+  }, [isAuthenticated, router]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
@@ -160,17 +216,23 @@ export default function SignIn() {
               />
 
               <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
-                  />
-                  <label htmlFor="remember-me" className="ml-3 block text-sm text-slate-500">
-                    Se rappeler de moi
-                  </label>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="rememberMe"
+                  render={({ field }) => (
+                    <div className="flex items-center">
+                      <Checkbox
+                        id="remember-me"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                      />
+                      <label htmlFor="remember-me" className="ml-3 block text-sm text-slate-500">
+                        Se rappeler de moi
+                      </label>
+                    </div>
+                  )}
+                />
                 <div className="text-sm">
                   <Link href="/recover" className="text-[#0466C8] hover:underline font-medium">
                     Mot de passe Oublié?
@@ -184,7 +246,7 @@ export default function SignIn() {
                 size="lg"
                 disabled={isLoading}
               >
-                {isLoading ? "Inscription en cours..." : "S'inscrire"}
+                {isLoading ? "Connexion en cours..." : "Se connecter"}
               </Button>
             </form>
           </Form>
@@ -210,9 +272,10 @@ export default function SignIn() {
             type="button"
             size="lg"
             onClick={signInWithGoogle}
+            disabled={isLoading}
           >
             <GoogleIcon />
-            S'inscrire avec Google
+            Se connecter avec Google
           </Button>
         </div>
       </div>
