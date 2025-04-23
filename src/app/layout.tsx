@@ -28,7 +28,7 @@ export default function RootLayout({
       <body className={`${poppins.className} antialiased`}>
         <ReduxProvider>
           {children}
-          <Toaster />
+          <Toaster position="top-right" richColors />
         </ReduxProvider>
       </body>
     </html>

@@ -1,8 +1,9 @@
+"use client";
 import { VerifyAccount } from "@/components/forms/verify-account";
-import { GalleryVerticalEnd } from "lucide-react";
 import Image from "next/image";
-
-export default function LoginPage() {
+import { useParams } from "next/navigation";
+export default function Page() {
+  const params = useParams();
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
@@ -22,7 +23,7 @@ export default function LoginPage() {
         </div>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
-            <VerifyAccount />
+            <VerifyAccount email={params.email} />
           </div>
         </div>
       </div>

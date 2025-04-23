@@ -6,11 +6,11 @@ export interface AuthCredentials {
   password: string;
 }
 export interface SignupData {
-  user_name: string;
-  email: string;
+  fs_name: string;
+  ls_name: string;
   password: string;
-  first_name?: string;
-  last_name?: string;
+  nick_name: string;
+  email: string;
 }
 export interface TokenResponse {
   access_token: string;
@@ -18,7 +18,8 @@ export interface TokenResponse {
   expires_in: number;
 }
 export interface VerifyRequest {
-  token: string;
+  user_email: string;
+  verication_code: string;
 }
 export interface RefreshRequest {
   refresh_token: string;

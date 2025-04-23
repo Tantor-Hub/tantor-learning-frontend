@@ -20,10 +20,11 @@ import { Eye, EyeOff } from "lucide-react";
 import { signUpSchema, SignUpFormValues } from "@/lib/validators/signup-schema";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useSignupMutation, useAuthWithGoogleMutation } from "@/lib/api";
 
 export default function SignUp() {
+  const [signup, { isLoading }] = useSignupMutation();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -41,21 +42,25 @@ export default function SignUp() {
 
   async function onSubmit(values: SignUpFormValues) {
     try {
-      setIsLoading(true);
-
-      // Simulate API call with timeout
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Success notification
-      toast("Compte créé avec succès!");
-
-      // Redirect to login page or dashboard
-      // router.push('/login');
+      const promise = signup({
+        fs_name: values.fullName.split(" ")[0],
+        ls_name: values.fullName.split(" ")[1],
+        password: values.password,
+        nick_name: values.username,
+        email: values.email,
+      });
+      console.log("promise", promise);
+      toast.promise(promise, {
+        loading: "Création du compte...",
+        success: () => {
+          router.push(`/signup/${values.email}`);
+          return "Compte créé avec succès!";
+        },
+        error: "Erreur lors de l'inscription",
+      });
+      await promise;
     } catch (error) {
-      console.error(error);
       toast("Erreur lors de l'inscription");
-    } finally {
-      setIsLoading(false);
     }
   }
 
@@ -63,7 +68,6 @@ export default function SignUp() {
     // Implement Google authentication logic here
     toast("Connexion avec Google");
   }
-
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -242,7 +246,6 @@ export default function SignUp() {
                         <span className="text-primary">les conditions</span>
                       </FormLabel>
                     </div>
-                    {/* <FormMessage /> */}
                   </FormItem>
                 )}
               />

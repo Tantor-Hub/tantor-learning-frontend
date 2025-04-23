@@ -1,8 +1,4 @@
 "use client";
-import { useDispatch } from "react-redux";
-import { useSigninMutation, useAuthWithGoogleMutation } from "@/lib/api";
-import { setCredentials } from "@/features/auth/auth-slice";
-
 import { useState } from "react";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
@@ -27,6 +23,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { SignInFormValues, signInSchema } from "@/lib/validators/signin-schema";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useDispatch } from "react-redux";
+import { useSigninMutation, useAuthWithGoogleMutation } from "@/lib/api";
+import { setCredentials } from "@/features/auth/auth-slice";
 
 export default function SignIn() {
   const router = useRouter();
@@ -70,7 +69,7 @@ export default function SignIn() {
       }
 
       // Redirect to dashboard
-      router.push("/dashboard");
+      router.push("/dashboard/student");
     } catch (error: any) {
       console.error(error);
       toast.error(
@@ -102,7 +101,7 @@ export default function SignIn() {
       );
 
       toast.success("Connexion avec Google réussie!");
-      router.push("/dashboard");
+      router.push("/dashboard/student");
     } catch (error) {
       console.error(error);
       toast.error("Échec de la connexion avec Google");
@@ -118,7 +117,7 @@ export default function SignIn() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/dashboard");
+      router.push("/dashboard/student");
     }
 
     // Check for stored refresh token
