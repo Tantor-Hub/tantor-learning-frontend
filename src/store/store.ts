@@ -1,23 +1,13 @@
-import { configureStore, combineReducers, Reducer } from "@reduxjs/toolkit";
+import { configureStore, combineReducers, Middleware, MiddlewareAPI } from "@reduxjs/toolkit";
 import { createListenerMiddleware } from "@reduxjs/toolkit";
-import {
-  persistStore,
-  persistReducer,
-  FLUSH,
-  REHYDRATE,
-  PAUSE,
-  PERSIST,
-  PURGE,
-  REGISTER,
-} from "redux-persist";
 import authReducer, {
   clearCredentials,
   selectIsTokenExpired,
   selectRefreshToken,
   selectIsAuthenticated,
+  setCredentials,
 } from "../features/auth/auth-slice";
 import { authApi } from "@/lib/api";
-import storage from "redux-persist/lib/storage";
 
 // Create listener middleware for token refresh
 const listenerMiddleware = createListenerMiddleware();
@@ -65,60 +55,81 @@ listenerMiddleware.startListening({
   },
 });
 
-// Initial reducer setup without persistence
-const initialReducers = {
-  auth: authReducer,
-  [authApi.reducerPath]: authApi.reducer,
-};
+// Simple localStorage middleware for auth state persistence with proper TypeScript types
+const localStorageMiddleware: Middleware = (store: MiddlewareAPI) => (next) => (action) => {
+  const result = next(action);
 
-// Function to create the store
-function createAppStore() {
-  // Create basic store without persistence first
-  const baseStore = configureStore({
-    reducer: initialReducers,
-    middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({
-        serializableCheck: {
-          ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-        },
-      })
-        .prepend(listenerMiddleware.middleware)
-        .concat(authApi.middleware),
-    devTools: process.env.NODE_ENV !== "production",
-  });
+  // Save auth state to localStorage when it changes
+  if (
+    typeof action === "object" &&
+    action !== null &&
+    "type" in action &&
+    typeof action.type === "string" &&
+    (action.type.startsWith("auth/") || action.type.includes("authApi/executeMutation"))
+  ) {
+    const state = store.getState();
+    const authState = state.auth;
 
-  // Only setup persistence on client side
-  if (typeof window !== "undefined") {
-    const persistConfig = {
-      key: "auth",
-      storage,
-      whitelist: ["token", "refreshToken", "expiresAt"],
-    };
-
-    const persistedReducer = persistReducer(persistConfig, authReducer);
-
-    // Replace the auth reducer with the persisted one
-    const rootReducer = combineReducers({
-      ...initialReducers,
-      auth: persistedReducer,
-    });
-
-    // Use a more aggressive type assertion through unknown
-    baseStore.replaceReducer(
-      rootReducer as unknown as Reducer<ReturnType<typeof baseStore.getState>>
-    );
-
-    const persistor = persistStore(baseStore);
-    return { store: baseStore, persistor };
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "authState",
+        JSON.stringify({
+          token: authState.token,
+          refreshToken: authState.refreshToken,
+          expiresAt: authState.expiresAt,
+          isAuthenticated: authState.isAuthenticated,
+          user: authState.user,
+        })
+      );
+    }
   }
 
-  return { store: baseStore, persistor: null };
+  return result;
+};
+
+// Create the root reducer
+const rootReducer = combineReducers({
+  auth: authReducer,
+  [authApi.reducerPath]: authApi.reducer,
+});
+
+// Configure the store
+const store = configureStore({
+  reducer: rootReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware()
+      .prepend(listenerMiddleware.middleware)
+      .concat(authApi.middleware, localStorageMiddleware),
+  devTools: process.env.NODE_ENV !== "production",
+});
+
+// Load auth state from localStorage on app initialization
+if (typeof window !== "undefined") {
+  const savedAuthState = localStorage.getItem("authState");
+  if (savedAuthState) {
+    try {
+      const parsedState = JSON.parse(savedAuthState);
+      // Only restore if the token is still valid
+      if (parsedState.expiresAt && parsedState.expiresAt > Date.now()) {
+        store.dispatch(
+          setCredentials({
+            token: parsedState.token,
+            refreshToken: parsedState.refreshToken,
+            expiresIn: (parsedState.expiresAt - Date.now()) / 1000,
+            user: parsedState.user,
+          })
+        );
+      } else {
+        // Clear expired state
+        localStorage.removeItem("authState");
+      }
+    } catch (e) {
+      console.error("Failed to parse auth state from localStorage", e);
+      localStorage.removeItem("authState");
+    }
+  }
 }
 
-// Create the store
-const { store, persistor } = createAppStore();
-
-export { persistor };
 export default store;
 
 // Export types for TypeScript
