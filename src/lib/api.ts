@@ -27,6 +27,17 @@ export interface RefreshRequest {
 export interface ResendCodeRequest {
   user_email: string;
 }
+export interface ForgotPasswordRequest {
+  user_email: string;
+}
+
+export interface ResetPasswordRequest {
+  user_name: string;
+  verification_code: string;
+  new_password: string;
+  repet_new_password: string;
+}
+
 // Auth API slice with improved token handling
 export const authApi = createApi({
   reducerPath: "authApi",
@@ -99,6 +110,22 @@ export const authApi = createApi({
         method: "GET",
       }),
     }),
+    // Forgot password
+    forgotPassword: builder.mutation<void, ForgotPasswordRequest>({
+      query: (data) => ({
+        url: "/api/users/user/forgotenpassword",
+        method: "PUT",
+        body: data,
+      }),
+    }),
+    // Reset password
+    resetPassword: builder.mutation<void, ResetPasswordRequest>({
+      query: (data) => ({
+        url: "/api/users/user/resetpassword",
+        method: "PUT",
+        body: data,
+      }),
+    }),
   }),
 });
 export const {
@@ -109,4 +136,6 @@ export const {
   useLogoutMutation,
   useResendCodeMutation,
   useAuthWithGoogleMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
 } = authApi;
