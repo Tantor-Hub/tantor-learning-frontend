@@ -1,11 +1,9 @@
-export function getDecodedEmail(email?: string | string[]) {
+export function getDecodedEmail(email: string | null) {
   if (!email) return "votre adresse email";
 
   try {
-    // Handle array case
-    const emailStr = Array.isArray(email) ? email[0] || "" : email;
     // Decode URL-encoded email
-    return decodeURIComponent(emailStr);
+    return decodeURIComponent(email);
   } catch (error) {
     console.error("Error decoding email:", error);
     // If decoding fails, return the original string

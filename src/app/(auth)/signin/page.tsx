@@ -1,37 +1,38 @@
 "use client";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useSelector } from "react-redux";
 import { selectIsAuthenticated } from "@/features/auth/auth-slice";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { GoogleIcon } from "@/components/icons/google";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { SignInFormValues, signInSchema } from "@/lib/validators/signin-schema";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useDispatch } from "react-redux";
 import { useSigninMutation, useAuthWithGoogleMutation } from "@/lib/api";
+import { Label } from "@/components/ui/label";
 import { setCredentials } from "@/features/auth/auth-slice";
+
+interface FormData {
+  email: string;
+  password: string;
+}
 
 export default function SignIn() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const dispatch = useDispatch();
+  const [signin, { isLoading: isSigningIn }] = useSigninMutation();
+  const [triggerGoogleAuth, { isLoading: isGoogleAuthLoading }] = useAuthWithGoogleMutation();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const [formData, setFormData] = useState<FormData>({
+    email: "",
+    password: "",
+  });
 
   const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
@@ -42,52 +43,48 @@ export default function SignIn() {
     },
   });
 
-  async function onSubmit(values: SignInFormValues) {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     try {
+      toast.loading("Connexion en cours...");
       setIsLoading(true);
       // Call the signin API
-      const result = await signin({
-        user_name: values.email,
-        password: values.password,
+      const promise = await signin({
+        user_name: formData.email,
+        password: formData.password,
       }).unwrap();
 
       // Store credentials in Redux
       dispatch(
         setCredentials({
-          token: result.access_token,
-          refreshToken: result.refresh_token,
-          expiresIn: result.expires_in,
-          // Add user info if available in the response
+          token: promise.access_token,
+          refreshToken: promise.refresh_token,
+          expiresIn: promise.expires_in,
         })
       );
-
-      toast.success("Connexion réussie!");
-
-      // Save to localStorage if "remember me" is checked
-      if (values.rememberMe) {
-        localStorage.setItem("refreshToken", result.refresh_token);
-      }
-
-      // Redirect to dashboard
       router.push("/dashboard/student");
+      toast.success(`Connexion réussie!`);
+      toast.dismiss();
     } catch (error: any) {
-      console.error(error);
-      toast.error(
-        error.data?.message || "Échec de la connexion. Veuillez vérifier vos identifiants."
-      );
+      toast.dismiss();
+      toast.error(error.data?.data || "Échec de la connexion. Veuillez vérifier vos identifiants.");
     } finally {
+      //
       setIsLoading(false);
     }
-  }
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
   };
 
   async function signInWithGoogle() {
     try {
       setIsLoading(true);
-
       // Use the mutation trigger function
       const result = await triggerGoogleAuth().unwrap();
 
@@ -103,17 +100,11 @@ export default function SignIn() {
       toast.success("Connexion avec Google réussie!");
       router.push("/dashboard/student");
     } catch (error) {
-      console.error(error);
       toast.error("Échec de la connexion avec Google");
     } finally {
       setIsLoading(false);
     }
   }
-
-  const dispatch = useDispatch();
-  const [signin, { isLoading: isSigningIn }] = useSigninMutation();
-  const [triggerGoogleAuth, { isLoading: isGoogleAuthLoading }] = useAuthWithGoogleMutation();
-  const isAuthenticated = useSelector(selectIsAuthenticated);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -128,156 +119,108 @@ export default function SignIn() {
   }, [isAuthenticated, router]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
-      <div className="grid md:grid-cols-2 items-center gap-10 max-w-6xl w-full px-4">
-        {/* Left section with illustration */}
-        <div className="hidden md:flex flex-col justify-center gap-0">
-          <Image
-            src="/sign-in-img.svg"
-            alt="Learning illustration"
-            className="max-w-full object-contain"
-            width={300}
-            height={300}
-          />
-          <h2 className="text-2xl font-bold text-primary">
-            Accédez à des formations de qualité, où que vous soyez.
-          </h2>
-        </div>
-
-        {/* Right section with sign up form */}
-        <div className="w-full max-w-md mx-auto py-6">
-          <div className="text-center mb-6">
-            <h1 className="text-[28px] font-bold text-primary">Bienvenue sur TANTOR-LEARNING</h1>
-          </div>
-
-          <div className="flex items-center justify-between mb-8 gap-4 bg-[#8FAEF9] rounded-full py-2 px-6">
-            <Button size="sm" className="rounded-full flex-1 bg-[#0466C8]">
-              Se Connecter
-            </Button>
-            <Button
-              variant="ghost"
-              className="rounded-full flex-1 text-white"
-              size="sm"
-              onClick={() => router.push("/signup")}
-            >
-              S'inscrire
-            </Button>
-          </div>
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Addresse mail</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="Entrer votre addresse mail"
-                        className="rounded-full p-6 border border-[#0466C8]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage className="text-red-500" />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Mot de passe</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Entrer votre mot de passe"
-                          className="rounded-full pr-12 p-6 border border-[#0466C8]"
-                          {...field}
-                        />
-                        <Button
-                          variant={"ghost"}
-                          size={"icon"}
-                          onClick={togglePasswordVisibility}
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500"
-                        >
-                          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-red-500" />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
-                <FormField
-                  control={form.control}
-                  name="rememberMe"
-                  render={({ field }) => (
-                    <div className="flex items-center">
-                      <Checkbox
-                        id="remember-me"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
-                      />
-                      <label htmlFor="remember-me" className="ml-3 block text-sm text-slate-500">
-                        Se rappeler de moi
-                      </label>
-                    </div>
-                  )}
-                />
-                <div className="text-sm">
-                  <Link href="/recover" className="text-[#0466C8] hover:underline font-medium">
-                    Mot de passe Oublié?
-                  </Link>
-                </div>
-              </div>
-
-              <Button
-                className="w-full bg-[#0466C8] mt-4"
-                type="submit"
-                size="lg"
-                disabled={isLoading}
-              >
-                {isLoading ? "Connexion en cours..." : "Se connecter"}
-              </Button>
-            </form>
-          </Form>
-
-          <div className="text-center mt-6">
-            <p className="text-sm text-gray-600">
-              Vous n’avez pas encore de compte?{" "}
-              <Link href="/signup" className="text-blue-600 hover:underline">
-                Inscrivez-vous ici
-              </Link>
-            </p>
-          </div>
-
-          <div className="my-6 flex items-center gap-4">
-            <hr className="w-full border-border" />
-            <p className="text-sm whitespace-nowrap">OU</p>
-            <hr className="w-full border-border" />
-          </div>
-
-          <Button
-            variant="outline"
-            className="w-full"
-            type="button"
-            size="lg"
-            onClick={signInWithGoogle}
-            disabled={isLoading}
-          >
-            <GoogleIcon />
-            Se connecter avec Google
-          </Button>
-        </div>
+    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+      <div className="flex flex-col items-center gap-2 text-center">
+        <h1 className="text-2xl font-bold">Se connecter</h1>
+        <p className="text-balance text-sm text-muted-foreground">
+          Entrez votre email ci-dessous pour vous connecter à votre compte
+        </p>
       </div>
-    </div>
+      <div className="grid gap-6">
+        <div className="grid gap-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="sofia@gmail.com"
+            value={formData.email}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+        <div className="grid gap-2">
+          <div className="flex items-center">
+            <Label htmlFor="password">Mot de passe</Label>
+            <Link
+              href="/recover"
+              className="ml-auto text-sm underline-offset-4 text-primary hover:underline"
+            >
+              Mot de passe Oublié?
+            </Link>
+          </div>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder="Mot de passe"
+              required
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prevState) => !prevState)}
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-primary hover:cursor-pointer"
+              tabIndex={-2}
+            >
+              {showPassword ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.956 9.956 0 012.547-4.2M9.88 9.88a3 3 0 104.24 4.24M6.1 6.1l11.8 11.8"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? "Connexion en cours..." : "Se connecter"}
+        </Button>
+        <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+          <span className="relative z-10 bg-background px-2 text-muted-foreground">OU</span>
+        </div>
+        <Button variant="outline" className="w-full" onClick={signInWithGoogle}>
+          <GoogleIcon />
+          Se connecter avec Google
+        </Button>
+      </div>
+      <div className="text-center text-sm">
+        Vous n’avez pas encore de compte?{" "}
+        <Link href="/signup" className="text-primary hover:underline">
+          Inscrivez-vous ici
+        </Link>
+      </div>
+    </form>
   );
 }

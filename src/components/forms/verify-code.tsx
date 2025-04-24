@@ -7,21 +7,19 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useResendCodeMutation, useVerifyMutation } from "@/lib/api";
+import { useResendCodeMutation } from "@/lib/api";
 import { toast } from "sonner";
 import { verifyAccountSchema, verifyAccountValues } from "@/lib/validators/verify-account-schema";
-import { getDecodedEmail } from "@/lib/get-decoded-email";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
-interface VerifyAccountProps {
-  email?: string | string[];
-  className?: string;
-}
+export function VerifyCode() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email") as string;
 
-export function VerifyAccount({ email, className }: VerifyAccountProps) {
-  const [resendCode, { isLoading }] = useResendCodeMutation();
-  const [verifyAccount, { isLoading: isVerifying }] = useVerifyMutation();
+  const [resendCode, { error }] = useResendCodeMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const decodedEmail = getDecodedEmail(email);
   const form = useForm<verifyAccountValues>({
     resolver: zodResolver(verifyAccountSchema),
     mode: "onChange",
@@ -31,17 +29,13 @@ export function VerifyAccount({ email, className }: VerifyAccountProps) {
   });
 
   const isFormValid = form.formState.isValid;
-
   const handleVerify = async (pin: string) => {
     setIsSubmitting(true);
     try {
-      const result = await verifyAccount({
-        user_email: decodedEmail,
-        verication_code: pin,
-      }).unwrap();
-
-      console.log(result);
-      toast.success("Compte vérifié avec succès");
+      if (pin && email) {
+        router.push(`/reset?email=${encodeURIComponent(email)}&pin=${pin}`);
+      }
+      return null;
     } catch {
       toast.error("Erreur lors de la vérification du compte");
     } finally {
@@ -51,16 +45,17 @@ export function VerifyAccount({ email, className }: VerifyAccountProps) {
 
   const handleResend = async () => {
     try {
-      const result = await resendCode({ user_email: decodedEmail }).unwrap();
-      console.log(result);
-      console.log("Code de vérification renvoyé à l'email:", decodedEmail);
+      await resendCode({ user_email: email }).unwrap();
+      if (!error) {
+        toast.success("Un nouveau code a été envoyé à votre adresse email");
+      }
     } catch (error) {
       toast.error("Erreur lors de l'envoi du code de vérification");
     }
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)}>
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-2 text-center">
         <h2 className="text-2xl font-bold">Vérification de compte</h2>
         <p className="text-balance text-sm text-muted-foreground">

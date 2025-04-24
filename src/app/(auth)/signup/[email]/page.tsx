@@ -2,6 +2,7 @@
 import { VerifyAccount } from "@/components/forms/verify-account";
 import Image from "next/image";
 import { useParams } from "next/navigation";
+
 export default function Page() {
   const params = useParams();
   return (
