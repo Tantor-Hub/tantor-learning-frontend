@@ -47,6 +47,11 @@ export const authSlice = createSlice({
       state.expiresAt = null;
       state.isAuthenticated = false;
       state.user = null;
+
+      // Also clear localStorage when logging out
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("authState");
+      }
     },
     updateUser: (state, action: PayloadAction<any>) => {
       state.user = action.payload;
@@ -84,6 +89,11 @@ export const authSlice = createSlice({
         state.expiresAt = null;
         state.isAuthenticated = false;
         state.user = null;
+
+        // Also clear localStorage when logging out
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("authState");
+        }
       });
   },
 });

@@ -1,10 +1,12 @@
 import { RootState } from "@/store/store";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+
 // Types for better type safety
 export interface AuthCredentials {
   user_name: string;
   password: string;
 }
+
 export interface SignupData {
   fs_name: string;
   ls_name: string;
@@ -12,21 +14,26 @@ export interface SignupData {
   nick_name: string;
   email: string;
 }
+
 export interface TokenResponse {
   access_token: string;
   refresh_token: string;
   expires_in: number;
 }
+
 export interface VerifyRequest {
   user_email: string;
   verication_code: string;
 }
+
 export interface RefreshRequest {
   refresh_token: string;
 }
+
 export interface ResendCodeRequest {
   user_email: string;
 }
+
 export interface ForgotPasswordRequest {
   user_email: string;
 }
@@ -43,11 +50,13 @@ export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "https://tantor.buhendje.com",
-    // Get token from Redux state instead of hardcoding
     prepareHeaders: (headers, { getState }) => {
       headers.set("Content-Type", "application/json");
-      // Get token from state
-      const token = (getState() as RootState).auth.token;
+
+      // Get token from state with proper type handling
+      const state = getState() as RootState;
+      const token = state.auth?.token;
+
       if (token) {
         headers.set("x-connexion-tantor", `Bearer ${token}`);
       }
@@ -95,7 +104,6 @@ export const authApi = createApi({
       // Invalidate auth cache on logout
       invalidatesTags: ["Auth"],
     }),
-    // First added endpoint - resend verification code
     resendCode: builder.mutation<void, ResendCodeRequest>({
       query: (data) => ({
         url: "/api/users/user/resendcode",
@@ -103,14 +111,12 @@ export const authApi = createApi({
         body: data,
       }),
     }),
-    // Second added endpoint - authenticate with Google
     authWithGoogle: builder.mutation<TokenResponse, void>({
       query: () => ({
         url: "/api/users/user/authwithgoogle",
         method: "GET",
       }),
     }),
-    // Forgot password
     forgotPassword: builder.mutation<void, ForgotPasswordRequest>({
       query: (data) => ({
         url: "/api/users/user/forgotenpassword",
@@ -118,7 +124,6 @@ export const authApi = createApi({
         body: data,
       }),
     }),
-    // Reset password
     resetPassword: builder.mutation<void, ResetPasswordRequest>({
       query: (data) => ({
         url: "/api/users/user/resetpassword",
@@ -128,6 +133,7 @@ export const authApi = createApi({
     }),
   }),
 });
+
 export const {
   useSigninMutation,
   useSignupMutation,
