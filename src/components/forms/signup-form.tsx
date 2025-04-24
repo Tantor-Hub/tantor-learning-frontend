@@ -14,8 +14,8 @@ import { useRouter } from "next/navigation";
 import { useSignupMutation, useAuthWithGoogleMutation } from "@/lib/api";
 
 export function SignUpForm() {
-  const [signup, { isLoading }] = useSignupMutation();
   const router = useRouter();
+  const [signup, { isLoading, error }] = useSignupMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -40,18 +40,16 @@ export function SignUpForm() {
         nick_name: values.username,
         email: values.email,
       });
-      console.log(promise);
       if (isLoading) {
         toast.loading("Inscription en cours...");
       }
       if (promise.error) {
         toast.error("Erreur lors de l'inscription");
-        console.log(promise.error);
         return;
       }
-      if (promise.data) {
+      if (promise.data && !error) {
         toast.dismiss();
-        router.push(`/signup/${values.email}`);
+        router.push(`/verify-account?email=${encodeURIComponent(values.email)}`);
         toast.success("Compte créé avec succès!");
       }
     } catch {
@@ -63,13 +61,6 @@ export function SignUpForm() {
     // Implement Google authentication logic here
     toast.error("Connexion avec Google");
   }
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
-  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -145,13 +136,60 @@ export function SignUpForm() {
               <FormItem className="grid gap-2">
                 <FormLabel htmlFor="password">Mot de passe</FormLabel>
                 <FormControl>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Entrer votre mot de passe"
-                    required
-                    {...field}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Entrer votre mot de passe"
+                      required
+                      className="pr-10"
+                      {...field}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-primary"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.956 9.956 0 012.547-4.2M9.88 9.88a3 3 0 104.24 4.24M6.1 6.1l11.8 11.8"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </FormControl>
               </FormItem>
             )}
@@ -164,13 +202,60 @@ export function SignUpForm() {
               <FormItem className="grid gap-2">
                 <FormLabel htmlFor="confirmPassword">Confirmer le mot de passe</FormLabel>
                 <FormControl>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="Confirmer le mot de passe"
-                    required
-                    {...field}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      placeholder="Entrer votre mot de passe"
+                      required
+                      type={showConfirmPassword ? "text" : "password"}
+                      className="pr-10"
+                      {...field}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-primary"
+                      tabIndex={-1}
+                    >
+                      {showConfirmPassword ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.956 9.956 0 012.547-4.2M9.88 9.88a3 3 0 104.24 4.24M6.1 6.1l11.8 11.8"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </FormControl>
               </FormItem>
             )}

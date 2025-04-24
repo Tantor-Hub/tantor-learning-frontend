@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Button } from "@/components/ui/button";
@@ -10,18 +9,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useResendCodeMutation, useVerifyMutation } from "@/lib/api";
 import { toast } from "sonner";
 import { verifyAccountSchema, verifyAccountValues } from "@/lib/validators/verify-account-schema";
-import { getDecodedEmail } from "@/lib/get-decoded-email";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
-interface VerifyAccountProps {
-  email?: string | string[];
-  className?: string;
-}
-
-export function VerifyAccount({ email, className }: VerifyAccountProps) {
-  const [resendCode, { isLoading }] = useResendCodeMutation();
-  const [verifyAccount, { isLoading: isVerifying }] = useVerifyMutation();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const decodedEmail = getDecodedEmail(email);
+export function VerifyAccount() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email") as string;
+  const [resendCode] = useResendCodeMutation();
+  const [verifyAccount, { error, isLoading }] = useVerifyMutation();
   const form = useForm<verifyAccountValues>({
     resolver: zodResolver(verifyAccountSchema),
     mode: "onChange",
@@ -33,34 +29,31 @@ export function VerifyAccount({ email, className }: VerifyAccountProps) {
   const isFormValid = form.formState.isValid;
 
   const handleVerify = async (pin: string) => {
-    setIsSubmitting(true);
     try {
-      const result = await verifyAccount({
-        user_email: decodedEmail,
+      await verifyAccount({
+        user_email: email,
         verication_code: pin,
       }).unwrap();
-
-      console.log(result);
-      toast.success("Compte vérifié avec succès");
+      if (!error) {
+        toast.success("Compte vérifié avec succès");
+        router.replace("/dashboard/student");
+      }
     } catch {
       toast.error("Erreur lors de la vérification du compte");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handleResend = async () => {
     try {
-      const result = await resendCode({ user_email: decodedEmail }).unwrap();
-      console.log(result);
-      console.log("Code de vérification renvoyé à l'email:", decodedEmail);
-    } catch (error) {
+      await resendCode({ user_email: email }).unwrap();
+      toast.success("Un nouveau code a été envoyé à votre adresse email");
+    } catch {
       toast.error("Erreur lors de l'envoi du code de vérification");
     }
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)}>
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-2 text-center">
         <h2 className="text-2xl font-bold">Vérification de compte</h2>
         <p className="text-balance text-sm text-muted-foreground">
@@ -98,12 +91,8 @@ export function VerifyAccount({ email, className }: VerifyAccountProps) {
               )}
             />
           </div>
-          <Button
-            type="submit"
-            disabled={!isFormValid || isSubmitting}
-            className="w-full bg-blue-500"
-          >
-            {isSubmitting ? "Vérification..." : "Vérifier le compte"}
+          <Button type="submit" disabled={!isFormValid || isLoading} className="w-full bg-blue-500">
+            {isLoading ? "Vérification..." : "Vérifier le compte"}
           </Button>
         </form>
       </Form>

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Reset } from "@/components/forms/reset";
+import { VerifyAccount } from "@/components/forms/verify-account";
 
 export default function Page() {
   return (
@@ -10,7 +10,7 @@ export default function Page() {
         </div>
       }
     >
-      <Reset />
+      <VerifyAccount />
     </Suspense>
   );
 }
