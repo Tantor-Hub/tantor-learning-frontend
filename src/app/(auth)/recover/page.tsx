@@ -1,103 +1,90 @@
 "use client";
-import Image from "next/image";
-import { useState } from "react";
+import { useState, ChangeEvent, FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
+import { buttonVariants } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
+import { useForgotPasswordMutation } from "@/lib/api";
+import { toast } from "sonner";
 
-export default function RecoverPage() {
+interface FormData {
+  email: string;
+}
+
+export default function ResetPasswordPage() {
+  const [forgottenPassword, { isLoading, error }] = useForgotPasswordMutation();
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [formData, setFormData] = useState<FormData>({
+    email: "",
+  });
+
+  // Email validation function
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Veuillez entrer une adresse email valide.");
-    } else {
-      setError("");
-      // here , will Handle form submission
+    try {
+      await forgottenPassword({
+        user_email: formData.email,
+      }).unwrap();
+      if (!error) {
+        router.push(`/verify-code?email=${encodeURIComponent(formData.email)}`);
+        toast.success("Un email a été envoyé à votre adresse");
+        return;
+      }
+      toast.error("Une erreur s'est produite");
+    } catch {
+      toast.error("Echec! Une erreur s'est produite");
     }
-    router.push("/verify-code");
   };
 
   return (
-    <div className="max-h-screen grid grid-cols-1 md:grid-cols-2">
-      {/* Left side illustration */}
-      <div className="hidden md:flex items-center justify-center bg-white">
-        <div className="text-center p-8">
-          <Image src="/kids_studying.svg" alt="kids_studying" width={1000} height={1000} />
-          <p className="mt-6 text-blue-700 font-semibold text-lg">
-            Accédez à des formations de qualité, où
-          </p>
-          <p className="mt-6 text-blue-700 font-semibold font-poppins text-lg">que vous soyez.</p>
+    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+      <div className="flex flex-col items-center gap-2 text-center">
+        <h1 className="text-2xl font-bold">Mot de passe oublié</h1>
+        <p className="text-balance text-sm text-muted-foreground">
+          Entrez votre adresse e-mail pour réinitialiser votre compte
+        </p>
+      </div>
+      <div className="grid gap-6">
+        <div className="grid gap-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="sofia@gmail.com"
+            required
+            value={formData.email}
+            onChange={handleInputChange}
+          />
         </div>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isLoading || !isValidEmail(formData.email)}
+        >
+          {isLoading ? "En cours..." : "Continuer"}
+        </Button>
+        <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+          <span className="relative z-10 bg-background px-2 text-muted-foreground">OU</span>
+        </div>
+        <Link href="/signin" className={`${buttonVariants({ variant: "outline" })} w-full`}>
+          Annuler
+        </Link>
       </div>
-
-      {/* Right side form */}
-      <div className="flex items-center justify-center p-6">
-        <form onSubmit={handleSubmit} className="w-full max-w-md space-y-5">
-          <h2 className="text-center text-2xl font-extrabold poppins text-blue-800">
-            TANTOR–LEARNING
-          </h2>
-          <div className="space-y-1">
-            <h3 className="text-center text-md font-bold text-blue-950">Mot de passe oublié</h3>
-            <h5 className="text-center text-sm text-blue-500">
-              Entrez votre adresse e-mail pour réinitialiser votre compte
-            </h5>
-          </div>
-
-          <div className="flex justify-center">
-            <div>
-              <Image
-                src="/lock-icon.svg"
-                alt="lock"
-                width={60}
-                height={70}
-                className="object-contain"
-              />
-            </div>
-          </div>
-
-          <div>
-            <h5 className="block text-sm font-poppins font-medium  text-blue-950">
-              Entrer votre addresse mail
-            </h5>
-            <div className="mt-2">
-              <Input
-                type="email"
-                placeholder="joedoe@gmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full bg-blue-900 text-white font-poppins hover:bg-blue-900"
-          >
-            Continuer
-          </Button>
-
-          <div className="flex items-center gap-2">
-            <div className="flex-grow h-px bg-gray-300" />
-            <span className="text-gray-400 text-sm">OU</span>
-            <div className="flex-grow h-px bg-gray-300" />
-          </div>
-
-          <Button
-            variant="outline"
-            className="w-full border-blue-900 text-blue-900 font-poppins hover:bg-blue-50"
-            type="button"
-            onClick={() => router.push("/signin")}
-          >
-            Annuler
-          </Button>
-        </form>
-      </div>
-    </div>
+    </form>
   );
 }
