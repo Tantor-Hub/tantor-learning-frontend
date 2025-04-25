@@ -1,14 +1,5 @@
 "use client";
 import * as React from "react";
-import {
-  FileText,
-  LayoutDashboard,
-  ChartColumn,
-  CalendarDays,
-  CircleUserRound,
-  CircleHelp,
-  MessageCircleMore,
-} from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
@@ -21,56 +12,12 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Image from "next/image";
-
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Tableau de bord",
-      url: "student",
-      icon: LayoutDashboard,
-      isActive: true,
-    },
-    {
-      title: "Mes Cours",
-      url: "student/courses",
-      icon: FileText,
-    },
-    {
-      title: "Messages",
-      url: "student/messages",
-      icon: MessageCircleMore,
-    },
-    {
-      title: "Mes Documents",
-      url: "student/documents",
-      icon: ChartColumn,
-    },
-    {
-      title: "Planning",
-      url: "student/planning",
-      icon: CalendarDays,
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Profile",
-      url: "student/profile",
-      icon: CircleUserRound,
-    },
-    {
-      title: "Support",
-      url: "student/support",
-      icon: CircleHelp,
-    },
-  ],
-};
+import navigationMenus, { Role, otherNav } from "@/app/dashboard/data/sidebar-links";
+import { usePathname } from "next/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const path = usePathname();
+  const role = path.split("/")[2] as Role;
   return (
     <Sidebar variant="inset" {...props} className="p-0 border-r border-border px-2 sticky top-0">
       <SidebarHeader>
@@ -94,11 +41,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent style={{ marginTop: 5 }}>
-        <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={navigationMenus[role]} />
+        <NavSecondary items={otherNav.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={otherNav.user} />
       </SidebarFooter>
     </Sidebar>
   );
