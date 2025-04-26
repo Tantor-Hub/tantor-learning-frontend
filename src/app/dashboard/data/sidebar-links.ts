@@ -70,16 +70,6 @@ const navigationMenus: NavigationMenus = {
       url: "student/planning",
       icon: CalendarDays,
     },
-    {
-      title: "Profile",
-      url: "student/profile",
-      icon: CircleUserRound,
-    },
-    {
-      title: "Support",
-      url: "student/support",
-      icon: CircleHelp,
-    },
   ],
   admin: [
     {
