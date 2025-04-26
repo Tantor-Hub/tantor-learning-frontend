@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { useState } from "react";
 
-import { filters, sessionCourses, documentsData, coursesData } from "./data";
+import { filters, sessionCourses, documentsData } from "./data";
 import { DocsTab } from "./types";
 import CourseTab from "./components/courses-tab";
 
