@@ -4,7 +4,7 @@ export const filters = [
   { label: "Formations", value: "Comptabilité et Finance (DCG, DSCG)" },
   { label: "Durée", value: "Courte (< 15h)" },
   { label: "Etats", value: "à venir" },
-  { label: "Note", value: "0-20" },
+  { label: "Notes", value: "0-20" },
 ];
 
 export const sessionCourses = [

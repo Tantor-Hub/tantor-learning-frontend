@@ -15,13 +15,11 @@ export default function RootLayout({
   const title =
     activeMenuItem == "courses"
       ? "Mes cours"
-      : activeMenuItem == "messages"
-        ? "Messages"
-        : activeMenuItem == "documents"
-          ? "Mes Documents"
-          : activeMenuItem
-            ? activeMenuItem[0].toUpperCase() + activeMenuItem.slice(1)
-            : "Tableau de bord";
+      : activeMenuItem == "documents"
+        ? "Mes Documents"
+        : activeMenuItem
+          ? activeMenuItem[0].toUpperCase() + activeMenuItem.slice(1)
+          : "Tableau de bord";
 
   return (
     <main>
