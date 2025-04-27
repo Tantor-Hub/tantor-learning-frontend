@@ -2,7 +2,7 @@
 import { ReactNode } from "react";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Search } from "lucide-react";
+import { Search, Bell } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 export default function RootLayout({
@@ -42,8 +42,9 @@ export default function RootLayout({
                   className="pl-10 pr-4 py-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+              <Bell className="mr-4" />
             </header>
-            <div className=" bg-[#EFEEEE] p-3.5 h-full w-full">{children}</div>
+            <div className="p-3.5 h-full w-full">{children}</div>
           </SidebarInset>
         </SidebarProvider>
       </div>
