@@ -42,7 +42,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent style={{ marginTop: 5 }}>
         <NavMain items={navigationMenus[role]} />
-        <NavSecondary items={otherNav.navSecondary} className="mt-auto" />
+        <NavSecondary items={otherNav.navSecondary[role]} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={otherNav.user} />
