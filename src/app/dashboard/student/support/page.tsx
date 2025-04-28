@@ -120,16 +120,16 @@ export default function Page() {
                 );
               }}
             />
-          </form>
 
-          <div className="flex gap-5 md:gap-10 justify-end md:mt-5">
-            <Button variant="outline" className="border-[#0466C8] text-[#0466C8] cursor-pointer">
-              Annuler
-            </Button>
-            <Button type="submit" className="bg-[#0466C8] cursor-pointer" disabled={!isFormValid}>
-              Envoyer
-            </Button>
-          </div>
+            <div className="flex gap-5 md:gap-10 justify-end md:mt-5">
+              <Button variant="outline" className="border-[#0466C8] text-[#0466C8] cursor-pointer">
+                Annuler
+              </Button>
+              <Button type="submit" className="bg-[#0466C8] cursor-pointer" disabled={!isFormValid}>
+                Envoyer
+              </Button>
+            </div>
+          </form>
         </Form>
       </div>
     </section>

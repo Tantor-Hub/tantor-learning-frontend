@@ -5,7 +5,7 @@ import { CoursesTab } from "../types";
 const CourseTab = ({ spec }: { spec: string }) => {
   return (
     <Tabs defaultValue="actifs">
-      <div className="overflow-x-auto bg-white p-8 shadow-md shadow-gray-300">
+      <div className="overflow-x-auto bg-white p-8 rounded-md shadow-md shadow-gray-300 border-t">
         <div className="flex flex-col mb-5">
           <h2 className="text-[#0466C8] text-[18px] font-semibold mb-2.5">Mes Cours</h2>
           <p>{spec}</p>
