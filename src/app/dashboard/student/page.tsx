@@ -25,7 +25,7 @@ const StudentDashboard = () => {
           <PieVisual />
         </div>
       </div>
-      <CourseTab />
+      <CourseTab spec="Progrression de vos cours actuels" />
     </>
   );
 };

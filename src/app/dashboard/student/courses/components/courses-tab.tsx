@@ -2,13 +2,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { coursesData } from "../data";
 import { CoursesTab } from "../types";
 
-const CourseTab = () => {
+const CourseTab = ({ spec }: { spec: string }) => {
   return (
     <Tabs defaultValue="actifs">
       <div className="overflow-x-auto bg-white p-8 shadow-md shadow-gray-300">
         <div className="flex flex-col mb-5">
           <h2 className="text-[#0466C8] text-[18px] font-semibold mb-2.5">Mes Cours</h2>
-          <p>Progrression de vos cours actuels</p>
+          <p>{spec}</p>
         </div>
 
         <TabsList className="flex w-full min-w-[1000px] mb-4 shadow-md shadow-gray-300 border-t bg-gray-100">
