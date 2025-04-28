@@ -39,7 +39,9 @@ interface OtherNavItems {
     email: string;
     avatar: string;
   };
-  navSecondary: NavSecondary[];
+  navSecondary: {
+    [key in Role]: NavSecondary[];
+  };
 }
 
 const navigationMenus: NavigationMenus = {
@@ -183,18 +185,56 @@ const otherNav: OtherNavItems = {
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  navSecondary: [
-    {
-      title: "Profile",
-      url: "student/profile",
-      icon: CircleUserRound,
-    },
-    {
-      title: "Support",
-      url: "student/support",
-      icon: CircleHelp,
-    },
-  ],
+  navSecondary: {
+    student: [
+      {
+        title: "Profile",
+        url: "student/profile",
+        icon: CircleUserRound,
+      },
+      {
+        title: "Support",
+        url: "student/support",
+        icon: CircleHelp,
+      },
+    ],
+    admin: [
+      {
+        title: "Profile",
+        url: "admin/profile",
+        icon: CircleUserRound,
+      },
+      {
+        title: "Support",
+        url: "admin/support",
+        icon: CircleHelp,
+      },
+    ],
+    instructor: [
+      {
+        title: "Profile",
+        url: "instructor/profile",
+        icon: CircleUserRound,
+      },
+      {
+        title: "Support",
+        url: "instructor/support",
+        icon: CircleHelp,
+      },
+    ],
+    secretary: [
+      {
+        title: "Profile",
+        url: "secretary/profile",
+        icon: CircleUserRound,
+      },
+      {
+        title: "Support",
+        url: "secretary/support",
+        icon: CircleHelp,
+      },
+    ],
+  },
 };
 
 export default navigationMenus;

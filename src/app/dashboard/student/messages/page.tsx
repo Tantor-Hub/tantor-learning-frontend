@@ -19,7 +19,15 @@ import { messages } from "./data";
 
 export default function Page() {
   return (
-    <div className="bg-white p-4">
+    <div className="p-4">
+      <div className="flex items-center justify-between max-w-[620px] bg-[#D8D8D8] rounded-[8px] p-2 px-6 mb-4">
+        <p className="bg-white rounded-[8px] p-1 px-4">Tous</p>
+        <p>Archives</p>
+        <p>Supprimés</p>
+        <p>Nouveaux</p>
+        <p>Envoyés</p>
+        <p>Reçus</p>
+      </div>
       <div className="flex items-center justify-between">
         <p>1 message(s) non lu</p>
         <AlertDialog>
