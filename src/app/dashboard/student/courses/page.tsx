@@ -177,7 +177,7 @@ export default function StudentDashboard() {
         </div>
       </Tabs>
 
-      <CourseTab />
+      <CourseTab spec={"Progression des vos cours actuels"} />
     </div>
   );
 }
