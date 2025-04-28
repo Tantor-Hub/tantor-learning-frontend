@@ -1,5 +1,6 @@
 import { BookOpen, ListCheck, Percent, User, UserPlus } from "lucide-react";
 import { Instructor, Session } from "../types";
+import { sign } from "crypto";
 
 export const instructorStats = [
   {
@@ -89,3 +90,49 @@ export const sessions: Session[] = [
     room: "Salle R204",
   },
 ];
+
+const documentFilter = [
+  { label: "Date", value: "10/04/2025" },
+  { label: "Type", value: "Avant la formation" },
+  { label: "Formations", value: "Comptabilité et Finance (DCG, DSCG)" },
+];
+
+const documentsData = [
+  {
+    title: "Les modalites d’evaluation",
+    type: "A lire",
+    signature: true,
+    date: "12/04/2025",
+    category: "fiche",
+  },
+  {
+    title: "Contrat",
+    type: "A lire",
+    signature: true,
+    date: "12/04/2025",
+    category: "fiche",
+  },
+  {
+    title: "Fiche de paye",
+    type: "A lire",
+    signature: true,
+    date: "12/04/2025",
+    category: "fiche",
+  },
+  {
+    title: "Contrat de formation",
+    type: "A lire",
+    signature: true,
+    date: "12/04/2025",
+    category: "fiche",
+  },
+  {
+    title: "Convention de formation",
+    type: "A completer",
+    signature: true,
+    date: "12/04/2025",
+    category: "fiche",
+  },
+];
+
+export { documentFilter, documentsData };
