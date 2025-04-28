@@ -20,12 +20,12 @@ export default function Page() {
         <p className="text-[#979DAC]">Lorem ipsum, dolor sit amet consectetur adipisicing elit.</p>
       </div>
       <div className="flex items-center justify-between gap-4">
-        <Button>Enregistrer la vidéo</Button>
-        <Button>Joindre la vidéo</Button>
+        <Button size="lg">Enregistrer la vidéo</Button>
+        <Button size="lg">Joindre la vidéo</Button>
       </div>
       <div className="mt-4 flex justify-between gap-6">
-        <div className="rounded-md bg-gray-950 flex flex-col items-center justify-center flex-1">
-          <VideoIcon className="text-white" size={100} />
+        <div className="rounded-md bg-gray-950 flex flex-col items-center justify-center flex-1 font-thin">
+          <VideoIcon className="text-white font-thin" size={100} />
           <p className="text-white text-xl">Clickez pour demarrer la visioconference</p>
         </div>
         <div className="border border-border rounded-md shadow-2xl w-[350px]">
