@@ -30,9 +30,7 @@ const EventViewer = ({ selected, events }: { selected: Date; events?: EventProps
   );
 
   const [tab, setActiveTab] = useState("all");
-  console.log("====================================");
-  console.log(events);
-  console.log("====================================");
+
   return (
     <div className="flex-[1] border shadow-md p-5 flex flex-col gap-5 rounded-[8px]">
       <div>
