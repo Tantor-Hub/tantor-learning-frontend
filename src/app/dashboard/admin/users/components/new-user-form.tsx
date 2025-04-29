@@ -20,32 +20,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
-  title: z.string().min(1, {
-    message: "Veuillez entrer un sujet",
+  name: z.string().min(3, {
+    message: "Veuillez entrer le nom de l'utilisateur",
   }),
-  description: z.string().min(1, {
-    message: "Le message ne doit pas être vide",
+  email: z.string().email({
+    message: "Veuillez entrer un email valide",
   }),
-  author: z.string().min(1, { message: "Veillez choisir l'auteur de l'évènement" }),
-  eventType: z.string().min(1, { message: "Veillez choisir le type d'évènement" }),
+  userType: z.string().min(1, {
+    message: "Veuillez choisir un type d'utilisateur",
+  }),
+  formation: z.string().min(1, {
+    message: "Veuillez sélectionner une formation",
+  }),
 });
-
 type SupportFormValues = z.infer<typeof formSchema>;
 
 interface NewEventFormProps {
   onCancel: () => void;
 }
 
-export default function NewEventForm({ onCancel }: NewEventFormProps) {
+export default function NewUserForm({ onCancel }: NewEventFormProps) {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      eventType: "",
-      author: "",
+      name: "",
+      email: "",
+      userType: "",
+      formation: "",
     },
     mode: "onChange",
   });
@@ -62,16 +67,16 @@ export default function NewEventForm({ onCancel }: NewEventFormProps) {
       >
         <FormField
           control={form.control}
-          name="title"
+          name="name"
           render={({ field }) => {
             return (
               <FormItem className="flex flex-col gap-2.5">
-                <FormLabel>Titre de l'évènement</FormLabel>
+                <FormLabel>Nom et prénom</FormLabel>
                 <FormControl>
                   <Input
                     type="text"
                     {...field}
-                    placeholder="Entrez le titre de l'évènement"
+                    placeholder="Entrez le nom et le prénom"
                     className="text-sm font-extralight py-5"
                   />
                 </FormControl>
@@ -82,17 +87,16 @@ export default function NewEventForm({ onCancel }: NewEventFormProps) {
         />
         <FormField
           control={form.control}
-          name="description"
+          name="email"
           render={({ field }) => {
             return (
               <FormItem className="flex flex-col gap-2.5">
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea
-                    rows={10}
-                    {...field}
-                    placeholder="Decrivez l'évènement"
-                    className="min-h-20 max-h-28 overflow-y-auto resize-none text-sm font-extralight"
+                  <Input
+                    type="email"
+                    placeholder="Entrez l'email de l'utilisateur"
+                    className="text-sm font-extralight py-5"
                   />
                 </FormControl>
                 <FormMessage />
@@ -103,41 +107,56 @@ export default function NewEventForm({ onCancel }: NewEventFormProps) {
 
         <FormField
           control={form.control}
-          name="eventType"
+          name="userType"
           render={({ field }) => (
             <FormItem className="flex flex-col gap-2.5">
-              <FormLabel>Type d'évènement</FormLabel>
+              <FormLabel>Type d'utilisateur</FormLabel>
               <FormControl>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="w-full py-5">
-                    <SelectValue placeholder="Sélectionnez un type" />
-                  </SelectTrigger>
-                  <SelectContent className="font-extralight">
-                    <SelectItem value="Cours">Cours</SelectItem>
-                    <SelectItem value="Examen">Examen</SelectItem>
-                    <SelectItem value="Sortie scolaire">Evènement</SelectItem>
-                  </SelectContent>
-                </Select>
+                <RadioGroup
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  className="flex flex-col gap-3.5 px-2.5"
+                >
+                  <div className="flex items-center space-x-2 ">
+                    <RadioGroupItem value="student" id="student" />
+                    <Label htmlFor="student" className="font-extralight cursor-pointer">
+                      Etudiant
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 ">
+                    <RadioGroupItem value="instructor" id="instructor" />
+                    <Label htmlFor="instructor" className="font-extralight cursor-pointer">
+                      Formateur
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 ">
+                    <RadioGroupItem value="secretary" id="secretary" />
+                    <Label htmlFor="secretary" className="font-extralight cursor-pointer">
+                      Secrétaire
+                    </Label>
+                  </div>
+                </RadioGroup>
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
-          name="author"
+          name="formation"
           render={({ field }) => (
             <FormItem className="flex flex-col gap-2.5">
-              <FormLabel>Par qui ?</FormLabel>
+              <FormLabel>Formation</FormLabel>
               <FormControl>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <SelectTrigger className="w-full py-5">
-                    <SelectValue placeholder="Sélectionnez l'auteur" />
+                    <SelectValue placeholder="Sélectionnez le cours" />
                   </SelectTrigger>
                   <SelectContent className="font-extralight">
-                    <SelectItem value="Cours">Moi uniquement</SelectItem>
-                    <SelectItem value="Examen">Joel</SelectItem>
-                    <SelectItem value="Sortie scolaire">Semjo</SelectItem>
+                    <SelectItem value="DC">DC en ligne</SelectItem>
+                    <SelectItem value="comptability">Comptabilite et Audit</SelectItem>
+                    <SelectItem value="finance">Finance</SelectItem>
                   </SelectContent>
                 </Select>
               </FormControl>
@@ -159,7 +178,7 @@ export default function NewEventForm({ onCancel }: NewEventFormProps) {
             className="!p-5 !px-7 bg-[#0466C8] cursor-pointer"
             disabled={!isFormValid}
           >
-            Créér l'évènement
+            Ajouter l'utilisateur
           </Button>
         </div>
       </form>
