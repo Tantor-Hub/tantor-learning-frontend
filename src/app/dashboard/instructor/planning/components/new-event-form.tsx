@@ -53,9 +53,7 @@ export default function NewEventForm({ onCancel }: NewEventFormProps) {
   const isFormValid = form.formState.isValid;
 
   const handleSubmit = (data: SupportFormValues) => {
-    console.log("====================================");
-    console.log(data);
-    console.log("====================================");
+    // console.log(data);
   };
   return (
     <Form {...form}>

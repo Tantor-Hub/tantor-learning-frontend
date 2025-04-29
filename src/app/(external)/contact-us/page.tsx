@@ -32,7 +32,7 @@ export default function ContactUs() {
 
   // Form submission handler
   function onSubmit(values: ContactUsFormValues) {
-    console.log(values);
+    // console.log(values);
     // Add your form submission logic here
   }
 

@@ -39,9 +39,7 @@ export default function Page() {
   const isFormValid = form.formState.isValid;
 
   const handleSubmit = (data: SupportFormValues) => {
-    console.log("====================================");
-    console.log(data);
-    console.log("====================================");
+    // console.log(data);
   };
   return (
     <section className="flex flex-col gap-4">
