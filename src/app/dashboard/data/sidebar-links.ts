@@ -5,7 +5,6 @@ import {
   MessageCircleMore,
   BarChart2,
   CalendarDays,
-  PlusCircle,
   File,
   GraduationCap,
   User,
@@ -99,11 +98,6 @@ const navigationMenus: NavigationMenus = {
       title: "Messages",
       url: "admin/messages",
       icon: MessageCircleMore,
-    },
-    {
-      title: "Dossiers étudiants",
-      url: "admin/student-files",
-      icon: PlusCircle,
     },
     {
       title: "Planning",
