@@ -33,7 +33,7 @@ const AuthButtons = ({
   signup: () => void;
 }) => {
   const baseStyle =
-    "px-2 py-6 rounded-[12px] border border-[#0353A4] text-[16px] lg:text-xl cursor-pointer";
+    "px-3.5 py-6 rounded-[12px] border border-[#0353A4] text-[16px] lg:text-xl cursor-pointer";
   const spacing = direction === "row" ? "flex gap-2 xl:gap-4" : "flex flex-col gap-4";
 
   return (
@@ -54,7 +54,7 @@ const Header = () => {
 
   return (
     <header className="text-[#0353A4] font-medium text-base lg:text-[22px] sticky top-0 z-30 backdrop-blur-xl bg-[#FFFFFFCC]">
-      <div className="max-w-[1440px] flex justify-between lg:justify-start md:gap-[5%] xl:gap-[10%] items-center m-auto py-5 lg:py-8 px-5 md:px-10">
+      <div className="max-w-[1440px] flex justify-between lg:justify-start md:gap-[5%] xl:gap-[10%] items-center m-auto py-4 lg:py-6 px-5 md:px-10">
         <Link href="/" className="flex gap-1 lg:gap-4 items-center ">
           <Image
             src="/tantor-logo.svg"

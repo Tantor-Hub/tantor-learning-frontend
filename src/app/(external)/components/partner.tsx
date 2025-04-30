@@ -3,9 +3,9 @@ import Image from "next/image";
 const partners = ["france travail", "lk paie", "qualiopi", "voltaire", "mon compe", "la region"];
 const Partners = () => {
   return (
-    <section id="partners">
+    <section id="partners" className="pt-10 md:pt-15">
       <div className="max-w-[1440px] m-auto">
-        <h1 className="text-center text-[#001845] text-2xl px-5 md:px-10 pb-15 md:pb-10 pt-6 font-semibold">
+        <h1 className="text-center text-[#001845] text-3xl px-5 md:px-10 pb-5 md:pb-10 pt-6 font-semibold">
           Nos partenaires
         </h1>
         <div className="overflow-x-clip [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
