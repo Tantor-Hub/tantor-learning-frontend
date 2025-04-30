@@ -8,9 +8,9 @@ import { useRouter } from "next/navigation";
 const Hero = () => {
   const router = useRouter();
   return (
-    <section className="hero relative h-[680px] p-5 md:p-10">
+    <section className="hero relative mask-b-from-70% h-[780px] p-5 md:p-10">
       <div className="relative max-w-[1440px] flex items-center h-full m-auto">
-        <div className="max-w-fit flex flex-col gap-10 h-fit justify-center">
+        <div className="max-w-fit flex flex-col gap-10 h-fit justify-center md:pl-10">
           <h1 className="text-[28px] md:text-[40px] relative z-20 text-shadow-md text-white font-bold">
             Bienvenue sur Tantor Learning
           </h1>
