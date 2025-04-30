@@ -16,7 +16,7 @@ export default function Page() {
         <div className="flex-[2]">
           <AdminChart />
         </div>
-        <div className="flex-[1] flex flex-col p-5 gap-10 shadow-sm rounded-md border-t">
+        <div className="flex-[1] flex flex-col p-5 gap-10 shadow-sm rounded-md border-t bg-white">
           <div className="flex flex-col gap-2">
             <h3 className="text-xl pb-1.5 text-[#0466C8] font-semibold">
               Activité des utilisateurs

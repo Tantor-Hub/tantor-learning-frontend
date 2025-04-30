@@ -14,7 +14,7 @@ const StudentDashboard = () => {
       </div>
       <OngoingCourse ongoing={ongoingCourse} />
       <div className="flex flex-col lg:flex-row gap-5 mb-5">
-        <div className="flex-[3] border border-border rounded-xl py-6">
+        <div className="flex-[3] border border-border rounded-xl py-6  bg-white">
           <h3 className="text-[#001845] font-medium text-xl pb-2.5 px-5">Productivite</h3>
 
           <div className="h-[300px]">
