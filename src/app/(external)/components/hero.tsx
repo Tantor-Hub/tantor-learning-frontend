@@ -48,13 +48,13 @@ const Hero = () => {
           </div>
         </div>
         <Image
-          src="/hero-bg.png"
+          src="/hero-background.png"
           height={100}
           width={400}
           alt="hero image"
           className="absolute z-0 right-5 top-0 h-full w-auto object-cover"
         />
-        <div className="absolute -inset-5 md:-inset-10 bg-[#00000094] lg:hidden"></div>
+        <div className="absolute -inset-5 md:-inset-10 bg-[#000000c4] lg:hidden"></div>
       </div>
     </section>
   );
