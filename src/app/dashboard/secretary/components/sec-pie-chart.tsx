@@ -2,8 +2,8 @@
 
 import { Pie, PieChart, ResponsiveContainer, Cell, Legend, Sector, Label } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { ChartConfig, ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { useEffect, useState } from "react";
 
 const chartData = [
   { name: "done", value: 150, fill: "#979DAC", label: "Terminés" },
@@ -12,31 +12,41 @@ const chartData = [
 ];
 
 const chartConfig = {
-  Terminé: {
-    label: "Terminés",
-    color: "#979DAC",
-  },
-  "En cours": {
-    label: "En cours",
-    color: "#65A9F0",
-  },
-  "A faire": {
-    label: "À faire",
-    color: "#1976D2",
-  },
+  Terminé: { label: "Terminés", color: "#979DAC" },
+  "En cours": { label: "En cours", color: "#65A9F0" },
+  "A faire": { label: "À faire", color: "#1976D2" },
 } satisfies ChartConfig;
 
 export function SecPieChart() {
+  const [innerRadius, setInnerRadius] = useState(50);
+  const [outerRadius, setOuterRadius] = useState(120);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const isSmall = window.innerWidth < 640;
+      setInnerRadius(isSmall ? 30 : 50);
+      setOuterRadius(isSmall ? 80 : 120);
+    };
+
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
-    <Card className="flex flex-col h-full">
+    <Card className="flex flex-col h-full min-h-[300px] sm:min-h-[400px]">
       <CardHeader className="flex flex-col">
-        <CardTitle className="text-xl text-[#0466C8] font-semibold">Statut des tâches</CardTitle>
+        <CardTitle className="text-lg sm:text-xl text-[#0466C8] font-semibold">
+          Statut des tâches
+        </CardTitle>
         <CardDescription className="text-xs font-light">
           Répartition des tâches par statut
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 pt-0 pb-0 px-4">
-        <ChartContainer config={chartConfig} className="mx-auto h-full">
+      <CardContent className="flex-1 pt-0 pb-0 px-2 sm:px-4">
+        <ChartContainer config={chartConfig} className="mx-auto h-full max-w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
               <ChartTooltip
@@ -60,21 +70,14 @@ export function SecPieChart() {
                 data={chartData}
                 dataKey="value"
                 nameKey="name"
-                innerRadius={40}
-                outerRadius={120}
+                innerRadius={innerRadius}
+                outerRadius={outerRadius}
                 paddingAngle={2}
                 cornerRadius={4}
-                label={(labelProps) => {
-                  if (
-                    !labelProps.cx ||
-                    !labelProps.cy ||
-                    !labelProps.innerRadius ||
-                    !labelProps.outerRadius
-                  ) {
+                label={({ cx, cy, midAngle, innerRadius, outerRadius, index }) => {
+                  if (!cx || !cy || !innerRadius || !outerRadius || index === undefined)
                     return null;
-                  }
 
-                  const { cx, cy, midAngle, innerRadius, outerRadius, index } = labelProps;
                   const RADIAN = Math.PI / 180;
                   const radius = innerRadius + (outerRadius - innerRadius) * 1.2;
                   const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -87,7 +90,7 @@ export function SecPieChart() {
                       fill={chartData[index].fill}
                       textAnchor={x > cx ? "start" : "end"}
                       dominantBaseline="central"
-                      className="text-xs font-medium"
+                      className="text-[10px] sm:text-xs font-medium"
                     >
                       {chartData[index].label}
                     </text>
@@ -97,17 +100,18 @@ export function SecPieChart() {
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
+
                 <Label
                   position="center"
-                  content={(labelProps) => {
-                    if (!labelProps.viewBox) {
-                      return null;
-                    }
+                  content={(props) => {
+                    const { viewBox } = props;
+                    if (!viewBox) return null;
 
-                    const viewBox = labelProps.viewBox as { cx: number; cy: number };
-                    const { cx, cy } = viewBox;
+                    const cx = ("cx" in viewBox ? viewBox.cx : (viewBox as any).width / 2) || 0;
+                    const cy = ("cy" in viewBox ? viewBox.cy : (viewBox as any).height / 2) || 0;
 
                     const total = chartData.reduce((sum, entry) => sum + entry.value, 0);
+
                     return (
                       <text
                         x={cx}
@@ -116,10 +120,10 @@ export function SecPieChart() {
                         dominantBaseline="middle"
                         className="fill-foreground"
                       >
-                        <tspan x={cx} y={cy - 10} className="text-lg font-bold text-center">
+                        <tspan x={cx} y={cy - 8} className="text-base font-bold">
                           {total}
                         </tspan>
-                        <tspan x={cx} y={cy + 10} className="text-xs text-center">
+                        <tspan x={cx} y={cy + 10} className="text-[10px]">
                           tâches
                         </tspan>
                       </text>
