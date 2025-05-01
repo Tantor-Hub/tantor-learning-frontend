@@ -115,6 +115,7 @@ export function PieVisual() {
               innerRadius={60}
               activeIndex={activeIndex}
               paddingAngle={1.5}
+              cornerRadius={4}
               activeShape={({ outerRadius = 0, ...props }: PieSectorDataItem) => (
                 <g>
                   <Sector {...props} outerRadius={outerRadius + 6} />
