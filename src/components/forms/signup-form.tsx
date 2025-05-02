@@ -65,8 +65,8 @@ export function SignUpForm() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">S'inscrire</h1>
-        <p className="text-balance text-sm text-muted-foreground">
+        <h1 className="text-2xl md:text-3xl font-semibold md:font-bold">S'inscrire</h1>
+        <p className="text-balance text-base text-muted-foreground">
           Inscrivez-vous en remplissant les informations ci-dessous
         </p>
       </div>
@@ -85,6 +85,7 @@ export function SignUpForm() {
                     placeholder="Entrer votre Nom et Post-nom"
                     required
                     {...field}
+                    className="py-5 text-sm md:text-base"
                   />
                 </FormControl>
               </FormItem>
@@ -104,6 +105,7 @@ export function SignUpForm() {
                     placeholder="sofia@gmail.com"
                     required
                     {...field}
+                    className="py-5 text-sm md:text-base"
                   />
                 </FormControl>
               </FormItem>
@@ -123,6 +125,7 @@ export function SignUpForm() {
                     placeholder="Entrer votre nom d'utilisateur"
                     required
                     {...field}
+                    className="py-5 text-sm md:text-base"
                   />
                 </FormControl>
               </FormItem>
@@ -142,7 +145,7 @@ export function SignUpForm() {
                       type={showPassword ? "text" : "password"}
                       placeholder="Entrer votre mot de passe"
                       required
-                      className="pr-10"
+                      className="pr-10 py-5 text-sm md:text-base"
                       {...field}
                     />
                     <button
@@ -208,7 +211,7 @@ export function SignUpForm() {
                       placeholder="Entrer votre mot de passe"
                       required
                       type={showConfirmPassword ? "text" : "password"}
-                      className="pr-10"
+                      className="pr-10 py-5 text-sm md:text-base"
                       {...field}
                     />
                     <button
@@ -286,7 +289,7 @@ export function SignUpForm() {
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full py-5" disabled={isLoading}>
             {isLoading ? "Connexion en cours..." : "Se connecter"}
           </Button>
 
@@ -294,15 +297,15 @@ export function SignUpForm() {
             <span className="relative z-10 bg-background px-2 text-muted-foreground">OU</span>
           </div>
 
-          <Button variant="outline" className="w-full" onClick={signInWithGoogle}>
+          <Button variant="outline" className="w-full py-5" onClick={signInWithGoogle}>
             <GoogleIcon />
             Se connecter avec Google
           </Button>
         </form>
       </Form>
-      <div className="text-center text-sm">
+      <div className="text-center text-sm md:text-base">
         Avez-vous déjà un compte?{" "}
-        <Link href="/signin" className="text-primary hover:underline">
+        <Link href="/signin" className="text-primary font-semibold hover:underline">
           Connectez-vous ici
         </Link>
       </div>
