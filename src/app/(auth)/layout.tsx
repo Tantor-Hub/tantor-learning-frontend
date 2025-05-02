@@ -12,21 +12,19 @@ export default function AuthLayout({
       <div className="grid min-h-svh lg:grid-cols-2">
         <div className="flex flex-col gap-4 p-6 md:p-10">
           <div className="flex justify-center gap-2 md:justify-start">
-            <Link href="/" className="flex items-center gap-2 font-medium">
-              <div className="flex h-6 w-6 items-center justify-center rounded-md">
-                <Image
-                  src="/tantor-logo.svg"
-                  width={16}
-                  height={16}
-                  alt="Tantor Logo"
-                  className="size-4"
-                />
-              </div>
-              TANTOR LEARNING
+            <Link href="/" className="flex gap-1 lg:gap-4 items-center ">
+              <Image
+                src="/tantor-logo.svg"
+                height={48}
+                width={48}
+                alt="Tantor logo"
+                className="h-8 w-auto lg:w-12"
+              />
+              <h1 className="text-nowrap text-[22px] border-b-2 border-red-500">Tantor Learning</h1>
             </Link>
           </div>
           <div className="flex flex-1 items-center justify-center">
-            <div className="w-full max-w-xs">{children}</div>
+            <div className="w-full max-w-sm">{children}</div>
           </div>
         </div>
         <div className="relative hidden bg-muted lg:block">
