@@ -19,11 +19,17 @@ export interface TokenResponse {
   access_token: string;
   refresh_token: string;
   expires_in: number;
+  status: number;
+  message: string;
+  data: {
+    message: string;
+    user: SignupData;
+  };
 }
 
 export interface VerifyRequest {
-  user_email: string;
-  verication_code: string;
+  email_user: string;
+  verication_code: number;
 }
 
 export interface RefreshRequest {
