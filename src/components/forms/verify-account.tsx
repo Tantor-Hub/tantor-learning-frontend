@@ -17,7 +17,7 @@ export function VerifyAccount() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") as string;
   const [resendCode] = useResendCodeMutation();
-  const [verifyAccount, { error, isLoading }] = useVerifyMutation();
+  const [verifyAccount, { isLoading }] = useVerifyMutation();
   const form = useForm<verifyAccountValues>({
     resolver: zodResolver(verifyAccountSchema),
     mode: "onChange",
@@ -31,15 +31,18 @@ export function VerifyAccount() {
   const handleVerify = async (pin: string) => {
     try {
       await verifyAccount({
-        user_email: email,
-        verication_code: pin,
+        email_user: email,
+        verication_code: parseInt(pin),
       }).unwrap();
-      if (!error) {
-        toast.success("Compte vérifié avec succès");
-        router.replace("/dashboard/student");
+      router.replace("/dashboard/student");
+      toast.success("Compte vérifié avec succès");
+    } catch (error: any) {
+      const message = error?.data?.data || "Erreur lors de l'inscription";
+      if (error instanceof Error) {
+        toast.error(message);
+      } else {
+        toast.error(message);
       }
-    } catch {
-      toast.error("Erreur lors de la vérification du compte");
     }
   };
 

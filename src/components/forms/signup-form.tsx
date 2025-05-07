@@ -15,7 +15,9 @@ import { useSignupMutation, useAuthWithGoogleMutation } from "@/lib/api";
 
 export function SignUpForm() {
   const router = useRouter();
-  const [signup, { isLoading, error }] = useSignupMutation();
+  const [emailSignup, { isLoading: isEmailLoading }] = useSignupMutation();
+  const [googleSignup, { isLoading: isGoogleLoading, error: googleError }] =
+    useAuthWithGoogleMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -33,34 +35,46 @@ export function SignUpForm() {
 
   async function onSubmit(values: SignUpFormValues) {
     try {
-      const promise = await signup({
+      toast.loading("Inscription en cours...");
+      const promise = await emailSignup({
         fs_name: values.fullName.split(" ")[0],
-        ls_name: values.fullName.split(" ")[1],
+        ls_name: values.fullName.split(" ")[1] || values.fullName.split(" ")[0],
         password: values.password,
         nick_name: values.username,
         email: values.email,
-      });
-      if (isLoading) {
-        toast.loading("Inscription en cours...");
+      }).unwrap();
+      router.push(`/verify-account?email=${encodeURIComponent(values.email)}`);
+      toast.dismiss();
+      toast.success(promise.data.message || "Compte créé avec succès!");
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message || "Erreur lors de l'inscription");
+      } else {
+        toast.error("Une erreur inattendue s'est produite");
       }
-      if (promise.error) {
-        toast.error("Erreur lors de l'inscription");
-        return;
-      }
-      if (promise.data && !error) {
-        toast.dismiss();
-        router.push(`/verify-account?email=${encodeURIComponent(values.email)}`);
-        toast.success("Compte créé avec succès!");
-      }
-    } catch {
-      toast.error("Erreur lors de l'inscription");
     }
   }
 
-  function signInWithGoogle() {
-    // Implement Google authentication logic here
-    toast.error("Connexion avec Google");
-  }
+  const signInWithGoogle = async () => {
+    try {
+      toast.loading("Connexion avec Google en cours...");
+
+      const result = await googleSignup().unwrap();
+      // console.log(result);
+
+      toast.dismiss();
+
+      if (result) {
+        // Handle successful Google sign-in
+        toast.success("Connexion avec Google réussie!");
+        router.push("/dashboard"); // Redirect to dashboard or appropriate page
+      }
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Échec de la connexion avec Google");
+      console.error("Google signup error:", error);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -289,8 +303,8 @@ export function SignUpForm() {
             )}
           />
 
-          <Button type="submit" className="w-full py-5" disabled={isLoading}>
-            {isLoading ? "Connexion en cours..." : "Se connecter"}
+          <Button type="submit" className="w-full py-5" disabled={isEmailLoading}>
+            {isEmailLoading ? "Connexion en cours..." : "Se connecter"}
           </Button>
 
           <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
