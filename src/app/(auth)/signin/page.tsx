@@ -23,12 +23,12 @@ interface FormData {
 
 export default function SignIn() {
   const router = useRouter();
+  const [signin, { isLoading: isSignInLoading }] = useSigninMutation();
+  const [triggerGoogleAuth, { isLoading: isGoogleAuthLoading }] = useAuthWithGoogleMutation();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
-  const [signin, { isLoading: isSigningIn }] = useSigninMutation();
-  const [triggerGoogleAuth, { isLoading: isGoogleAuthLoading }] = useAuthWithGoogleMutation();
-  const isAuthenticated = useSelector(selectIsAuthenticated);
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
@@ -82,29 +82,28 @@ export default function SignIn() {
     }
   };
 
-  async function signInWithGoogle() {
+  const signInWithGoogle = async () => {
     try {
-      setIsLoading(true);
-      // Use the mutation trigger function
-      const result = await triggerGoogleAuth().unwrap();
+      toast.loading("Connexion avec Google en cours...");
+      window.location.href = "https://tantor.buhendje.com/api/users/user/authwithgoogle";
 
+      // const result = await triggerGoogleAuth().unwrap();
+      // console.log(result);
       // Rest remains the same
-      dispatch(
-        setCredentials({
-          token: result.access_token,
-          refreshToken: result.refresh_token,
-          expiresIn: result.expires_in,
-        })
-      );
+      // dispatch(
+      //   setCredentials({
+      //     token: result.access_token,
+      //     refreshToken: result.refresh_token,
+      //     expiresIn: result.expires_in,
+      //   })
+      // );
 
-      toast.success("Connexion avec Google réussie!");
-      router.push("/dashboard/student");
+      // toast.success("Connexion avec Google réussie!");
+      // router.push("/dashboard/student");
     } catch (error) {
-      toast.error("Échec de la connexion avec Google");
-    } finally {
-      setIsLoading(false);
+      // toast.error("Échec de la connexion avec Google");
     }
-  }
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -209,8 +208,12 @@ export default function SignIn() {
             </button>
           </div>
         </div>
-        <Button type="submit" className="w-full text-sm md:text-base  py-5" disabled={isLoading}>
-          {isLoading ? "Connexion en cours..." : "Se connecter"}
+        <Button
+          type="submit"
+          className="w-full text-sm md:text-base  py-5"
+          disabled={isSignInLoading}
+        >
+          {isSignInLoading ? "Connexion en cours..." : "Se connecter"}
         </Button>
         <div className="relative text-center text-sm md:text-base after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
           <span className="relative z-10 bg-background px-2 text-muted-foreground">OU</span>
@@ -219,9 +222,10 @@ export default function SignIn() {
           variant="outline"
           className="w-full text-sm md:text-base py-5"
           onClick={signInWithGoogle}
+          disabled={isGoogleAuthLoading}
         >
           <GoogleIcon />
-          Se connecter avec Google
+          {isGoogleAuthLoading ? "Connexion..." : "Se connecter avec Google"}
         </Button>
       </div>
       <div className="text-center text-sm md:text-base">

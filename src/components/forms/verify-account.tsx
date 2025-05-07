@@ -10,11 +10,14 @@ import { useResendCodeMutation, useVerifyMutation } from "@/lib/api";
 import { toast } from "sonner";
 import { verifyAccountSchema, verifyAccountValues } from "@/lib/validators/verify-account-schema";
 import { useSearchParams } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "@/features/auth/auth-slice";
 import { useRouter } from "next/navigation";
 
 export function VerifyAccount() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const dispatch = useDispatch();
   const email = searchParams.get("email") as string;
   const [resendCode] = useResendCodeMutation();
   const [verifyAccount, { isLoading }] = useVerifyMutation();
@@ -30,13 +33,26 @@ export function VerifyAccount() {
 
   const handleVerify = async (pin: string) => {
     try {
-      await verifyAccount({
+      toast.loading("Vérification en cours");
+      const promise = await verifyAccount({
         email_user: email,
         verication_code: parseInt(pin),
       }).unwrap();
+
+      // console.log(promise);
+      // Store credentials in Redux
+      dispatch(
+        setCredentials({
+          token: promise.access_token,
+          refreshToken: promise.refresh_token,
+          expiresIn: promise.expires_in,
+        })
+      );
+      toast.dismiss();
       router.replace("/dashboard/student");
       toast.success("Compte vérifié avec succès");
     } catch (error: any) {
+      toast.dismiss();
       const message = error?.data?.data || "Erreur lors de l'inscription";
       if (error instanceof Error) {
         toast.error(message);

@@ -39,13 +39,10 @@ export default function ResetPasswordPage() {
     try {
       await forgottenPassword({
         user_email: formData.email,
-      }).unwrap();
-      if (!error) {
-        router.push(`/verify-code?email=${encodeURIComponent(formData.email)}`);
-        toast.success("Un email a été envoyé à votre adresse");
-        return;
-      }
-      toast.error("Une erreur s'est produite");
+      });
+      router.push(`/verify-code?email=${encodeURIComponent(formData.email)}`);
+      toast.success("Un email a été envoyé à votre adresse");
+      return;
     } catch {
       toast.error("Echec! Une erreur s'est produite");
     }

@@ -65,7 +65,7 @@ export function CreateCourseForm({ onCancel, onSubmit }: CreateCourseFormProps) 
     if (onSubmit) {
       onSubmit(data);
     }
-    console.log("Form submitted successfully:", data);
+    // console.log("Form submitted successfully:", data);
   };
 
   return (

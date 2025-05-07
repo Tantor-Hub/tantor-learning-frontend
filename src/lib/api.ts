@@ -88,7 +88,7 @@ export const authApi = createApi({
         body: data,
       }),
     }),
-    verify: builder.mutation<{ valid: boolean }, VerifyRequest>({
+    verify: builder.mutation<TokenResponse, VerifyRequest>({
       query: (data) => ({
         url: "/api/users/user/verify",
         method: "PUT",
