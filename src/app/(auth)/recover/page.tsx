@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useForgotPasswordMutation } from "@/lib/api";
 import { toast } from "sonner";
+import { useForgotPasswordMutation } from "@/lib/apis/auth-api";
 
 interface FormData {
   email: string;

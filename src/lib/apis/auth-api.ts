@@ -1,5 +1,4 @@
-import { RootState } from "@/store/store";
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { baseQuery, createApi } from "./base-api";
 
 // Types for better type safety
 export interface AuthCredentials {
@@ -54,21 +53,7 @@ export interface ResetPasswordRequest {
 // Auth API slice with improved token handling
 export const authApi = createApi({
   reducerPath: "authApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "https://tantor.buhendje.com",
-    prepareHeaders: (headers, { getState }) => {
-      headers.set("Content-Type", "application/json");
-
-      // Get token from state with proper type handling
-      const state = getState() as RootState;
-      const token = state.auth?.token;
-
-      if (token) {
-        headers.set("x-connexion-tantor", `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery,
   // Tags for cache invalidation
   tagTypes: ["Auth"],
   endpoints: (builder) => ({

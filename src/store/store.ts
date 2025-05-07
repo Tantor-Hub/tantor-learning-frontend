@@ -1,3 +1,4 @@
+// File: src/store/store.ts
 import { configureStore, combineReducers, Middleware, MiddlewareAPI } from "@reduxjs/toolkit";
 import { createListenerMiddleware } from "@reduxjs/toolkit";
 import authReducer, {
@@ -7,7 +8,6 @@ import authReducer, {
   selectIsAuthenticated,
   setCredentials,
 } from "../features/auth/auth-slice";
-import { authApi } from "@/lib/api";
 
 // Create listener middleware for token refresh
 const listenerMiddleware = createListenerMiddleware();
@@ -87,10 +87,10 @@ const localStorageMiddleware: Middleware = (store: MiddlewareAPI) => (next) => (
   return result;
 };
 
-// Create the root reducer
+// Create the root reducer with all API reducers
 const rootReducer = combineReducers({
   auth: authReducer,
-  [authApi.reducerPath]: authApi.reducer,
+  ...apiReducers,
 });
 
 // Configure the store
@@ -99,7 +99,7 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
       .prepend(listenerMiddleware.middleware)
-      .concat(authApi.middleware, localStorageMiddleware),
+      .concat(...apiMiddlewares, localStorageMiddleware),
   devTools: process.env.NODE_ENV !== "production",
 });
 
@@ -136,6 +136,9 @@ export default store;
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
+// TypeScript hooks
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import { authApi } from "@/lib/apis/auth-api";
+import { apiMiddlewares, apiReducers } from "@/lib/apis/api";
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
