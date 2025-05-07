@@ -12,9 +12,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SignInFormValues, signInSchema } from "@/lib/validators/signin-schema";
 import { useDispatch } from "react-redux";
-import { useSigninMutation, useAuthWithGoogleMutation } from "@/lib/api";
 import { Label } from "@/components/ui/label";
 import { setCredentials } from "@/features/auth/auth-slice";
+import { useAuthWithGoogleMutation, useSigninMutation } from "@/lib/apis/auth-api";
 
 interface FormData {
   email: string;
@@ -71,6 +71,7 @@ export default function SignIn() {
         })
       );
       router.push("/dashboard/student");
+      toast.dismiss();
       toast.success(`Connexion réussie!`);
       toast.dismiss();
     } catch (error: any) {

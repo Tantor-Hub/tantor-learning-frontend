@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { signUpSchema, SignUpFormValues } from "@/lib/validators/signup-schema";
 import { useRouter } from "next/navigation";
-import { useSignupMutation, useAuthWithGoogleMutation } from "@/lib/api";
+import { useSignupMutation, useAuthWithGoogleMutation } from "@/lib/apis/auth-api";
 
 export function SignUpForm() {
   const router = useRouter();

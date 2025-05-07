@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { BadgeCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useResetPasswordMutation } from "@/lib/api";
+import { useResetPasswordMutation } from "@/lib/apis/auth-api";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
