@@ -21,6 +21,8 @@ export interface TokenResponse {
   status: number;
   message: string;
   data: {
+    refresh_token: string;
+    auth_token: string;
     message: string;
     user: SignupData;
   };

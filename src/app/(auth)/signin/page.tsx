@@ -1,3 +1,4 @@
+// src\app\(auth)\signin\page.tsx
 "use client";
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useSelector } from "react-redux";
@@ -61,13 +62,15 @@ export default function SignIn() {
         user_name: formData.email,
         password: formData.password,
       }).unwrap();
+      console.log(promise);
 
       // Store credentials in Redux
       dispatch(
         setCredentials({
-          token: promise.auth_token,
-          refreshToken: promise.refresh_token,
+          token: promise.data.auth_token,
+          refreshToken: promise.data.refresh_token,
           expiresIn: promise.expires_in,
+          user: promise.data.user,
         })
       );
       router.push("/dashboard/student");

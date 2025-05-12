@@ -10,6 +10,9 @@ import authReducer, {
   setCredentials,
 } from "../features/auth/auth-slice";
 
+let isRefreshing = false;
+let refreshPromise: Promise<any> | null = null;
+
 // Create listener middleware for token refresh
 const listenerMiddleware = createListenerMiddleware();
 
@@ -35,23 +38,40 @@ listenerMiddleware.startListening({
     const refreshToken = selectRefreshToken(getState() as any);
 
     if (!refreshToken) {
-      // No refresh token available, log user out
       dispatch(clearCredentials());
       return;
     }
 
+    // Don't refresh if already refreshing
+    if (isRefreshing) {
+      // Wait for the existing refresh to complete before continuing
+      try {
+        await refreshPromise;
+        // Then retry the original action
+        dispatch(action);
+      } catch {
+        // If refresh failed, we've already logged out
+      }
+      return;
+    }
+
     try {
-      // Attempt to refresh the token
-      await dispatch(
+      isRefreshing = true;
+      // Create a single promise for all concurrent requests to wait on
+      refreshPromise = dispatch(
         authApi.endpoints.refreshToken.initiate({ refresh_token: refreshToken })
       ).unwrap();
 
-      // Re-dispatch the original action to retry with new token
+      await refreshPromise;
+
+      // Re-dispatch the original action with fresh token
       dispatch(action);
     } catch (error) {
       console.error("Token refresh failed:", error);
-      // Refresh failed, log user out
       dispatch(clearCredentials());
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
     }
   },
 });
@@ -77,7 +97,6 @@ const localStorageMiddleware: Middleware = (store: MiddlewareAPI) => (next) => (
         JSON.stringify({
           token: authState.token,
           refreshToken: authState.refreshToken,
-          expiresAt: authState.expiresAt,
           isAuthenticated: authState.isAuthenticated,
           user: authState.user,
         })
