@@ -148,7 +148,7 @@ export const authSlice = createSlice({
         state.error = null;
       })
       .addMatcher(authApi.endpoints.signin.matchFulfilled, (state, { payload }) => {
-        state.token = payload.access_token;
+        state.token = payload.auth_token;
         state.refreshToken = payload.refresh_token;
         state.expiresAt = Date.now() + payload.expires_in * 1000;
         state.isAuthenticated = true;
@@ -178,7 +178,7 @@ export const authSlice = createSlice({
         state.error = null;
       })
       .addMatcher(authApi.endpoints.signup.matchFulfilled, (state, { payload }) => {
-        state.token = payload.access_token;
+        state.token = payload.auth_token;
         state.refreshToken = payload.refresh_token;
         state.expiresAt = Date.now() + payload.expires_in * 1000;
         state.isAuthenticated = true;
@@ -204,8 +204,8 @@ export const authSlice = createSlice({
       })
 
       .addMatcher(authApi.endpoints.verify.matchFulfilled, (state, { payload }) => {
-        if (payload.access_token) {
-          state.token = payload.access_token;
+        if (payload.auth_token) {
+          state.token = payload.auth_token;
           state.refreshToken = payload.refresh_token;
           state.expiresAt = Date.now() + payload.expires_in * 1000;
           state.isAuthenticated = true;
@@ -219,7 +219,7 @@ export const authSlice = createSlice({
         state.error = null;
       })
       .addMatcher(authApi.endpoints.refreshToken.matchFulfilled, (state, { payload }) => {
-        state.token = payload.access_token;
+        state.token = payload.auth_token;
         state.refreshToken = payload.refresh_token;
         state.expiresAt = Date.now() + payload.expires_in * 1000;
         state.isLoading = false;
@@ -237,7 +237,7 @@ export const authSlice = createSlice({
         state.error = null;
       })
       .addMatcher(authApi.endpoints.authWithGoogle.matchFulfilled, (state, { payload }) => {
-        state.token = payload.access_token;
+        state.token = payload.auth_token;
         state.refreshToken = payload.refresh_token;
         state.expiresAt = Date.now() + payload.expires_in * 1000;
         state.isAuthenticated = true;

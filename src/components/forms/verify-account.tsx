@@ -43,7 +43,7 @@ export function VerifyAccount() {
       // Store credentials in Redux
       dispatch(
         setCredentials({
-          token: promise.access_token,
+          token: promise.auth_token,
           refreshToken: promise.refresh_token,
           expiresIn: promise.expires_in,
         })

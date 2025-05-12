@@ -15,7 +15,7 @@ export interface SignupData {
 }
 
 export interface TokenResponse {
-  access_token: string;
+  auth_token: string;
   refresh_token: string;
   expires_in: number;
   status: number;

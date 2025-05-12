@@ -4,7 +4,7 @@ import { fetchBaseQuery, createApi } from "@reduxjs/toolkit/query/react";
 
 // Base query with authentication
 export const baseQuery = fetchBaseQuery({
-  baseUrl: "https://tantor.buhendje.com",
+  baseUrl: "https://tantor-learning.up.railway.app",
   prepareHeaders: (headers, { getState }) => {
     headers.set("Content-Type", "application/json");
 
