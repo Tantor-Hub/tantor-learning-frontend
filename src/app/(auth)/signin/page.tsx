@@ -1,3 +1,4 @@
+// src\app\(auth)\signin\page.tsx
 "use client";
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useSelector } from "react-redux";
@@ -61,13 +62,15 @@ export default function SignIn() {
         user_name: formData.email,
         password: formData.password,
       }).unwrap();
+      console.log(promise);
 
       // Store credentials in Redux
       dispatch(
         setCredentials({
-          token: promise.access_token,
-          refreshToken: promise.refresh_token,
+          token: promise.data.auth_token,
+          refreshToken: promise.data.refresh_token,
           expiresIn: promise.expires_in,
+          user: promise.data.user,
         })
       );
       router.push("/dashboard/student");
@@ -86,14 +89,14 @@ export default function SignIn() {
   const signInWithGoogle = async () => {
     try {
       toast.loading("Connexion avec Google en cours...");
-      window.location.href = "https://tantor.buhendje.com/api/users/user/authwithgoogle";
+      window.location.href = "https://tantor-learning.up.railway.app/api/users/user/authwithgoogle";
 
       // const result = await triggerGoogleAuth().unwrap();
       // console.log(result);
       // Rest remains the same
       // dispatch(
       //   setCredentials({
-      //     token: result.access_token,
+      //     token: result.auth_token,
       //     refreshToken: result.refresh_token,
       //     expiresIn: result.expires_in,
       //   })

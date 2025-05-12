@@ -58,7 +58,7 @@ export function SignUpForm() {
   const signInWithGoogle = async () => {
     try {
       toast.loading("Connexion avec Google en cours...");
-      window.location.href = "https://tantor.buhendje.com/api/users/user/authwithgoogle";
+      window.location.href = "https://tantor-learning.up.railway.app/api/users/user/authwithgoogle";
       const result = await googleSignup().unwrap();
       // console.log(result);
 
