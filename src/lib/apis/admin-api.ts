@@ -1,59 +1,58 @@
 import { baseQuery, createApi } from "./base-api";
 
-// User related types
+interface UserRole {
+  id: number;
+  role: string;
+  HasRoles: {
+    id: number;
+    UserId: number;
+    RoleId: number;
+    status: number;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
 export interface User {
-  id: string;
-  username: string;
+  id: number;
+  uuid: string;
+  fs_name: string;
+  ls_name: string;
+  nick_name: string;
   email: string;
-  fs_name?: string;
-  ls_name?: string;
-  nick_name?: string;
-  data?: any;
-  // Add other user properties as needed
+  phone: string | null;
+  last_login: string | null;
+  num_record: string;
+  avatar: string | null;
+  adresse_physique: string | null;
+  pays_residance: string | null;
+  ville_residance: string | null;
+  num_piece_identite: string | null;
+  can_update_password: number;
+  createdAt: string;
+  updatedAt: string;
+  roles: UserRole[];
 }
 
-export interface ProfileUpdateRequest {
-  // Define the fields that can be updated in a profile
-  fs_name?: string;
-  ls_name?: string;
-  email?: string;
-  avatar?: File;
-  phone?: string;
-  // Add other updatable fields
+export interface UsersListResponse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    rows: User[];
+  };
 }
 
-// Admin API
 export const AdminApi = createApi({
   reducerPath: "adminApi",
   baseQuery,
   tagTypes: ["Admin"],
   endpoints: (builder) => ({
-    getUserProfile: builder.query<User, void>({
-      query: () => "/api/users/user/profile",
-      providesTags: ["Admin"],
-    }),
-    updateUserProfile: builder.mutation<User, ProfileUpdateRequest>({
-      query: (userData) => ({
-        url: "/api/users/user/update",
-        method: "PUT",
-        body: userData,
-      }),
-      invalidatesTags: ["Admin"],
-    }),
-    getAllUsers: builder.query<User[], void>({
+    listUsers: builder.query<UsersListResponse, void>({
       query: () => "/api/users/listall",
       providesTags: ["Admin"],
-    }),
-    getUserById: builder.query<User, string>({
-      query: (userId) => `/api/users/user/${userId}`,
-      providesTags: (result, error, userId) => [{ type: "Admin", id: userId }],
     }),
   }),
 });
 
-export const {
-  useGetUserProfileQuery,
-  useUpdateUserProfileMutation,
-  useGetAllUsersQuery,
-  useGetUserByIdQuery,
-} = AdminApi;
+export const { useListUsersQuery } = AdminApi;

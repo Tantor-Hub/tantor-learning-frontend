@@ -1,8 +1,7 @@
-// src\app\(auth)\signin\page.tsx
 "use client";
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useSelector } from "react-redux";
-import { selectIsAuthenticated } from "@/features/auth/auth-slice";
+import { selectCurrentUser, selectIsAuthenticated } from "@/features/auth/auth-slice";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { GoogleIcon } from "@/components/icons/google";
@@ -27,6 +26,7 @@ export default function SignIn() {
   const [signin, { isLoading: isSignInLoading }] = useSigninMutation();
   const [triggerGoogleAuth, { isLoading: isGoogleAuthLoading }] = useAuthWithGoogleMutation();
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const user = useSelector(selectCurrentUser);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
@@ -54,16 +54,17 @@ export default function SignIn() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const loadingToast = toast.loading("Connexion en cours...");
+    setIsLoading(true);
+
     try {
-      toast.loading("Connexion en cours...");
-      setIsLoading(true);
       // Call the signin API
       const promise = await signin({
         user_name: formData.email,
         password: formData.password,
       }).unwrap();
-      console.log(promise);
 
+      console.log(promise);
       // Store credentials in Redux
       dispatch(
         setCredentials({
@@ -73,15 +74,21 @@ export default function SignIn() {
           user: promise.data.user,
         })
       );
-      toast.success(`Connexion réussie!`);
-      // router.push("/dashboard/student");
-      toast.dismiss();
-      toast.dismiss();
+      router.push("/dashboard/admin");
+      toast.dismiss(loadingToast);
+      // router.push(
+      //   `${!(promise.data.user.roles[0].role === "Admin") ? "/dashboard/admin" : "/dashboard/admin"}`
+      // );
+      toast.success("Connexion réussie!", {
+        description: "Vous êtes connecté, vous allez être redirigé vers votre tableau de bord",
+      });
     } catch (error: any) {
-      toast.dismiss();
-      toast.error(error.data?.data || "Échec de la connexion. Veuillez vérifier vos identifiants.");
+      toast.dismiss(loadingToast);
+      const errorMessage =
+        error.data?.data ||
+        "Échec de la connexion. Veuillez vérifier vos identifiants. Soit votre mot de passe ou email est invalide";
+      toast.error("Echec de la connexion", { description: errorMessage });
     } finally {
-      //
       setIsLoading(false);
     }
   };
@@ -111,7 +118,7 @@ export default function SignIn() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/dashboard/student");
+      router.push("/dashboard/admin");
     }
 
     // Check for stored refresh token

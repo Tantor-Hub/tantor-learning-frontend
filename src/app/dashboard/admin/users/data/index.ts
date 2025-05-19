@@ -1,38 +1,6 @@
 import { UserData } from "../types";
 
 export const userData: UserData = {
-  allUsers: Array(5).fill({
-    id: "user1",
-    nom: "Birusha",
-    email: "birusha@example.com",
-    role: "Étudiant",
-    status: "Archivé",
-    lastUpdate: "il y a 3 mois",
-  }),
-  students: Array(5).fill({
-    id: "student1",
-    nom: "Semjo",
-    email: "semjomagene@example.com",
-    role: "Étudiant",
-    status: "Archivé",
-    lastUpdate: "il y a 1 mois",
-  }),
-  instructors: Array(5).fill({
-    id: "formateur1",
-    nom: "Jéthron",
-    email: "jethron@example.com",
-    role: "Formateur",
-    status: "Archivé",
-    lastUpdate: "il y a 2 mois",
-  }),
-  secretaries: Array(5).fill({
-    id: "secretaire1",
-    nom: "Malo",
-    email: "Malo@example.com",
-    role: "Secrétaire",
-    status: "Archivé",
-    lastUpdate: "il y a 10 mois",
-  }),
   tableInfo: {
     allUsers: {
       title: "Tous les utilisateurs",

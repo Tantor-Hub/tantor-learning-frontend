@@ -1,46 +1,39 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Download, Filter, Plus } from "lucide-react";
-import Image from "next/image";
+"use client";
+import { Users } from "lucide-react";
 import NewUser from "./components/new-user";
 import TableUser from "./components/table-users";
 import { userData } from "./data";
 
-const UserManagement = () => {
+export default function Page() {
   return (
-    <section>
-      <div className="flex flex-col md:flex-row gap-2.5 justify-between md:items-end mb-5">
-        <h1>Gérez tous les cours disponibles sur la plateforme</h1>
+    <div className="">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Gestion des utilisateurs</h1>
+
         <NewUser />
       </div>
-      <div className="flex flex-col sm:flex-row gap-5 justify-between md:gap-10 mb-5">
-        <div className="flex items-center border px-2.5 rounded-md bg-white md:min-w-80">
-          <Image src="/icons/search.svg" height={20} width={20} alt="search icon" />
+
+      {/* <div className="flex justify-between items-center mb-6">
+        <div className="relative w-96">
           <Input
-            type="search"
-            className="text-[#ACACAC] border-none focus-visible:outline-none focus-visible:ring-0"
-            placeholder="Rechercher ..."
+            placeholder="Rechercher un utilisateur..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-5">
-          <Button
-            variant="outline"
-            className="flex gap-2 items-center px-2.5 py-1 min-w-28 rounded-md bg-white border-[#0466C8] text-[#0466C8]"
-          >
-            <Download className="size-5" />
-            <span>Export</span>
+        <div className="flex gap-3">
+          <Button variant="outline">
+            <Download className="mr-2 h-4 w-4" />
+            Export
           </Button>
-          <Button
-            variant="outline"
-            className="flex gap-2 items-center px-2.5 py-1 min-w-28 rounded-md bg-white border-[#0466C8] text-[#0466C8]"
-          >
-            <Filter className="size-5" />
-            <span>Filtres</span>
+          <Button variant="outline">
+            <Filter className="mr-2 h-4 w-4" />
+            Filtres
           </Button>
         </div>
-      </div>
+      </div> */}
+
       <TableUser userData={userData} />
-    </section>
+    </div>
   );
-};
-export default UserManagement;
+}

@@ -1,4 +1,3 @@
-// File: src/store/store.ts
 import { authApi } from "@/lib/apis/auth-api";
 import { configureStore, combineReducers, Middleware, MiddlewareAPI } from "@reduxjs/toolkit";
 import { createListenerMiddleware } from "@reduxjs/toolkit";
