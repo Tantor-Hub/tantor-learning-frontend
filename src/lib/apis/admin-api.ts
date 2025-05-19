@@ -43,6 +43,21 @@ export interface UsersListResponse {
   };
 }
 
+export interface AddUserRequest {
+  fs_name: string;
+  ls_name: string;
+  password: string;
+  nick_name: string; // ie. username CFR. to the mockup on figma
+  email: string;
+  id_role: number;
+  phone: string;
+}
+
+export interface AddUserResponse {
+  status: number;
+  message: string;
+}
+
 export const AdminApi = createApi({
   reducerPath: "adminApi",
   baseQuery,
@@ -52,7 +67,15 @@ export const AdminApi = createApi({
       query: () => "/api/users/listall",
       providesTags: ["Admin"],
     }),
+    add: builder.mutation<AddUserResponse, AddUserRequest>({
+      query: (userData) => ({
+        url: "/api/users/user/add",
+        method: "POST",
+        body: userData,
+      }),
+      invalidatesTags: ["Admin"],
+    }),
   }),
 });
 
-export const { useListUsersQuery } = AdminApi;
+export const { useListUsersQuery, useAddMutation } = AdminApi;
