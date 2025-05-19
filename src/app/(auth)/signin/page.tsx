@@ -73,9 +73,9 @@ export default function SignIn() {
           user: promise.data.user,
         })
       );
-      router.push("/dashboard/student");
-      toast.dismiss();
       toast.success(`Connexion réussie!`);
+      // router.push("/dashboard/student");
+      toast.dismiss();
       toast.dismiss();
     } catch (error: any) {
       toast.dismiss();

@@ -4,6 +4,7 @@ import { usersApi } from "./users-api";
 import { formationsApi } from "./formations-api";
 import { categoriesApi } from "./categories-api";
 import { thematicsApi } from "./thematics-api";
+import { contactFormAPI } from "./contact-form";
 
 // Export all API slices for easy access
 export { authApi, usersApi, formationsApi, categoriesApi, thematicsApi };
@@ -15,6 +16,7 @@ export const apiReducers = {
   [formationsApi.reducerPath]: formationsApi.reducer,
   [categoriesApi.reducerPath]: categoriesApi.reducer,
   [thematicsApi.reducerPath]: thematicsApi.reducer,
+  [contactFormAPI.reducerPath]: contactFormAPI.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -24,4 +26,5 @@ export const apiMiddlewares = [
   formationsApi.middleware,
   categoriesApi.middleware,
   thematicsApi.middleware,
+  contactFormAPI.middleware,
 ];
