@@ -1,9 +1,8 @@
 "use client";
-
 import { Calendar } from "@/components/ui/calendar";
-import EventViewer from "../../student/planning/components/event-viewer";
+import { EventViewer } from "./event-viewer";
 import { useState } from "react";
-import NewEvent from "../../instructor/planning/components/new-event";
+import { NewEvent } from "./new-event";
 
 const today = new Date();
 const events = [
@@ -15,7 +14,7 @@ const events = [
   },
 ];
 
-export default function InstructorCalendar() {
+export default function Page() {
   const [date, setDate] = useState<Date | undefined>(new Date());
 
   return (
