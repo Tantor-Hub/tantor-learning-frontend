@@ -22,13 +22,45 @@ export interface ProfileUpdateRequest {
   // Add other updatable fields
 }
 
+export interface GetUserProfileResponse {
+  status: number;
+  message: string;
+  data: {
+    id: number;
+    fs_name: string;
+    ls_name: string;
+    nick_name: string;
+    email: string;
+    phone?: string;
+    avatar?: string | null;
+    adresse_physique?: string | null;
+    pays_residance?: string | null;
+    ville_residance?: string | null;
+    num_piece_identite?: string | null;
+    createdAt: string;
+    roles: {
+      id: number;
+      role: string;
+      description: string;
+      HasRoles: {
+        id: number;
+        UserId: number;
+        RoleId: number;
+        status: number;
+        createdAt: string;
+        updatedAt: string;
+      };
+    }[];
+  };
+}
+
 // Users API
 export const usersApi = createApi({
   reducerPath: "usersApi",
   baseQuery,
   tagTypes: ["User"],
   endpoints: (builder) => ({
-    getUserProfile: builder.query<User, void>({
+    getUserProfile: builder.query<GetUserProfileResponse, void>({
       query: () => "/api/users/user/profile",
       providesTags: ["User"],
     }),

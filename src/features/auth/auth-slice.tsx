@@ -282,15 +282,15 @@ export const authSlice = createSlice({
       })
 
       // User API matchers (for profile updates)
-      .addMatcher(usersApi.endpoints.getUserProfile.matchFulfilled, (state, { payload }) => {
-        if (payload) {
-          state.user = {
-            ...state.user,
-            ...payload,
-          };
-          persistAuthState(state);
-        }
-      })
+      // .addMatcher(usersApi.endpoints.getUserProfile.matchFulfilled, (state, { payload }) => {
+      //   if (payload) {
+      //     state.user = {
+      //       ...state.user,
+      //       ...payload,
+      //     };
+      //     persistAuthState(state);
+      //   }
+      // })
       .addMatcher(usersApi.endpoints.updateUserProfile.matchFulfilled, (state, { payload }) => {
         if (payload) {
           state.user = {

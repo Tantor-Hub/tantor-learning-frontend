@@ -44,7 +44,7 @@ export default function RootLayout({
               </div>
               <Bell className="mr-4" />
             </header>
-            <div className="p-3.5 h-full w-full bg-[#fafafa]">{children}</div>
+            <div className="p-3.5 h-full w-full bg-background">{children}</div>
           </SidebarInset>
         </SidebarProvider>
       </div>

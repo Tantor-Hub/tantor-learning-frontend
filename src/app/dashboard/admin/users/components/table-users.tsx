@@ -56,7 +56,7 @@ export default function TableUser({ userData }: { userData: UserData }) {
   return (
     <Tabs defaultValue="allUsers">
       <div className="overflow-x-auto">
-        <TabsList className="mt-10 mb-8 px-2.5 py-6 bg-white font-semibold">
+        <TabsList className="mt-10 mb-8 px-2.5 py-6 bg-white border font-semibold">
           <TabsTrigger value="allUsers" className="p-5 px-2 md:px-5">
             Tous ({allUsers.length})
           </TabsTrigger>
@@ -74,7 +74,7 @@ export default function TableUser({ userData }: { userData: UserData }) {
 
       <TabsContent
         value="allUsers"
-        className="bg-white flex flex-col rounded-md gap-10 p-5 md:p-10"
+        className="bg-white border flex flex-col rounded-md gap-10 p-5 md:p-10"
       >
         <div className="flex flex-col gap-2.5">
           <h3 className="text-[#0466C8] text-xl font-semibold">
@@ -117,7 +117,7 @@ export default function TableUser({ userData }: { userData: UserData }) {
 
       <TabsContent
         value="students"
-        className="bg-white flex flex-col rounded-md gap-10 p-5 md:p-10"
+        className="bg-white border flex flex-col rounded-md gap-10 p-5 md:p-10"
       >
         <div className="flex flex-col gap-2.5">
           <h3 className="text-[#0466C8] text-xl font-semibold">
@@ -160,7 +160,7 @@ export default function TableUser({ userData }: { userData: UserData }) {
 
       <TabsContent
         value="instructors"
-        className="bg-white flex flex-col rounded-md gap-10 p-5 md:p-10"
+        className="bg-white border flex flex-col rounded-md gap-10 p-5 md:p-10"
       >
         <div className="flex flex-col gap-2.5">
           <h3 className="text-[#0466C8] text-xl font-semibold">
@@ -203,7 +203,7 @@ export default function TableUser({ userData }: { userData: UserData }) {
 
       <TabsContent
         value="secretaries"
-        className="bg-white flex flex-col rounded-md gap-10 p-5 md:p-10"
+        className="bg-white border flex flex-col rounded-md gap-10 p-5 md:p-10"
       >
         <div className="flex flex-col gap-2.5">
           <h3 className="text-[#0466C8] text-xl font-semibold">
