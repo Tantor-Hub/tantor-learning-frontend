@@ -20,7 +20,15 @@ export const baseQuery = fetchBaseQuery({
 });
 
 // Define common tag types for cache invalidation
-export const commonTagTypes = ["Auth", "User", "Formation", "Category", "Admin", "Event"];
+export const commonTagTypes = [
+  "Auth",
+  "User",
+  "Formation",
+  "Category",
+  "Admin",
+  "Event",
+  "Message",
+];
 
 // Re-export for convenience
 export { createApi };

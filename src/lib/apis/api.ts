@@ -7,6 +7,7 @@ import { thematicsApi } from "./thematics-api";
 import { contactFormAPI } from "./contact-form";
 import { AdminApi } from "./admin-api";
 import { EventApi } from "./planning";
+import { MessageApi } from "./messages-api";
 
 // Export all API slices for easy access
 export { authApi, usersApi, formationsApi, categoriesApi, thematicsApi };
@@ -21,6 +22,7 @@ export const apiReducers = {
   [contactFormAPI.reducerPath]: contactFormAPI.reducer,
   [AdminApi.reducerPath]: AdminApi.reducer,
   [EventApi.reducerPath]: EventApi.reducer,
+  [MessageApi.reducerPath]: EventApi.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -33,4 +35,5 @@ export const apiMiddlewares = [
   contactFormAPI.middleware,
   AdminApi.middleware,
   EventApi.middleware,
+  MessageApi.middleware,
 ];
