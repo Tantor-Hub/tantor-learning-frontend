@@ -10,18 +10,31 @@ import { PieVisual } from "./components/pie-chart";
 // import StatCard from "./components/student-stat-card";
 import CourseTab from "./courses/components/courses-tab";
 import { ongoingCourse, studentStats } from "./data";
-import { BookOpen, Camera, ClipboardList, ListCheck, Percent, UserPlus } from "lucide-react";
+import {
+  BookOpen,
+  Camera,
+  ClipboardList,
+  ListCheck,
+  Loader2,
+  Percent,
+  UserPlus,
+} from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loading } from "@/components/shared/loading";
 
 const StudentDashboard = () => {
   const studentsStatus = useStudentStatusQuery();
   const nextLiveSession = useNextLiveSessionQuery();
   const average = useAverageScoreQuery();
 
-  if (studentsStatus.isLoading) {
-    console.log("Loading...");
-    return null;
+  // Check if any of the queries are loading
+  const isLoading = studentsStatus.isLoading || nextLiveSession.isLoading || average.isLoading;
+
+  // Show loader when data is loading
+  if (isLoading) {
+    return <Loading />;
   }
+
   if (studentsStatus.data) {
     console.log(studentsStatus.data);
   }
@@ -47,7 +60,7 @@ const StudentDashboard = () => {
             </span>
           </CardContent>
           <CardFooter className="px-4">
-            <p className="text-[10px] text-[#5C677D]">aujourd’hui</p>
+            <p className="text-[10px] text-[#5C677D]">aujourd'hui</p>
           </CardFooter>
         </Card>
 
