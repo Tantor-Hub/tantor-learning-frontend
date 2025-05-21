@@ -1,4 +1,3 @@
-// File: src/lib/apis/api.ts
 import { authApi } from "./auth-api";
 import { usersApi } from "./users-api";
 import { formationsApi } from "./formations-api";
@@ -7,10 +6,22 @@ import { thematicsApi } from "./thematics-api";
 import { contactFormAPI } from "./contact-form";
 import { AdminApi } from "./admin-api";
 import { EventApi } from "./planning";
-import { MessageApi } from "./messages-api";
+import { coursesApi } from "./courses-api";
+import { chatApi } from "./chat-api";
 
 // Export all API slices for easy access
-export { authApi, usersApi, formationsApi, categoriesApi, thematicsApi };
+export {
+  authApi,
+  usersApi,
+  formationsApi,
+  categoriesApi,
+  thematicsApi,
+  contactFormAPI,
+  AdminApi,
+  EventApi,
+  chatApi,
+  coursesApi,
+};
 
 // Combine all reducers for easy store setup
 export const apiReducers = {
@@ -22,7 +33,8 @@ export const apiReducers = {
   [contactFormAPI.reducerPath]: contactFormAPI.reducer,
   [AdminApi.reducerPath]: AdminApi.reducer,
   [EventApi.reducerPath]: EventApi.reducer,
-  [MessageApi.reducerPath]: EventApi.reducer,
+  [coursesApi.reducerPath]: coursesApi.reducer,
+  [chatApi.reducerPath]: chatApi.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -35,5 +47,6 @@ export const apiMiddlewares = [
   contactFormAPI.middleware,
   AdminApi.middleware,
   EventApi.middleware,
-  MessageApi.middleware,
+  chatApi.middleware,
+  coursesApi.middleware,
 ];

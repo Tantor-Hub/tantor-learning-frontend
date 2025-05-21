@@ -4,9 +4,9 @@ import { MessageCard } from "./message-card";
 import Image from "next/image";
 import Link from "next/link";
 import { NewMessageAlert } from "./new-message";
-import { useListMessageQuery, useListMessageByCategoryQuery } from "@/lib/apis/messages-api";
+import { useListChatQuery, useListChatByCategoryQuery } from "@/lib/apis/chat-api";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Message } from "@/lib/apis/messages-api";
+import { Message } from "@/lib/apis/chat-api";
 
 export function TabsView() {
   // Ajout de isSuccess pour chaque requête
@@ -14,37 +14,37 @@ export function TabsView() {
     data: allMessages,
     isLoading: isLoadingAll,
     isSuccess: isSuccessAll,
-  } = useListMessageQuery();
+  } = useListChatQuery();
 
   const {
     data: archivedMessages,
     isLoading: isLoadingArchived,
     isSuccess: isSuccessArchived,
-  } = useListMessageByCategoryQuery({ group: "archived" });
+  } = useListChatByCategoryQuery({ group: "archived" });
 
   const {
     data: deletedMessages,
     isLoading: isLoadingDeleted,
     isSuccess: isSuccessDeleted,
-  } = useListMessageByCategoryQuery({ group: "deleted" });
+  } = useListChatByCategoryQuery({ group: "deleted" });
 
   const {
     data: newMessages,
     isLoading: isLoadingNew,
     isSuccess: isSuccessNew,
-  } = useListMessageByCategoryQuery({ group: "new" });
+  } = useListChatByCategoryQuery({ group: "new" });
 
   const {
     data: sentMessages,
     isLoading: isLoadingSent,
     isSuccess: isSuccessSent,
-  } = useListMessageByCategoryQuery({ group: "sent" });
+  } = useListChatByCategoryQuery({ group: "sent" });
 
   const {
     data: receivedMessages,
     isLoading: isLoadingReceived,
     isSuccess: isSuccessReceived,
-  } = useListMessageByCategoryQuery({ group: "received" });
+  } = useListChatByCategoryQuery({ group: "received" });
 
   const EmptyState = () => (
     <div className="flex flex-col items-center justify-center py-12 space-y-4">

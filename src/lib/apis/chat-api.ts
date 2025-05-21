@@ -1,12 +1,12 @@
 import { baseQuery, createApi } from "./base-api";
 
-export interface CreateMessageRequest {
+interface CreateMessageRequest {
   subject: string;
   content: string;
   piece_jointe?: File;
 }
 
-export interface MessageRequest {
+interface MessageRequest {
   id?: string;
   group?: string;
 }
@@ -19,59 +19,62 @@ export interface Message {
   // Add other message properties as needed
 }
 
-export const MessageApi = createApi({
-  reducerPath: "messageApi",
+// Chat API
+export const chatApi = createApi({
+  reducerPath: "chatApi",
   baseQuery,
-  tagTypes: ["Message"],
+  tagTypes: ["Chat"],
   endpoints: (builder) => ({
-    listMessage: builder.query<Message[], void>({
+    listChat: builder.query<Message[], void>({
       query: () => "/api/cms/messages/list",
-      providesTags: ["Message"],
+      providesTags: ["Chat"],
     }),
-    createMessage: builder.mutation<void, CreateMessageRequest>({
+    createChat: builder.mutation<void, CreateMessageRequest>({
       query: (userData) => ({
         url: "/api/cms/messages/message/send",
         method: "POST",
         body: userData,
       }),
-      invalidatesTags: ["Message"],
+      invalidatesTags: ["Chat"],
     }),
-    deleteMessage: builder.mutation<void, { id: string }>({
+
+    deleteChat: builder.mutation<void, { id: string }>({
       query: ({ id }) => ({
         url: `/api/cms/messages/message/delete/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Message"],
+      invalidatesTags: ["Chat"],
     }),
-    archivedMessage: builder.mutation<void, { id: string }>({
+
+    archivedChat: builder.mutation<void, { id: string }>({
       query: ({ id }) => ({
         url: `/api/cms/messages/message/archive/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Message"],
+      invalidatesTags: ["Chat"],
     }),
-    listMessageByCategory: builder.query<Message[], { group: string }>({
+
+    listChatByCategory: builder.query<Message[], { group: string }>({
       query: ({ group }) => ({
         url: `/api/cms/messages/list/${group}`,
         method: "GET",
       }),
-      providesTags: ["Message"],
+      providesTags: ["Chat"],
     }),
-    messageById: builder.query<Message, { id: string }>({
+    chatById: builder.query<Message, { id: string }>({
       query: ({ id }) => ({
         url: `/api/cms/messages/message/${id}`,
         method: "GET",
       }),
-      providesTags: ["Message"],
+      providesTags: ["Chat"],
     }),
   }),
 });
 
 export const {
-  useListMessageQuery,
-  useCreateMessageMutation,
-  useDeleteMessageMutation,
-  useArchivedMessageMutation,
-  useListMessageByCategoryQuery,
-  useMessageByIdQuery,
-} = MessageApi;
+  useDeleteChatMutation,
+  useCreateChatMutation,
+  useArchivedChatMutation,
+  useListChatByCategoryQuery,
+  useListChatQuery,
+} = chatApi;
