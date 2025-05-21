@@ -32,7 +32,7 @@ const initialState: AuthState = {
   error: null,
 };
 
-// Helper to persist auth state to localStorage
+// Helper to persist auth state to localStorage - now using stringified dates and consistent property names
 const persistAuthState = (state: AuthState) => {
   if (typeof window !== "undefined") {
     localStorage.setItem(
@@ -54,7 +54,14 @@ const loadAuthState = (): Partial<AuthState> => {
     const savedState = localStorage.getItem("authState");
     if (savedState) {
       try {
-        return JSON.parse(savedState);
+        const parsedState = JSON.parse(savedState);
+        return {
+          token: parsedState.token,
+          refreshToken: parsedState.refreshToken,
+          expiresAt: parsedState.expiresAt,
+          isAuthenticated: parsedState.token && parsedState.refreshToken ? true : false,
+          user: parsedState.user,
+        };
       } catch (e) {
         console.error("Failed to parse auth state from localStorage", e);
       }
@@ -63,9 +70,15 @@ const loadAuthState = (): Partial<AuthState> => {
   return {};
 };
 
+// Get initial state with merged localStorage data if available
+const getInitialState = (): AuthState => {
+  const persistedState = loadAuthState();
+  return { ...initialState, ...persistedState };
+};
+
 export const authSlice = createSlice({
   name: "auth",
-  initialState: { ...initialState, ...loadAuthState() },
+  initialState: getInitialState(),
   reducers: {
     setCredentials: (
       state,
@@ -137,6 +150,9 @@ export const authSlice = createSlice({
       if (expiresAt) state.expiresAt = expiresAt;
       if (isAuthenticated !== undefined) state.isAuthenticated = isAuthenticated;
       if (user) state.user = user;
+
+      // Persist the initialized session
+      persistAuthState(state);
     },
   },
   // Handle auth API responses automatically
@@ -282,15 +298,6 @@ export const authSlice = createSlice({
       })
 
       // User API matchers (for profile updates)
-      // .addMatcher(usersApi.endpoints.getUserProfile.matchFulfilled, (state, { payload }) => {
-      //   if (payload) {
-      //     state.user = {
-      //       ...state.user,
-      //       ...payload,
-      //     };
-      //     persistAuthState(state);
-      //   }
-      // })
       .addMatcher(usersApi.endpoints.updateUserProfile.matchFulfilled, (state, { payload }) => {
         if (payload) {
           state.user = {

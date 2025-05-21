@@ -96,6 +96,7 @@ const localStorageMiddleware: Middleware = (store: MiddlewareAPI) => (next) => (
         JSON.stringify({
           token: authState.token,
           refreshToken: authState.refreshToken,
+          expiresAt: authState.expiresAt,
           isAuthenticated: authState.isAuthenticated,
           user: authState.user,
         })
@@ -128,18 +129,19 @@ if (typeof window !== "undefined") {
   if (savedAuthState) {
     try {
       const parsedState = JSON.parse(savedAuthState);
-      // Only restore if the token is still valid
-      if (parsedState.expiresAt && parsedState.expiresAt > Date.now()) {
+      // Restore state if there's a token, even if it might be expired
+      // The middleware will handle token refresh if needed
+      if (parsedState.token && parsedState.refreshToken) {
         store.dispatch(
           setCredentials({
             token: parsedState.token,
             refreshToken: parsedState.refreshToken,
-            expiresIn: (parsedState.expiresAt - Date.now()) / 1000,
+            expiresIn: parsedState.expiresAt ? (parsedState.expiresAt - Date.now()) / 1000 : 3600, // Default to 1 hour if expiresAt is missing
             user: parsedState.user,
           })
         );
       } else {
-        // Clear expired state
+        // Clear invalid state
         localStorage.removeItem("authState");
       }
     } catch (e) {
