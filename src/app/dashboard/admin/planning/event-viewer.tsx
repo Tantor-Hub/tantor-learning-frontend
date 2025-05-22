@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
+
 export interface EventProps {
   title: string;
   type: "Cours" | "Examen" | "Evènement";

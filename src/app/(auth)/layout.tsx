@@ -1,12 +1,36 @@
+"use client";
+import { useEffect } from "react";
 import { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { selectCurrentUser, selectIsAuthenticated } from "@/features/auth/auth-slice";
 
 export default function AuthLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const router = useRouter();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const currentUser = useSelector(selectCurrentUser);
+  // console.log("current user", currentUser);
+  useEffect(() => {
+    // console.log("current user", currentUser?.roles);
+    /*
+    if (isAuthenticated) {
+      router.push("/dashboard/admin");
+    }
+
+    // Check for stored refresh token
+    const storedToken = localStorage.getItem("refreshToken");
+    if (storedToken && !isAuthenticated) {
+      // You could dispatch a token refresh action here
+    }
+      */
+  }, [isAuthenticated, router]);
+
   return (
     <>
       <div className="grid min-h-svh lg:grid-cols-2">

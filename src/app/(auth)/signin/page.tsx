@@ -64,7 +64,7 @@ export default function SignIn() {
         password: formData.password,
       }).unwrap();
 
-      console.log(promise);
+      // console.log(promise);
       // Store credentials in Redux
       dispatch(
         setCredentials({
@@ -116,17 +116,17 @@ export default function SignIn() {
     }
   };
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/dashboard/admin");
-    }
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     router.push("/dashboard/admin");
+  //   }
 
-    // Check for stored refresh token
-    const storedToken = localStorage.getItem("refreshToken");
-    if (storedToken && !isAuthenticated) {
-      // You could dispatch a token refresh action here
-    }
-  }, [isAuthenticated, router]);
+  //   // Check for stored refresh token
+  //   const storedToken = localStorage.getItem("refreshToken");
+  //   if (storedToken && !isAuthenticated) {
+  //     // You could dispatch a token refresh action here
+  //   }
+  // }, [isAuthenticated, router]);
 
   return (
     <form className="flex flex-col gap-6" onSubmit={handleSubmit}>

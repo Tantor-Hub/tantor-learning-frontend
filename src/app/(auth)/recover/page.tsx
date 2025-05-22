@@ -14,7 +14,7 @@ interface FormData {
 }
 
 export default function ResetPasswordPage() {
-  const [forgottenPassword, { isLoading, error }] = useForgotPasswordMutation();
+  const [forgottenPassword, { isLoading }] = useForgotPasswordMutation();
   const router = useRouter();
 
   const [formData, setFormData] = useState<FormData>({
@@ -36,15 +36,28 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const loadingToast = toast.loading("Envoi en cours...", {
+      description: "Nous sommes en train d'envoyer un code de restauration à votre adresse email",
+    });
+
     try {
       await forgottenPassword({
         user_email: formData.email,
+      }); // .unrap() to avoid see if the mail if bad
+      toast.dismiss(loadingToast);
+      router.push(`/verify-code?email=${encodeURIComponent(formData.email)}`);
+      toast.success(`Un email a été envoyé à ${formData.email}`, {
+        description: "Veuillez vérifier votre boîte mail pour le message envoyé",
+        duration: 10000, // 10 secondes au lieu de 4 par défaut
       });
       router.push(`/verify-code?email=${encodeURIComponent(formData.email)}`);
-      toast.success("Un email a été envoyé à votre adresse");
-      return;
-    } catch {
-      toast.error("Echec! Une erreur s'est produite");
+    } catch (error: any) {
+      toast.dismiss(loadingToast);
+      toast.error(error?.name || "Echec! Une erreur s'est produite", {
+        description: error?.description || "Erreur produite lors de l'envoi du code",
+        duration: 5000,
+      });
     }
   };
 

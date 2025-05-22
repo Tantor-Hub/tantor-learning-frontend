@@ -57,6 +57,19 @@ export interface ResetPasswordRequest {
   repet_new_password: string;
 }
 
+// verifyBeforeResetPassword
+
+interface VerifyBeforeResetPasswordRequest {
+  email_user: string;
+  verication_code: number;
+}
+
+interface VerifyBeforeResetPasswordResponse {
+  status: number;
+  message: string;
+  data: string; //  "Le code de vérification est invalide";
+}
+
 // Auth API slice with improved token handling
 export const authApi = createApi({
   reducerPath: "authApi",
@@ -109,6 +122,16 @@ export const authApi = createApi({
         body: data,
       }),
     }),
+    verifyBeforeResetPassword: builder.mutation<
+      VerifyBeforeResetPasswordResponse,
+      VerifyBeforeResetPasswordRequest
+    >({
+      query: (data) => ({
+        url: "/api/users/user/verify-before-reset-password",
+        method: "PUT",
+        body: data,
+      }),
+    }),
     authWithGoogle: builder.mutation<TokenResponse, void>({
       query: () => ({
         url: "/api/users/user/authwithgoogle",
@@ -142,4 +165,5 @@ export const {
   useAuthWithGoogleMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
+  useVerifyBeforeResetPasswordMutation,
 } = authApi;

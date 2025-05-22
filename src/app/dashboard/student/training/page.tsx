@@ -21,7 +21,7 @@ const dcgData = {
 
 const dcgArray = Array.from({ length: 8 }, () => ({ ...dcgData }));
 
-export default function FormationsPage() {
+export default function Page() {
   const router = useRouter();
 
   return (

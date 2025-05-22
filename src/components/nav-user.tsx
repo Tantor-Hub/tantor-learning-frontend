@@ -57,7 +57,7 @@ export function NavUser() {
   // Vérifier et mettre à jour les données utilisateur quand elles sont chargées
   useEffect(() => {
     if (data) {
-      console.log("Structure complète des données:", JSON.stringify(data));
+      // console.log("Structure complète des données:", JSON.stringify(data));
       setUserData(data.data);
     }
   }, [data]);
@@ -66,7 +66,7 @@ export function NavUser() {
     // return null;
     // if (isError) return null;
     // if (!userData) return null;
-    console.log(userData);
+    // console.log(userData);
   }
 
   return (

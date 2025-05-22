@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 
-// Données fictives pour les sessions du DCG
 const dcgSessions = [
   {
     month: "Septembre 2024",
@@ -81,7 +80,7 @@ const dcgSessions = [
   },
 ];
 
-export default function DCGSessionsPage() {
+export default function Page() {
   return (
     <div className="container mx-auto px-4 py-8">
       <header className="mb-8">

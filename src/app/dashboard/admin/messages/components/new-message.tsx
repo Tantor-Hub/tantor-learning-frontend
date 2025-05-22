@@ -53,13 +53,13 @@ export function NewMessageAlert() {
   });
 
   const onSubmit = async (values: z.infer<typeof messageFormSchema>) => {
-    console.log("Form data:", values);
+    // console.log("Form data:", values);
     try {
       const promise = await createMessage(values).unwrap();
       toast.success("Message envoye", {
         description: "Message envoye avec success",
       });
-      console.log(promise);
+      // console.log(promise);
       form.reset();
     } catch (e: any) {
       toast.error(`${e.name}`, {

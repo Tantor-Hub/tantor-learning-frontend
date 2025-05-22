@@ -36,7 +36,7 @@ const StudentDashboard = () => {
   }
 
   if (studentsStatus.data) {
-    console.log(studentsStatus.data);
+    // console.log(studentsStatus.data);
   }
 
   return (

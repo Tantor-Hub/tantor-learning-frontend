@@ -42,7 +42,7 @@ export default function ContactUs() {
         subject: values.subject,
         content: values.message,
       }).unwrap();
-      console.log(response);
+      // console.log(response);
       if (response.status === 201) {
         toast.success("Message envoyé", {
           description: "Nous vous répondrons au plus vite",

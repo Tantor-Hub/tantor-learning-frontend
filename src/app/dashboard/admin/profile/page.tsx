@@ -43,7 +43,7 @@ export default function Page() {
   // Vérifier et mettre à jour les données utilisateur quand elles sont chargées
   useEffect(() => {
     if (data) {
-      console.log("Structure complète des données:", JSON.stringify(data));
+      // console.log("Structure complète des données:", JSON.stringify(data));
       setUserData(data.data);
     }
   }, [data]);

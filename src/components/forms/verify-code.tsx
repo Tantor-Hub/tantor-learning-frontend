@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useResendCodeMutation } from "@/lib/apis/auth-api";
+import { useResendCodeMutation, useVerifyBeforeResetPasswordMutation } from "@/lib/apis/auth-api";
 import { toast } from "sonner";
 import { verifyAccountSchema, verifyAccountValues } from "@/lib/validators/verify-account-schema";
 import { useSearchParams } from "next/navigation";
@@ -17,9 +17,8 @@ export function VerifyCode() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") as string;
-
+  const [verifyBeforeResetPassword, { isLoading }] = useVerifyBeforeResetPasswordMutation();
   const [resendCode, { error }] = useResendCodeMutation();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<verifyAccountValues>({
     resolver: zodResolver(verifyAccountSchema),
     mode: "onChange",
@@ -30,27 +29,79 @@ export function VerifyCode() {
 
   const isFormValid = form.formState.isValid;
   const handleVerify = async (pin: string) => {
-    setIsSubmitting(true);
     try {
-      if (pin && email) {
+      const loadingToast = toast.loading("Vérification en cours...", {
+        description: "Nous validons votre code de vérification",
+      });
+
+      const response = await verifyBeforeResetPassword({
+        email_user: email,
+        verication_code: parseInt(pin),
+      }).unwrap();
+
+      toast.dismiss(loadingToast);
+
+      if (response.status === 200) {
+        toast.success("Code validé avec succès", {
+          description: "Redirection vers la page de réinitialisation...",
+          duration: 3000,
+        });
         router.push(`/reset?email=${encodeURIComponent(email)}&pin=${pin}`);
+        return;
       }
-      return null;
-    } catch {
-      toast.error("Erreur lors de la vérification du compte");
-    } finally {
-      setIsSubmitting(false);
+
+      // Cas où le statut n'est pas 200
+      toast.error("Erreur inattendue", {
+        description: "La réponse du serveur est invalide",
+        duration: 5000,
+      });
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Code invalide", {
+        description: "Le code saisi est incorrect ou a expiré",
+        duration: 5000,
+      });
     }
   };
 
   const handleResend = async () => {
     try {
+      const loadingToast = toast.loading("Envoi en cours...", {
+        description: "Nous préparons un nouveau code de vérification",
+      });
+
       await resendCode({ user_email: email }).unwrap();
-      if (!error) {
-        toast.success("Un nouveau code a été envoyé à votre adresse email");
+
+      toast.dismiss(loadingToast);
+
+      toast.success("Nouveau code envoyé", {
+        description: `Un code de vérification a été renvoyé à ${email}`,
+        duration: 5000,
+      });
+    } catch (error: any) {
+      toast.dismiss();
+
+      if (error?.status === 404) {
+        toast.error("Email non trouvé", {
+          description: "Aucun compte n'est associé à cette adresse email",
+          duration: 5000,
+        });
+      } else if (error?.status === 429) {
+        toast.error("Trop de demandes", {
+          description: "Veuillez patienter avant de demander un nouveau code",
+          duration: 7000,
+        });
+      } else if (error?.status === 500) {
+        toast.error("Erreur serveur", {
+          description: "Problème lors de l'envoi du code. Veuillez réessayer plus tard",
+          duration: 5000,
+        });
+      } else {
+        toast.error("Échec de l'envoi", {
+          description: error?.data?.message || "Une erreur inattendue s'est produite",
+          duration: 5000,
+        });
       }
-    } catch (error) {
-      toast.error("Erreur lors de l'envoi du code de vérification");
     }
   };
 
@@ -93,12 +144,8 @@ export function VerifyCode() {
               )}
             />
           </div>
-          <Button
-            type="submit"
-            disabled={!isFormValid || isSubmitting}
-            className="w-full bg-blue-500"
-          >
-            {isSubmitting ? "Vérification..." : "Vérifier le compte"}
+          <Button type="submit" disabled={!isFormValid || isLoading} className="w-full bg-blue-500">
+            {isLoading ? "Vérification..." : "Vérifier le compte"}
           </Button>
         </form>
       </Form>

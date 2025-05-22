@@ -4,6 +4,17 @@ import { EventViewer } from "./event-viewer";
 import { useState } from "react";
 import { NewEvent } from "./new-event";
 
+const adaptApiResponseToEvents = (apiResponse: any) => {
+  return apiResponse.data.list.map((item: any) => ({
+    title: item.titre,
+    type: item.type as "Evènement" | "Réunion" | "Examen",
+    startTime: new Date(parseInt(item.timeline[0]) * 1000),
+    endTime: new Date(parseInt(item.timeline[1]) * 1000),
+  }));
+};
+
+// const apiResponse =
+
 const today = new Date();
 const events = [
   {
