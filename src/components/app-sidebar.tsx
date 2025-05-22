@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Image from "next/image";
-import navigationMenus, { Role, otherNav } from "@/app/dashboard/data/sidebar-links";
+import navigationMenus, { Role, otherNav } from "../data/sidebar-links";
 import { usePathname } from "next/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -45,7 +45,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={otherNav.navSecondary[role]} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={otherNav.user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   );

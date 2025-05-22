@@ -34,11 +34,6 @@ interface NavSecondary {
   icon: LucideIcon;
 }
 interface OtherNavItems {
-  user: {
-    name: string;
-    email: string;
-    avatar: string;
-  };
   navSecondary: {
     [key in Role]: NavSecondary[];
   };
@@ -181,11 +176,6 @@ const navigationMenus: NavigationMenus = {
 };
 
 const otherNav: OtherNavItems = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navSecondary: {
     student: [
       {

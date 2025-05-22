@@ -17,9 +17,11 @@ export default function RootLayout({
       ? "Mes cours"
       : activeMenuItem == "documents"
         ? "Mes Documents"
-        : activeMenuItem
-          ? activeMenuItem[0].toUpperCase() + activeMenuItem.slice(1)
-          : "Tableau de bord";
+        : activeMenuItem == "training"
+          ? "Ma Formation"
+          : activeMenuItem
+            ? activeMenuItem[0].toUpperCase() + activeMenuItem.slice(1)
+            : "Tableau de bord";
 
   return (
     <main>
@@ -31,16 +33,6 @@ export default function RootLayout({
               <div className="flex items-center gap-2">
                 <SidebarTrigger className="-ml-1" />
                 <h1 className="text-xl font-semibold text-blue-600">{title}</h1>
-              </div>
-              <div className="relative flex-1 mx-16">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Rechercher..."
-                  className="pl-10 pr-4 py-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
               </div>
               <Bell className="mr-4" />
             </header>
