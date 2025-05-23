@@ -74,7 +74,7 @@ export default function SignIn() {
           user: promise.data.user,
         })
       );
-      router.push("/dashboard/admin");
+      router.push("/dashboard/student");
       toast.dismiss(loadingToast);
       // router.push(
       //   `${!(promise.data.user.roles[0].role === "Admin") ? "/dashboard/admin" : "/dashboard/admin"}`
