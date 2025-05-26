@@ -1,13 +1,11 @@
 "use client";
-import { Label } from "@/components/ui/label";
-import { BadgeCheck, FilePenLine } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, Home, MapPin, Calendar, IdCard } from "lucide-react";
-import Image from "next/image";
 import { useGetUserProfileQuery } from "@/lib/apis/users-api";
 import { Loading } from "../shared/loading";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { UpdateProfile } from "./update-profile";
 
 type UserDataProps = {
   id: number;
@@ -38,7 +36,6 @@ type UserDataProps = {
 };
 export function ProfilePage() {
   const { data, isLoading, isError } = useGetUserProfileQuery();
-  const [preview, setPreview] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserDataProps | null>(null);
 
   // Vérifier et mettre à jour les données utilisateur quand elles sont chargées
@@ -49,52 +46,26 @@ export function ProfilePage() {
     }
   }, [data]);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreview(url);
-    }
-  };
-
   if (isLoading) return <Loading />;
   if (isError) return <div>Error loading profile</div>;
   if (!userData) return <div>No profile data found</div>;
   return (
     <div>
-      <div className="flex flex-col md:flex-row items-start gap-5 md:gap-20 p-6 rounded-xl shadow bg-white border border-border justify-center">
+      <div className="flex flex-col md:flex-row items-start gap-5 md:gap-20 p-6 rounded-xl border justify-center">
         <div className="flex flex-col items-center w-full md:w-fit">
-          <picture>
-            <Label
-              htmlFor="picture"
-              className="w-40 h-40 rounded-full bg-[#CAC5C5] cursor-pointer relative overflow-hidden"
-            >
-              {preview && (
-                <Image
-                  src={preview}
-                  fill
-                  alt="preview"
-                  className="absolute w-full h-full object-cover"
-                />
-              )}
-            </Label>
-            <Input
-              id="picture"
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={handleFileChange}
-            />
-          </picture>
-
+          <Avatar className="w-40 h-40">
+            <AvatarImage src={userData.avatar || ""} alt="Profile Image" />
+            <AvatarFallback className="text-2xl font-bold">
+              {userData.fs_name[0]}
+              {userData.ls_name[0]}
+            </AvatarFallback>
+          </Avatar>
           <h2 className="mt-4 text-sm font-semibold">
             {userData.fs_name || "Prénom"} {userData.ls_name || "Nom"}
           </h2>
-          <div className="flex gap-1.5">
+          <div className="flex flex-col gap-4">
             <p className="text-sm text-gray-500">{userData.email || "Email non disponible"}</p>
-            <span className="text-blue-500">
-              <BadgeCheck className="inline w-4 h-4" />
-            </span>
+            <UpdateProfile />
           </div>
         </div>
 
@@ -147,12 +118,6 @@ export function ProfilePage() {
                   })
                 : "Date inconnue"}
             </p>
-          </div>
-
-          <div className="px-2">
-            <Button size="sm" variant="outline">
-              <FilePenLine />
-            </Button>
           </div>
         </div>
       </div>
