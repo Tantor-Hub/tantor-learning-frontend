@@ -1,8 +1,6 @@
 "use client";
-
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -13,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, SquarePen, Upload } from "lucide-react";
+import { Loader2, SquarePen } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -27,42 +25,94 @@ import {
 } from "@/components/ui/form";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useUpdateUserProfileMutation } from "@/lib/apis/users-api";
+import Image from "next/image";
 
-// Validation schema
+// Updated validation schema - all fields are truly optional
 const profileFormSchema = z.object({
-  email: z.string().email("Email invalide"),
-  phone: z.string().min(3, "Numéro requis"),
-  address: z.string().min(2),
-  city: z.string().min(2),
-  country: z.string().min(2),
-  identityNumber: z.string().min(2),
+  phone: z
+    .string()
+    .refine((val) => !val || (val.length >= 9 && /^[0-9]+$/.test(val)), {
+      message: "Le numéro doit contenir au moins 9 chiffres",
+    })
+    .optional(),
+  address: z
+    .string()
+    .refine((val) => !val || val.length >= 2, {
+      message: "L'adresse doit contenir au moins 2 caractères",
+    })
+    .optional(),
+  city: z
+    .string()
+    .refine((val) => !val || val.length >= 2, {
+      message: "La ville doit contenir au moins 2 caractères",
+    })
+    .optional(),
+  country: z
+    .string()
+    .refine((val) => !val || val.length >= 2, {
+      message: "Le pays doit contenir au moins 2 caractères",
+    })
+    .optional(),
+  identityNumber: z
+    .string()
+    .refine((val) => !val || val.length >= 2, {
+      message: "Le numéro d'identité doit contenir au moins 2 caractères",
+    })
+    .optional(),
   photo: z.any().optional(),
 });
 
 export function UpdateProfile() {
+  const [updateProfile, { isLoading }] = useUpdateUserProfileMutation();
   const [preview, setPreview] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      email: "tantorelearning@gmail.com",
-      phone: "tantorlearning",
-      address: "GOMA",
-      city: "ville",
-      country: "pays",
-      identityNumber: "num",
+      address: "",
+      country: "",
+      identityNumber: "",
+      phone: "",
+      city: "",
     },
     mode: "onChange",
   });
 
   const onSubmit = async (values: z.infer<typeof profileFormSchema>) => {
     try {
-      // Simuler une requête
-      await new Promise((res) => setTimeout(res, 1000));
-      toast.success("Profil mis à jour !");
+      toast.loading("En cours ...", {
+        description: "Mise à jour de votre profil en cours",
+      });
+
+      // Filter out empty values before sending to API
+      const filteredValues = Object.fromEntries(
+        Object.entries(values).filter(
+          ([_, value]) => value !== "" && value !== null && value !== undefined
+        )
+      );
+
+      await updateProfile({
+        ...(filteredValues.photo && { avatar: filteredValues.photo }),
+        ...(filteredValues.address && { adresse_physique: filteredValues.address }),
+        ...(filteredValues.country && { pays_residance: filteredValues.country }),
+        ...(filteredValues.identityNumber && { num_piece_identite: filteredValues.identityNumber }),
+        ...(filteredValues.city && { ville_residance: filteredValues.city }),
+        ...(filteredValues.phone && { phone: filteredValues.phone }),
+      });
+
+      toast.success("Profil mis à jour !", {
+        description: "Votre profil a été modifié avec succès",
+      });
+
       form.reset();
+      setPreview(null);
     } catch (e: any) {
-      toast.error("Erreur", { description: e.message });
+      toast.error("Erreur", {
+        description: e.message || "Une erreur s'est produite lors de la mise à jour",
+      });
+    } finally {
+      toast.dismiss();
     }
   };
 
@@ -78,97 +128,77 @@ export function UpdateProfile() {
         <AlertDialogHeader>
           <AlertDialogTitle>Modifier le Profil</AlertDialogTitle>
           <AlertDialogDescription>
-            Veuillez remplir les informations de votre profil.
+            Veuillez remplir les informations de votre profil. Tous les champs sont optionnels.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              {/** Email */}
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="Email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/** Téléphone */}
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Téléphone</FormLabel>
+                    <FormLabel>Numéro de Téléphone (optionnel)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Téléphone" {...field} />
+                      <Input type="tel" placeholder="+33 612 345 678" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/** Adresse */}
               <FormField
                 control={form.control}
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Adresse</FormLabel>
+                    <FormLabel>Adresse (optionnel)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Adresse" {...field} />
+                      <Input placeholder="123 Rue de la République" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/** Ville */}
               <FormField
                 control={form.control}
                 name="city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ville</FormLabel>
+                    <FormLabel>Ville (optionnel)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ville" {...field} />
+                      <Input placeholder="Paris" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/** Pays */}
               <FormField
                 control={form.control}
                 name="country"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pays</FormLabel>
+                    <FormLabel>Pays (optionnel)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Pays" {...field} />
+                      <Input placeholder="France" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/** Pièce d'identité */}
               <FormField
                 control={form.control}
                 name="identityNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pièce d'identité</FormLabel>
+                    <FormLabel>Pièce d'identité (optionnel)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Numéro" {...field} />
+                      <Input placeholder="1234567890123" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -176,13 +206,12 @@ export function UpdateProfile() {
               />
             </div>
 
-            {/** Photo de profil - Pleine largeur */}
             <FormField
               control={form.control}
               name="photo"
               render={({ field }) => (
-                <FormItem className="mb-4">
-                  <FormLabel>Photo de profil</FormLabel>
+                <FormItem>
+                  <FormLabel>Photo de profil (optionnel)</FormLabel>
                   <FormControl>
                     <Input
                       type="file"
@@ -199,7 +228,7 @@ export function UpdateProfile() {
                   </FormControl>
                   {preview && (
                     <div className="mt-2">
-                      <img
+                      <Image
                         src={preview}
                         alt="Aperçu du profil"
                         className="w-24 h-24 rounded-full object-cover"
@@ -212,14 +241,17 @@ export function UpdateProfile() {
             />
 
             <AlertDialogFooter>
-              <AlertDialogCancel type="button" onClick={() => form.reset()}>
+              <AlertDialogCancel
+                type="button"
+                onClick={() => {
+                  form.reset();
+                  setPreview(null);
+                }}
+              >
                 Annuler
               </AlertDialogCancel>
-              <Button
-                type="submit"
-                disabled={!form.formState.isValid || form.formState.isSubmitting}
-              >
-                {form.formState.isSubmitting ? (
+              <Button type="submit" disabled={form.formState.isSubmitting || isLoading}>
+                {form.formState.isSubmitting || isLoading ? (
                   <Loader2 className="animate-spin w-4 h-4" />
                 ) : (
                   "Mettre à jour"

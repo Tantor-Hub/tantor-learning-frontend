@@ -13,13 +13,12 @@ export interface User {
 }
 
 export interface ProfileUpdateRequest {
-  // Define the fields that can be updated in a profile
-  fs_name?: string;
-  ls_name?: string;
-  email?: string;
-  avatar?: File;
+  avatar?: string;
+  adresse_physique?: string;
+  pays_residance?: string;
+  num_piece_identite?: string;
+  ville_residance?: string;
   phone?: string;
-  // Add other updatable fields
 }
 
 export interface GetUserProfileResponse {
