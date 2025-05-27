@@ -37,8 +37,8 @@ export default function ContactUs() {
     });
     try {
       const response = await contactForm({
-        from_name: values.fullName,
-        from_mail: values.email,
+        from_name: values.fullName || "",
+        from_mail: values.email || "",
         subject: values.subject,
         content: values.message,
       }).unwrap();
