@@ -17,11 +17,9 @@ export default function AuthLayout({
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const currentUser = useSelector(selectCurrentUser);
   const { isDialogOpen, setIsDialogOpen, handleUserRoles } = useRoleSelection();
+  const roles = currentUser?.roles;
 
   useEffect(() => {
-    const roles = currentUser?.roles;
-    console.log("Roles length:", roles?.length);
-
     if (isAuthenticated && roles) {
       handleUserRoles(roles);
     }
@@ -31,7 +29,7 @@ export default function AuthLayout({
     if (storedToken && !isAuthenticated) {
       // You could dispatch a token refresh action here
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, roles]);
 
   return (
     <>

@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Role {
   role: string;
@@ -60,7 +61,13 @@ export function RoleSelectionDialog({ roles, isOpen, onClose }: RoleSelectionDia
               key={index}
               variant="outline"
               size="lg"
-              onClick={() => handleRoleSelect(roleObj.role)}
+              onClick={() => {
+                handleRoleSelect(roleObj.role);
+                toast.success("Connexion réussie!", {
+                  description:
+                    "Vous êtes connecté, vous allez être redirigé vers votre tableau de bord",
+                });
+              }}
               className="justify-center"
             >
               {roleObj.role.toUpperCase()}

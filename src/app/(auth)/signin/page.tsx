@@ -1,16 +1,10 @@
 "use client";
-import { useState, useEffect, ChangeEvent, FormEvent } from "react";
-import { useSelector } from "react-redux";
-import { selectCurrentUser, selectIsAuthenticated } from "@/features/auth/auth-slice";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useState, ChangeEvent, FormEvent } from "react";
 import { GoogleIcon } from "@/components/icons/google";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { SignInFormValues, signInSchema } from "@/lib/validators/signin-schema";
 import { useDispatch } from "react-redux";
 import { Label } from "@/components/ui/label";
 import { setCredentials } from "@/features/auth/auth-slice";
@@ -22,28 +16,14 @@ interface FormData {
 }
 
 export default function SignIn() {
-  const router = useRouter();
   const [signin, { isLoading: isSignInLoading }] = useSigninMutation();
   const [triggerGoogleAuth, { isLoading: isGoogleAuthLoading }] = useAuthWithGoogleMutation();
-  const isAuthenticated = useSelector(selectIsAuthenticated);
-  const user = useSelector(selectCurrentUser);
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
   });
-
-  const form = useForm<SignInFormValues>({
-    resolver: zodResolver(signInSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-      rememberMe: false,
-    },
-  });
-
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({
@@ -55,7 +35,6 @@ export default function SignIn() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const loadingToast = toast.loading("Connexion en cours...");
-    setIsLoading(true);
 
     try {
       // Call the signin API
@@ -63,8 +42,6 @@ export default function SignIn() {
         user_name: formData.email,
         password: formData.password,
       }).unwrap();
-
-      // console.log(promise);
       // Store credentials in Redux
       dispatch(
         setCredentials({
@@ -74,14 +51,8 @@ export default function SignIn() {
           user: promise.data.user,
         })
       );
-      router.push("/dashboard/student");
-      toast.dismiss(loadingToast);
-      // router.push(
-      //   `${!(promise.data.user.roles[0].role === "Admin") ? "/dashboard/admin" : "/dashboard/admin"}`
-      // );
-      toast.success("Connexion réussie!", {
-        description: "Vous êtes connecté, vous allez être redirigé vers votre tableau de bord",
-      });
+      // it will get handle inside the layout
+      // router.push("/dashboard/student");
     } catch (error: any) {
       toast.dismiss(loadingToast);
       const errorMessage =
@@ -89,7 +60,7 @@ export default function SignIn() {
         "Échec de la connexion. Veuillez vérifier vos identifiants. Soit votre mot de passe ou email est invalide";
       toast.error("Echec de la connexion", { description: errorMessage });
     } finally {
-      setIsLoading(false);
+      toast.dismiss(loadingToast);
     }
   };
 
@@ -115,19 +86,6 @@ export default function SignIn() {
       // toast.error("Échec de la connexion avec Google");
     }
   };
-
-  // useEffect(() => {
-  //   if (isAuthenticated) {
-  //     router.push("/dashboard/admin");
-  //   }
-
-  //   // Check for stored refresh token
-  //   const storedToken = localStorage.getItem("refreshToken");
-  //   if (storedToken && !isAuthenticated) {
-  //     // You could dispatch a token refresh action here
-  //   }
-  // }, [isAuthenticated, router]);
-
   return (
     <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
       <div className="flex flex-col items-center gap-5 text-center">

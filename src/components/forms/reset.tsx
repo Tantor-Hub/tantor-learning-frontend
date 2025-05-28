@@ -19,6 +19,11 @@ import { useResetPasswordMutation } from "@/lib/apis/auth-api";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { GoogleIcon } from "@/components/icons/google";
+import Link from "next/link";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "@/features/auth/auth-slice";
+
 interface FormData {
   password: string;
   confirm: string;
@@ -26,6 +31,7 @@ interface FormData {
 
 export function Reset() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [resetPassword, { isLoading, error }] = useResetPasswordMutation();
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
@@ -51,14 +57,26 @@ export function Reset() {
         toast.warning("Les mots de passe ne correspondent pas");
         return;
       }
-      await resetPassword({
+      const promise = await resetPassword({
         user_name: email,
         verification_code: pin,
         new_password: formData.password,
         repet_new_password: formData.confirm,
+      }).unwrap();
+      // Store credentials in Redux
+      // dispatch(
+      //   setCredentials({
+      //     token: promise.data.auth_token,
+      //     refreshToken: promise.data.refresh_token,
+      //     expiresIn: promise.expires_in,
+      //     user: promise.data.user,
+      //   })
+      // );
+
+      toast.success("Succès !", {
+        description: "Votre mot de passe a été réinitialisé avec succès.",
       });
       if (!error) {
-        toast.success("Mot de passe réinitialisé avec succès");
         setOpen(true);
       }
     } catch {

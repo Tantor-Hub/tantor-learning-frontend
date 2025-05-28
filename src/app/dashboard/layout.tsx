@@ -1,15 +1,21 @@
 "use client";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Search, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { selectIsAuthenticated } from "@/features/auth/auth-slice";
+import { toast } from "sonner";
 
-export default function RootLayout({
+export default function DashboardLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const router = useRouter();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
   const path = usePathname();
   const activeMenuItem = path.split("/")[3];
   const title =
@@ -22,6 +28,22 @@ export default function RootLayout({
           : activeMenuItem
             ? activeMenuItem[0].toUpperCase() + activeMenuItem.slice(1)
             : "Tableau de bord";
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/signin");
+      toast.info("Connexion requise", {
+        description:
+          "Veuillez vous connecter ou créer un compte pour accéder à votre tableau de bord",
+      });
+    }
+
+    // Check for stored refresh token
+    const storedToken = localStorage.getItem("refreshToken");
+    if (storedToken) {
+      // You could dispatch a token refresh action here
+    }
+  }, [isAuthenticated, router]);
 
   return (
     <main>
