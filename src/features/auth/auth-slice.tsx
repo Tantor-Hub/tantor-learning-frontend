@@ -17,6 +17,19 @@ interface AuthState {
     // Added additional user properties
     phone?: string;
     avatar?: string;
+    roles: {
+      id: number;
+      role: string;
+      description: string;
+      HasRoles: {
+        id: number;
+        UserId: number;
+        RoleId: number;
+        status: number;
+        createdAt: string;
+        updatedAt: string;
+      };
+    }[];
   };
   isLoading: boolean;
   error: string | null;
@@ -179,6 +192,7 @@ export const authSlice = createSlice({
             fs_name: payload.data.user.fs_name,
             ls_name: payload.data.user.ls_name,
             nick_name: payload.data.user.nick_name,
+            roles: payload.data.user.roles || [],
           };
         }
 
@@ -209,6 +223,7 @@ export const authSlice = createSlice({
             fs_name: payload.data.user.fs_name,
             ls_name: payload.data.user.ls_name,
             nick_name: payload.data.user.nick_name,
+            roles: payload.data.user.roles || [],
           };
         }
 
@@ -299,7 +314,7 @@ export const authSlice = createSlice({
 
       // User API matchers (for profile updates)
       .addMatcher(usersApi.endpoints.updateUserProfile.matchFulfilled, (state, { payload }) => {
-        if (payload) {
+        if (payload && state.user) {
           state.user = {
             ...state.user,
             ...payload,

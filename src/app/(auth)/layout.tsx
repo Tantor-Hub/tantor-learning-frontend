@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { selectCurrentUser, selectIsAuthenticated } from "@/features/auth/auth-slice";
+import { RoleSelectionDialog, useRoleSelection } from "@/components/role-selection-dialog";
 
 export default function AuthLayout({
   children,
@@ -15,12 +16,14 @@ export default function AuthLayout({
   const router = useRouter();
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const currentUser = useSelector(selectCurrentUser);
-  // console.log("current user", currentUser);
+  const { isDialogOpen, setIsDialogOpen, handleUserRoles } = useRoleSelection();
+
   useEffect(() => {
-    // console.log("current user", currentUser?.roles);
-    /*
-    if (isAuthenticated) {
-      router.push("/dashboard/admin");
+    const roles = currentUser?.roles;
+    console.log("Roles length:", roles?.length);
+
+    if (isAuthenticated && roles) {
+      handleUserRoles(roles);
     }
 
     // Check for stored refresh token
@@ -28,7 +31,6 @@ export default function AuthLayout({
     if (storedToken && !isAuthenticated) {
       // You could dispatch a token refresh action here
     }
-      */
   }, [isAuthenticated, router]);
 
   return (
@@ -61,6 +63,11 @@ export default function AuthLayout({
           />
         </div>
       </div>
+      <RoleSelectionDialog
+        roles={currentUser?.roles || []}
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+      />
     </>
   );
 }

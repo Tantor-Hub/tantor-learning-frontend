@@ -2,13 +2,33 @@
 import { baseQuery, createApi } from "./base-api";
 
 // User related types
-export interface User {
+export interface ProfileUpdateResponse {
+  // username: string;
+  fs_name: string;
+  ls_name: string;
+  nick_name: string;
   id: string;
-  username: string;
   email: string;
-  fs_name?: string;
-  ls_name?: string;
-  nick_name?: string;
+  phone: string;
+  // avatar?: string | null;
+  adresse_physique?: string | null;
+  pays_residance?: string | null;
+  ville_residance?: string | null;
+  num_piece_identite?: string | null;
+  createdAt: string;
+  roles?: {
+    id: number;
+    role: string;
+    description: string;
+    HasRoles: {
+      id: number;
+      UserId: number;
+      RoleId: number;
+      status: number;
+      createdAt: string;
+      updatedAt: string;
+    };
+  }[];
   // Add other user properties as needed
 }
 
@@ -21,7 +41,7 @@ export interface ProfileUpdateRequest {
   phone?: string;
 }
 
-export interface GetUserProfileResponse {
+export interface User {
   status: number;
   message: string;
   data: {
@@ -59,11 +79,11 @@ export const usersApi = createApi({
   baseQuery,
   tagTypes: ["User"],
   endpoints: (builder) => ({
-    getUserProfile: builder.query<GetUserProfileResponse, void>({
+    getUserProfile: builder.query<User, void>({
       query: () => "/api/users/user/profile",
       providesTags: ["User"],
     }),
-    updateUserProfile: builder.mutation<User, ProfileUpdateRequest>({
+    updateUserProfile: builder.mutation<ProfileUpdateResponse, ProfileUpdateRequest>({
       query: (userData) => ({
         url: "/api/users/user/update",
         method: "PUT",

@@ -6,17 +6,25 @@ export interface AuthCredentials {
   password: string;
 }
 
-type Role = {
-  role: string;
-};
-
 export interface SignupData {
   fs_name: string;
   ls_name: string;
   password: string;
   nick_name: string;
   email: string;
-  roles?: Role[];
+  roles?: {
+    id: number;
+    role: string;
+    description: string;
+    HasRoles: {
+      id: number;
+      UserId: number;
+      RoleId: number;
+      status: number;
+      createdAt: string;
+      updatedAt: string;
+    };
+  }[];
 }
 
 export interface TokenResponse {
