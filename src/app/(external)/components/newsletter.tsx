@@ -57,6 +57,7 @@ export default function NewsLetter() {
         description:
           "Vous recevrez régulièrement des mises à jour de notre part dans votre boîte mail.",
       });
+      form.reset();
       if (response.status !== 201) {
         toast.error("Erreur", {
           description: "Une erreur s'est produite. Veuillez réessayer.",

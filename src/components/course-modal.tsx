@@ -1,5 +1,5 @@
 "use client";
-
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,12 +20,11 @@ export default function CourseModal({ isOpen, onClose }: CourseModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="relative max-h-[90vh] w-full max-w-3xl overflow-auto rounded-lg bg-white p-6">
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
-        >
-          x
-        </button>
+        <div className="sticky top-0 z-10 flex justify-end bg-transparent p-2">
+          <Button variant="outline" size="icon" onClick={onClose}>
+            <X />
+          </Button>
+        </div>
 
         <h2 className="text-xl font-bold">
           Diplôme Supérieur de Comptabilité et de Gestion (DSCG)
