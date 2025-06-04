@@ -9,6 +9,7 @@ import { EventApi } from "./planning";
 import { coursesApi } from "./courses-api";
 import { chatApi } from "./chat-api";
 import { studentApi } from "./student-api";
+import { publicApi } from "./public-api";
 // Export all API slices for easy access
 export {
   authApi,
@@ -22,6 +23,7 @@ export {
   chatApi,
   coursesApi,
   studentApi,
+  publicApi,
 };
 
 // Combine all reducers for easy store setup
@@ -37,6 +39,7 @@ export const apiReducers = {
   [coursesApi.reducerPath]: coursesApi.reducer,
   [chatApi.reducerPath]: chatApi.reducer,
   [studentApi.reducerPath]: studentApi.reducer,
+  [publicApi.reducerPath]: publicApi.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -52,4 +55,5 @@ export const apiMiddlewares = [
   chatApi.middleware,
   coursesApi.middleware,
   studentApi.middleware,
+  publicApi.middleware,
 ];

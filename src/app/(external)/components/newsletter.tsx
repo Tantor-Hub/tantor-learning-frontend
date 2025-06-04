@@ -1,6 +1,20 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Locate, Mail, MapPin, Phone } from "lucide-react";
+import { Loader2, Mail, MapPin, Phone } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useSubscribeNewsLetterMutation } from "@/lib/apis/public-api";
+import { toast } from "sonner";
+import { subscribeNewsLetterSchema, SubscribeNewsLetterSchemaFormValues } from "@/lib/validators";
 
 const contactInfo = {
   title: "Besoin de plus d'informations ?",
@@ -15,17 +29,50 @@ const contactInfo = {
     {
       type: "Email",
       icon: <Mail className="text-[#33415C] h-full w-auto" />,
-      value: "contact@tantor.fr",
+      value: "infos@tantor.com",
     },
     {
       type: "Adresse",
       icon: <MapPin className="text-[#33415C] h-full w-auto" />,
-      value: "48 rue du bret, 38090 Villefontaine",
+      value: "France, Paris",
     },
   ],
 };
 
-const NewsLetter = () => {
+export default function NewsLetter() {
+  const [handleSubscribeNewsLetter, { isLoading }] = useSubscribeNewsLetterMutation();
+  const form = useForm<SubscribeNewsLetterSchemaFormValues>({
+    resolver: zodResolver(subscribeNewsLetterSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  const onSubmit = async (values: SubscribeNewsLetterSchemaFormValues) => {
+    try {
+      const response = await handleSubscribeNewsLetter({
+        user_email: values.email,
+      }).unwrap();
+      toast.success("Ajouté à la liste de diffusion", {
+        description:
+          "Vous recevrez régulièrement des mises à jour de notre part dans votre boîte mail.",
+      });
+      if (response.status !== 201) {
+        toast.error("Erreur", {
+          description: "Une erreur s'est produite. Veuillez réessayer.",
+        });
+      }
+    } catch (error) {
+      toast.error("Échec de l'abonnement", {
+        description:
+          "Impossible de vous abonner pour le moment. Vérifiez votre connexion ou réessayez plus tard.",
+      });
+      // console.error("Subscription error:", error);
+    }
+  };
+
+  const isFormValid = form.formState.isValid;
+
   return (
     <div className="max-w-[1440px] m-auto px-5 md:px-10 py-16 flex flex-col md:flex-row justify-between gap-5">
       <div className="max-w-[430px] text-white flex flex-col gap-3.5 flex-[2/3]">
@@ -50,23 +97,33 @@ const NewsLetter = () => {
             Restez informés de nos actualités, événements et nouvelles formations
           </p>
         </div>
-        <form>
-          <div className="pb-5">
-            <label htmlFor="name" className="text-[#001233] text-[14px] font-medium mb-2.5">
-              Nom complet
-            </label>
-            <Input type="text" placeholder="Votre nom" className="rounded-2xl" />
-          </div>
-          <div className="pb-5">
-            <label htmlFor="name" className="text-[#001233] text-[14px] font-medium mb-2.5">
-              Nom complet
-            </label>
-            <Input type="text" placeholder="Votre nom" className="rounded-2xl" />
-          </div>
-          <Button className="rounded-[12px] w-full text-[12px] font-light">S'inscrire</Button>
-        </form>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[#001233] text-[14px] font-medium">
+                    Addresse Mail
+                  </FormLabel>
+                  <FormControl>
+                    <Input placeholder="Votre Address Mail" className="rounded-2xl" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button
+              type="submit"
+              className="rounded-[12px] w-full text-[12px] font-light"
+              disabled={!isFormValid || isLoading} // Désactivé si le formulaire n'est pas valide
+            >
+              {isLoading ? <Loader2 className="animate-spin" /> : "S'inscrire"}
+            </Button>
+          </form>
+        </Form>
       </div>
     </div>
   );
-};
-export default NewsLetter;
+}
