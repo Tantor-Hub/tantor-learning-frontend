@@ -8,14 +8,14 @@ const footerLinks = [
     { href: "/contact-us", label: "Contacts" },
   ],
   [
-    { href: "#partners", label: "Nos partenaires" },
+    { href: "/#partners", label: "Nos partenaires" },
     { href: "#", label: "Politiques de Confidentialite" },
     { href: "#", label: "Termes & Conditions" },
   ],
   [
     { href: "/trainings", label: "Nos Formations" },
     { href: "/about-us", label: "Qui sommes-nous?" },
-    { href: "#", label: "Nos objectifs" },
+    { href: "/about-us", label: "Nos objectifs" },
   ],
 ];
 

@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
 
 export function FeatureCard({
   icon: Icon,
@@ -21,6 +23,7 @@ export function FeatureCard({
   action?: React.ReactNode;
   className?: string;
 }) {
+  const router = useRouter();
   return (
     <Card className={className}>
       <CardContent>
@@ -32,7 +35,7 @@ export function FeatureCard({
       </CardHeader>
       {action && (
         <CardFooter>
-          <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full" onClick={() => router.push("/trainings")}>
             {action}
           </Button>
         </CardFooter>

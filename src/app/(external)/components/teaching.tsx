@@ -23,7 +23,7 @@ const Teaching = () => {
             className="h-[24px] w-auto absolute top-30 left-0"
           />
           <Link
-            href="#"
+            href="/trainings"
             className=" absolute bottom-0 top-40 text-base text-[#5C677D] font-normal underline"
           >
             Apprendre plus
