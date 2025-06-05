@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,12 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Funnel } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import NewsLetter from "../components/newsletter";
 import CourseModal from "@/components/course-modal";
-import { useState } from "react";
 import { dcgData } from "./data/index";
 
 const filters = [
@@ -29,6 +29,7 @@ const filters = [
 const dcgArray = Array.from({ length: 9 }, () => ({ ...dcgData }));
 
 export default function Dashboard() {
+  const [isShown, setIsShown] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
@@ -51,35 +52,37 @@ export default function Dashboard() {
               placeholder="Rechercher Une formation ..."
             />
           </div>
-          <div className="flex gap-2 items-center border px-2.5 rounded-md">
-            <Image src="/icons/filter.svg" height={20} width={20} alt="search icon" />
-            <span className="text-[#ACACAC]">Filtres</span>
-          </div>
-        </div>
-        <div className="border p-8 flex flex-col items-end gap-7">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 md:gap-10 w-full">
-            {filters.map((filters, i) => (
-              <div key={i} className="flex flex-col gap-[7px]">
-                <span>{filters.label}</span>
-                <Select>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={filters.value} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="most-recent">{filters.value}</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-            ))}
-          </div>
-          <Button className="bg-transparent border border-[#0466C8] text-[#ACACAC]">
-            {" "}
-            <Image src="/icons/close.svg" height={20} width={20} alt="close icon" />
-            Renitialiser les filtres
+          <Button variant="outline" size="lg" onClick={() => setIsShown(!isShown)}>
+            <Funnel />
+            Filtres
           </Button>
         </div>
+        {isShown && (
+          <div className="border p-8 flex flex-col items-end gap-7">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 md:gap-10 w-full">
+              {filters.map((filters, i) => (
+                <div key={i} className="flex flex-col gap-[7px]">
+                  <span>{filters.label}</span>
+                  <Select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={filters.value} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="most-recent">{filters.value}</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </div>
+            <Button className="bg-transparent border border-[#0466C8] text-[#ACACAC]">
+              {" "}
+              <Image src="/icons/close.svg" height={20} width={20} alt="close icon" />
+              Renitialiser les filtres
+            </Button>
+          </div>
+        )}
         <div className="py-10  grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-7">
           {dcgArray.map((dcgData, i) => (
             <div key={i} className="border border-blue-200 rounded-[6px] shadow-sm max-w-md">
