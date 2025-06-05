@@ -3,7 +3,6 @@ import { usersApi } from "./users-api";
 import { formationsApi } from "./formations-api";
 import { categoriesApi } from "./categories-api";
 import { thematicsApi } from "./thematics-api";
-import { contactFormAPI } from "./contact-form";
 import { AdminApi } from "./admin-api";
 import { EventApi } from "./planning";
 import { coursesApi } from "./courses-api";
@@ -17,7 +16,6 @@ export {
   formationsApi,
   categoriesApi,
   thematicsApi,
-  contactFormAPI,
   AdminApi,
   EventApi,
   chatApi,
@@ -33,7 +31,6 @@ export const apiReducers = {
   [formationsApi.reducerPath]: formationsApi.reducer,
   [categoriesApi.reducerPath]: categoriesApi.reducer,
   [thematicsApi.reducerPath]: thematicsApi.reducer,
-  [contactFormAPI.reducerPath]: contactFormAPI.reducer,
   [AdminApi.reducerPath]: AdminApi.reducer,
   [EventApi.reducerPath]: EventApi.reducer,
   [coursesApi.reducerPath]: coursesApi.reducer,
@@ -49,7 +46,6 @@ export const apiMiddlewares = [
   formationsApi.middleware,
   categoriesApi.middleware,
   thematicsApi.middleware,
-  contactFormAPI.middleware,
   AdminApi.middleware,
   EventApi.middleware,
   chatApi.middleware,

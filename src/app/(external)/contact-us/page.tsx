@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { contactUsFormSchema } from "@/lib/validators/form-schema";
 import type { ContactUsFormValues } from "@/lib/validators/form-schema";
-import { useContactFormAPIMutation } from "@/lib/apis/contact-form";
+import { useContactFormAPIMutation } from "@/lib/apis/public-api";
 import { toast } from "sonner";
 
 export default function ContactUs() {
