@@ -4,8 +4,6 @@ import {
   ICreateMessageResponse,
   IGetAllMessagesResponse,
   IGetMessageByIdResponse,
-  IMessage,
-  IMessageRequest,
 } from "@/types/common/message-api";
 
 // Chat API

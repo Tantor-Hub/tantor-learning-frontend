@@ -1,10 +1,12 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Archive, Reply, Forward, Trash } from "lucide-react";
+import { ChevronLeft, Archive, Reply, Forward, Loader2 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { Suspense } from "react";
 import { Loading } from "@/components/shared/loading";
-import { useGetMessageByIdQuery } from "@/lib/apis/common/chat-api";
+import { useGetMessageByIdQuery, useArchivedChatMutation } from "@/lib/apis/common/chat-api";
+import { DeleteMessageDialog } from "@/components/messages/dialog/delete-message-dialog";
+import { toast } from "sonner";
 
 function MessageActions() {
   const router = useRouter();
@@ -20,6 +22,17 @@ function MessageActions() {
     { skip: !messageId } // Skip if no messageId
   );
 
+  const [archivedMessage, { isLoading: isLoadingArchived }] = useArchivedChatMutation();
+
+  const handleArchivedMessage = async () => {
+    try {
+      await archivedMessage({ id: messageId }).unwrap();
+      toast.info("Message Archivé");
+    } catch {
+      toast.error("Une erreur est survenue");
+    }
+  };
+
   if (isLoading) return <Loading />;
   if (isError) return <div>Erreur lors du chargement du message</div>;
   if (!message) return <div>Message non trouvé</div>;
@@ -30,8 +43,14 @@ function MessageActions() {
           <ChevronLeft /> Retour
         </Button>
         <div className="flex items-center gap-4">
-          <Button variant={"outline"}>
-            <Archive /> Archiver
+          <Button variant={"outline"} onClick={handleArchivedMessage}>
+            {!isLoadingArchived ? (
+              <>
+                <Archive /> Archiver
+              </>
+            ) : (
+              <Loader2 className="animate-spin" />
+            )}
           </Button>
           <Button variant={"outline"}>
             <Reply /> Repondre
@@ -39,9 +58,7 @@ function MessageActions() {
           <Button variant={"outline"}>
             <Forward /> Transferer
           </Button>
-          <Button variant={"destructive"}>
-            <Trash /> Supprimer
-          </Button>
+          <DeleteMessageDialog id={messageId} />
         </div>
       </div>
       <div className="border border-border rounded-lg p-4 mt-4">
