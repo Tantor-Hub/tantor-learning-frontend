@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Loader2, Paperclip, Plus } from "lucide-react";
-import { useCreateChatMutation } from "@/lib/apis/chat-api";
+import { useCreateMessageMutation } from "@/lib/apis/common/chat-api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -41,7 +41,7 @@ const messageFormSchema = z.object({
 });
 
 export function NewMessageAlert() {
-  const [createMessage, { isLoading }] = useCreateChatMutation();
+  const [createMessage, { isLoading }] = useCreateMessageMutation();
 
   const form = useForm<z.infer<typeof messageFormSchema>>({
     resolver: zodResolver(messageFormSchema),

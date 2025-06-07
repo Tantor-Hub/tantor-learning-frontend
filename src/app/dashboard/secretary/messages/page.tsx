@@ -1,9 +1,3 @@
-import { TabsView } from "./components/tab-view";
+import { MessageTabView } from "@/components/messages/message-tab-view";
 
-export default function Page() {
-  return (
-    <>
-      <TabsView />
-    </>
-  );
-}
+export default MessageTabView;

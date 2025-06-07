@@ -1,4 +1,4 @@
-import { baseQuery, createApi } from "./base-api";
+import { baseQuery, createApi } from "../base-api";
 import {
   IContactFormRequest,
   IContactFormResponse,

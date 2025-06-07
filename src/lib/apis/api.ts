@@ -3,12 +3,12 @@ import { usersApi } from "./users-api";
 import { formationsApi } from "./formations-api";
 import { categoriesApi } from "./categories-api";
 import { thematicsApi } from "./thematics-api";
-import { AdminApi } from "./admin-api";
-import { EventApi } from "./planning";
+import { AdminApi } from "./admin/user-api";
+import { EventApi } from "./common/planning";
 import { coursesApi } from "./courses-api";
-import { chatApi } from "./chat-api";
+import { chatApi } from "./common/chat-api";
 import { studentApi } from "./student-api";
-import { publicApi } from "./public-api";
+import { publicApi } from "./public/public-api";
 // Export all API slices for easy access
 export {
   authApi,

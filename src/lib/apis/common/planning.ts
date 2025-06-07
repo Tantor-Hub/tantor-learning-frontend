@@ -1,4 +1,5 @@
-import { baseQuery, createApi } from "./base-api";
+import { IListPlanning } from "@/types/common/planning-api";
+import { baseQuery, createApi } from "../base-api";
 
 export interface AddEventRequest {
   titre: string;
@@ -21,7 +22,7 @@ export const EventApi = createApi({
   baseQuery,
   tagTypes: ["Event"],
   endpoints: (builder) => ({
-    listEvents: builder.query({
+    listEvents: builder.query<IListPlanning, void>({
       query: () => "/api/cms/events/e/list",
       providesTags: ["Event"],
     }),

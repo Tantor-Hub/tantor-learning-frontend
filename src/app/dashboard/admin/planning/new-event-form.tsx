@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAddEventMutation } from "@/lib/apis/planning";
+import { useAddEventMutation } from "@/lib/apis/common/planning";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 

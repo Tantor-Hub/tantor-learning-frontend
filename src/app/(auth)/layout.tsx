@@ -29,7 +29,7 @@ export default function AuthLayout({
     if (storedToken && !isAuthenticated) {
       // You could dispatch a token refresh action here
     }
-  }, [isAuthenticated, router, roles]);
+  }, [isAuthenticated, router, roles, handleUserRoles]);
 
   return (
     <>

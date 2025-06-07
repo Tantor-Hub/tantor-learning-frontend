@@ -1,23 +1,12 @@
-import { baseQuery, createApi } from "./base-api";
-
-interface CreateMessageRequest {
-  subject: string;
-  content: string;
-  piece_jointe?: File;
-}
-
-interface MessageRequest {
-  id?: string;
-  group?: string;
-}
-
-export interface Message {
-  // Define your message interface properties here
-  id: string;
-  subject: string;
-  content: string;
-  // Add other message properties as needed
-}
+import { baseQuery, createApi } from "../base-api";
+import {
+  ICreateMessageRequest,
+  ICreateMessageResponse,
+  IGetAllMessagesResponse,
+  IGetMessageByIdResponse,
+  IMessage,
+  IMessageRequest,
+} from "@/types/common/message-api";
 
 // Chat API
 export const chatApi = createApi({
@@ -25,11 +14,11 @@ export const chatApi = createApi({
   baseQuery,
   tagTypes: ["Chat"],
   endpoints: (builder) => ({
-    listChat: builder.query<Message[], void>({
+    listChat: builder.query<IGetAllMessagesResponse, void>({
       query: () => "/api/cms/messages/list",
       providesTags: ["Chat"],
     }),
-    createChat: builder.mutation<void, CreateMessageRequest>({
+    createMessage: builder.mutation<ICreateMessageResponse, ICreateMessageRequest>({
       query: (userData) => ({
         url: "/api/cms/messages/message/send",
         method: "POST",
@@ -54,14 +43,14 @@ export const chatApi = createApi({
       invalidatesTags: ["Chat"],
     }),
 
-    listChatByCategory: builder.query<Message[], { group: string }>({
+    listChatByCategory: builder.query<IGetAllMessagesResponse, { group: string }>({
       query: ({ group }) => ({
         url: `/api/cms/messages/list/${group}`,
         method: "GET",
       }),
       providesTags: ["Chat"],
     }),
-    chatById: builder.query<Message, { id: string }>({
+    getMessageById: builder.query<IGetMessageByIdResponse, { id: string }>({
       query: ({ id }) => ({
         url: `/api/cms/messages/message/${id}`,
         method: "GET",
@@ -73,8 +62,9 @@ export const chatApi = createApi({
 
 export const {
   useDeleteChatMutation,
-  useCreateChatMutation,
   useArchivedChatMutation,
   useListChatByCategoryQuery,
   useListChatQuery,
+  useCreateMessageMutation,
+  useGetMessageByIdQuery,
 } = chatApi;

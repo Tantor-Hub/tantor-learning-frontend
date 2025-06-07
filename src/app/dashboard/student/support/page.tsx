@@ -15,7 +15,7 @@ import { ArrowLeft, Download, File, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useContactFormAPIMutation } from "@/lib/apis/public-api";
+import { useContactFormAPIMutation } from "@/lib/apis/public/public-api";
 import { contactUsFormSchema, type ContactUsFormValues } from "@/lib/validators/form-schema";
 import { toast } from "sonner";
 import { useSelector } from "react-redux";

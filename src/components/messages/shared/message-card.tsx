@@ -5,20 +5,16 @@ import { cn } from "@/lib/utils";
 
 type MessageCardProps = {
   name: string;
-  role: string;
+  role?: string;
   title: string;
   message: string;
   isRead: boolean;
 };
 
 export function MessageCard({ name, role, title, message, isRead }: MessageCardProps) {
+  // bg-[#E8F0FF]
   return (
-    <Card
-      className={cn(
-        "transition-all border-none shadow-none",
-        !isRead && "bg-[#E8F0FF] text-secondary-foreground"
-      )}
-    >
+    <Card className={cn("transition-all overflow-hidden", !isRead && "")}>
       <CardHeader className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Avatar className="h-12 w-12">
@@ -27,7 +23,7 @@ export function MessageCard({ name, role, title, message, isRead }: MessageCardP
                 .split(" ")
                 .map((n) => n[0])
                 .join("")
-                .toUpperCase()}
+                .toUpperCase() || "Expéditeur inconnu"}
             </AvatarFallback>
           </Avatar>
           <div>

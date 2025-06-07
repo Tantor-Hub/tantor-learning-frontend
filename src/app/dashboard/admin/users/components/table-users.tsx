@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useListUsersQuery } from "@/lib/apis/admin-api";
+import { useListUsersQuery } from "@/lib/apis/admin/user-api";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 

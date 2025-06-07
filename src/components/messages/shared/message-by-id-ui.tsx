@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { Loading } from "@/components/shared/loading";
 import { useGetMessageByIdQuery } from "@/lib/apis/common/chat-api";
 
-function MessageActions() {
+export function MessageByIdUI() {
   const router = useRouter();
   const params = useParams();
   const messageId = params.id as string;
@@ -60,13 +60,5 @@ function MessageActions() {
         <p>{message.data.content}</p>
       </div>
     </div>
-  );
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={<Loading />}>
-      <MessageActions />
-    </Suspense>
   );
 }

@@ -12,7 +12,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useSubscribeNewsLetterMutation } from "@/lib/apis/public-api";
+import { useSubscribeNewsLetterMutation } from "@/lib/apis/public/public-api";
 import { toast } from "sonner";
 import { subscribeNewsLetterSchema, SubscribeNewsLetterSchemaFormValues } from "@/lib/validators";
 

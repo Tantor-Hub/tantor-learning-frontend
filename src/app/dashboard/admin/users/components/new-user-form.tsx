@@ -14,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useAddMutation } from "@/lib/apis/admin-api";
+import { useAddMutation } from "@/lib/apis/admin/user-api";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 

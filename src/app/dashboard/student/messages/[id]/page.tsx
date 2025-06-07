@@ -1,10 +1,28 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Archive, Reply, Forward, Trash } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import { Suspense } from "react";
+import { Loading } from "@/components/shared/loading";
+import { useGetMessageByIdQuery } from "@/lib/apis/common/chat-api";
 
-export default function Page() {
+function MessageActions() {
   const router = useRouter();
+  const params = useParams();
+  const messageId = params.id as string;
+
+  const {
+    data: message,
+    isLoading,
+    isError,
+  } = useGetMessageByIdQuery(
+    { id: messageId },
+    { skip: !messageId } // Skip if no messageId
+  );
+
+  if (isLoading) return <Loading />;
+  if (isError) return <div>Erreur lors du chargement du message</div>;
+  if (!message) return <div>Message non trouvé</div>;
   return (
     <div>
       <div className="flex items-center justify-between gap-4">
@@ -28,17 +46,27 @@ export default function Page() {
       </div>
       <div className="border border-border rounded-lg p-4 mt-4">
         <div className="mb-4">
-          <p className="text-primary text-xl font-bold">Informations sur le prochain cours</p>
-          <p className="text-[#979DAC]">De : Pierre Durand (Formateur) . Aujourdh’ui , 09:15</p>
+          <p className="text-primary text-xl font-bold">{message.data.subject}</p>
+          <p className="text-[#979DAC]">
+            De : {message.data.Sender.fs_name} (Role,formateur).{" "}
+            {new Date(message.data.createdAt).toLocaleDateString("fr-FR", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
         </div>
-        <p>
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Minima, nisi beatae animi
-          sapiente rerum doloremque. Recusandae, doloribus accusantium? Eveniet quos rem velit rerum
-          sed magnam error hic suscipit nihil porro. Lorem ipsum dolor sit amet consectetur
-          adipisicing elit. Impedit eligendi quo nobis dolorem nisi! Minus iure animi possimus
-          architecto in a sed deserunt est, ad dicta, totam facere perferendis harum?
-        </p>
+        <p>{message.data.content}</p>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <MessageActions />
+    </Suspense>
   );
 }
