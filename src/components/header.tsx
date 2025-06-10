@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 
 const navLinks = [
   { href: "/trainings", label: "Formation" },
-  { href: "/trainings", label: "Bibliothèque" },
+  { href: "/library", label: "Bibliothèque" },
   { href: "#", label: "Candidater" },
   { href: "/about-us", label: "À propos" },
 ];
