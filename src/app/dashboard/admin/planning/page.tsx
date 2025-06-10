@@ -1,32 +1,34 @@
+// Main Page
 "use client";
 import { Calendar } from "@/components/ui/calendar";
 import { EventViewer } from "./event-viewer";
 import { useState } from "react";
 import { NewEvent } from "./new-event";
+import { useListEventsQuery } from "@/lib/apis/common/planning";
+import { Loading } from "@/components/shared/loading";
 
 const adaptApiResponseToEvents = (apiResponse: any) => {
+  if (!apiResponse?.data?.list) return [];
+
   return apiResponse.data.list.map((item: any) => ({
     title: item.titre,
     type: item.type as "Evènement" | "Réunion" | "Examen",
     startTime: new Date(parseInt(item.timeline[0]) * 1000),
     endTime: new Date(parseInt(item.timeline[1]) * 1000),
+    description: item.description,
+    createdBy: item.Createdby ? `${item.Createdby.fs_name} ${item.Createdby.ls_name}` : "Inconnu",
   }));
 };
 
-// const apiResponse =
-
-const today = new Date();
-const events = [
-  {
-    title: "My event here!!!",
-    type: "Evènement" as const,
-    startTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 30),
-    endTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 30),
-  },
-];
-
 export default function Page() {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const { data, isLoading } = useListEventsQuery();
+  console.log(data);
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  const events = adaptApiResponseToEvents(data);
 
   return (
     <div className="bg-white">
@@ -35,7 +37,7 @@ export default function Page() {
         <NewEvent />
       </div>
 
-      <div className="flex flex-col md:flex-row  gap-5 p-5">
+      <div className="flex flex-col md:flex-row gap-5 p-5">
         <Calendar mode="single" selected={date} onSelect={setDate} />
         <EventViewer selected={date ?? new Date()} events={events} />
       </div>

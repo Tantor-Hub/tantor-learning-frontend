@@ -27,10 +27,10 @@ export const EventApi = createApi({
       providesTags: ["Event"],
     }),
     addEvent: builder.mutation<AddEventResponse, AddEventRequest>({
-      query: (userData) => ({
+      query: (body) => ({
         url: "/api/cms/events/event/add",
         method: "POST",
-        body: userData,
+        body: body,
       }),
       invalidatesTags: ["Event"],
     }),

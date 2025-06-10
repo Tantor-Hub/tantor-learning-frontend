@@ -76,9 +76,9 @@ export function NavUser() {
     setShowLogoutDialog(true);
   };
 
-  const confirmLogout = () => {
+  const confirmLogout = async () => {
     setShowLogoutDialog(false);
-    logout();
+    await logout();
   };
 
   return (

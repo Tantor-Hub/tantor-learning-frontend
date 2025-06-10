@@ -4,9 +4,11 @@ import { useState } from "react";
 
 export interface EventProps {
   title: string;
-  type: "Cours" | "Examen" | "Evènement";
+  type: "Evènement" | "Réunion" | "Examen";
   startTime: Date;
   endTime: Date;
+  description?: string;
+  createdBy?: string;
 }
 
 export function EventViewer({ selected, events }: { selected: Date; events?: EventProps[] }) {
@@ -22,7 +24,7 @@ export function EventViewer({ selected, events }: { selected: Date; events?: Eve
     finalDate = formatedDate.charAt(0).toUpperCase() + formatedDate.slice(1);
   }
 
-  //Filter events to the selected date
+  // Filter events to the selected date
   const todaysEvents = events?.filter(
     (event) =>
       event.startTime.getFullYear() === selected.getFullYear() &&
@@ -36,7 +38,7 @@ export function EventViewer({ selected, events }: { selected: Date; events?: Eve
     <div className="flex-[1] border shadow-md p-5 flex flex-col gap-5 rounded-[8px]">
       <div>
         <h2 className="text-[#0466C8] font-medium text-base md:text-[18px]">
-          Planning global - {finalDate}
+          Planning global - {finalDate}
         </h2>
         <p className="text-sm">{events?.length || 0} évènement(s) programmé(s) </p>
       </div>
@@ -64,7 +66,7 @@ export function EventViewer({ selected, events }: { selected: Date; events?: Eve
                   Semaine
                 </TabsTrigger>
                 <TabsTrigger value="month" className="flex-[1] p-4">
-                  Moi
+                  Mois
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -80,9 +82,13 @@ export function EventViewer({ selected, events }: { selected: Date; events?: Eve
                   <p>{event.type}</p>
                   <h4>{event.title}</h4>
                   <p>
-                    {event.startTime.getHours()}:{event.startTime.getMinutes()} -{" "}
-                    {event.endTime.getHours()}:{event.endTime.getMinutes()}
+                    {event.startTime.getHours().toString().padStart(2, "0")}:
+                    {event.startTime.getMinutes().toString().padStart(2, "0")} -{" "}
+                    {event.endTime.getHours().toString().padStart(2, "0")}:
+                    {event.endTime.getMinutes().toString().padStart(2, "0")}
                   </p>
+                  {event.description && <p>{event.description}</p>}
+                  {event.createdBy && <p>Créé par: {event.createdBy}</p>}
                 </div>
               ))}
               <span className="w-full border-b pb-3.5">15:00</span>
