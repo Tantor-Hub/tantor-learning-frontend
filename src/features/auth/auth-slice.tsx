@@ -2,7 +2,7 @@ import { authApi, SignupData } from "@/lib/apis/auth-api";
 import { usersApi } from "@/lib/apis/users-api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-interface AuthState {
+export interface AuthState {
   token: string | null;
   refreshToken: string | null;
   expiresAt: number | null;

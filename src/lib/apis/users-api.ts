@@ -1,5 +1,5 @@
 // File: src/lib/api/users-api.ts
-import { baseQuery, createApi } from "./base-api";
+import { createApi, enhancedBaseQuery } from "./base-api";
 
 // User related types
 export interface ProfileUpdateResponse {
@@ -76,7 +76,7 @@ export interface User {
 // Users API
 export const usersApi = createApi({
   reducerPath: "usersApi",
-  baseQuery,
+  baseQuery: enhancedBaseQuery,
   tagTypes: ["User"],
   endpoints: (builder) => ({
     getUserProfile: builder.query<User, void>({

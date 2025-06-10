@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkle } from "lucide-react";
-
+import { useLogout } from "@/hooks/use-logout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -19,6 +19,16 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useGetUserProfileQuery } from "@/lib/apis/users-api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type UserDataProps = {
   id: number;
@@ -50,56 +60,37 @@ type UserDataProps = {
 
 export function NavUser() {
   const { isMobile } = useSidebar();
+  const { logout } = useLogout();
   const { data, isLoading, isError } = useGetUserProfileQuery();
   const [preview, setPreview] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserDataProps | null>(null);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  // Vérifier et mettre à jour les données utilisateur quand elles sont chargées
   useEffect(() => {
     if (data) {
-      // console.log("Structure complète des données:", JSON.stringify(data));
       setUserData(data.data);
     }
   }, [data]);
 
-  if (isLoading || isError || !userData) {
-    // return null;
-    // if (isError) return null;
-    // if (!userData) return null;
-    // console.log(userData);
-  }
+  const handleLogoutClick = () => {
+    setShowLogoutDialog(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutDialog(false);
+    logout();
+  };
 
   return (
-    <SidebarMenu className="border rounded-md hover:cursor-pointer">
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={userData?.avatar || ""} alt={userData?.fs_name} />
-                <AvatarFallback className="rounded-lg">
-                  {userData?.fs_name[0]}
-                  {userData?.ls_name[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{userData?.nick_name}</span>
-                <span className="truncate text-xs">{userData?.email}</span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-4" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+    <>
+      <SidebarMenu className="border rounded-md hover:cursor-pointer">
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                size="lg"
+                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              >
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={userData?.avatar || ""} alt={userData?.fs_name} />
                   <AvatarFallback className="rounded-lg">
@@ -111,31 +102,63 @@ export function NavUser() {
                   <span className="truncate font-semibold">{userData?.nick_name}</span>
                   <span className="truncate text-xs">{userData?.email}</span>
                 </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              {/* <DropdownMenuItem>
-                <BadgeCheck />
-                Account
+                <ChevronsUpDown className="ml-auto size-4" />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+              side={isMobile ? "bottom" : "right"}
+              align="end"
+              sideOffset={4}
+            >
+              <DropdownMenuLabel className="p-0 font-normal">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarImage src={userData?.avatar || ""} alt={userData?.fs_name} />
+                    <AvatarFallback className="rounded-lg">
+                      {userData?.fs_name[0]}
+                      {userData?.ls_name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">{userData?.nick_name}</span>
+                    <span className="truncate text-xs">{userData?.email}</span>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem>
+                  <Bell className="mr-2 h-4 w-4" />
+                  Notifications
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogoutClick}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Se déconnecter
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem> */}
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut />
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Êtes-vous sûr de vouloir vous déconnecter ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous serez redirigé vers la page de connexion et devrez vous reconnecter pour accéder
+              à nouveau à votre compte.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmLogout}>Se déconnecter</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
