@@ -153,6 +153,12 @@ const navigationMenus: NavigationMenus = {
       icon: User,
     },
     {
+      title: "Formations",
+      url: "secretary/training",
+      icon: Shapes,
+      isActive: true,
+    },
+    {
       title: "Cours",
       url: "secretary/courses",
       icon: FileText,

@@ -15,11 +15,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 export function TabsView() {
   return (
     <Tabs defaultValue="all" className="w-full">
-      <TabsList className="flex items-center gap-4 my-4 bg-white border">
-        <TabsTrigger value="all">Tous</TabsTrigger>
-        <TabsTrigger value="actifs">Actifs</TabsTrigger>
-        <TabsTrigger value="brouillon">Brouillon</TabsTrigger>
-        <TabsTrigger value="archives">Archives</TabsTrigger>
+      <TabsList className="w-full mb-8 px-2.5 py-6 bg-white border font-semibold">
+        <TabsTrigger value="all" className="p-5 px-2 md:px-5">
+          Tous
+        </TabsTrigger>
+        <TabsTrigger value="actifs" className="p-5 px-2 md:px-5">
+          Actifs
+        </TabsTrigger>
+        <TabsTrigger value="brouillon" className="p-5 px-2 md:px-5">
+          Brouillon
+        </TabsTrigger>
+        <TabsTrigger value="archives" className="p-5 px-2 md:px-5">
+          Archives
+        </TabsTrigger>
       </TabsList>
       <TabsContent value="all">
         <div className="overflow-x-auto p-8 shadow-md my-5 border border-border rounded-md bg-white">
