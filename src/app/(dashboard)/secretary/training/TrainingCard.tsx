@@ -2,9 +2,10 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Trash2 } from "lucide-react";
+import { Eye, Loader2, Trash2 } from "lucide-react";
 import { useDeleteTrainingByIdMutation } from "@/lib/apis/secretary/training-secretary-api";
 import { ITraining } from "@/types/secretary/training-secretary";
+import { toast } from "sonner";
 
 interface TrainingCardProps {
   formation: ITraining;
@@ -17,14 +18,23 @@ const TrainingCard: React.FC<TrainingCardProps> = ({
   onViewDetails,
   refetchFormations,
 }) => {
-  const [deleteTrainingMutation] = useDeleteTrainingByIdMutation();
+  const [deleteTrainingMutation, { isLoading }] = useDeleteTrainingByIdMutation();
 
   const handleDelete = async (id: string) => {
     try {
       await deleteTrainingMutation({ id }).unwrap();
+      toast.success("Suppression réussie", {
+        description: "La formation a été supprimée avec succès.",
+      });
+
       refetchFormations();
     } catch (error) {
-      console.error("Error deleting training:", error);
+      console.error("Delete error:", error);
+
+      toast.error("Échec de la suppression", {
+        description:
+          "Une erreur est survenue lors de la suppression de la formation. Veuillez réessayer.",
+      });
     }
   };
 
@@ -69,7 +79,11 @@ const TrainingCard: React.FC<TrainingCardProps> = ({
               size="icon"
               className="text-red-600"
             >
-              <Trash2 className="w-4 h-4" />
+              {isLoading ? (
+                <Loader2 className="animate-spin  size-4" />
+              ) : (
+                <Trash2 className="size-4" />
+              )}
             </Button>
           </div>
         </div>

@@ -20,6 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ICategory } from "@/types/secretary/training-secretary";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface TrainingFormProps {
   children: React.ReactNode;
@@ -59,7 +61,7 @@ const trainingTypes = [
 ];
 
 const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChange, onSuccess }) => {
-  const [addTrainingMutation] = useAddTrainingMutation();
+  const [addTrainingMutation, { isLoading }] = useAddTrainingMutation();
   const [form, setForm] = React.useState({
     titre: "",
     sous_titre: "",
@@ -75,7 +77,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
 
   const handleSubmit = async () => {
     try {
-      const promise = await addTrainingMutation({
+      await addTrainingMutation({
         titre: form.titre,
         sous_titre: form.sous_titre,
         type_formation: form.type_formation as
@@ -91,11 +93,15 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
         objectif: form.objectif,
         alternance: form.alternance,
       }).unwrap();
-      console.log(promise);
+      toast.success("Création réussie", {
+        description: "La formation a été créée avec succès.",
+      });
       onSuccess();
     } catch (error) {
-      console.log(error);
-      // console.error("Error adding training:", error);
+      toast.error("Erreur lors de la création", {
+        description:
+          "Une erreur est survenue lors de la création de la formation. Veuillez réessayer.",
+      });
     }
   };
 
@@ -233,7 +239,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
             Annuler
           </Button>
           <Button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">
-            Créer la Formation
+            {isLoading ? <Loader2 className="animate-spin" /> : "Créer la Formation"}
           </Button>
         </div>
       </DialogContent>
