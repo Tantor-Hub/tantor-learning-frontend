@@ -67,7 +67,7 @@ export function SignUpForm() {
       if (result) {
         // Handle successful Google sign-in
         toast.success("Connexion avec Google réussie!");
-        router.push("/dashboard"); // Redirect to dashboard or appropriate page
+        router.push("/"); // Redirect to dashboard or appropriate page
       }
     } catch (error) {
       toast.dismiss();

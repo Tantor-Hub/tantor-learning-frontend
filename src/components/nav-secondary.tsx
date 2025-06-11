@@ -30,7 +30,7 @@ export function NavSecondary({
               key={item.title}
               className={`hover:bg-[#ECECEC] rounded-lg p-2 ${currentSegment == item.url.trim().split("/").pop() ? "bg-[#ececec]" : ""}`}
             >
-              <Link href={`/dashboard/${item.url}`} className="flex items-center gap-6">
+              <Link href={`/${item.url}`} className="flex items-center gap-6">
                 <item.icon size={24} />
                 <p>{item.title}</p>
               </Link>

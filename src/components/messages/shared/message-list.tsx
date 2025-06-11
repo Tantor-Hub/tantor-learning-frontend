@@ -13,7 +13,7 @@ interface MessageListProps {
 export const MessageList = ({ messages, isLoading, isSuccess }: MessageListProps) => {
   const pathname = usePathname();
   // Extract the role: 'student' or 'admin' ...
-  const role = pathname.split("/")[2]; // 'dashboard/student/messages' -> ['','dashboard','student','messages'
+  const role = pathname.split("/")[1]; // '/student/messages' -> ['','dashboard','student','messages'
   if (isLoading) {
     return <Loading />;
   }
@@ -31,7 +31,7 @@ export const MessageList = ({ messages, isLoading, isSuccess }: MessageListProps
   return (
     <div className="my-4 grid grid-cols-1 gap-4">
       {messages?.map((msg) => (
-        <Link key={msg.id} href={`/dashboard/${role}/messages/${msg.id}`}>
+        <Link key={msg.id} href={`/${role}/messages/${msg.id}`}>
           <MessageCard
             name={`${msg?.Sender?.fs_name} ${msg.Sender.ls_name}`}
             // role={msg.sender?.role || "Rôle inconnu"}

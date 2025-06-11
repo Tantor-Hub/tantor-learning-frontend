@@ -229,7 +229,7 @@ export function Reset() {
           </AlertDialogHeader>
           <AlertDialogFooter className="grid grid-cols-1 gap-4">
             <AlertDialogAction
-              onClick={() => router.push("/dashboard/student")}
+              onClick={() => router.push("/student")}
               className="bg-blue-500 w-full"
             >
               Aller au tableau de bord

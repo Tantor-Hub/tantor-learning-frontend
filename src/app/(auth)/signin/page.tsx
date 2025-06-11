@@ -52,7 +52,7 @@ export default function SignIn() {
         })
       );
       // it will get handle inside the layout
-      // router.push("/dashboard/student");
+      // router.push("/student");
     } catch (error: any) {
       toast.dismiss(loadingToast);
       const errorMessage =
@@ -81,7 +81,7 @@ export default function SignIn() {
       // );
 
       // toast.success("Connexion avec Google réussie!");
-      // router.push("/dashboard/student");
+      // router.push("/student");
     } catch (error) {
       // toast.error("Échec de la connexion avec Google");
     }

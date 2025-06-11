@@ -25,7 +25,7 @@ export default function SuccessPage() {
         Félicitations! Votre paiement a été effectué avec succès
       </h1>
       <div className="mt-10">
-        <Link href="/dashboard">
+        <Link href="/">
           <Button className="bg-blue-900 hover:bg-blue-950 text-white px-6 py-2 rounded">
             Aller au Tableau De Bord
           </Button>

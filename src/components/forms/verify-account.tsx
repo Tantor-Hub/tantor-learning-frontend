@@ -49,7 +49,7 @@ export function VerifyAccount() {
         })
       );
       toast.dismiss();
-      router.replace("/dashboard/student");
+      router.replace("/student");
       toast.success("Compte vérifié avec succès");
     } catch (error: any) {
       toast.dismiss();

@@ -18,7 +18,7 @@ const OngoingCourse = ({ ongoing }: { ongoing: OngoingCourseTypes }) => {
       </div>
       <Button
         className="p-5 bg-[#0466C8] w-52 md:w-auto mx-auto md:mx-0 cursor-pointer"
-        onClick={() => router.push("/dashboard/student/courses/live")}
+        onClick={() => router.push("/student/courses/live")}
       >
         Rejoindre
       </Button>

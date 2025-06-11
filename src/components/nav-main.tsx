@@ -15,6 +15,7 @@ export function NavMain({
   }[];
 }) {
   const pathname = usePathname();
+  // console.log(pathname);
   const currentSegment = pathname.trim().split("/").pop();
   return (
     <SidebarGroup>
@@ -24,7 +25,7 @@ export function NavMain({
             className={`hover:bg-[#ECECEC] rounded-lg p-2 ${currentSegment == item.url.trim().split("/").pop() ? "bg-[#ececec]" : ""}`}
             key={item.title}
           >
-            <Link href={`/dashboard/${item.url}`} className="flex items-center gap-6">
+            <Link href={`/${item.url}`} className="flex items-center gap-6">
               <item.icon size={24} />
               <p>{item.title}</p>
             </Link>

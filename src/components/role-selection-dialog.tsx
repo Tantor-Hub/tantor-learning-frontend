@@ -35,11 +35,11 @@ export function RoleSelectionDialog({ roles, isOpen, onClose }: RoleSelectionDia
   const getDashboardPath = (role: string): string | null => {
     switch (role) {
       case "Admin":
-        return "/dashboard/admin";
+        return "/admin";
       case "Étudiants":
-        return "/dashboard/student";
+        return "/student";
       case "Secrétariat & Administratif":
-        return "/dashboard/secretary";
+        return "/secretary";
       default:
         return null;
     }
@@ -100,11 +100,11 @@ export function useRoleSelection() {
   const getDashboardPath = (role: string): string | null => {
     switch (role) {
       case "Admin":
-        return "/dashboard/admin";
+        return "/admin";
       case "Étudiants":
-        return "/dashboard/student";
+        return "/student";
       case "Secrétariat & Administratif":
-        return "/dashboard/secretary";
+        return "/secretary";
       default:
         return null;
     }

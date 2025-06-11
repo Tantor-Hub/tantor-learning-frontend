@@ -17,7 +17,7 @@ import { usePathname } from "next/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const path = usePathname();
-  const role = path.split("/")[2] as Role;
+  const role = path.split("/")[1] as Role;
   return (
     <Sidebar variant="inset" {...props} className="p-0 border-r border-border px-2 sticky top-0">
       <SidebarHeader>

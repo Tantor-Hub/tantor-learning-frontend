@@ -82,7 +82,7 @@ export default function Page() {
                 variant="outline"
                 size="lg"
                 className="flex-1"
-                onClick={() => router.push(`/dashboard/student/training/${dcgData.id}`)}
+                onClick={() => router.push(`/student/training/${dcgData.id}`)}
               >
                 Détails
               </Button>
