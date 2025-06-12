@@ -2,11 +2,27 @@
 import { useGetAllBooksInLibraryQuery } from "@/lib/apis/public/public-api";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Loading } from "@/components/shared/loading";
+import { selectCurrentUser, selectIsAuthenticated } from "@/features/auth/auth-slice";
+import { useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function Page() {
   const { data, isLoading } = useGetAllBooksInLibraryQuery();
-
+  const router = useRouter();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
   if (isLoading) return <Loading />;
+  if (!isAuthenticated) {
+    toast.info("Vous devez créer un compte pour accéder à cette fonctionnalité", {
+      action: {
+        label: "Créer un compte",
+        onClick: () => router.push("/signup"),
+      },
+      duration: 5000,
+    });
+    router.push("/signin");
+    return;
+  }
 
   // console.log("data: ", data);
 

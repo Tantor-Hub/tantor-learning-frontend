@@ -55,4 +55,8 @@ export const trainingStudentApi = createApi({
   }),
 });
 
-export const { useGetAllTrainingsQuery, useGetTrainingsByCategoryQuery } = trainingStudentApi;
+export const {
+  useGetAllTrainingsQuery,
+  useGetTrainingsByCategoryQuery,
+  useApplyToTrainingMutation,
+} = trainingStudentApi;

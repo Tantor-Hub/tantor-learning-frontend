@@ -72,7 +72,7 @@ export function Reset() {
       //     user: promise.data.user,
       //   })
       // );
-
+      router.replace("/");
       toast.success("Succès !", {
         description: "Votre mot de passe a été réinitialisé avec succès.",
       });

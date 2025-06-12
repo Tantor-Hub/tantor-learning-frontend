@@ -187,7 +187,7 @@ export default function PaymentPage() {
       </Dialog>
 
       {/* Course Details Modal */}
-      <CourseModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      {/* <CourseModal isOpen={modalOpen} onClose={() => setModalOpen(false)} /> */}
     </div>
   );
 }

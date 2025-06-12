@@ -8,6 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { ITraining } from "@/types/secretary/training-secretary";
 
 interface CourseModalProps {
   isOpen: boolean;

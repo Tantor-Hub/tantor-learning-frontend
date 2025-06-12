@@ -40,6 +40,8 @@ export function RoleSelectionDialog({ roles, isOpen, onClose }: RoleSelectionDia
         return "/student";
       case "Secrétariat & Administratif":
         return "/secretary";
+      case "Formateurs":
+        return "/instructor";
       default:
         return null;
     }

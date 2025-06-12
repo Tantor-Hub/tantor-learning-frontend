@@ -1,3 +1,5 @@
 import { Loading } from "@/components/shared/loading";
 
-export default Loading;
+export default function Page() {
+  return <Loading />;
+}

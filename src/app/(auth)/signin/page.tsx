@@ -9,6 +9,7 @@ import { useDispatch } from "react-redux";
 import { Label } from "@/components/ui/label";
 import { setCredentials } from "@/features/auth/auth-slice";
 import { useAuthWithGoogleMutation, useSigninMutation } from "@/lib/apis/auth-api";
+import { useRouter } from "next/navigation";
 
 interface FormData {
   email: string;
@@ -16,6 +17,7 @@ interface FormData {
 }
 
 export default function SignIn() {
+  const router = useRouter();
   const [signin, { isLoading: isSignInLoading }] = useSigninMutation();
   const [triggerGoogleAuth, { isLoading: isGoogleAuthLoading }] = useAuthWithGoogleMutation();
   const [showPassword, setShowPassword] = useState(false);
@@ -51,8 +53,8 @@ export default function SignIn() {
           user: promise.data.user,
         })
       );
-      // it will get handle inside the layout
-      // router.push("/student");
+      // it will get handle inside the layout main page with the status of isAuthenticated is true
+      router.push("/");
     } catch (error: any) {
       toast.dismiss(loadingToast);
       const errorMessage =

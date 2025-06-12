@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight, Funnel } from "lucide-react";
+import { ArrowRight, Funnel, Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import NewsLetter from "../components/newsletter";
@@ -18,6 +18,9 @@ import CourseModal from "@/components/course-modal";
 import { dcgData } from "./data/index";
 import { useGetAllTrainingsQuery } from "@/lib/apis/public/public-api";
 import { Loading } from "@/components/shared/loading";
+import { useApplyToTrainingMutation } from "@/lib/apis/student/training-api";
+import { toast } from "sonner";
+
 const filters = [
   { label: "Niveau", value: "Tous les niveaux" },
   { label: "Modalité d'enseignement", value: "Toutes les modalités" },
@@ -29,12 +32,38 @@ const filters = [
 
 const dcgArray = Array.from({ length: 9 }, () => ({ ...dcgData }));
 
-export default function Dashboard() {
+export default function Page() {
+  const [applySessionMutation, { isLoading: isLoadingApplySessionMutation }] =
+    useApplyToTrainingMutation();
   const [isShown, setIsShown] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const { data, isLoading } = useGetAllTrainingsQuery();
   if (isLoading) return <Loading />;
-  console.log("data", data);
+  // console.log("data", data);
+  const handleApplySessionMutation = async (id: number) => {
+    try {
+      await applySessionMutation({ id_session: id }).unwrap();
+      // console.log(response);
+      toast.success("Candidature enregistrée", {
+        description:
+          "Votre demande a bien été prise en compte. Vous recevrez sous peu la liste des documents à fournir pour finaliser votre inscription.",
+      });
+    } catch (error: any) {
+      let errorMessage = "Une erreur est survenue lors de votre candidature";
+
+      if (error.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error.status === 403) {
+        errorMessage = "Vous devez compléter votre profil avant de postuler";
+      } else if (error.status === 409) {
+        errorMessage = "Vous avez déjà postulé à cette session";
+      }
+
+      toast.error("Erreur de candidature", {
+        description: errorMessage,
+      });
+    }
+  };
   return (
     <section>
       <div className="max-w-[1440px] m-auto px-5 md:px-10">
@@ -120,25 +149,35 @@ export default function Dashboard() {
 
                 <Button
                   className="bg-transparent border border-[#0466C8] hover:shadow-sm hover:shadow-blue-300 h-fit"
-                  onClick={() => setModalOpen(true)}
+                  onClick={() => handleApplySessionMutation(item.id)}
+                  // onClick={() => setModalOpen(true)}
                 >
-                  <Link
+                  {/* <Link
                     href={dcgData.link}
                     className="text-[#5C677D] font-semibold flex justify-between w-full items-center p-[7px_12px]"
-                  >
-                    <span>Plus de détails</span>
-                    <ArrowRight />
-                  </Link>
+                  > */}
+                  {/* For Later */}
+                  {/* <span>Plus de détails</span> */}
+                  {isLoadingApplySessionMutation ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <>
+                      <span className="text-[#5C677D]">S'inscrire</span>
+                      <ArrowRight className="text-[#5C677D]" />
+                    </>
+                  )}
+                  {/* </Link> */}
                 </Button>
               </div>
             </div>
           ))}
         </div>
       </div>
+      {/* This will be used later */}
+      {/* <CourseModal isOpen={modalOpen} onClose={() => setModalOpen(false)} data={item} /> */}
       <div className="bg-[#0466C8]">
         <NewsLetter />
       </div>
-      <CourseModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </section>
   );
 }
