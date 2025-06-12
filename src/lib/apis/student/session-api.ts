@@ -10,11 +10,7 @@
 //   baseQuery,
 //   tagTypes: ["SessionStudent"],
 //   endpoints: (builder) => ({
-//     sessionApply: builder.mutation<void, {  "id_session": 2
-// }>({
-
-// })
-//     getAllTrainings: builder.query<void, IGetAllTrainingsResponse>({
+//     sessionList: builder.query<void, IGetAllTrainingsResponse>({
 //       query: () => "/api/sessions/list",
 //       providesTags: ["SessionStudent"],
 //     }),

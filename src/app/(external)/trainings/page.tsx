@@ -172,6 +172,17 @@ export default function Page() {
             </div>
           ))}
         </div>
+        {/* Section d'appel à l'action */}
+        {/* <div className="bg-blue-50 rounded-lg p-6 mt-8 text-center">
+          <h2 className="text-xl font-semibold text-blue-800 mb-3">Vous hésitez encore ?</h2>
+          <p className="text-gray-600 mb-4">
+            Nos conseillers pédagogiques sont à votre disposition pour vous aider à choisir la
+            formation la plus adaptée à vos objectifs professionnels.
+          </p>
+          <Button variant="outline" className="border-blue-600 text-blue-600">
+            Contactez un conseiller
+          </Button>
+        </div> */}
       </div>
       {/* This will be used later */}
       {/* <CourseModal isOpen={modalOpen} onClose={() => setModalOpen(false)} data={item} /> */}

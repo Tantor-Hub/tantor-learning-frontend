@@ -10,7 +10,7 @@ interface SessionListProps {
 }
 
 const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
-  console.log("sessions", sessions);
+  // console.log("sessions", sessions);
   return (
     <div className="space-y-4">
       {sessions.map((session: ISession) => (

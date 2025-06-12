@@ -10,7 +10,7 @@ export const trainingStudentApi = createApi({
   baseQuery,
   tagTypes: ["TrainingStudent"],
   endpoints: (builder) => ({
-    getAllTrainings: builder.query<void, IGetAllTrainingsResponse>({
+    getAllTrainings: builder.query<IGetAllTrainingsResponse, void>({
       query: () => "/api/sessions/list",
       providesTags: ["TrainingStudent"],
     }),
