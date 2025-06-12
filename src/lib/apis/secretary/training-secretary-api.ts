@@ -1,5 +1,9 @@
-import { IAddTrainingRequest, ITrainingListResponse } from "@/types/secretary/training-secretary";
 import { createApi, enhancedBaseQuery } from "../base-api";
+import {
+  IAddTrainingRequest,
+  ITrainingByIdResponse,
+  ITrainingListResponse,
+} from "@/types/secretary/training-secretary";
 
 // Training Secretary API
 export const trainingSecretaryApi = createApi({
@@ -23,7 +27,7 @@ export const trainingSecretaryApi = createApi({
       query: ({ id }) => `/api/formations/list/bycategory/${id}`,
       providesTags: ["TrainingSecretary"],
     }),
-    listTrainingById: builder.query<ITrainingListResponse, { id: string }>({
+    listTrainingById: builder.query<ITrainingByIdResponse, { id: string }>({
       query: ({ id }) => `/api/formations/formation/${id}`,
       providesTags: ["TrainingSecretary"],
     }),

@@ -3,6 +3,7 @@ import {
   IContactFormRequest,
   IContactFormResponse,
   IGetAllTrainingsResponse,
+  ILibraryResponse,
   ISubscribeNewsLetterRequest,
   ISubscribeNewsLetterResponse,
 } from "@/types/public-api";
@@ -22,7 +23,7 @@ export const publicApi = createApi({
         body: body,
       }),
     }),
-    getAllTrainings: builder.query<void, IGetAllTrainingsResponse>({
+    getAllTrainings: builder.query<IGetAllTrainingsResponse, void>({
       query: () => "/api/sessions/list",
       providesTags: ["Public"],
     }),
@@ -34,8 +35,8 @@ export const publicApi = createApi({
       }),
       invalidatesTags: ["Public"],
     }),
-    getAllBooksInLibrary: builder.query({
-      query: () => "/api/cms/libraries/list",
+    getAllBooksInLibrary: builder.query<ILibraryResponse, void>({
+      query: () => "/api/cms/librairies/list",
       providesTags: ["Public"],
     }),
   }),

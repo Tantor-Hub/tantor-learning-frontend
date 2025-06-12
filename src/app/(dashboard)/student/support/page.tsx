@@ -51,7 +51,7 @@ export default function Page() {
 
   const handleDownloadGuide = (): void => {
     // Logique pour télécharger le guide
-    console.log("Téléchargement du guide d'aide");
+    // console.log("Téléchargement du guide d'aide");
   };
 
   // Form submission handler

@@ -16,7 +16,8 @@ import Link from "next/link";
 import NewsLetter from "../components/newsletter";
 import CourseModal from "@/components/course-modal";
 import { dcgData } from "./data/index";
-
+import { useGetAllTrainingsQuery } from "@/lib/apis/public/public-api";
+import { Loading } from "@/components/shared/loading";
 const filters = [
   { label: "Niveau", value: "Tous les niveaux" },
   { label: "Modalité d'enseignement", value: "Toutes les modalités" },
@@ -31,7 +32,9 @@ const dcgArray = Array.from({ length: 9 }, () => ({ ...dcgData }));
 export default function Dashboard() {
   const [isShown, setIsShown] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-
+  const { data, isLoading } = useGetAllTrainingsQuery();
+  if (isLoading) return <Loading />;
+  console.log("data", data);
   return (
     <section>
       <div className="max-w-[1440px] m-auto px-5 md:px-10">
@@ -84,16 +87,14 @@ export default function Dashboard() {
           </div>
         )}
         <div className="py-10  grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-7">
-          {dcgArray.map((dcgData, i) => (
-            <div key={i} className="border border-blue-200 rounded-[6px] shadow-sm max-w-md">
+          {data?.data.list.map((item) => (
+            <div key={item.id} className="border border-blue-200 rounded-[6px] shadow-sm max-w-md">
               <div className="p-5 bg-[#007AFF26] flex flex-col gap-4">
-                <h2 className="text-xl font-semibold text-blue-900">{dcgData.title}</h2>
-                <p className="text-gray-700 font-medium">
-                  {dcgData.category} • {dcgData.level}
-                </p>
+                <h2 className="text-xl font-semibold text-blue-900">{item.Formation.titre}</h2>
+                <p className="text-gray-700 font-medium">{item.Formation.sous_titre}</p>
               </div>
               <div className="p-10 pt-5 flex flex-col gap-4">
-                <p className="text-[#5C677D] mt-4 mb-5">{dcgData.description}</p>
+                <p className="text-[#5C677D] mt-4 mb-5">{item.Formation.description}</p>
 
                 <div className="flex gap-2.5">
                   <Image src="/icons/house.svg" height={20} width={20} alt="house icon" />
@@ -106,7 +107,7 @@ export default function Dashboard() {
 
                 <div className="flex items-center gap-2.5">
                   <Image src="/icons/clock.svg" height={20} width={20} alt="house icon" />
-                  {dcgData.duration}
+                  {item.duree}
                 </div>
                 <div className="flex items-center gap-2.5">
                   <Image src="/icons/graduation.svg" height={20} width={20} alt="house icon" />{" "}
@@ -114,7 +115,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center gap-2.5">
                   <Image src="/icons/money.svg" height={20} width={20} alt="house icon" />{" "}
-                  {dcgData.price}
+                  {item.prix}
                 </div>
 
                 <Button

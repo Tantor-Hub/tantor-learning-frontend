@@ -19,17 +19,17 @@ export default function AuthLayout({
   const { isDialogOpen, setIsDialogOpen, handleUserRoles } = useRoleSelection();
   const roles = currentUser?.roles;
 
-  useEffect(() => {
-    if (isAuthenticated && roles) {
-      handleUserRoles(roles);
-    }
+  // useEffect(() => {
+  //   if (isAuthenticated && roles) {
+  //     handleUserRoles(roles);
+  //   }
 
-    // Check for stored refresh token
-    const storedToken = localStorage.getItem("refreshToken");
-    if (storedToken && !isAuthenticated) {
-      // You could dispatch a token refresh action here
-    }
-  }, [isAuthenticated, router, roles, handleUserRoles]);
+  //   // Check for stored refresh token
+  //   const storedToken = localStorage.getItem("refreshToken");
+  //   if (storedToken && !isAuthenticated) {
+  //     // You could dispatch a token refresh action here
+  //   }
+  // }, [isAuthenticated, router, roles, handleUserRoles]);
 
   return (
     <>
