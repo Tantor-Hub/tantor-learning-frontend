@@ -231,6 +231,8 @@ export function UpdateProfile() {
                       <Image
                         src={preview}
                         alt="Aperçu du profil"
+                        width={24}
+                        height={24}
                         className="w-24 h-24 rounded-full object-cover"
                       />
                     </div>
