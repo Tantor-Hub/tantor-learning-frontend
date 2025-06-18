@@ -95,7 +95,6 @@ export default function NewUserForm({ onCancel }: NewEventFormProps) {
       toast.error("Erreur lors de la création", {
         description: "Une erreur est survenue lors de la création de l'utilisateur",
       });
-      console.error("Erreur:", error);
     }
   };
 

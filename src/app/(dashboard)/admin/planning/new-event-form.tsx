@@ -56,7 +56,6 @@ export function NewEventForm({ onCancel }: NewEventFormProps) {
   const isFormValid = form.formState.isValid;
 
   const handleSubmit = async (data: SupportFormValues) => {
-    // console.log(data);
     try {
       await addEvent({
         titre: data.title,

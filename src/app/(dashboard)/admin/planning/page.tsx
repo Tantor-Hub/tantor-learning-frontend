@@ -23,7 +23,7 @@ const adaptApiResponseToEvents = (apiResponse: any) => {
 export default function Page() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const { data, isLoading } = useListEventsQuery();
-  console.log(data);
+
   if (isLoading) {
     return <Loading />;
   }

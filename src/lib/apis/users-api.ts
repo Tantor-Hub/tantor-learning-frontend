@@ -73,12 +73,30 @@ export interface User {
   };
 }
 
+interface IPublicUsers {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    rows: Array<{
+      id: number;
+      fs_name: string;
+      ls_name: string;
+      avatar: string | null;
+    }>;
+  };
+}
+
 // Users API
 export const usersApi = createApi({
   reducerPath: "usersApi",
   baseQuery: enhancedBaseQuery,
   tagTypes: ["User"],
   endpoints: (builder) => ({
+    publicListUsers: builder.query<IPublicUsers, void>({
+      query: () => "/api/users/list",
+      providesTags: ["User"],
+    }),
     getUserProfile: builder.query<User, void>({
       query: () => "/api/users/user/profile",
       providesTags: ["User"],
@@ -107,4 +125,5 @@ export const {
   useUpdateUserProfileMutation,
   useGetAllUsersQuery,
   useGetUserByIdQuery,
+  usePublicListUsersQuery,
 } = usersApi;

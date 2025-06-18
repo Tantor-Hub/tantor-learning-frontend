@@ -1,7 +1,6 @@
 "use client";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -13,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Loader2, Paperclip, Plus } from "lucide-react";
+import { Loader2, Paperclip, Plus, Search, X } from "lucide-react";
 import { useCreateMessageMutation } from "@/lib/apis/common/chat-api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +26,19 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "sonner";
+import { useState, useEffect } from "react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
+import { usePublicListUsersQuery } from "@/lib/apis/users-api";
+import { Loading } from "@/components/shared/loading";
 
 const messageFormSchema = z.object({
   subject: z
@@ -37,39 +49,65 @@ const messageFormSchema = z.object({
     .string()
     .min(1, "Le message est requis")
     .max(1000, "Le message ne doit pas dépasser 1000 caractères"),
+  recipientId: z.string().min(1, "Le destinataire est requis"),
   attachment: z.any().optional(),
 });
 
+interface User {
+  id: number;
+  fs_name: string;
+  ls_name: string;
+  avatar: string | null;
+}
+
 export function NewMessageAlert() {
+  const { data: usersData, isLoading: isLoadingUsers } = usePublicListUsersQuery();
   const [createMessage, { isLoading }] = useCreateMessageMutation();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [open, setOpen] = useState(false);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 
   const form = useForm<z.infer<typeof messageFormSchema>>({
     resolver: zodResolver(messageFormSchema),
     defaultValues: {
       subject: "",
       content: "",
+      recipientId: "",
     },
-    mode: "onChange", // Validation en temps réel
+    mode: "onChange",
   });
 
+  // Filter users based on search term
+  useEffect(() => {
+    if (usersData?.data?.rows) {
+      const filtered = usersData.data.rows.filter((user: User) =>
+        `${user.fs_name} ${user.ls_name}`.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredUsers(filtered);
+    }
+  }, [searchTerm, usersData]);
+
   const onSubmit = async (values: z.infer<typeof messageFormSchema>) => {
-    // console.log("Form data:", values);
     try {
-      const promise = await createMessage(values).unwrap();
-      toast.success("Message envoye", {
-        description: "Message envoye avec success",
+      await createMessage({
+        subject: values.subject,
+        content: values.content,
+        id_user_receiver: values.recipientId,
+      }).unwrap();
+      toast.success("Message envoyé", {
+        description: "Message envoyé avec succès",
       });
-      // console.log(promise);
       form.reset();
-    } catch (e: any) {
-      toast.error(`${e.name}`, {
-        description: `${e.message}`,
+    } catch {
+      toast.error(`Un erreur est survenu`, {
+        description: `Nous n'avons pas pu envoye le message`,
       });
     }
   };
 
-  // Vérifie si le formulaire est valide
   const isFormValid = form.formState.isValid;
+
+  if (isLoadingUsers) return <Loading />;
 
   return (
     <AlertDialog>
@@ -78,17 +116,86 @@ export function NewMessageAlert() {
           <Plus className="mr-2 h-4 w-4" /> Nouveau Message
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent className="max-w-2xl">
         <AlertDialogHeader>
           <AlertDialogTitle>Nouveau Message</AlertDialogTitle>
           <AlertDialogDescription>
-            Ce message sera visible par tous les étudiants, formateurs, administrateurs et
-            secrétaires.
+            Sélectionnez un destinataire et composez votre message.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Recipient Field */}
+            <FormField
+              control={form.control}
+              name="recipientId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Destinataire</FormLabel>
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value && usersData?.data?.rows
+                            ? usersData.data.rows.find(
+                                (user: User) => user.id.toString() === field.value
+                              )?.fs_name +
+                              " " +
+                              usersData.data.rows.find(
+                                (user: User) => user.id.toString() === field.value
+                              )?.ls_name
+                            : "Sélectionner un destinataire"}
+                          <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Rechercher un destinataire..."
+                          onValueChange={(search) => setSearchTerm(search)}
+                        />
+                        <CommandEmpty>Aucun destinataire trouvé.</CommandEmpty>
+                        <CommandGroup className="max-h-60 overflow-y-auto">
+                          {filteredUsers.map((user: User) => (
+                            <CommandItem
+                              value={user.id.toString()}
+                              key={user.id}
+                              onSelect={() => {
+                                form.setValue("recipientId", user.id.toString());
+                                setOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  user.id.toString() === field.value ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <span>
+                                  {user.fs_name} {user.ls_name}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="subject"
@@ -117,42 +224,14 @@ export function NewMessageAlert() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="attachment"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    <Button
-                      variant="ghost"
-                      type="button"
-                      className="space-x-2 flex justify-start items-center hover:cursor-pointer"
-                      onClick={() => document.getElementById("attachment")?.click()}
-                    >
-                      <Paperclip size={16} />
-                      <span>Attachez une pièce jointe</span>
-                    </Button>
-                    {field.value?.name && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Fichier sélectionné: {field.value.name}
-                      </p>
-                    )}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      id="attachment"
-                      type="file"
-                      className="hidden"
-                      onChange={(e) => field.onChange(e.target.files?.[0])}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <AlertDialogFooter>
-              <AlertDialogCancel type="button" onClick={() => form.reset()}>
+              <AlertDialogCancel
+                type="button"
+                onClick={() => {
+                  form.reset();
+                  setSearchTerm("");
+                }}
+              >
                 Annuler
               </AlertDialogCancel>
               <Button

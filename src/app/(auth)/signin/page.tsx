@@ -72,7 +72,7 @@ export default function SignIn() {
       window.location.href = "https://tantor-learning.up.railway.app/api/users/user/authwithgoogle";
 
       // const result = await triggerGoogleAuth().unwrap();
-      // console.log(result);
+
       // Rest remains the same
       // dispatch(
       //   setCredentials({

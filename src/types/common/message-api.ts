@@ -4,7 +4,7 @@ export interface ICreateMessageRequest {
   subject: string;
   content: string;
   piece_jointe?: File;
-  // id_user_receiver /// pour quoi c'est id alors que tout le monde doit voir c'est msg
+  id_user_receiver: string; /// pour quoi c'est id alors que tout le monde doit voir c'est msg
   is_replied_to?: string; // soit id of a replied msg
   thread?: string; // another unknown value
 }
