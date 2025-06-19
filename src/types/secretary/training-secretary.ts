@@ -99,3 +99,15 @@ export interface ISession {
   createdAt: string;
   updatedAt: string;
 }
+
+// Training Types
+
+export interface ITrainingTypesResponse {
+  status: number;
+  message: string;
+  data: {
+    key: string;
+    type: string;
+    description: string;
+  }[];
+}

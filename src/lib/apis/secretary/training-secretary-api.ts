@@ -3,6 +3,7 @@ import {
   IAddTrainingRequest,
   ITrainingByIdResponse,
   ITrainingListResponse,
+  ITrainingTypesResponse,
 } from "@/types/secretary/training-secretary";
 
 // Training Secretary API
@@ -38,6 +39,10 @@ export const trainingSecretaryApi = createApi({
       }),
       invalidatesTags: ["TrainingSecretary"],
     }),
+    listTrainingType: builder.query<ITrainingTypesResponse, void>({
+      query: () => "/api/formations/types",
+      providesTags: ["TrainingSecretary"],
+    }),
   }),
 });
 
@@ -46,4 +51,5 @@ export const {
   useAddTrainingMutation,
   useDeleteTrainingByIdMutation,
   useListTrainingByIdQuery,
+  useListTrainingTypeQuery,
 } = trainingSecretaryApi;

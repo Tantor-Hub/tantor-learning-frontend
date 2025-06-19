@@ -14,7 +14,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { XCircleIcon } from "lucide-react";
 export function CourseTable() {
-  const { data, isLoading, isError, error } = useListCoursesQuery();
+  const { data, isLoading, isError } = useListCoursesQuery();
 
   if (isLoading) {
     return <Loading />;

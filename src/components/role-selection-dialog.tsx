@@ -91,7 +91,7 @@ export function useRoleSelection() {
       // Single role - redirect directly
       const dashboardPath = getDashboardPath(roles[0].role);
       if (dashboardPath) {
-        router.replace(dashboardPath);
+        router.push(dashboardPath);
       }
     } else if (roles?.length > 1) {
       // Multiple roles - show selection dialog
