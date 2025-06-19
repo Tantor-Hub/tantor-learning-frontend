@@ -7,10 +7,10 @@ import {
 import { createApi, enhancedBaseQuery } from "../base-api";
 
 // Courses API
-export const coursesApi = createApi({
-  reducerPath: "coursesApi",
+export const manageCoursesApi = createApi({
+  reducerPath: "manageCoursesApi",
   baseQuery: enhancedBaseQuery,
-  tagTypes: ["Courses"],
+  tagTypes: ["ManageCourses"],
   endpoints: (builder) => ({
     // COURS
     addCourse: builder.mutation<
@@ -28,11 +28,11 @@ export const coursesApi = createApi({
         method: "POST",
         body: body,
       }),
-      invalidatesTags: ["Courses"],
+      invalidatesTags: ["ManageCourses"],
     }),
     listCourses: builder.query<ICoursesAPIResponse, void>({
       query: () => "/api/courses/presets/list",
-      providesTags: ["Courses"],
+      providesTags: ["ManageCourses"],
     }),
 
     // MATIERES
@@ -49,7 +49,7 @@ export const coursesApi = createApi({
         method: "POST",
         body: body,
       }),
-      invalidatesTags: ["Courses"],
+      invalidatesTags: ["ManageCourses"],
     }),
 
     // Add a document for a course
@@ -65,13 +65,13 @@ export const coursesApi = createApi({
         method: "POST",
         body: body,
       }),
-      invalidatesTags: ["Courses"],
+      invalidatesTags: ["ManageCourses"],
     }),
 
     // get courses content
     getCourseContent: builder.query<ICourseContentResponse, { id_cours: string }>({
       query: ({ id_cours }) => `api/courses/course/${id_cours}`,
-      providesTags: ["Courses"],
+      providesTags: ["ManageCourses"],
     }),
   }),
 });
@@ -81,4 +81,4 @@ export const {
   useListCoursesQuery,
   useAddCourseContentMutation,
   useAddDocumentsForACourseMutation,
-} = coursesApi;
+} = manageCoursesApi;
