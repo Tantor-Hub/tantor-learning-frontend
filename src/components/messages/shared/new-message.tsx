@@ -107,7 +107,7 @@ export function NewMessageAlert() {
 
   const isFormValid = form.formState.isValid;
 
-  if (isLoadingUsers) return <Loading />;
+  if (isLoadingUsers) return null;
 
   return (
     <AlertDialog>
