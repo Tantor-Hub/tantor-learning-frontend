@@ -7,7 +7,7 @@ import { AddSeance } from "./components/add-seance";
 export default function Page() {
   return (
     <Tabs defaultValue="courses" className="w-full">
-      <TabsList className="w-full mb-8 px-2.5 py-6 bg-white border font-semibold">
+      <TabsList className="bg-white border font-semibold px-2.5 py-6 grid-cols-1 gap-4">
         <TabsTrigger value="courses" className="p-5 px-2 md:px-5">
           COURS
         </TabsTrigger>
