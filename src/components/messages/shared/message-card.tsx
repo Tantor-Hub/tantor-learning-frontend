@@ -9,9 +9,10 @@ type MessageCardProps = {
   title: string;
   message: string;
   isRead: boolean;
+  date: Date;
 };
 
-export function MessageCard({ name, role, title, message, isRead }: MessageCardProps) {
+export function MessageCard({ name, role, title, message, isRead, date }: MessageCardProps) {
   // bg-[#E8F0FF]
   return (
     <Card className={cn("transition-all overflow-hidden", !isRead && "")}>
@@ -31,7 +32,16 @@ export function MessageCard({ name, role, title, message, isRead }: MessageCardP
             <CardDescription>{role}</CardDescription>
           </div>
         </div>
-        {!isRead && <Badge className="bg-blue-500">Nouveau</Badge>}
+        <Badge>
+          {date.toLocaleDateString("fr-FR", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </Badge>
       </CardHeader>
       <CardContent>
         <p className="font-bold mb-2 text-base">{title}</p>

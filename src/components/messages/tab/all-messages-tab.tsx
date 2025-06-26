@@ -15,7 +15,7 @@ export const AllMessagesTab = () => {
   return (
     <>
       <div className="flex items-center justify-between">
-        <p>{unreadCount} message(s) non lu(s)</p>
+        <p>Tous les messages</p>
         <NewMessageAlert />
       </div>
       <MessageList

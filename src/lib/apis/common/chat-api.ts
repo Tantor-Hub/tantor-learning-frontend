@@ -4,6 +4,7 @@ import {
   ICreateMessageResponse,
   IGetAllMessagesResponse,
   IGetMessageByIdResponse,
+  IListChatTreadResponse,
 } from "@/types/common/message-api";
 
 // Chat API
@@ -12,15 +13,24 @@ export const chatApi = createApi({
   baseQuery,
   tagTypes: ["Chat"],
   endpoints: (builder) => ({
+    // TREAD
+    // Liste des messages par thread
+    listChatTread: builder.query<IListChatTreadResponse, { id: string }>({
+      query: ({ id }) => `/api/cms/messages/thread/${id}`,
+      providesTags: ["Chat"],
+    }),
+
     listChat: builder.query<IGetAllMessagesResponse, void>({
       query: () => "/api/cms/messages/list",
       providesTags: ["Chat"],
     }),
+    // create Message By Thread -> a reply message -> pour tread ajouter messageID & tread
+
     createMessage: builder.mutation<ICreateMessageResponse, ICreateMessageRequest>({
-      query: (userData) => ({
+      query: (request) => ({
         url: "/api/cms/messages/message/send",
         method: "POST",
-        body: userData,
+        body: request,
       }),
       invalidatesTags: ["Chat"],
     }),
@@ -65,4 +75,5 @@ export const {
   useListChatQuery,
   useCreateMessageMutation,
   useGetMessageByIdQuery,
+  useListChatTreadQuery,
 } = chatApi;

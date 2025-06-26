@@ -56,11 +56,13 @@ export interface IGetMessageByIdResponse {
     content: string;
     date_d_envoie: string;
     date_de_lecture: string | null;
-    piece_jointe: string | null;
+    piece_jointe: any | null;
     is_readed: number;
     is_replied_to: number;
     thread: string;
     status: number;
+    is_deletedto: number[];
+    is_archievedto: any[];
     createdAt: string;
     updatedAt: string;
     Sender: {
@@ -70,6 +72,9 @@ export interface IGetMessageByIdResponse {
       nick_name: string;
       email: string;
       phone: string;
+      roles: Array<{
+        role: string;
+      }>;
     };
     Receiver: {
       id: number;
@@ -78,7 +83,50 @@ export interface IGetMessageByIdResponse {
       nick_name: string;
       email: string;
       phone: string;
+      roles: Array<{
+        role: string;
+      }>;
     };
+    Thread: Array<{
+      id: number;
+      id_user_sender: number;
+      id_user_receiver: number;
+      subject: string;
+      content: string;
+      date_d_envoie: string;
+      date_de_lecture: string | null;
+      piece_jointe: any | null;
+      is_readed: number;
+      is_replied_to: number;
+      thread: string;
+      status: number;
+      is_deletedto: number[];
+      is_archievedto: any[];
+      createdAt: string;
+      updatedAt: string;
+      Sender: {
+        id: number;
+        fs_name: string;
+        ls_name: string;
+        nick_name: string;
+        email: string;
+        phone: string;
+        roles: Array<{
+          role: string;
+        }>;
+      };
+      Receiver: {
+        id: number;
+        fs_name: string;
+        ls_name: string;
+        nick_name: string;
+        email: string;
+        phone: string;
+        roles: Array<{
+          role: string;
+        }>;
+      };
+    }>;
   };
 }
 
@@ -97,18 +145,21 @@ export interface IMessage {
   content: string;
   date_d_envoie: string;
   date_de_lecture: string | null;
-  piece_jointe: string | null;
+  piece_jointe: null;
   is_readed: number;
   is_replied_to: number;
   thread: string;
   status: number;
+  is_deletedto: any[];
+  is_archievedto: any[];
   Sender: {
     id: number;
     fs_name: string;
     ls_name: string;
     nick_name: string;
     email: string;
-    phone: string;
+    phone: string | null;
+    roles: Array<{ role: string }>;
   };
   Receiver: {
     id: number;
@@ -116,6 +167,57 @@ export interface IMessage {
     ls_name: string;
     nick_name: string;
     email: string;
-    phone: string;
+    phone: string | null;
+    roles: Array<{ role: string }>;
+  };
+}
+
+// TREAD
+
+export interface IListChatTreadResponse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    list: Array<{
+      id: number;
+      id_user_sender: number;
+      id_user_receiver: number;
+      subject: string;
+      content: string;
+      date_d_envoie: string;
+      date_de_lecture: string | null;
+      piece_jointe: any | null; // Replace 'any' with a more specific type if you know the structure of attachments
+      is_readed: number;
+      is_replied_to: number;
+      thread: string;
+      status: number;
+      is_deletedto: any[]; // Replace 'any' with a more specific type if needed
+      is_archievedto: any[]; // Replace 'any' with a more specific type if needed
+      createdAt: string;
+      updatedAt: string;
+      Sender: {
+        id: number;
+        fs_name: string;
+        ls_name: string;
+        nick_name: string;
+        email: string;
+        phone: string;
+        roles: Array<{
+          role: string;
+        }>;
+      };
+      Receiver: {
+        id: number;
+        fs_name: string;
+        ls_name: string;
+        nick_name: string;
+        email: string;
+        phone: string;
+        roles: Array<{
+          role: string;
+        }>;
+      };
+    }>;
   };
 }

@@ -31,14 +31,14 @@ export const MessageList = ({ messages, isLoading, isSuccess }: MessageListProps
   return (
     <div className="my-4 grid grid-cols-1 gap-4">
       {messages?.map((msg) => (
-        <Link key={msg.id} href={`/${role}/messages/${msg.id}`}>
+        <Link key={msg.id} href={`/${role}/messages/${msg.id}?threadId=${msg.thread}`}>
           <MessageCard
             name={`${msg?.Sender?.fs_name} ${msg.Sender.ls_name}`}
-            // role={msg.sender?.role || "Rôle inconnu"}
+            role={msg.Sender.roles.length > 0 ? msg.Sender.roles.map((r) => r.role).join(", ") : ""}
             title={msg.subject}
             message={msg.content}
-            isRead={Boolean(msg.is_readed)}
-            // date={msg.date_d_envoie}
+            isRead={Boolean(0)}
+            date={new Date(msg.date_d_envoie)}
           />
         </Link>
       ))}

@@ -115,10 +115,12 @@ export default function Header() {
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="secondary" size="icon" className="rounded-full">
-                  <Avatar className="inline-block static">
+                <Button variant="outline" size="icon" className="rounded-full">
+                  <Avatar className="inline-block static size-12">
                     <AvatarImage src={currentUser?.avatar} />
-                    <AvatarFallback>{currentUser?.fs_name?.[0] || "A"}</AvatarFallback>
+                    <AvatarFallback className="font-semibold bg-primary text-background">
+                      {currentUser?.fs_name?.[0] || "A"}
+                    </AvatarFallback>
                   </Avatar>
                   <span className="sr-only">Toggle user menu</span>
                 </Button>

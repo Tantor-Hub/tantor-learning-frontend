@@ -1,3 +1,4 @@
+"use client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,11 +13,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, Trash } from "lucide-react";
 import { useDeleteChatMutation } from "@/lib/apis/common/chat-api";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export function DeleteMessageDialog({ id }: { id: string }) {
+  const router = useRouter();
   const [deleteMessage, { isLoading: isLoadingDelete }] = useDeleteChatMutation();
   const handleDeleteMessage = async () => {
-    await deleteMessage({ id: id }).unwrap();
+    try {
+      await deleteMessage({ id: id }).unwrap();
+      router.back();
+      toast.info("Message supprimé");
+    } catch {
+      toast.error("Erreur lors de suppression du message");
+    }
   };
   return (
     <AlertDialog>
