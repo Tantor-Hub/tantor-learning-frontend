@@ -90,3 +90,68 @@ export interface ILibraryResponse {
     }>;
   };
 }
+
+// Formation Response
+
+export interface IListFormationResponse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    list: Array<{
+      id: number;
+      titre: string;
+      sous_titre: string;
+      id_category: number;
+      id_thematic: number | null;
+      rnc: string;
+      description: string;
+      prerequis: string;
+      alternance: string;
+      status: number;
+      createdAt: string;
+      updatedAt: string;
+      Category: {
+        id: number;
+        category: string;
+      };
+    }>;
+  };
+}
+
+export interface IListSessionsByFormationIdResponse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    list: Array<{
+      id: number;
+      uuid: string;
+      designation: string;
+      id_controleur: number | null;
+      id_superviseur: number | null;
+      date_mise_a_jour: string | null;
+      duree: string;
+      progression: number;
+      id_formation: number;
+      piece_jointe: string | null;
+      type_formation: string;
+      id_category: number;
+      date_session_debut: string;
+      date_session_fin: string;
+      description: string | null;
+      prix: number;
+      status: number;
+      createdAt: string;
+      updatedAt: string;
+      Formation: {
+        id: number;
+        titre: string;
+        sous_titre: string;
+        description: string;
+      };
+      Superviseur: null;
+      Cours: any[]; // You might want to replace 'any' with a more specific type if Cours has a structure
+    }>;
+  };
+}

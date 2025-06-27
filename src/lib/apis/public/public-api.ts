@@ -4,6 +4,8 @@ import {
   IContactFormResponse,
   IGetAllTrainingsResponse,
   ILibraryResponse,
+  IListFormationResponse,
+  IListSessionsByFormationIdResponse,
   ISubscribeNewsLetterRequest,
   ISubscribeNewsLetterResponse,
 } from "@/types/public-api";
@@ -39,6 +41,16 @@ export const publicApi = createApi({
       query: () => "/api/cms/librairies/list",
       providesTags: ["Public"],
     }),
+    // Liste de Formations
+    listFormations: builder.query<IListFormationResponse, void>({
+      query: () => "/api/formations/list",
+      providesTags: ["Public"],
+    }),
+    // get Formations by Id -> sessions
+    ListSessionsByFormationId: builder.query<IListSessionsByFormationIdResponse, { id: string }>({
+      query: ({ id }) => `/api/sessions/byidformation/${id}`,
+      providesTags: ["Public"],
+    }),
   }),
 });
 
@@ -47,4 +59,6 @@ export const {
   useGetAllTrainingsQuery,
   useGetAllBooksInLibraryQuery,
   useContactFormAPIMutation,
+  useListFormationsQuery,
+  useListSessionsByFormationIdQuery,
 } = publicApi;

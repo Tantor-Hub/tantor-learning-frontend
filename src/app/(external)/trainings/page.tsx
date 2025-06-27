@@ -10,16 +10,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight, Funnel, Loader2 } from "lucide-react";
+import { ArrowRight, Funnel, Loader2, Router } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import NewsLetter from "../components/newsletter";
 import CourseModal from "@/components/course-modal";
 import { dcgData } from "./data/index";
-import { useGetAllTrainingsQuery } from "@/lib/apis/public/public-api";
+import { useGetAllTrainingsQuery, useListFormationsQuery } from "@/lib/apis/public/public-api";
 import { Loading } from "@/components/shared/loading";
 import { useApplyToTrainingMutation } from "@/lib/apis/student/training-api";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { ListSeance } from "./ListeSeance";
 
 const filters = [
   { label: "Niveau", value: "Tous les niveaux" },
@@ -30,14 +32,13 @@ const filters = [
   { label: "Prix", value: "0-500€" },
 ];
 
-const dcgArray = Array.from({ length: 9 }, () => ({ ...dcgData }));
-
 export default function Page() {
+  const router = useRouter();
   const [applySessionMutation, { isLoading: isLoadingApplySessionMutation }] =
     useApplyToTrainingMutation();
   const [isShown, setIsShown] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const { data, isLoading } = useGetAllTrainingsQuery();
+  const { data, isLoading } = useListFormationsQuery();
   if (isLoading) return <Loading />;
   // console.log("data", data);
   const handleApplySessionMutation = async (id: number) => {
@@ -61,6 +62,11 @@ export default function Page() {
 
       toast.error("Erreur de candidature", {
         description: errorMessage,
+        action: (
+          <Button variant="outline" onClick={() => router.push("/signin")}>
+            Se Connecter
+          </Button>
+        ),
       });
     }
   };
@@ -119,11 +125,15 @@ export default function Page() {
           {data?.data.list.map((item) => (
             <div key={item.id} className="border border-blue-200 rounded-[6px] shadow-sm max-w-md">
               <div className="p-5 bg-[#007AFF26] flex flex-col gap-4">
-                <h2 className="text-xl font-semibold text-blue-900">{item.Formation.titre}</h2>
-                <p className="text-gray-700 font-medium">{item.Formation.sous_titre}</p>
+                <h2 className="text-xl font-semibold text-blue-900">{item.titre}</h2>
+                <p className="text-gray-700 font-medium">{item.sous_titre}</p>
               </div>
               <div className="p-10 pt-5 flex flex-col gap-4">
-                <p className="text-[#5C677D] mt-4 mb-5">{item.Formation.description}</p>
+                <p className="text-[#5C677D] mt-4 mb-5">
+                  {item.description.length >= 80
+                    ? item.description.substring(0, 80) + "..."
+                    : item.description}
+                </p>
 
                 <div className="flex gap-2.5">
                   <Image src="/icons/house.svg" height={20} width={20} alt="house icon" />
@@ -136,7 +146,7 @@ export default function Page() {
 
                 <div className="flex items-center gap-2.5">
                   <Image src="/icons/clock.svg" height={20} width={20} alt="house icon" />
-                  {item.duree}
+                  {item.id_category}
                 </div>
                 <div className="flex items-center gap-2.5">
                   <Image src="/icons/graduation.svg" height={20} width={20} alt="house icon" />{" "}
@@ -144,30 +154,13 @@ export default function Page() {
                 </div>
                 <div className="flex items-center gap-2.5">
                   <Image src="/icons/money.svg" height={20} width={20} alt="house icon" />{" "}
-                  {item.prix}
+                  {item.id_category}
                 </div>
-
-                <Button
-                  className="bg-transparent border border-[#0466C8] hover:shadow-sm hover:shadow-blue-300 h-fit"
-                  onClick={() => handleApplySessionMutation(item.id)}
-                  // onClick={() => setModalOpen(true)}
-                >
-                  {/* <Link
-                    href={dcgData.link}
-                    className="text-[#5C677D] font-semibold flex justify-between w-full items-center p-[7px_12px]"
-                  > */}
-                  {/* For Later */}
-                  {/* <span>Plus de détails</span> */}
-                  {isLoadingApplySessionMutation ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    <>
-                      <span className="text-[#5C677D]">S'inscrire</span>
-                      <ArrowRight className="text-[#5C677D]" />
-                    </>
-                  )}
-                  {/* </Link> */}
-                </Button>
+                <ListSeance
+                  title={item.titre}
+                  description={item.description}
+                  id={item.id.toString()}
+                />
               </div>
             </div>
           ))}
