@@ -3,10 +3,8 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -47,24 +45,20 @@ export function ListSeance({
           "Votre demande a bien été prise en compte. Vous recevrez sous peu la liste des documents à fournir pour finaliser votre inscription.",
       });
     } catch (error: any) {
-      let errorMessage = "Une erreur est survenue lors de votre candidature";
-
-      if (error.data?.message) {
-        errorMessage = error.data.message;
-      } else if (error.status === 403) {
-        errorMessage = "Vous devez compléter votre profil avant de postuler";
-      } else if (error.status === 409) {
-        errorMessage = "Vous avez déjà postulé à cette session";
-      }
-
-      toast.error("Erreur de candidature", {
-        description: errorMessage,
-        action: (
-          <Button variant="outline" onClick={() => router.push("/signin")}>
-            Se Connecter
-          </Button>
-        ),
+      toast.info("Information", {
+        description:
+          "Vous vous êtes déjà inscrit à cette session de formation; vous ne pouvez le faire deux fois.",
       });
+      if (error.status === 401) {
+        toast.error("Erreur de candidature", {
+          description: "Vous devez vous connecter pour postuler",
+          action: (
+            <Button variant="outline" onClick={() => router.push("/signin")}>
+              Se Connecter
+            </Button>
+          ),
+        });
+      }
     } finally {
       setLoadingSessionId(null); // Réinitialiser l'état de chargement
     }

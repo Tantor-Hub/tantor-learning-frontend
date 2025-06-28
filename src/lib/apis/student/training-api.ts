@@ -35,10 +35,10 @@ export const trainingStudentApi = createApi({
     }),
 
     applyToTraining: builder.mutation<void, IApplyToTrainingRequest>({
-      query: (body) => ({
+      query: (request) => ({
         url: `/api/sessions/session/apply`,
         method: "POST",
-        body,
+        body: request,
       }),
       invalidatesTags: ["TrainingStudent"],
     }),
