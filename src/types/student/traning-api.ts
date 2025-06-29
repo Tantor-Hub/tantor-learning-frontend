@@ -50,3 +50,38 @@ export interface ISessionDetailsResponse {
   category: string;
   // add other fields as needed
 }
+
+export interface IListCourses {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    rows: Array<{
+      id: number;
+      id_preset_cours: number;
+      duree: null | string;
+      ponderation: null | number;
+      is_published: boolean;
+      createdBy: number;
+      id_session: number;
+      id_category: number;
+      id_formateur: number;
+      Session: {
+        designation: string;
+        duree: string;
+        type_formation: string;
+      };
+      CreatedBy: {
+        id: number;
+        fs_name: string;
+        ls_name: string;
+        email: string;
+      };
+      Title: {
+        id: number;
+        title: string;
+        description: string;
+      };
+    }>;
+  };
+}

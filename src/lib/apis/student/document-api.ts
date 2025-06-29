@@ -6,7 +6,7 @@ export const documentStudentApi = createApi({
   tagTypes: ["DocumentStudent"],
   endpoints: (builder) => ({
     // Get documents for a specific session/group/student
-    getDocumentsForStudentSession: builder.query<
+    listStudentDocBySessionId: builder.query<
       void,
       { id_student: number; id_session: number; group: string }
     >({
@@ -79,3 +79,10 @@ export const documentStudentApi = createApi({
     }),
   }),
 });
+
+export const {
+  useListStudentDocBySessionIdQuery,
+  useUploadDocumentAfterMutation,
+  useUploadDocumentBeforeMutation,
+  useUploadDocumentDuringMutation,
+} = documentStudentApi;

@@ -48,12 +48,6 @@ const navigationMenus: NavigationMenus = {
       isActive: true,
     },
     {
-      title: "Ma Formation",
-      url: "student/training",
-      icon: Shapes,
-      isActive: true,
-    },
-    {
       title: "Mes Cours",
       url: "student/courses",
       icon: FileText,
