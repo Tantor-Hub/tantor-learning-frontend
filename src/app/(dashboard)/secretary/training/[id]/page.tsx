@@ -1,55 +1,32 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useListTrainingByIdQuery } from "@/lib/apis/secretary/training-secretary-api";
 import { useRouter, useParams } from "next/navigation";
 import { Loading } from "@/components/shared/loading";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Calendar, Clock, Users, Edit, Trash2, Eye, Loader2 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Plus, Clock, Users, Edit, Trash2, Eye, Loader2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { ITraining, ISession, ICategory } from "@/types/secretary/training-secretary";
+import { ISession } from "@/types/secretary/training-secretary";
 import { EmptyState } from "@/components/shared/empty-state";
 import SessionForm from "../SessionForm";
+import { useUpdateSessionMutation } from "@/lib/apis/secretary/session-secretary-api";
 
 const SessionList = ({ sessions }: { sessions: ISession[] }) => {
   return (
     <div className="space-y-4">
       {sessions.map((session: ISession) => (
         <Card key={session.id}>
-          <CardContent className="pt-6">
+          <CardContent>
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h4 className="font-semibold text-lg">{session.description}</h4>
-                <p className="text-gray-600 mt-1">{session.description}</p>
-                <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {new Date(session.duree).toLocaleDateString("fr-FR")}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {session.date_session_debut} - {session.date_session_fin}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    {session.duree} min
-                  </div>
-                </div>
+                <h4 className="font-semibold text-lg">{session.designation}</h4>
+                <p className="text-gray-600 mt-1">
+                  {session.date_session_debut} - {session.date_session_fin}
+                </p>
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline">

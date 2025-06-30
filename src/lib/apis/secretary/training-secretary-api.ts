@@ -41,6 +41,9 @@ export const trainingSecretaryApi = createApi({
       invalidatesTags: ["TrainingSecretary"],
     }),
 
+    // ====================================================================
+    // Liste de Training Type
+    // =======================================================================
     listTrainingType: builder.query<ITrainingTypesResponse, void>({
       query: () => "/api/formations/types",
       providesTags: ["TrainingSecretary"],

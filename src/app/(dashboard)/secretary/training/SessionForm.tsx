@@ -1,3 +1,4 @@
+"use client";
 import { ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,58 +14,48 @@ import {
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import { Plus, Loader2 } from "lucide-react";
 import { useAddSessionMutation } from "@/lib/apis/secretary/session-secretary-api";
+import { useListTrainingTypeQuery } from "@/lib/apis/secretary/training-secretary-api";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SessionFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  // training: {
-  //   id_formation: number;
-  //   titre: string;
-  // };
   onSuccess: () => void;
   trainingId: string;
   children: ReactNode;
 }
 
-const SessionForm: React.FC<SessionFormProps> = ({
-  open,
-  onOpenChange,
-  // training,
-  onSuccess,
-  trainingId,
-}) => {
+const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess, trainingId }) => {
   const [form, setForm] = useState({
     titre: "",
     description: "",
-    date: "",
-    heure_debut: "",
-    heure_fin: "",
-    duree: "",
+    date_debut: "",
+    date_fin: "",
     prix: "900",
     type_formation: "onLine",
   });
 
   const [addSessionMutation, { isLoading }] = useAddSessionMutation();
+  const { data: trainingTypes, isLoading: isTrainingTypesLoading } = useListTrainingTypeQuery();
 
   const handleSubmit = async () => {
     try {
-      // Combine date and time to create ISO strings
-      const dateDebut = new Date(`${form.date}T${form.heure_debut}`);
-      const dateFin = new Date(`${form.date}T${form.heure_fin}`);
-      // Format dates to ISO strings without timezone offset
-      const formattedDateDebut = dateDebut.toISOString();
-      const formattedDateFin = dateFin.toISOString();
-
       const promise = await addSessionMutation({
         id_formation: trainingId,
         descripiton: form.description,
-        date_session_debut: formattedDateDebut as string,
-        date_session_fin: formattedDateFin as string,
-        prix: parseInt(form.prix).toString(),
+        date_session_debut: form.date_debut,
+        date_session_fin: form.date_fin,
+        prix: form.prix,
         type_formation: form.type_formation,
       }).unwrap();
-      // console.log(promise);
+      console.log(promise);
       onSuccess();
       toast.success("Session ajoutée avec succès", {
         description: "La nouvelle session a été créée.",
@@ -72,10 +63,8 @@ const SessionForm: React.FC<SessionFormProps> = ({
       setForm({
         titre: "",
         description: "",
-        date: "",
-        heure_debut: "",
-        heure_fin: "",
-        duree: "",
+        date_debut: "",
+        date_fin: "",
         prix: "900",
         type_formation: "onLine",
       });
@@ -84,8 +73,6 @@ const SessionForm: React.FC<SessionFormProps> = ({
       toast.error("Erreur lors de la création", {
         description: "Une erreur est survenue lors de la création de la session.",
       });
-      // console.log(error);
-      // console.log(error);
     }
   };
 
@@ -99,10 +86,8 @@ const SessionForm: React.FC<SessionFormProps> = ({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nouvelle Séance</DialogTitle>
-          <DialogDescription>
-            Ajoutez une nouvelle séance à la formation "{"training.titre"}"
-          </DialogDescription>
+          <DialogTitle>Nouvelle Session</DialogTitle>
+          <DialogDescription>Ajoutez une nouvelle session à la formation</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div>
@@ -124,59 +109,61 @@ const SessionForm: React.FC<SessionFormProps> = ({
               rows={3}
             />
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid gap-4">
             <div>
-              <Label htmlFor="seance_date">Date</Label>
+              <Label htmlFor="date_debut">Date de début</Label>
               <Input
-                id="seance_date"
+                id="date_debut"
                 type="date"
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
+                value={form.date_debut}
+                onChange={(e) => setForm({ ...form, date_debut: e.target.value })}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="heure_debut">Heure début</Label>
+              <Label htmlFor="date_fin">Date de fin</Label>
               <Input
-                id="heure_debut"
-                type="time"
-                value={form.heure_debut}
-                onChange={(e) => setForm({ ...form, heure_debut: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="heure_fin">Heure fin</Label>
-              <Input
-                id="heure_fin"
-                type="time"
-                value={form.heure_fin}
-                onChange={(e) => setForm({ ...form, heure_fin: e.target.value })}
+                id="date_fin"
+                type="date"
+                value={form.date_fin}
+                onChange={(e) => setForm({ ...form, date_fin: e.target.value })}
                 required
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="duree">Durée (minutes)</Label>
-              <Input
-                id="duree"
-                type="number"
-                value={form.duree}
-                onChange={(e) => setForm({ ...form, duree: e.target.value })}
-                placeholder="180"
-              />
-            </div>
-            <div>
-              <Label htmlFor="prix">Prix (€)</Label>
-              <Input
-                id="prix"
-                type="number"
-                value={form.prix}
-                onChange={(e) => setForm({ ...form, prix: e.target.value })}
-                placeholder="900"
-              />
-            </div>
+          <div>
+            <Label htmlFor="prix">Prix (€)</Label>
+            <Input
+              id="prix"
+              type="number"
+              value={form.prix}
+              onChange={(e) => setForm({ ...form, prix: e.target.value })}
+              placeholder="900"
+            />
+          </div>
+          <div>
+            <Label>Type de formation</Label>
+            <Select
+              value={form.type_formation}
+              onValueChange={(value) => setForm({ ...form, type_formation: value })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Sélectionnez un type de formation" />
+              </SelectTrigger>
+              <SelectContent>
+                {isTrainingTypesLoading ? (
+                  <SelectItem value="loading" disabled>
+                    Chargement...
+                  </SelectItem>
+                ) : (
+                  trainingTypes?.data?.map((type) => (
+                    <SelectItem key={type.key} value={type.key}>
+                      {type.type}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <div className="flex justify-end gap-3">

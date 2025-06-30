@@ -1,12 +1,12 @@
 "use client";
-import React, { useState } from "react";
 import { useTrainingListQuery } from "@/lib/apis/secretary/training-secretary-api";
 import TrainingList from "./training-list";
-import { ICategory, ITraining } from "@/types/secretary/training-secretary";
+import { ITraining } from "@/types/secretary/training-secretary";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryFormation } from "./tabs/category";
-export default function TrainingListPage() {
+
+export default function Page() {
   const {
     data: formationsData,
     refetch: refetchFormations,

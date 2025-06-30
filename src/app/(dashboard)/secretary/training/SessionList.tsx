@@ -10,7 +10,8 @@ interface SessionListProps {
 }
 
 const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
-  // console.log("sessions", sessions);
+  console.error("sessions", sessions);
+  return null;
   return (
     <div className="space-y-4">
       {sessions.map((session: ISession) => (
@@ -18,13 +19,13 @@ const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
           <CardContent className="pt-6">
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h4 className="font-semibold text-lg">{session.description}</h4>
+                <h4 className="font-semibold text-lg">{session.designation}</h4>
                 <p className="text-gray-600 mt-1">{session.description}</p>
                 <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
+                  {/* <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
                     {new Date(session.duree).toLocaleDateString("fr-FR")}
-                  </div>
+                  </div> */}
                   <div className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
                     {session.date_session_debut} - {session.date_session_fin}
