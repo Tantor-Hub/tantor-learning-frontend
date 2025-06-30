@@ -15,6 +15,8 @@ import { trainingStudentApi } from "./student/training-api";
 import { manageCoursesApi } from "./common/courses-api";
 import { seanceSecretaryApi } from "./secretary/seance-secretary-api";
 import { documentStudentApi } from "./student/document-api";
+import { instructorApi } from "./instructor/instructor";
+
 // Export all API slices for easy access
 export {
   authApi,
@@ -34,6 +36,7 @@ export {
   manageCoursesApi,
   seanceSecretaryApi,
   documentStudentApi,
+  instructorApi,
 };
 
 // Combine all reducers for easy store setup
@@ -55,6 +58,7 @@ export const apiReducers = {
   [manageCoursesApi.reducerPath]: manageCoursesApi.reducer,
   [seanceSecretaryApi.reducerPath]: seanceSecretaryApi.reducer,
   [documentStudentApi.reducerPath]: documentStudentApi.reducer,
+  [instructorApi.reducerPath]: instructorApi.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -76,4 +80,5 @@ export const apiMiddlewares = [
   manageCoursesApi.middleware,
   seanceSecretaryApi.middleware,
   documentStudentApi.middleware,
+  instructorApi.middleware,
 ];
