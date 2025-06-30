@@ -48,7 +48,7 @@ const navigationMenus: NavigationMenus = {
       isActive: true,
     },
     {
-      title: "Mes Cours",
+      title: "Cours & Sessions",
       url: "student/courses",
       icon: FileText,
     },

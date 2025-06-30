@@ -22,16 +22,16 @@ import { Plus, Upload, FileText, Download } from "lucide-react";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { EmptyState } from "@/components/shared/empty-state";
+import Link from "next/link";
 
 export default function Page() {
   const params = useParams();
   const sessionId = params.id as string;
   const currentUser = useSelector(selectCurrentUser);
-  const {
-    data: courses,
-    isLoading,
-    isError,
-  } = useListCoursesBySessionIdQuery({ id_session: sessionId.toString() }, { skip: !sessionId });
+  const { data: courses, isLoading } = useListCoursesBySessionIdQuery(
+    { id_session: sessionId.toString() },
+    { skip: !sessionId }
+  );
 
   const handleAddDocument = (phase: string) => {
     console.log(`Ajouter document pour ${phase}`);
@@ -90,50 +90,49 @@ export default function Page() {
       {/* Section des cours */}
       {courses?.data.rows.length ? (
         <div className="py-5 grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-5">
-          {courses?.data.rows.map((session, i) => (
-            <div
-              key={i}
-              className="border border-blue-200 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow"
-            >
-              <div className="p-2.5">
-                <Image
-                  src="/icons/video-placeholder.svg"
-                  width={200}
-                  height={110}
-                  alt="Aperçu du cours"
-                  className="object-cover w-full h-auto rounded-md"
-                />
-                <div className="flex justify-between mt-2.5">
-                  <span
-                    className={`text-xs font-semibold px-2 py-0.5 rounded-xl ${
-                      session.CreatedBy.email === "En direct"
-                        ? "bg-[#E8F8ED] text-[#1BB66C]"
-                        : session.CreatedBy.email === "Dans 2h"
-                          ? "bg-[#FDF6E8] text-[#DFA100]"
-                          : "bg-[#F1F5F9] text-[#334155]"
-                    }`}
-                  >
-                    {session.id_formateur}
-                  </span>
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Image src="/icons/users.svg" alt="Participants" width={14} height={14} />
-                    <span>{"49"} inscrits</span>
+          {courses?.data.rows.map((session) => (
+            <Link key={session.id} href={`/student/courses/${sessionId}/${session.id}`}>
+              <div className="border border-blue-200 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow">
+                <div className="p-2.5">
+                  <Image
+                    src="/icons/video-placeholder.svg"
+                    width={200}
+                    height={110}
+                    alt="Aperçu du cours"
+                    className="object-cover w-full h-auto rounded-md"
+                  />
+                  <div className="flex justify-between mt-2.5">
+                    <span
+                      className={`text-xs font-semibold px-2 py-0.5 rounded-xl ${
+                        session.CreatedBy.email === "En direct"
+                          ? "bg-[#E8F8ED] text-[#1BB66C]"
+                          : session.CreatedBy.email === "Dans 2h"
+                            ? "bg-[#FDF6E8] text-[#DFA100]"
+                            : "bg-[#F1F5F9] text-[#334155]"
+                      }`}
+                    >
+                      {session.id_formateur}
+                    </span>
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Image src="/icons/users.svg" alt="Participants" width={14} height={14} />
+                      <span>{"49"} inscrits</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="px-4 py-3 space-y-2">
+                  <p className="text-sm text-[#0466C8] font-medium leading-tight">
+                    {session.Title.title}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 bg-gray-200 rounded-md" />
+                    <div className="text-sm text-gray-800 flex flex-col">
+                      <span className="text-[#0466C8]">{session.CreatedBy.fs_name}</span>
+                      <span className="text-[10px] text-gray-500">Professeur</span>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="px-4 py-3 space-y-2">
-                <p className="text-sm text-[#0466C8] font-medium leading-tight">
-                  {session.Title.title}
-                </p>
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 bg-gray-200 rounded-md" />
-                  <div className="text-sm text-gray-800 flex flex-col">
-                    <span className="text-[#0466C8]">{session.CreatedBy.fs_name}</span>
-                    <span className="text-[10px] text-gray-500">Professeur</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
       ) : (

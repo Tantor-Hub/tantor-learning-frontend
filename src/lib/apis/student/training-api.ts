@@ -4,6 +4,8 @@ import {
   ISessionDetailsResponse,
   IApplyToTrainingRequest,
   IListCourses,
+  IGetMySessionsResponse,
+  ICoursDetailsResponse,
 } from "@/types/student/traning-api";
 
 // Including showing the student courses
@@ -45,7 +47,7 @@ export const trainingStudentApi = createApi({
       invalidatesTags: ["TrainingStudent"],
     }),
 
-    getMySessions: builder.query<IGetAllTrainingsResponse, void>({
+    getMySessions: builder.query<IGetMySessionsResponse, void>({
       query: () => `/api/sessions/mylist`,
       providesTags: ["TrainingStudent"],
     }),
@@ -59,6 +61,10 @@ export const trainingStudentApi = createApi({
       query: (request) => `api/courses/listall/${request.id_session}`,
       providesTags: ["TrainingStudent"],
     }),
+    getCoursesById: builder.query<ICoursDetailsResponse, { id_cours: string }>({
+      query: (request) => `/api/courses/course/${request.id_cours}`,
+      providesTags: ["TrainingStudent"],
+    }),
   }),
 });
 
@@ -67,4 +73,6 @@ export const {
   useGetTrainingsByCategoryQuery,
   useApplyToTrainingMutation,
   useListCoursesBySessionIdQuery,
+  useGetMySessionsQuery,
+  useGetCoursesByIdQuery,
 } = trainingStudentApi;
