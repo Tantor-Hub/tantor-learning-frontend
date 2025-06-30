@@ -111,3 +111,16 @@ export interface ITrainingTypesResponse {
     description: string;
   }[];
 }
+
+export interface IListCategoryTrainingResponse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    list: Array<{
+      id: number;
+      category: string;
+      description: string;
+    }>;
+  };
+}

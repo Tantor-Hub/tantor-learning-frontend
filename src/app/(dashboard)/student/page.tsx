@@ -45,7 +45,7 @@ const StudentDashboard = () => {
         <Card className="gap-0 py-4">
           <CardHeader className="px-4">
             <CardTitle className="flex justify-between items-center">
-              <h1 className="text-sm md:text-base">Cours Inscrits</h1>
+              <h1 className="text-sm md:text-base">Sessions inscrites</h1>
               <span>
                 <BookOpen size={20} />
               </span>

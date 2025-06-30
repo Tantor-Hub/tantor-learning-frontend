@@ -1,6 +1,7 @@
 import { createApi, enhancedBaseQuery } from "../base-api";
 import {
   IAddTrainingRequest,
+  IListCategoryTrainingResponse,
   ITrainingByIdResponse,
   ITrainingListResponse,
   ITrainingTypesResponse,
@@ -39,9 +40,53 @@ export const trainingSecretaryApi = createApi({
       }),
       invalidatesTags: ["TrainingSecretary"],
     }),
+
     listTrainingType: builder.query<ITrainingTypesResponse, void>({
       query: () => "/api/formations/types",
       providesTags: ["TrainingSecretary"],
+    }),
+    // =================================================================================
+    // Category de Formation
+    //===================================================================================
+    listCategoryTraining: builder.query<IListCategoryTrainingResponse, void>({
+      query: () => "/api/categories/list",
+      providesTags: ["TrainingSecretary"],
+    }),
+
+    addCategoryTraining: builder.mutation<
+      void,
+      {
+        category: string;
+        description: string;
+      }
+    >({
+      query: (request) => ({
+        url: "/api/categories/category/add",
+        method: "POST",
+        body: request,
+      }),
+    }),
+
+    updateCategoryTraining: builder.mutation<
+      void,
+      {
+        category?: string;
+        description?: string;
+        id_thematique?: string;
+      }
+    >({
+      query: (request) => ({
+        url: `/api/categories/category/${request.id_thematique}`,
+        method: "PUT",
+        body: request,
+      }),
+    }),
+
+    removeCategoryTrainingById: builder.mutation<void, { id_category: string }>({
+      query: (request) => ({
+        url: `/api/categories/categorie/${request.id_category}`,
+        method: "DELETE",
+      }),
     }),
   }),
 });
@@ -52,4 +97,11 @@ export const {
   useDeleteTrainingByIdMutation,
   useListTrainingByIdQuery,
   useListTrainingTypeQuery,
+
+  // category de formation
+
+  useListCategoryTrainingQuery,
+  useUpdateCategoryTrainingMutation,
+  useRemoveCategoryTrainingByIdMutation,
+  useAddCategoryTrainingMutation,
 } = trainingSecretaryApi;
