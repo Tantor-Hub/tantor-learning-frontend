@@ -76,7 +76,7 @@ const navigationMenus: NavigationMenus = {
       isActive: true,
     },
     {
-      title: "Gestion des Cours",
+      title: "Cours & Roles",
       url: "admin/courses",
       icon: FileText,
     },

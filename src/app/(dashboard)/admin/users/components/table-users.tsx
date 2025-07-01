@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 export default function TableUser({ userData }: { userData: UserData }) {
-  const { data: apiData, isLoading, isError, error, refetch } = useListUsersQuery();
+  const { data: apiData, isLoading, isError, refetch } = useListUsersQuery();
 
   if (isLoading) {
     return (
