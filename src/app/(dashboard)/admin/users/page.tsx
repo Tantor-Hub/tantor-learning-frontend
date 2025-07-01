@@ -1,6 +1,6 @@
 "use client";
-import NewUser from "./components/new-user";
-import TableUser from "./components/table-users";
+import NewUser from "./new-user";
+import TableUser from "./table-users";
 import { userData } from "./data";
 
 export default function Page() {

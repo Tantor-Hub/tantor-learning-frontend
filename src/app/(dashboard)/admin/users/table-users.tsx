@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserData } from "../types";
+import { UserData } from "./data";
 import {
   Table,
   TableBody,
@@ -7,24 +7,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableCaption,
 } from "@/components/ui/table";
 import { useListUsersQuery } from "@/lib/apis/admin/user-api";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loading } from "@/components/shared/loading";
 
 export default function TableUser({ userData }: { userData: UserData }) {
   const { data: apiData, isLoading, isError, refetch } = useListUsersQuery();
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-[calc(100vh-160px)]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <p>Chargement des utilisateurs...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <Loading />;
 
   if (isError) {
     return (
@@ -86,23 +78,21 @@ export default function TableUser({ userData }: { userData: UserData }) {
           <div className="min-w-[1000px]">
             {allUsers.length > 0 ? (
               <Table>
-                <TableHeader>
-                  <TableRow className="grid grid-cols-7 text-sm font-medium text-gray-500 px-4 py-2 rounded-t-lg bg-gray-100 mb-1">
+                <TableCaption>Liste de tous les utilisateurs</TableCaption>
+                <TableHeader className="border">
+                  <TableRow>
                     <TableHead>Nom</TableHead>
-                    <TableHead className="col-span-2">Email</TableHead>
-                    <TableHead>Role</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Rôle</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {allUsers.map((data) => (
-                    <TableRow
-                      key={data.id}
-                      className="grid grid-cols-7 items-center px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 transition bg-white mb-1"
-                    >
-                      <TableCell>{data.nick_name}</TableCell>
-                      <TableCell className="text-wrap col-span-2">{data.email}</TableCell>
-                      <TableCell>{data.roles[0].role}</TableCell>
+                <TableBody className="border">
+                  {allUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.nick_name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.roles[0].role}</TableCell>
                       <TableCell>...</TableCell>
                     </TableRow>
                   ))}
@@ -129,23 +119,21 @@ export default function TableUser({ userData }: { userData: UserData }) {
           <div className="min-w-[1000px]">
             {students.length > 0 ? (
               <Table>
-                <TableHeader>
-                  <TableRow className="grid grid-cols-7 text-sm font-medium text-gray-500 px-4 py-2 rounded-t-lg bg-gray-100 mb-1">
+                <TableCaption>Liste de tous les étudiants</TableCaption>
+                <TableHeader className="border">
+                  <TableRow>
                     <TableHead>Nom</TableHead>
-                    <TableHead className="col-span-2">Email</TableHead>
-                    <TableHead>Role</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Rôle</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {students.map((data) => (
-                    <TableRow
-                      key={data.id}
-                      className="grid grid-cols-7 items-center px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 transition bg-white mb-1"
-                    >
-                      <TableCell>{data.nick_name}</TableCell>
-                      <TableCell className="text-wrap col-span-2">{data.email}</TableCell>
-                      <TableCell>{data.roles[0].role}</TableCell>
+                <TableBody className="border">
+                  {students.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.nick_name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.roles[0].role}</TableCell>
                       <TableCell>...</TableCell>
                     </TableRow>
                   ))}
@@ -172,23 +160,21 @@ export default function TableUser({ userData }: { userData: UserData }) {
           <div className="min-w-[1000px]">
             {instructors.length > 0 ? (
               <Table>
-                <TableHeader>
-                  <TableRow className="grid grid-cols-7 text-sm font-medium text-gray-500 px-4 py-2 rounded-t-lg bg-gray-100 mb-1">
+                <TableCaption>Liste de tous les Formateurs</TableCaption>
+                <TableHeader className="border">
+                  <TableRow>
                     <TableHead>Nom</TableHead>
-                    <TableHead className="col-span-2">Email</TableHead>
-                    <TableHead>Role</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Rôle</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {instructors.map((data) => (
-                    <TableRow
-                      key={data.id}
-                      className="grid grid-cols-7 items-center px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 transition bg-white mb-1"
-                    >
-                      <TableCell>{data.nick_name}</TableCell>
-                      <TableCell className="text-wrap col-span-2">{data.email}</TableCell>
-                      <TableCell>{data.roles[0].role}</TableCell>
+                <TableBody className="border">
+                  {instructors.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.nick_name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.roles[0].role}</TableCell>
                       <TableCell>...</TableCell>
                     </TableRow>
                   ))}
@@ -215,23 +201,21 @@ export default function TableUser({ userData }: { userData: UserData }) {
           <div className="min-w-[1000px]">
             {secretaries.length > 0 ? (
               <Table>
-                <TableHeader>
-                  <TableRow className="grid grid-cols-7 text-sm font-medium text-gray-500 px-4 py-2 rounded-t-lg bg-gray-100 mb-1">
+                <TableCaption>Liste de tous les Sécretaires</TableCaption>
+                <TableHeader className="border">
+                  <TableRow>
                     <TableHead>Nom</TableHead>
-                    <TableHead className="col-span-2">Email</TableHead>
-                    <TableHead>Role</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Rôle</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {secretaries.map((data) => (
-                    <TableRow
-                      key={data.id}
-                      className="grid grid-cols-7 items-center px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 transition bg-white mb-1"
-                    >
-                      <TableCell>{data.nick_name}</TableCell>
-                      <TableCell className="text-wrap col-span-2">{data.email}</TableCell>
-                      <TableCell>{data.roles[0].role}</TableCell>
+                <TableBody className="border">
+                  {secretaries.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.nick_name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.roles[0].role}</TableCell>
                       <TableCell>...</TableCell>
                     </TableRow>
                   ))}
