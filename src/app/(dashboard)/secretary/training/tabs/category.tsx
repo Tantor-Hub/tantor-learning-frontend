@@ -56,7 +56,7 @@ interface CreateCategoryData {
 interface UpdateCategoryData {
   category?: string;
   description?: string;
-  id_thematique?: string;
+  id_thematique?: number;
 }
 
 export function CategoryFormation() {
@@ -113,7 +113,7 @@ export function CategoryFormation() {
     setEditForm({
       category: category.category,
       description: category.description,
-      id_thematique: String(category.id),
+      id_thematique: Number(category.id),
     });
     setEditDialogOpen(true);
   };
@@ -124,7 +124,7 @@ export function CategoryFormation() {
     try {
       await updateCategory({
         ...editForm,
-        id_thematique: selectedCategory.id.toString(),
+        id_thematique: String(selectedCategory.id),
       }).unwrap();
       toast.success("Succès", {
         description: "Catégorie mise à jour avec succès",

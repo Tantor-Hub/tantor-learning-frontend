@@ -8,9 +8,9 @@ export default function Page() {
   return (
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 md:gap-5">
-        {SecretaryStats.map((stat, i) => (
+        {/* {SecretaryStats.map((stat, i) => (
           <StatCard key={i} stat={stat} />
-        ))}
+        ))} */}
       </div>
       <div className="flex flex-col lg:flex-row gap-5 my-5">
         <div className="flex-[1]">

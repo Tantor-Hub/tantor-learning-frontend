@@ -177,7 +177,7 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
                 Création...
               </>
             ) : (
-              "Créer la Séance"
+              "Créer la session"
             )}
           </Button>
         </div>

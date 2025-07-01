@@ -1,18 +1,16 @@
-import { Divide } from "lucide-react";
-import StatCard from "../student/components/student-stat-card";
 import CourseTab from "../student/courses/components/courses-tab";
 import AreaChartComponent from "./components/area-chart";
-import { instructors, instructorStats, sessions } from "./data";
-import SessionCard from "./components/session-card";
+import { instructors, sessions } from "./data";
+// import SessionCard from "./components/session-card";
 import InstructorCard from "./components/instructror-card";
 
 export default function Page() {
   return (
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 md:gap-5">
-        {instructorStats.map((stat, i) => (
+        {/* {instructorStats.map((stat, i) => (
           <StatCard key={i} stat={stat} />
-        ))}
+        ))} */}
       </div>
       <div className="flex flex-col lg:flex-row gap-5 my-5">
         <div className="flex-[3]  bg-white rounded-xl py-6">
@@ -33,9 +31,9 @@ export default function Page() {
             <p>Vos cours programmes por les prochains jours</p>
           </div>
           <div className="flex flex-col gap-6">
-            {sessions.map((session, i) => (
+            {/* {sessions.map((session, i) => (
               <SessionCard key={i} session={session} />
-            ))}
+            ))} */}
           </div>
         </div>
         <div className="flex-[1]">

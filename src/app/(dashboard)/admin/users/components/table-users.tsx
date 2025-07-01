@@ -56,7 +56,7 @@ export default function TableUser({ userData }: { userData: UserData }) {
   return (
     <Tabs defaultValue="allUsers">
       <div className="overflow-x-auto">
-        <TabsList className="mt-10 w-full mb-8 px-2.5 py-6 bg-white border font-semibold">
+        <TabsList className="mt-10 mb-8 px-2.5 py-6 bg-white border font-semibold">
           <TabsTrigger value="allUsers" className="p-5 px-2 md:px-5">
             Tous ({allUsers.length})
           </TabsTrigger>
