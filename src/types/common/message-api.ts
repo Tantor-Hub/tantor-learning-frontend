@@ -1,7 +1,7 @@
 // CREATE A MESSAGE REQUEST
 
 export interface ICreateMessageRequest {
-  subject: string;
+  subject?: string;
   content: string;
   piece_jointe?: File;
   id_user_receiver: string; /// pour quoi c'est id alors que tout le monde doit voir c'est msg
