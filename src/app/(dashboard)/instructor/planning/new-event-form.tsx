@@ -20,17 +20,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAddEventMutation } from "@/lib/apis/common/planning";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
-const formSchema = z.object({
-  title: z.string().min(1, {
-    message: "Veuillez entrer un sujet",
-  }),
-  description: z.string().min(1, {
-    message: "Le message ne doit pas être vide",
-  }),
-  author: z.string().min(1, { message: "Veillez choisir l'auteur de l'évènement" }),
-  eventType: z.string().min(1, { message: "Veillez choisir le type d'évènement" }),
-});
+const formSchema = z
+  .object({
+    title: z.string().min(1, {
+      message: "Veuillez entrer un sujet",
+    }),
+    description: z.string().min(1, {
+      message: "Le message ne doit pas être vide",
+    }),
+    eventType: z.string().min(1, {
+      message: "Veuillez choisir le type d'évènement",
+    }),
+    startDate: z.string().min(1, {
+      message: "Veuillez sélectionner la date de début",
+    }),
+    endDate: z.string().min(1, {
+      message: "Veuillez sélectionner la date de fin",
+    }),
+  })
+  .refine(
+    (data) => {
+      // Vérifier que la date de fin est après la date de début
+      const start = new Date(data.startDate);
+      const end = new Date(data.endDate);
+      return end >= start;
+    },
+    {
+      message: "La date de fin doit être égale ou postérieure à la date de début",
+      path: ["endDate"],
+    }
+  );
 
 type SupportFormValues = z.infer<typeof formSchema>;
 
@@ -38,22 +61,47 @@ interface NewEventFormProps {
   onCancel: () => void;
 }
 
-export default function NewEventForm({ onCancel }: NewEventFormProps) {
+export function NewEventForm({ onCancel }: NewEventFormProps) {
+  const [addEvent, { isLoading }] = useAddEventMutation();
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       description: "",
       eventType: "",
-      author: "",
+      startDate: "",
+      endDate: "",
     },
     mode: "onChange",
   });
   const isFormValid = form.formState.isValid;
 
-  const handleSubmit = (data: SupportFormValues) => {
-    // console.log(data);
+  const handleSubmit = async (data: SupportFormValues) => {
+    try {
+      // Convertir les dates en format ISO
+      const startDate = new Date(data.startDate).toISOString();
+      const endDate = new Date(data.endDate).toISOString();
+      console.log(startDate);
+
+      await addEvent({
+        titre: data.title,
+        description: data.description,
+        type: data.eventType,
+        timeline: [startDate, endDate],
+      }).unwrap();
+
+      toast.success("Evénement créé", {
+        description:
+          "L'événement a été créé avec succès, vous pouvez le voir dans la liste de vos événements",
+      });
+      form.reset();
+    } catch {
+      toast.error("Erreur", {
+        description: "Une erreur s'est produite lors de la création de l'événement",
+      });
+    }
   };
+
   return (
     <Form {...form}>
       <form
@@ -80,6 +128,7 @@ export default function NewEventForm({ onCancel }: NewEventFormProps) {
             );
           }}
         />
+
         <FormField
           control={form.control}
           name="description"
@@ -91,7 +140,7 @@ export default function NewEventForm({ onCancel }: NewEventFormProps) {
                   <Textarea
                     rows={10}
                     {...field}
-                    placeholder="Decrivez l'évènement"
+                    placeholder="Décrivez l'évènement"
                     className="min-h-20 max-h-28 overflow-y-auto resize-none text-sm font-extralight"
                   />
                 </FormControl>
@@ -115,7 +164,7 @@ export default function NewEventForm({ onCancel }: NewEventFormProps) {
                   <SelectContent className="font-extralight">
                     <SelectItem value="Cours">Cours</SelectItem>
                     <SelectItem value="Examen">Examen</SelectItem>
-                    <SelectItem value="Sortie scolaire">Evènement</SelectItem>
+                    <SelectItem value="Réunion">Réunion</SelectItem>
                   </SelectContent>
                 </Select>
               </FormControl>
@@ -123,28 +172,45 @@ export default function NewEventForm({ onCancel }: NewEventFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="author"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-2.5">
-              <FormLabel>Par qui ?</FormLabel>
-              <FormControl>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="w-full py-5">
-                    <SelectValue placeholder="Sélectionnez l'auteur" />
-                  </SelectTrigger>
-                  <SelectContent className="font-extralight">
-                    <SelectItem value="Cours">Moi uniquement</SelectItem>
-                    <SelectItem value="Examen">Joel</SelectItem>
-                    <SelectItem value="Sortie scolaire">Semjo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <FormField
+            control={form.control}
+            name="startDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col gap-2.5">
+                <FormLabel>Date de début</FormLabel>
+                <FormControl>
+                  <Input
+                    type="datetime-local"
+                    {...field}
+                    className="text-sm font-extralight py-5"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="endDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col gap-2.5">
+                <FormLabel>Date de fin</FormLabel>
+                <FormControl>
+                  <Input
+                    type="datetime-local"
+                    {...field}
+                    className="text-sm font-extralight py-5"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <div className="flex gap-5 md:gap-10 justify-end md:mt-5">
           <Button
             variant="outline"
@@ -157,9 +223,9 @@ export default function NewEventForm({ onCancel }: NewEventFormProps) {
           <Button
             type="submit"
             className="!p-5 !px-7 bg-[#0466C8] cursor-pointer"
-            disabled={!isFormValid}
+            disabled={!isFormValid || isLoading}
           >
-            Créér l'évènement
+            {isLoading ? <Loader2 className="animate-spin" /> : "Créer l'évènement"}
           </Button>
         </div>
       </form>

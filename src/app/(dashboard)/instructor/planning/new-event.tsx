@@ -1,5 +1,4 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,10 +8,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
-import NewEventForm from "./new-event-form";
+import { NewEventForm } from "./new-event-form";
 import { useState } from "react";
 
-const NewEvent = () => {
+export function NewEvent() {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -32,5 +31,4 @@ const NewEvent = () => {
       </DialogContent>
     </Dialog>
   );
-};
-export default NewEvent;
+}
