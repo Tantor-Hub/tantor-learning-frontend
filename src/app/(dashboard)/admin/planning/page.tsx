@@ -1,4 +1,3 @@
-// Main Page
 "use client";
 import { Calendar } from "@/components/ui/calendar";
 import { EventViewer } from "./event-viewer";
@@ -11,6 +10,7 @@ const adaptApiResponseToEvents = (apiResponse: any) => {
   if (!apiResponse?.data?.list) return [];
 
   return apiResponse.data.list.map((item: any) => ({
+    id: item.id,
     title: item.titre,
     type: item.type as "Evènement" | "Réunion" | "Examen",
     startTime: new Date(parseInt(item.timeline[0]) * 1000),

@@ -3,24 +3,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Loader2, Trash2 } from "lucide-react";
-import { useDeleteEventMutation } from "@/lib/apis/common/planning";
-import { toast } from "sonner";
 
 export interface EventProps {
-  id: string; // Ajout de l'id pour l'événement
   title: string;
   type: "Evènement" | "Réunion" | "Examen" | "Cours";
   startTime: Date;
@@ -30,7 +14,6 @@ export interface EventProps {
 }
 
 export function EventViewer({ selected, events }: { selected: Date; events?: EventProps[] }) {
-  const [deleteEvent, { isLoading }] = useDeleteEventMutation();
   let finalDate = "";
   if (selected) {
     const formatedDate = selected.toLocaleDateString("fr-FR", {
@@ -52,20 +35,6 @@ export function EventViewer({ selected, events }: { selected: Date; events?: Eve
   );
 
   const [tab, setActiveTab] = useState("all");
-
-  // Function to handle event deletion
-  const handleDeleteEvent = async (eventId: string) => {
-    try {
-      await deleteEvent({ id: eventId }).unwrap();
-      toast.success("Événement supprimé", {
-        description: "L'événement a été supprimé avec succès",
-      });
-    } catch {
-      toast.error("Erreur de suppression", {
-        description: "Une erreur est survenue lors de la suppression de l'événement",
-      });
-    }
-  };
 
   // Function to get color based on event type
   const getEventColor = (type: string) => {
@@ -91,41 +60,7 @@ export function EventViewer({ selected, events }: { selected: Date; events?: Eve
           <Badge variant="secondary" className={`${getEventColor(event.type)} text-white`}>
             {event.type}
           </Badge>
-          <div className="flex items-center gap-2">
-            <span className="text-xs opacity-90">
-              {event.startTime.toLocaleDateString("fr-FR")}
-            </span>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Supprimer l'événement</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Voulez-vous vraiment supprimer l'événement "{event.title}" ? Cette action est
-                    irréversible.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction
-                    disabled={isLoading}
-                    onClick={() => handleDeleteEvent(event.id)}
-                    className="bg-red-500 hover:bg-red-600"
-                  >
-                    {isLoading ? <Loader2 className="animate-spin text-white" /> : "Supprimer"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+          <span className="text-xs opacity-90">{event.startTime.toLocaleDateString("fr-FR")}</span>
         </div>
         <h4 className="font-semibold text-lg">{event.title}</h4>
         <p className="text-sm">
