@@ -3,7 +3,6 @@
 import { Calendar } from "@/components/ui/calendar";
 import { EventViewer } from "./event-viewer";
 import { useState } from "react";
-import { NewEvent } from "./new-event";
 import { useListEventsQuery } from "@/lib/apis/common/planning";
 import { Loading } from "@/components/shared/loading";
 
@@ -34,7 +33,6 @@ export default function Page() {
     <div className="bg-white">
       <div className="flex justify-between items-center flex-wrap gap-2.5 px-5">
         <h1 className="text-[#0466C8] p-5 text-2xl">Calendrier</h1>
-        <NewEvent />
       </div>
 
       <div className="flex flex-col md:flex-row gap-5 p-5">
