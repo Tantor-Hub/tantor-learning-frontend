@@ -1,4 +1,4 @@
-import { IAddMatiere } from "@/types/instructor";
+import { IAddMatiere, IGetCourseByIdResponse, IListAllCoursesResponse } from "@/types/instructor";
 import { createApi, enhancedBaseQuery } from "../base-api";
 
 // Instructor API
@@ -79,7 +79,26 @@ export const instructorApi = createApi({
         };
       },
     }),
+
+    // ========================================================================
+    // COURS POUR FORMATEURS
+    // ========================================================================
+    // Affichez le cours du formateur connecte
+    listAllCoursesByIdInstructor: builder.query<IListAllCoursesResponse, void>({
+      query: () => "/api/courses/list",
+      providesTags: ["Instructor"],
+    }),
+    // get cours by id
+    getCourseById: builder.query<IGetCourseByIdResponse, { id_cours: string }>({
+      query: (request) => `/api/courses/course/${request.id_cours}`,
+      providesTags: ["Instructor"],
+    }),
   }),
 });
 
-export const {} = instructorApi;
+export const {
+  useListAllCoursesByIdInstructorQuery,
+  useGetCourseByIdQuery,
+  useAddMatiereMutation,
+  useAddDocumentToCourseMutation,
+} = instructorApi;
