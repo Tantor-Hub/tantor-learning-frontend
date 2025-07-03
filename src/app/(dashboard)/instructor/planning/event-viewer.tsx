@@ -20,7 +20,7 @@ import { useDeleteEventMutation } from "@/lib/apis/common/planning";
 import { toast } from "sonner";
 
 export interface EventProps {
-  id: string; // Ajout de l'id pour l'événement
+  id: string;
   title: string;
   type: "Evènement" | "Réunion" | "Examen" | "Cours";
   startTime: Date;
@@ -145,7 +145,7 @@ export function EventViewer({ selected, events }: { selected: Date; events?: Eve
       <div>
         <h3 className="text-[#0466C8] font-medium text-lg flex items-center gap-2">
           <span>📅</span>
-          Tous les évènements ({events?.length})
+          Évènements du {finalDate}
         </h3>
       </div>
 
@@ -159,22 +159,6 @@ export function EventViewer({ selected, events }: { selected: Date; events?: Eve
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          {/* All Events Section */}
-          <div>
-            <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-2">
-              {events.map((event, i) => renderEventCard(event, i))}
-            </div>
-          </div>
-
-          {/* Separator Line */}
-          <div className="flex items-center gap-4">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-            <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border">
-              Évènements du {finalDate}
-            </span>
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-          </div>
-
           {/* Selected Date Events Section */}
           <div>
             {todaysEvents?.length === 0 ? (
@@ -209,33 +193,8 @@ export function EventViewer({ selected, events }: { selected: Date; events?: Eve
                   </div>
 
                   <TabsContent value="day" className="flex flex-col gap-2.5">
-                    {/* Time slots with events */}
-                    <div className="space-y-3">
-                      {/* Morning slots */}
-                      <div className="border-b pb-2">
-                        <span className="text-sm text-gray-600 font-medium">9:00</span>
-                      </div>
-                      <div className="border-b pb-2">
-                        <span className="text-sm text-gray-600 font-medium">10:00</span>
-                      </div>
-                      <div className="border-b pb-2">
-                        <span className="text-sm text-gray-600 font-medium">11:00</span>
-                      </div>
-
-                      {/* Events for selected date */}
-                      {todaysEvents?.map((event, i) => renderEventCard(event, i))}
-
-                      {/* Afternoon slots */}
-                      <div className="border-b pb-2">
-                        <span className="text-sm text-gray-600 font-medium">15:00</span>
-                      </div>
-                      <div className="border-b pb-2">
-                        <span className="text-sm text-gray-600 font-medium">16:00</span>
-                      </div>
-                      <div className="border-b pb-2">
-                        <span className="text-sm text-gray-600 font-medium">17:00</span>
-                      </div>
-                    </div>
+                    {/* Events for selected date */}
+                    {todaysEvents?.map((event, i) => renderEventCard(event, i))}
                   </TabsContent>
 
                   <TabsContent value="week">
@@ -252,6 +211,22 @@ export function EventViewer({ selected, events }: { selected: Date; events?: Eve
                 </Tabs>
               </div>
             )}
+          </div>
+
+          {/* Separator Line */}
+          <div className="flex items-center gap-4">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+            <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border">
+              Tous les évènements ({events?.length})
+            </span>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+          </div>
+
+          {/* All Events Section */}
+          <div>
+            <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-2">
+              {events.map((event, i) => renderEventCard(event, i))}
+            </div>
           </div>
         </div>
       )}
