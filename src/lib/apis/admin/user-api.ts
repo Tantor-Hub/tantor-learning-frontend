@@ -43,6 +43,15 @@ export interface UsersListResponse {
   };
 }
 
+export interface IUsersListByGroupResponse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    list: User[];
+  };
+}
+
 export interface AddUserRequest {
   fs_name: string;
   ls_name: string;
@@ -75,7 +84,14 @@ export const AdminApi = createApi({
       }),
       invalidatesTags: ["Admin"],
     }),
+    listUserByGroup: builder.query<
+      IUsersListByGroupResponse,
+      { group: "teacher" | "admin" | "student" | "secretary" | "all" }
+    >({
+      query: (request) => `/api/users/list/bygroup/${request.group}`,
+      providesTags: ["Admin"],
+    }),
   }),
 });
 
-export const { useListUsersQuery, useAddMutation } = AdminApi;
+export const { useListUsersQuery, useAddMutation, useListUserByGroupQuery } = AdminApi;

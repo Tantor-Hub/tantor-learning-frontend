@@ -13,12 +13,18 @@ import { Loading } from "@/components/shared/loading";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { XCircleIcon } from "lucide-react";
+import { AddCourseSession, ISessionData } from "./add-course-session";
+
 export function CourseTable() {
   const { data, isLoading, isError } = useListCoursesQuery();
-
   if (isLoading) {
     return <Loading />;
   }
+
+  const handleSubmit = (sessionData: Omit<ISessionData, "id_session">) => {
+    console.log("Nouvelle séance créée:", sessionData);
+    // API call to save the session
+  };
 
   if (isError) {
     return (
@@ -55,6 +61,7 @@ export function CourseTable() {
           <TableHead>Titre</TableHead>
           <TableHead>Description</TableHead>
           <TableHead>Créateur</TableHead>
+          <TableHead className="text-center">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody className="border">
@@ -64,6 +71,9 @@ export function CourseTable() {
             <TableCell>{item.description}</TableCell>
             <TableCell>
               {item.CreatedBy.fs_name} {item.CreatedBy.ls_name}
+            </TableCell>
+            <TableCell>
+              <AddCourseSession courseId={Number(item.id)} />
             </TableCell>
           </TableRow>
         ))}

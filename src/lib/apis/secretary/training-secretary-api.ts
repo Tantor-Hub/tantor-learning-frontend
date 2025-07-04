@@ -2,6 +2,7 @@ import { createApi, enhancedBaseQuery } from "../base-api";
 import {
   IAddTrainingRequest,
   IListCategoryTrainingResponse,
+  IListCourseBySessionIdResponse,
   ITrainingByIdResponse,
   ITrainingListResponse,
   ITrainingTypesResponse,
@@ -91,6 +92,32 @@ export const trainingSecretaryApi = createApi({
         method: "DELETE",
       }),
     }),
+    // =====================================================================
+    // ajouter un cours dans une formation & assigne un instructeur
+    // ======================================================================
+    addNewCourseInSessionById: builder.mutation<
+      void,
+      {
+        id_session: number;
+        duree: number; // en minutes
+        ponderation: number; //
+        id_preset_cours: number;
+        id_formateur: number; // not required tu peux ou ne pas le mettre
+      }
+    >({
+      query: (request) => ({
+        url: "/api/courses/course/add",
+        method: "POST",
+        body: request,
+      }),
+    }),
+    // =====================================================================
+    // LISTE DE COURS PAR ID DE LA SESSION
+    // ====================================================================
+    listCourseBySessionId: builder.query<IListCourseBySessionIdResponse, { id_session: string }>({
+      query: (request) => `/api/courses/listall/${request.id_session}`,
+      providesTags: ["TrainingSecretary"],
+    }),
   }),
 });
 
@@ -107,4 +134,8 @@ export const {
   useUpdateCategoryTrainingMutation,
   useRemoveCategoryTrainingByIdMutation,
   useAddCategoryTrainingMutation,
+
+  // list course by session id
+
+  useListCourseBySessionIdQuery,
 } = trainingSecretaryApi;
