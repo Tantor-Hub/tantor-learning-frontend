@@ -49,6 +49,12 @@ interface NewEventFormProps {
   onCancel: () => void;
 }
 
+// Définition des rôles disponibles avec leurs IDs correspondants
+const AVAILABLE_ROLES = [
+  { id: 2, value: "secretary", label: "Secrétaire" },
+  { id: 3, value: "instructor", label: "Formateur" },
+];
+
 export default function NewUserForm({ onCancel }: NewEventFormProps) {
   const [addUser, { isLoading }] = useAddMutation();
   const form = useForm<SupportFormValues>({
@@ -68,25 +74,20 @@ export default function NewUserForm({ onCancel }: NewEventFormProps) {
   const handleSubmit = async (data: SupportFormValues) => {
     try {
       const names = data.name.split(" ");
+      const selectedRole = AVAILABLE_ROLES.find((role) => role.value === data.userType);
+
       const userData = {
         fs_name: names[0] || "",
         ls_name: names[1] || names[0] || "",
         password: data.password,
         nick_name: names[1] || names[0] || "",
         email: data.email,
-        id_role:
-          data.userType === "student"
-            ? 1
-            : data.userType === "instructor"
-              ? 2
-              : data.userType === "secretary"
-                ? 3
-                : 1,
-        phone: data.phone || "", // Envoie undefined si le champ est vide
+        id_role: selectedRole?.id || 3, // Par défaut Formateur si non trouvé
+        phone: data.phone || "",
       };
 
-      await addUser(userData).unwrap();
-
+      const p = await addUser(userData).unwrap();
+      console.log(p);
       toast.success("Utilisateur créé", {
         description: "L'utilisateur recevra un message pour vérifier son compte",
       });
@@ -169,7 +170,7 @@ export default function NewUserForm({ onCancel }: NewEventFormProps) {
                     type="tel"
                     placeholder="+33 6 12 34 56 78"
                     className="h-12"
-                    value={field.value || ""} // Gère les valeurs null/undefined
+                    value={field.value || ""}
                   />
                 </FormControl>
                 <FormMessage className="text-xs text-red-500" />
@@ -192,11 +193,7 @@ export default function NewUserForm({ onCancel }: NewEventFormProps) {
                   value={field.value}
                   className="flex flex-col space-y-2"
                 >
-                  {[
-                    { value: "student", label: "Étudiant" },
-                    { value: "instructor", label: "Formateur" },
-                    { value: "secretary", label: "Secrétaire" },
-                  ].map((item) => (
+                  {AVAILABLE_ROLES.map((item) => (
                     <div key={item.value} className="flex items-center space-x-3">
                       <RadioGroupItem value={item.value} id={item.value} />
                       <Label htmlFor={item.value} className="font-normal cursor-pointer">
