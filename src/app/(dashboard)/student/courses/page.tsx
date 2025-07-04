@@ -47,16 +47,19 @@ export default function Page() {
             </TableRow>
           </TableHeader>
           <TableBody className="border">
-            {data?.data.list.map((item) => (
+            {data?.data.list?.map((session) => (
               <TableRow
-                key={item.id}
-                onClick={() => router.push(`/student/courses/${item.id}`)}
+                key={session.id}
+                onClick={() => router.push(`/student/courses/${session.id}`)}
                 className="hover:cursor-pointer"
               >
-                <TableCell className="font-medium">{item.SessionSuivi.designation}</TableCell>
-                <TableCell className="text-muted-foreground">{item.Formation.titre}</TableCell>
-                <TableCell className="text-muted-foreground">{item.SessionSuivi.duree}</TableCell>
-                <TableCell className="text-muted-foreground">{item.SessionSuivi.prix} €</TableCell>
+                <TableCell className="font-medium">{session.date_session_debut}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {session.designation}
+                  {session.Formation.titre}
+                </TableCell>
+                <TableCell className="text-muted-foreground">{session.duree}</TableCell>
+                <TableCell className="text-muted-foreground">{session.prix} €</TableCell>
               </TableRow>
             ))}
           </TableBody>
