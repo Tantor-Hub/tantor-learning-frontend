@@ -23,6 +23,8 @@ import { useListUserByGroupQuery } from "@/lib/apis/admin/user-api";
 import { useGetAllTrainingsQuery } from "@/lib/apis/public/public-api";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useAddNewCourseInSessionByIdMutation } from "@/lib/apis/secretary/training-secretary-api";
+import { toast } from "sonner";
 
 export interface ISessionData {
   id_session: number;
@@ -38,13 +40,12 @@ export function AddCourseSession({ courseId }: { courseId: number }) {
   });
 
   const { data: sessionsData, isLoading: isLoadingSessions } = useGetAllTrainingsQuery();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [addCourseToSession, { isLoading: isLoadingAddCourseToSession }] =
+    useAddNewCourseInSessionByIdMutation();
   if (isLoadingInstructors || isLoadingSessions) return null;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
 
@@ -56,33 +57,18 @@ export function AddCourseSession({ courseId }: { courseId: number }) {
       id_formateur: formData.get("id_formateur") as string,
       id_preset_cours: courseId,
     };
-
-    // Prepare the data to log
-    const submissionData = {
-      id_session: Number(formValues.id_session),
-      duree: Number(formValues.duree),
-      ponderation: Number(formValues.ponderation),
-      id_formateur: formValues.id_formateur ? Number(formValues.id_formateur) : undefined,
-      id_preset_cours: Number(formValues.id_preset_cours),
-    };
-
-    console.log("Form submitted with data:", submissionData);
-
-    // Simulate API call delay (remove this in production)
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    setIsSubmitting(false);
-
-    // Here you would typically send the data to your API
-    // For example:
-    // try {
-    //   const response = await api.post('/endpoint', submissionData);
-    //   console.log("API response:", response.data);
-    // } catch (error) {
-    //   console.error("API error:", error);
-    // } finally {
-    //   setIsSubmitting(false);
-    // }
+    try {
+      await addCourseToSession({
+        id_session: Number(formValues.id_session),
+        duree: Number(formValues.duree),
+        ponderation: Number(formValues.ponderation),
+        id_formateur: Number(formValues.id_formateur),
+        id_preset_cours: courseId,
+      });
+      toast.success("Ajouter le cours dans la session");
+    } catch {
+      toast.error("Une erreur est survenue");
+    }
   };
 
   return (
@@ -169,12 +155,12 @@ export function AddCourseSession({ courseId }: { courseId: number }) {
           </div>
           <div className="flex justify-end gap-2">
             <DialogClose asChild>
-              <Button variant="outline" disabled={isSubmitting}>
+              <Button variant="outline" disabled={isLoadingAddCourseToSession}>
                 Annuler
               </Button>
             </DialogClose>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
+            <Button type="submit" disabled={isLoadingAddCourseToSession}>
+              {isLoadingAddCourseToSession ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Enregistrement...

@@ -136,6 +136,6 @@ export const {
   useAddCategoryTrainingMutation,
 
   // list course by session id
-
+  useAddNewCourseInSessionByIdMutation,
   useListCourseBySessionIdQuery,
 } = trainingSecretaryApi;
