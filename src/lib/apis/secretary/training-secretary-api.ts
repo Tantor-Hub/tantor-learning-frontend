@@ -76,7 +76,7 @@ export const trainingSecretaryApi = createApi({
       {
         category?: string;
         description?: string;
-        id_thematique?: string;
+        id_thematique?: number;
       }
     >({
       query: (request) => ({

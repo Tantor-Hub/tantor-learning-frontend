@@ -40,7 +40,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Loading } from "@/components/shared/loading";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface CategoryData {
   id: number;
@@ -124,7 +123,7 @@ export function CategoryFormation() {
     try {
       await updateCategory({
         ...editForm,
-        id_thematique: String(selectedCategory.id),
+        id_thematique: Number(selectedCategory.id),
       }).unwrap();
       toast.success("Succès", {
         description: "Catégorie mise à jour avec succès",
