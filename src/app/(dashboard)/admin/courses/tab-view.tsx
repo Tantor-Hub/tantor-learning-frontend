@@ -1,7 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CourseTab } from "./course-tab";
 import { RoleTab } from "./role-tab";
-import { AddRole } from "./add-role";
 
 export function TabsView() {
   return (
@@ -34,7 +33,6 @@ export function TabsView() {
                 Visualisez et gérez tous les rôles d’utilisateurs disponibles dans l’application.
               </p>
             </div>
-            <AddRole />
           </div>
           <div>
             <div className="min-w-[1000px]">
