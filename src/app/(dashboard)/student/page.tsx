@@ -7,42 +7,63 @@ import {
 import { BarVisual } from "./components/bar-chart";
 import OngoingCourse from "./components/ongoing-course";
 import { PieVisual } from "./components/pie-chart";
-// import StatCard from "./components/student-stat-card";
 import CourseTab from "./courses/components/courses-tab";
-import { ongoingCourse, studentStats } from "./data";
-import {
-  BookOpen,
-  Camera,
-  ClipboardList,
-  ListCheck,
-  Loader2,
-  Percent,
-  UserPlus,
-} from "lucide-react";
+import { ongoingCourse } from "./data";
+import { BookOpen, ClipboardList, ListCheck, Percent, UserPlus } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loading } from "@/components/shared/loading";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useGetMySessionsQuery } from "@/lib/apis/student/training-api";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
+import { useRouter } from "next/navigation";
 
-const StudentDashboard = () => {
+export default function Page() {
+  const router = useRouter();
   const studentsStatus = useStudentStatusQuery();
   const nextLiveSession = useNextLiveSessionQuery();
   const average = useAverageScoreQuery();
+  const listSessions = useGetMySessionsQuery();
 
   // Check if any of the queries are loading
-  const isLoading = studentsStatus.isLoading || nextLiveSession.isLoading || average.isLoading;
+  const isLoading =
+    studentsStatus.isLoading ||
+    nextLiveSession.isLoading ||
+    average.isLoading ||
+    listSessions.isLoading;
 
   // Show loader when data is loading
   if (isLoading) {
     return <Loading />;
   }
-
-  if (studentsStatus.data) {
-    // console.log(studentsStatus.data);
-  }
-
+  console.log(JSON.stringify(listSessions.data?.data.list));
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 md:gap-5">
-        <Card className="gap-0 py-4">
+      <div className="flex justify-start mb-4">
+        <Select>
+          <SelectTrigger className="min-w-[300px]">
+            <SelectValue placeholder="Sélectionner une session" />
+          </SelectTrigger>
+          <SelectContent>
+            {listSessions.data?.data.list.map((session) => (
+              <SelectItem key={session.id} value={String(session.id)}>
+                {session.Session.designation || "Session sans nom"}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 md:gap-5">
+        <Card
+          className="gap-0 py-4 border hover:cursor-pointer hover:shadow-lg"
+          onClick={() => router.push("/student/courses")}
+        >
           <CardHeader className="px-4">
             <CardTitle className="flex justify-between items-center">
               <h1 className="text-sm md:text-base">Sessions inscrites</h1>
@@ -64,7 +85,7 @@ const StudentDashboard = () => {
           </CardFooter>
         </Card>
 
-        <Card className="gap-0 py-4">
+        <Card className="gap-0 py-4 border">
           <CardHeader className="px-4">
             <CardTitle className="flex justify-between items-center">
               <h1 className="text-sm md:text-base">Devoirs à rendre</h1>
@@ -86,7 +107,7 @@ const StudentDashboard = () => {
           </CardFooter>
         </Card>
 
-        <Card className="gap-0 py-4">
+        <Card className="gap-0 py-4 border">
           <CardHeader className="px-4">
             <CardTitle className="flex justify-between items-center">
               <h1 className="text-sm md:text-base">Moyenne générale</h1>
@@ -108,7 +129,7 @@ const StudentDashboard = () => {
           </CardFooter>
         </Card>
 
-        <Card className="gap-0 py-4">
+        <Card className="gap-0 py-4 border">
           <CardHeader className="px-4">
             <CardTitle className="flex justify-between items-center">
               <h1 className="text-sm md:text-base">Pourcentage</h1>
@@ -130,7 +151,7 @@ const StudentDashboard = () => {
           </CardFooter>
         </Card>
 
-        <Card className="gap-0 py-4">
+        {/* <Card className="gap-0 py-4">
           <CardHeader className="px-4">
             <CardTitle className="flex justify-between items-center">
               <h1 className="text-sm md:text-base">Messages non lus</h1>
@@ -150,7 +171,7 @@ const StudentDashboard = () => {
           <CardFooter className="px-4">
             <p className="text-[10px] text-[#5C677D]">à lire</p>
           </CardFooter>
-        </Card>
+        </Card> */}
       </div>
       {(nextLiveSession.data?.data?.length ?? 0) > 0 && <OngoingCourse ongoing={ongoingCourse} />}
       <div className="flex flex-col lg:flex-row gap-5 my-5">
@@ -168,5 +189,4 @@ const StudentDashboard = () => {
       <CourseTab spec="Progrression de vos cours actuels" />
     </>
   );
-};
-export default StudentDashboard;
+}

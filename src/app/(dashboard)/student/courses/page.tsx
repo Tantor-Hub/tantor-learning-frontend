@@ -53,13 +53,13 @@ export default function Page() {
                 onClick={() => router.push(`/student/courses/${session.id}`)}
                 className="hover:cursor-pointer"
               >
-                <TableCell className="font-medium">{session.date_session_debut}</TableCell>
+                <TableCell className="font-medium">{session.Session.date_session_debut}</TableCell>
                 <TableCell className="text-muted-foreground">
-                  {session.designation}
+                  {session.Session.designation}
                   {session.Formation.titre}
                 </TableCell>
-                <TableCell className="text-muted-foreground">{session.duree}</TableCell>
-                <TableCell className="text-muted-foreground">{session.prix} €</TableCell>
+                <TableCell className="text-muted-foreground">{session.Session.duree}</TableCell>
+                <TableCell className="text-muted-foreground">{session.Session.prix} €</TableCell>
               </TableRow>
             ))}
           </TableBody>

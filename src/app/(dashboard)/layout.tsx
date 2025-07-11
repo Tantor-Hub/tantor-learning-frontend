@@ -2,7 +2,7 @@
 import { ReactNode, useEffect } from "react";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Bell } from "lucide-react";
+import { Notification } from "./notification";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
@@ -17,7 +17,10 @@ export default function DashboardLayout({
   const router = useRouter();
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const path = usePathname();
-  const activeMenuItem = path.split("/")[3];
+
+  // Changé de [3] à [2] pour récupérer la bonne partie de l'URL
+  const activeMenuItem = path.split("/")[2];
+
   const title =
     activeMenuItem == "courses"
       ? "Mes cours"
@@ -56,7 +59,7 @@ export default function DashboardLayout({
                 <SidebarTrigger className="-ml-1" />
                 <h1 className="text-xl font-semibold text-blue-600">{title}</h1>
               </div>
-              <Bell className="mr-4" />
+              <Notification />
             </header>
             <div className="p-3.5 h-full w-full bg-background">{children}</div>
           </SidebarInset>

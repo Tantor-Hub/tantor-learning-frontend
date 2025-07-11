@@ -93,25 +93,40 @@ export interface IGetMySessionsResponse {
     length: number;
     list: Array<{
       id: number;
-      uuid: string;
-      designation: string;
       id_controleur: number | null;
-      createdBy: number | null;
-      id_superviseur: number | null;
-      date_mise_a_jour: string | null;
-      duree: string;
-      progression: number;
+      id_superviseur: number[] | null;
+      date_mise_a_jour: string;
       id_formation: number;
-      piece_jointe: string | null;
-      type_formation: "onLine" | "presentiel" | "hybride"; // specific values from your data
-      id_category: number;
-      date_session_debut: string;
-      date_session_fin: string;
-      description: string | null;
-      prix: number;
-      status: number;
+      is_started: number;
+      id_sessionsuivi: number;
+      id_seances: number | null;
+      id_stagiaire: number;
+      id_payement: number | null;
+      status: number | null;
       createdAt: string;
       updatedAt: string;
+      Session: {
+        id: number;
+        uuid: string;
+        designation: string;
+        id_controleur: number | null;
+        createdBy: number | null;
+        id_superviseur: number[] | null;
+        date_mise_a_jour: string | null;
+        duree: string;
+        progression: number;
+        id_formation: number;
+        piece_jointe: string | null;
+        type_formation: "onLine" | "presentiel" | "hybride";
+        id_category: number;
+        date_session_debut: string;
+        date_session_fin: string;
+        description: string | null;
+        prix: number;
+        status: number;
+        createdAt: string;
+        updatedAt: string;
+      };
       Formation: {
         id: number;
         titre: string;
