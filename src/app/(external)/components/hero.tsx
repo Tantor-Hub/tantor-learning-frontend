@@ -18,7 +18,7 @@ const Hero = () => {
             Votre plateforme de formation en ligne professionnelle. Accedez a des formations de
             qualite, ou que vous soyez.
           </p>
-          <div className="border border-white flex gap-2.5 items-center px-1.5 md:px-2.5 relative z-20 rounded-full w-full max-w-[500px]">
+          {/* <div className="border border-white flex gap-2.5 items-center px-1.5 md:px-2.5 relative z-20 rounded-full w-full max-w-[500px]">
             <Input
               id="searchInput"
               type="text"
@@ -31,7 +31,7 @@ const Hero = () => {
             >
               <Search />
             </label>
-          </div>
+          </div> */}
           <div className="relative z-20 flex flex-col md:flex-row gap-5 max-w-[500px]">
             <Button
               className=" bg-white text-[#0353A4] text-[18px] cursor-pointer p-5 py-6 rounded-xl"

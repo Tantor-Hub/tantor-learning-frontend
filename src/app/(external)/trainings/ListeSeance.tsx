@@ -45,20 +45,17 @@ export function ListSeance({
           "Votre demande a bien été prise en compte. Vous recevrez sous peu la liste des documents à fournir pour finaliser votre inscription.",
       });
     } catch (error: any) {
+      if (error.status === 401) {
+        toast.error("Erreur de candidature", {
+          description: "Vous devez vous connecter pour postuler",
+        });
+        router.push("/signin");
+        return;
+      }
       toast.info("Information", {
         description:
           "Vous vous êtes déjà inscrit à cette session de formation; vous ne pouvez le faire deux fois.",
       });
-      if (error.status === 401) {
-        toast.error("Erreur de candidature", {
-          description: "Vous devez vous connecter pour postuler",
-          action: (
-            <Button variant="outline" onClick={() => router.push("/signin")}>
-              Se Connecter
-            </Button>
-          ),
-        });
-      }
     } finally {
       setLoadingSessionId(null); // Réinitialiser l'état de chargement
     }
