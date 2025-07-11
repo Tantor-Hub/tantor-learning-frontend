@@ -2,13 +2,22 @@
 import NewUser from "./new-user";
 import TableUser from "./table-users";
 import { userData } from "./data";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
+  const router = useRouter();
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestion des utilisateurs</h1>
-        <NewUser />
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <Button variant="outline" onClick={() => router.back()}>
+            <ChevronLeft /> Retour
+          </Button>
+          <NewUser />
+        </div>
+        <p className="truncate font-semibold text-xl">Gestion des utilisateurs</p>
       </div>
       <TableUser userData={userData} />
     </>

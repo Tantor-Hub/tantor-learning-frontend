@@ -12,6 +12,8 @@ import {
 import { useListUsersQuery } from "@/lib/apis/admin/user-api";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/shared/loading";
+import { Ellipsis } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function TableUser({ userData }: { userData: UserData }) {
   const { data: apiData, isLoading, isError, refetch } = useListUsersQuery();
@@ -48,17 +50,17 @@ export default function TableUser({ userData }: { userData: UserData }) {
   return (
     <Tabs defaultValue="allUsers">
       <div className="overflow-x-auto">
-        <TabsList className="mt-10 mb-8 px-2.5 py-6 bg-white border font-semibold">
-          <TabsTrigger value="allUsers" className="p-5 px-2 md:px-5">
+        <TabsList className="my-4 py-4 px-2.5 bg-white border font-semibold">
+          <TabsTrigger value="allUsers" className="p-3.5">
             Tous ({allUsers.length})
           </TabsTrigger>
-          <TabsTrigger value="students" className="p-5 px-2 md:px-5">
+          <TabsTrigger value="students" className="p-3.5">
             Etudiants ({students.length})
           </TabsTrigger>
-          <TabsTrigger value="instructors" className="p-5 px-2 md:px-5">
+          <TabsTrigger value="instructors" className="p-3.5">
             Formateurs ({instructors.length})
           </TabsTrigger>
-          <TabsTrigger value="secretaries" className="p-5 px-2 md:px-5">
+          <TabsTrigger value="secretaries" className="p-3.5">
             Secrétaires ({secretaries.length})
           </TabsTrigger>
         </TabsList>
@@ -84,7 +86,7 @@ export default function TableUser({ userData }: { userData: UserData }) {
                     <TableHead>Nom</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Rôle</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="border">
@@ -93,7 +95,11 @@ export default function TableUser({ userData }: { userData: UserData }) {
                       <TableCell className="font-medium">{user.nick_name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.roles[0].role}</TableCell>
-                      <TableCell>...</TableCell>
+                      <TableCell className="flex items-center justify-center">
+                        <Badge variant="secondary">
+                          <Ellipsis />
+                        </Badge>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -125,7 +131,7 @@ export default function TableUser({ userData }: { userData: UserData }) {
                     <TableHead>Nom</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Rôle</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="border">
@@ -134,7 +140,11 @@ export default function TableUser({ userData }: { userData: UserData }) {
                       <TableCell className="font-medium">{user.nick_name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.roles[0].role}</TableCell>
-                      <TableCell>...</TableCell>
+                      <TableCell className="flex items-center justify-center">
+                        <Badge variant="secondary">
+                          <Ellipsis />
+                        </Badge>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -166,7 +176,7 @@ export default function TableUser({ userData }: { userData: UserData }) {
                     <TableHead>Nom</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Rôle</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="border">
@@ -175,7 +185,11 @@ export default function TableUser({ userData }: { userData: UserData }) {
                       <TableCell className="font-medium">{user.nick_name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.roles[0].role}</TableCell>
-                      <TableCell>...</TableCell>
+                      <TableCell className="flex items-center justify-center">
+                        <Badge variant="secondary">
+                          <Ellipsis />
+                        </Badge>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -207,7 +221,7 @@ export default function TableUser({ userData }: { userData: UserData }) {
                     <TableHead>Nom</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Rôle</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="border">
@@ -216,7 +230,11 @@ export default function TableUser({ userData }: { userData: UserData }) {
                       <TableCell className="font-medium">{user.nick_name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.roles[0].role}</TableCell>
-                      <TableCell>...</TableCell>
+                      <TableCell className="flex items-center justify-center">
+                        <Badge variant="secondary">
+                          <Ellipsis />
+                        </Badge>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

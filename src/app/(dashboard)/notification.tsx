@@ -26,12 +26,17 @@ export function Notification() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative" onClick={handleNotificationClick}>
-          <Bell className={`${isActive ? "text-blue-600" : "text-gray-400"}`} />
+        <Button
+          variant="secondary"
+          size="icon"
+          className="relative"
+          onClick={handleNotificationClick}
+        >
+          <Bell className={`size-5 ${isActive ? "text-primary" : "text-secondary-foreground"}`} />
           {notifications.length > 0 && isActive && (
             <Badge
               variant="destructive"
-              className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 flex items-center justify-center text-xs"
+              className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 flex items-center justify-center text-xs text-white"
             >
               {notifications.length}
             </Badge>
@@ -42,12 +47,6 @@ export function Notification() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Notifications</h3>
-            <div className="flex items-center gap-2">
-              <Bell className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-gray-400"}`} />
-              <Badge variant="destructive" className="text-xs">
-                {notifications.length}
-              </Badge>
-            </div>
           </div>
 
           {notifications.length > 0 ? (

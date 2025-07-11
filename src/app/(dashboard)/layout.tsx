@@ -23,14 +23,16 @@ export default function DashboardLayout({
 
   const title =
     activeMenuItem == "courses"
-      ? "Mes cours"
+      ? "Cours"
       : activeMenuItem == "documents"
-        ? "Mes Documents"
+        ? "Documents"
         : activeMenuItem == "training"
-          ? "Ma Formation"
-          : activeMenuItem
-            ? activeMenuItem[0].toUpperCase() + activeMenuItem.slice(1)
-            : "Tableau de bord";
+          ? "Formation"
+          : activeMenuItem == "users"
+            ? "Utilisateurs"
+            : activeMenuItem
+              ? activeMenuItem[0].toUpperCase() + activeMenuItem.slice(1)
+              : "Tableau de bord";
 
   useEffect(() => {
     if (!isAuthenticated) {

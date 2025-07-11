@@ -1,5 +1,4 @@
 import { useListChatQuery } from "@/lib/apis/common/chat-api";
-import { NewMessageAlert } from "../shared/new-message";
 import { MessageList } from "../shared/message-list";
 
 export const AllMessagesTab = () => {
@@ -14,10 +13,6 @@ export const AllMessagesTab = () => {
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <p>Tous les messages</p>
-        <NewMessageAlert />
-      </div>
       <MessageList
         messages={allMessages?.data.list}
         isLoading={isLoadingAll}

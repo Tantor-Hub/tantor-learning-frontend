@@ -112,8 +112,8 @@ export function NewMessageAlert() {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button size="lg">
-          <Plus className="mr-2 h-4 w-4" /> Nouveau Message
+        <Button>
+          <Plus /> Nouveau Message
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="max-w-2xl">

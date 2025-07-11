@@ -10,13 +10,16 @@ import {
 import { Plus } from "lucide-react";
 import { NewEventForm } from "./new-event-form";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export function NewEvent() {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="py-3 px-5 bg-[#0466C8] flex text-white rounded-md cursor-pointer h-fit text-sm justify-center gap-2.5">
-        <Plus className="size-4" /> <span>Nouvel évènement</span>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus /> Nouvel évènement
+        </Button>
       </DialogTrigger>
       <DialogContent className="!w-full !max-w-3xl pt-12 pb-5 flex flex-col gap-5">
         <DialogHeader className="flex flex-col gap-2.5">

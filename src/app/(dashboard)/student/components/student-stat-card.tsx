@@ -16,7 +16,7 @@ const StatCard = ({
   change: string;
 }) => {
   return (
-    <Card className="gap-0 py-4 border">
+    <Card className="gap-0 py-4 border hover:cursor-pointer hover:shadow-lg">
       <Link href="/admin/users">
         <CardHeader className="px-4">
           <CardTitle className="flex justify-between items-center">
