@@ -142,3 +142,7 @@
 .hero {
   background: linear-gradient(135deg, #023e7a 0%, #f1f5f9 100%);
 }
+
+.heading-one {
+  @apply truncate font-semibold text-xl;
+}

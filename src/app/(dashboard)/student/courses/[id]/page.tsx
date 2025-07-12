@@ -18,13 +18,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BeforeTab } from "../documents/before-tab";
 import { DuringTab } from "../documents/during-tab";
 import { AfterTab } from "../documents/after-tab";
-import { Plus, Upload, FileText, Download } from "lucide-react";
+import { Plus, Upload, FileText, Download, ChevronLeft } from "lucide-react";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { EmptyState } from "@/components/shared/empty-state";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
+  const router = useRouter();
   const params = useParams();
   const sessionId = params.id as string;
   const currentUser = useSelector(selectCurrentUser);
@@ -42,6 +44,9 @@ export default function Page() {
 
   return (
     <div className="space-y-6">
+      <Button onClick={() => router.back()}>
+        <ChevronLeft /> Retour
+      </Button>
       {/* Section de recherche et filtres */}
       {courses!.data.rows.length > 0 && (
         <>
@@ -138,109 +143,12 @@ export default function Page() {
       ) : (
         <div className="py-10">
           <EmptyState
-            icon="BookIcon"
+            icon="BookOpen"
             title="Aucun cours disponible"
             description="Il n'y a actuellement aucun cours à afficher."
           />
         </div>
       )}
-
-      {/* Section des documents avec boutons d'action */}
-      <div className="bg-white rounded-lg shadow-sm border">
-        <Tabs defaultValue="before" className="w-full">
-          <div className="border-b">
-            <TabsList className="bg-transparent w-full justify-start p-0 h-auto">
-              <TabsTrigger
-                value="before"
-                className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-[#0466C8] data-[state=active]:bg-transparent data-[state=active]:text-[#0466C8] font-semibold"
-              >
-                Avant La Formation
-              </TabsTrigger>
-              <TabsTrigger
-                value="during"
-                className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-[#0466C8] data-[state=active]:bg-transparent data-[state=active]:text-[#0466C8] font-semibold"
-              >
-                Pendant La Formation
-              </TabsTrigger>
-              <TabsTrigger
-                value="after"
-                className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-[#0466C8] data-[state=active]:bg-transparent data-[state=active]:text-[#0466C8] font-semibold"
-              >
-                Après La Formation
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="before" className="p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <div>
-                <h2 className="text-[#0466C8] text-xl font-semibold mb-2">
-                  Documents Avant La Formation
-                </h2>
-                <p className="text-gray-600 text-sm">
-                  Gérez les documents nécessaires avant le début de la formation
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => handleAddDocument("before")}
-                  className="bg-[#0466C8] hover:bg-[#0456b8] text-white flex items-center gap-2"
-                >
-                  <Plus size={16} />
-                  Ajouter Document
-                </Button>
-              </div>
-            </div>
-            <BeforeTab id_session={Number(sessionId)} id_student={Number(currentUser!.id)} />
-          </TabsContent>
-
-          <TabsContent value="during" className="p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <div>
-                <h2 className="text-[#0466C8] text-xl font-semibold mb-2">
-                  Documents Pendant La Formation
-                </h2>
-                <p className="text-gray-600 text-sm">
-                  Ressources et documents utilisés pendant la session de formation
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => handleAddDocument("before")}
-                  className="bg-[#0466C8] hover:bg-[#0456b8] text-white flex items-center gap-2"
-                >
-                  <Plus size={16} />
-                  Ajouter Document
-                </Button>
-              </div>
-            </div>
-            <DuringTab id_session={Number(sessionId)} id_student={Number(currentUser!.id)} />
-          </TabsContent>
-
-          <TabsContent value="after" className="p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <div>
-                <h2 className="text-[#0466C8] text-xl font-semibold mb-2">
-                  Documents Après La Formation
-                </h2>
-                <p className="text-gray-600 text-sm">
-                  Certificats, évaluations et documents de suivi post-formation
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => handleAddDocument("after")}
-                  className="bg-[#0466C8] hover:bg-[#0456b8] text-white flex items-center gap-2"
-                >
-                  <Plus size={16} />
-                  Ajouter Document
-                </Button>
-              </div>
-            </div>
-            <AfterTab id_session={Number(sessionId)} id_student={Number(currentUser!.id)} />
-          </TabsContent>
-        </Tabs>
-      </div>
     </div>
   );
 }

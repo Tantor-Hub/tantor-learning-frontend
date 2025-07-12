@@ -1,5 +1,5 @@
 import React from "react";
-import { BookOpen, Calendar, Database, ShieldUser } from "lucide-react";
+import { BadgeCheck, BookOpen, Calendar, Clock, Database, ShieldUser } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface EmptyStateProps {
@@ -17,7 +17,11 @@ export function EmptyState({ icon, title, description, className }: EmptyStatePr
         ? Database
         : icon === "ShieldUser"
           ? ShieldUser
-          : Calendar;
+          : icon == "Clock"
+            ? Clock
+            : icon == "BadgeCheck"
+              ? BadgeCheck
+              : Calendar;
   return (
     <div className={cn("text-center py-12", className)}>
       <IconComponent className="w-12 h-12 text-gray-400 mx-auto mb-4" />

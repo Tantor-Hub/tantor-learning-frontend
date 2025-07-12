@@ -1,5 +1,5 @@
 "use client";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useGetCoursesByIdQuery } from "@/lib/apis/student/training-api";
 import { Loading } from "@/components/shared/loading";
 import {
@@ -12,9 +12,12 @@ import {
   CheckCircle,
   GraduationCap,
   Globe,
+  ChevronLeft,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Page() {
+  const router = useRouter();
   const params = useParams();
   const courseId = params.idCourse as string;
   const { data: course, isLoading } = useGetCoursesByIdQuery(
@@ -38,27 +41,28 @@ export default function Page() {
   const courseData = course.data;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen">
+      <div className="space-y-4">
         {/* Section En-tête */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-12">
+        <div className="overflow-hidden border rounded-md p-4">
+          <div className="space-y-4">
+            <Button variant="outline" onClick={() => router.back()}>
+              <ChevronLeft /> Retour
+            </Button>
             <div className="flex items-center gap-4 mb-4">
-              <div className="bg-white/20 p-3 rounded-full">
-                <GraduationCap className="h-8 w-8 text-white" />
+              <div className="p-3 rounded-full bg-primary-foreground">
+                <GraduationCap className="h-8 w-8 text-primary" />
               </div>
               <div>
-                <h2 className="truncate font-semibold text-xl text-white mb-2">
-                  {courseData.Title.title}
-                </h2>
-                <p className="text-blue-100 text-sm">{courseData.Title.description}</p>
+                <h2 className="heading-one mb-2 text-primary">{courseData.Title.title}</h2>
+                <p className="text-muted-foreground text-sm">{courseData.Title.description}</p>
               </div>
             </div>
 
             {courseData.is_published && (
               <div className="flex items-center gap-2 mt-4">
-                <CheckCircle className="h-5 w-5 text-green-300" />
-                <span className="text-green-100">Cours publié</span>
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span className="text-green-300">Cours publié</span>
               </div>
             )}
           </div>
@@ -68,7 +72,7 @@ export default function Page() {
           {/* Contenu principal */}
           <div className="lg:col-span-2 space-y-8">
             {/* Chapitres du cours */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="rounded-md border overflow-hidden">
               <div className="px-8 py-6 border-b border-gray-100">
                 <div className="flex items-center gap-3">
                   <BookOpen className="h-6 w-6 text-blue-600" />
@@ -110,7 +114,7 @@ export default function Page() {
 
             {/* Section Documents */}
             {courseData.Documents && courseData.Documents.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+              <div className="rounded-md border overflow-hidden">
                 <div className="px-8 py-6 border-b border-gray-100">
                   <div className="flex items-center gap-3">
                     <FileText className="h-6 w-6 text-green-600" />
@@ -154,14 +158,14 @@ export default function Page() {
           </div>
 
           {/* Barre latérale */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Carte d'information du cours */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-              <div className="px-6 py-5 border-b border-gray-100">
-                <h3 className="truncate font-semibold text-xl">Informations du cours</h3>
+            <div className="rounded-md border overflow-hidden">
+              <div className="p-4 border-b border-gray-100">
+                <h3 className="heading-one">Informations du cours</h3>
               </div>
 
-              <div className="p-6 space-y-4 text-sm">
+              <div className="p-4 space-y-4 text-sm">
                 <div className="flex items-start gap-3">
                   <User className="h-5 w-5 text-gray-500 mt-1" />
                   <div>
@@ -202,7 +206,7 @@ export default function Page() {
             </div>
 
             {/* Statistiques rapides */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="bg-white rounded-md border p-4">
               <h3 className="truncate font-semibold text-xl mb-4">Statistiques rapides</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
