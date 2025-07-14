@@ -38,8 +38,8 @@ export function ListSeance({
   const handleApplySessionMutation = async (sessionId: number) => {
     try {
       setLoadingSessionId(sessionId); // Marquer ce bouton comme en chargement
-      await applySessionMutation({ id_session: sessionId }).unwrap();
-
+      // await applySessionMutation({ id_session: sessionId }).unwrap();
+      router.push(`/trainings/${sessionId}/questions`);
       toast.success("Candidature enregistrée", {
         description:
           "Votre demande a bien été prise en compte. Vous recevrez sous peu la liste des documents à fournir pour finaliser votre inscription.",
