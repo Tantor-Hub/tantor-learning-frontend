@@ -1,36 +1,50 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { LottieSuccessView } from "@/components/payment/lottie-success-view";
+import { useSearchParams } from "next/navigation";
+export default function PageSuccess() {
+  const searchParams = useSearchParams();
+  const amount = searchParams.get("amount") as string;
+  const [countdown, setCountdown] = useState(5);
+  const router = useRouter();
 
-export default function SuccessPage() {
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          router.push("/"); // Changez cette route selon votre structure
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 2000);
+
+    return () => clearInterval(timer);
+  }, [router]);
+
   return (
-    <div className="container mx-auto flex flex-col items-center justify-center py-20 px-4 text-center">
-      <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-green-600">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="48"
-          height="48"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="text-green-600"
-        >
-          <path d="M20 6 9 17l-5-5" />
-        </svg>
-      </div>
-      <p className="mt-4 text-sm text-gray-600">Merveilleux!</p>
-      <h1 className="mt-2 text-xl font-semibold text-blue-800">
-        Félicitations! Votre paiement a été effectué avec succès
-      </h1>
-      <div className="mt-10">
-        <Link href="/">
-          <Button className="bg-blue-900 hover:bg-blue-950 text-white px-6 py-2 rounded">
-            Aller au Tableau De Bord
-          </Button>
-        </Link>
-      </div>
-    </div>
+    <>
+      <main className="max-w-6xl mx-auto p-10 text-white text-center border m-10 rounded-md bg-gradient-to-tr from-blue-500 to-purple-500">
+        <div className="mb-10">
+          <h1 className="text-4xl font-extrabold mb-2">Paiement réussi 🎉</h1>
+          <h2 className="text-2xl">Félicitations! Votre paiement a été effectué avec succès</h2>
+          <div className="bg-white p-2 rounded-md mt-5 text-4xl font-bold text-black">
+            ${amount}
+          </div>
+          <div className="mt-8 text-lg">
+            <p>Redirection vers le tableau de bord dans {countdown} secondes...</p>
+            <div className="mt-4 bg-white/20 rounded-full h-2 w-full max-w-md mx-auto overflow-hidden">
+              <div
+                className="bg-white h-full rounded-full transition-all duration-1000 ease-linear"
+                style={{ width: `${((5 - countdown) / 5) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </main>
+      <LottieSuccessView />
+    </>
   );
 }

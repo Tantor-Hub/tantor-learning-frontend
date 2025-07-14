@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LockIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,11 +14,21 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import CourseModal from "@/components/course-modal"; // Import the CourseModal component
+import { CheckoutPage } from "@/components/payment/checkout-page";
+import { convertToSubcurrency } from "@/lib/convert-to-subcurrency";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import { Badge } from "@/components/ui/badge";
 
-export default function PaymentPage() {
+if (process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY === undefined) {
+  throw new Error("NEXT_PUBLIC_STRIPE_PUBLIC_KEY is not defined");
+}
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
+
+export default function Page() {
   const [open, setOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false); // State for CourseModal
+  const amount = 40;
   const router = useRouter();
 
   // Function to handle success
@@ -32,32 +42,24 @@ export default function PaymentPage() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-2xl font-bold text-center mb-8">
-          Vous êtes sur le point de finaliser votre paiement en ligne de manière sécurisée
-        </h1>
-
+      <div className="mx-auto">
         <div className="grid md:grid-cols-2 gap-8">
           {/* Left - Info course */}
           <div>
-            <div className="sticky top-8">
-              <p className="text-sm font-medium text-gray-700 mb-3">Formation sélectionnée :</p>
-
-              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 overflow-hidden">
-                <div className="h-2 bg-gradient-to-r from-blue-400 to-blue-800"></div>
+            <div>
+              <Card className="border">
+                <div className="h-2 bg-gradient-to-r from-blue-400 to-primary"></div>
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h2 className="text-lg font-bold text-blue-800">
+                      <h2 className="text-lg font-bold text-primary">
                         Diplôme de Comptabilité et de Gestion (DCG)
                       </h2>
-                      <p className="text-sm font-medium mt-1 text-blue-700">
+                      <p className="text-sm font-medium mt-1 text-primary/50">
                         Comptabilité et Finance • Bac+3
                       </p>
                     </div>
-                    <div className="bg-blue-800 text-white text-xs font-bold px-2 py-1 rounded-full">
-                      RNCP35526
-                    </div>
+                    <Badge variant="outline">RNCP35526</Badge>
                   </div>
 
                   <div className="mt-4 text-sm text-gray-600">
@@ -139,39 +141,48 @@ export default function PaymentPage() {
                   <div className="mt-6 pt-6 border-t border-blue-200">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-600">Total à payer</span>
-                      <span className="text-xl font-bold text-blue-800">199,00 €</span>
+                      <span className="text-xl font-bold text-primary">199,00 €</span>
                     </div>
                   </div>
-
-                  <Button
-                    variant="outline"
-                    className="mt-6 w-full border-blue-800 text-blue-800 hover:bg-blue-50"
-                    onClick={() => setModalOpen(true)}
-                  >
-                    Plus de détails
-                  </Button>
                 </CardContent>
               </Card>
-
-              <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-500">
-                <LockIcon size={14} />
-                <span>Paiement sécurisé par cryptage SSL</span>
-              </div>
             </div>
           </div>
 
           {/* Right - Form + modal trigger */}
           <div>
-            <Card className="shadow-lg border-gray-200">
-              <CardContent className="p-6">
-                <PaymentForm onSuccess={handlePaymentSuccess} />
+            <Card className="border">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-primary">
+                  Méthode de paiement
+                </CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Ajouter un nouveau CardDescriptionaiement à votre compte
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    mode: "payment",
+                    amount: convertToSubcurrency(amount),
+                    currency: "eur",
+                  }}
+                >
+                  <CheckoutPage amount={amount} />
+                </Elements>
               </CardContent>
+
+              {/* <CardContent className="p-6">
+                <PaymentForm onSuccess={handlePaymentSuccess} />
+              </CardContent> */}
             </Card>
           </div>
         </div>
       </div>
 
       {/*  Modal de confirmation */}
+      {/*       
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -184,10 +195,7 @@ export default function PaymentPage() {
             <Button onClick={() => setOpen(false)}>Fermer</Button>
           </div>
         </DialogContent>
-      </Dialog>
-
-      {/* Course Details Modal */}
-      {/* <CourseModal isOpen={modalOpen} onClose={() => setModalOpen(false)} /> */}
+      </Dialog> */}
     </div>
   );
 }
