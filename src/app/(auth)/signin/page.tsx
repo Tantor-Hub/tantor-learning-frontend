@@ -54,7 +54,8 @@ export default function SignIn() {
         })
       );
       // it will get handle inside the layout main page with the status of isAuthenticated is true
-      router.push("/");
+      // redirect to the page where you where before signin
+      router.back();
     } catch (error: any) {
       toast.dismiss(loadingToast);
       const errorMessage =
