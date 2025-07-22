@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Facebook, Instagram, LinkedIn, X, Youtube } from "./social-icons";
+import { Facebook, Instagram, Linkedin, Youtube, Twitter } from "lucide-react";
+import { Separator } from "./ui/separator";
 
 const footerLinks = [
   [
@@ -20,43 +21,61 @@ const footerLinks = [
 ];
 
 const socialsIcons = [
-  { id: "facebook", icon: <Facebook /> },
-  { id: "instagram", icon: <Instagram /> },
-  { id: "linkedin", icon: <LinkedIn /> },
-  { id: "x", icon: <X /> },
-  { id: "youtube", icon: <Youtube /> },
+  { id: "facebook", icon: <Facebook className="w-4 h-4 text-white" size={16} /> },
+  { id: "instagram", icon: <Instagram className="w-4 h-4 text-white" /> },
+  { id: "linkedin", icon: <Linkedin className="w-4 h-4 text-white" /> },
+  { id: "x", icon: <Twitter className="w-4 h-4 text-white" /> },
+  { id: "youtube", icon: <Youtube className="w-4 h-4 text-white" /> },
 ];
 
-const Footer = () => {
+export default function Footer() {
   return (
-    <footer className="bg-[#023E7D] pt-20 pb-5 text-white">
-      <div className="max-w-[1440px] flex flex-col gap-10 m-auto px-5 md:px-10 text-base md:text-xl">
-        <section className="flex gap-5 flex-wrap justify-between items-center w-full">
-          {footerLinks.map((links) => (
-            <div key={links[0].label} className="flex flex-col h-32 md:h-44 justify-between">
-              {links.map((link) => (
-                <Link key={link.label} href={link.href} className="md:max-w-[200px] ">
-                  {link.label}
-                </Link>
-              ))}
+    <footer className="bg-primary py-12 text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex flex-col gap-12">
+          <section className="flex gap-4 flex-wrap justify-between items-start w-full">
+            {footerLinks.map((links) => (
+              <div key={links[0].label} className="flex flex-col gap-4 justify-between">
+                {links.map((link) => (
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    className="md:max-w-[200px] hover:text-white/80 font-light"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            ))}
+            <div className="border h-[110px] flex flex-col justify-between p-3.5">
+              <p className="font-semibold">Nous Suivre</p>
+              <div className="flex gap-2.5">
+                {socialsIcons.map((social) => (
+                  <a
+                    href="#"
+                    className="bg-white/20 rounded-full p-2"
+                    aria-label={social.id}
+                    key={social.id}
+                    target="_blank"
+                  >
+                    {social.icon}
+                  </a>
+                  // <div key={social.id} className="hover:text-blue-300 cursor-pointer bg-none">
+                  // <FaInstagram className="w-4 h-4 text-white" />
+                  //   {social.icon}
+                  // </div>
+                ))}
+              </div>
             </div>
-          ))}
-          <div className="border h-[130px] border-white flex flex-col justify-between p-3.5">
-            <p>Nous Suivre</p>
-            <div className="flex gap-2.5">
-              {socialsIcons.map((social) => (
-                <div key={social.id} className="hover:text-blue-300 cursor-pointer bg-none">
-                  {social.icon}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-        <section>
-          <p className="text-center mt-5 md:mt-10">© 2025 Tantor Learning. Tous droits reserves</p>
-        </section>
+          </section>
+          <section>
+            <Separator />
+            <p className="text-center mt-12 font-light">
+              © 2025 Tantor Learning. Tous droits reserves
+            </p>
+          </section>
+        </div>
       </div>
     </footer>
   );
-};
-export default Footer;
+}
