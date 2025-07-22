@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "./ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   DropdownMenu,
@@ -31,25 +31,49 @@ interface NavLinksProps {
   className?: string;
   isAuthenticated: boolean;
   onDashboardClick?: () => void;
+  isMobile?: boolean;
+  closeMobileMenu?: () => void;
+  currentPath: string;
 }
 
-const NavLinks = ({ className, isAuthenticated, onDashboardClick }: NavLinksProps) => (
-  <nav className={className}>
-    {(isAuthenticated ? privateLinks : publicLinks).map(({ href, label }) =>
-      href === "#" ? (
-        <button
+const NavLinks = ({
+  className,
+  isAuthenticated,
+  onDashboardClick,
+  isMobile = false,
+  closeMobileMenu,
+  currentPath,
+}: NavLinksProps) => (
+  <nav
+    className={`${isMobile ? "flex" : "hidden md:flex"} items-center ${isMobile ? "flex-col space-y-4 mt-4" : "space-x-8"} ${className}`}
+  >
+    {(isAuthenticated ? privateLinks : publicLinks).map(({ href, label }) => {
+      const isActive = href === "#" ? false : currentPath === href;
+
+      return href === "#" ? (
+        <div
           key={label}
-          onClick={onDashboardClick}
-          className="p-2 text-nowrap hover:text-shadow-sm text-left"
+          onClick={() => {
+            onDashboardClick?.();
+            closeMobileMenu?.();
+          }}
+          className="text-foreground hover:text-primary font-normal flex items-center hover:cursor-pointer whitespace-nowrap"
         >
           {label}
-        </button>
+        </div>
       ) : (
-        <Link href={href} key={label} className="p-2 text-nowrap hover:text-shadow-sm">
+        <Link
+          href={href}
+          key={label}
+          onClick={closeMobileMenu}
+          className={`font-normal flex items-center whitespace-nowrap transition-colors ${
+            isActive ? "text-primary" : "text-foreground hover:text-primary"
+          }`}
+        >
           {label}
         </Link>
-      )
-    )}
+      );
+    })}
   </nav>
 );
 
@@ -57,19 +81,40 @@ interface AuthButtonsProps {
   direction?: "row" | "col";
   signin: () => void;
   signup: () => void;
+  isMobile?: boolean;
+  closeMobileMenu?: () => void;
 }
 
-const AuthButtons = ({ direction = "row", signin, signup }: AuthButtonsProps) => {
-  const baseStyle =
-    "px-3.5 py-6 rounded-[12px] border border-[#0353A4] text-[16px] lg:text-xl cursor-pointer";
-  const spacing = direction === "row" ? "flex gap-2 xl:gap-4" : "flex flex-col gap-4";
+const AuthButtons = ({
+  direction = "row",
+  signin,
+  signup,
+  isMobile = false,
+  closeMobileMenu,
+}: AuthButtonsProps) => {
+  const spacing =
+    direction === "row" ? "flex items-center space-x-4" : "flex flex-col items-center space-y-4";
+
+  const handleSignin = () => {
+    signin();
+    closeMobileMenu?.();
+  };
+
+  const handleSignup = () => {
+    signup();
+    closeMobileMenu?.();
+  };
 
   return (
-    <div className={spacing}>
-      <Button className={`${baseStyle} bg-white text-[#0353A4]`} onClick={signup}>
+    <div className={`${spacing} ${isMobile ? "mt-4 w-full" : ""}`}>
+      <Button
+        variant="outline"
+        className="text-primary border-primary w-full md:w-auto"
+        onClick={handleSignup}
+      >
         S'inscrire
       </Button>
-      <Button className={`${baseStyle} bg-[#0353A4] text-white`} onClick={signin}>
+      <Button onClick={handleSignin} className="text-white w-full md:w-auto">
         Se connecter
       </Button>
     </div>
@@ -81,8 +126,9 @@ export default function Header() {
   const currentUser = useSelector(selectCurrentUser);
   const { isDialogOpen, setIsDialogOpen, handleUserRoles } = useRoleSelection();
   const roles = currentUser?.roles;
-  const [isOpen, setIsOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname(); // Add this hook to get current path
   const isAuthenticated = useSelector(selectIsAuthenticated);
 
   const handleDashboardClick = () => {
@@ -91,84 +137,49 @@ export default function Header() {
     }
   };
 
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   return (
-    <header className="text-[#0353A4] font-medium text-base lg:text-[22px] sticky top-0 z-30 backdrop-blur-xl bg-[#FFFFFFCC]">
-      <div className="max-w-[1440px] flex justify-between lg:justify-start md:gap-[5%] xl:gap-[10%] items-center m-auto py-4 lg:py-6 px-5 md:px-10">
-        <Link href="/" className="flex gap-1 lg:gap-4 items-center ">
-          <Image
-            src="/tantor-logo.svg"
-            height={48}
-            width={48}
-            alt="Tantor logo"
-            className="h-8 w-auto lg:w-12"
-          />
-          <h1 className="text-nowrap border-b-2 border-red-500">Tantor Learning</h1>
-        </Link>
+    <header className="py-2 shadow-sm sticky top-0 z-30 backdrop-blur-xl bg-[#FFFFFFCC]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="flex justify-between h-16 items-center w-full">
+          {/* Logo - fixed width */}
+          <div className="flex-shrink-0 w-48">
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/tantor-logo.svg"
+                height={32}
+                width={32}
+                alt="Tantor logo"
+                className="h-8 w-8 mr-2"
+              />
+              <span className="text-[16px] font-[600] text-primary">Tantor Learning</span>
+            </Link>
+          </div>
 
-        <div className="hidden lg:flex lg:flex-[1] justify-between items-center gap-2 xl:gap-6">
-          <NavLinks
-            className="flex xl:gap-2.5"
-            isAuthenticated={isAuthenticated}
-            onDashboardClick={handleDashboardClick}
-          />
-
-          {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="rounded-full">
-                  <Avatar className="inline-block static size-12">
-                    <AvatarImage src={currentUser?.avatar} />
-                    <AvatarFallback className="font-semibold bg-primary text-background">
-                      {currentUser?.fs_name?.[0] || "A"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="sr-only">Toggle user menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>
-                  <p className="text-sm font-medium">{currentUser?.fs_name || "Anonymous"}</p>
-                  <p className="text-xs font-light">{currentUser?.email || "mail"}</p>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={async () => await logout()}>
-                  Se déconnecter
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <AuthButtons
-              signin={() => router.push("/signin")}
-              signup={() => router.push("/signup")}
+          {/* Desktop Navigation - takes remaining space */}
+          <div className="hidden md:flex flex-1 justify-center px-4">
+            <NavLinks
+              isAuthenticated={isAuthenticated}
+              onDashboardClick={handleDashboardClick}
+              className="flex-1 justify-center"
+              currentPath={pathname}
             />
-          )}
-        </div>
+          </div>
 
-        <button
-          className="lg:hidden text-gray-700"
-          onClick={() => setIsOpen((prev) => !prev)}
-          aria-label="Toggle menu"
-        >
-          {isOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
-      </div>
-
-      {isOpen && (
-        <div className="lg:hidden bg-white pb-5 shadow-md border-t absolute z-50 w-full left-0 px-5">
-          <NavLinks
-            className="flex flex-col items-center py-4 space-y-4"
-            isAuthenticated={isAuthenticated}
-            onDashboardClick={handleDashboardClick}
-          />
-
-          {isAuthenticated ? (
-            <div className="flex justify-center">
+          {/* Action Buttons - fixed width desktop */}
+          <div className="hidden flex-shrink-0 w-48 md:flex justify-end">
+            {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="secondary" size="icon" className="rounded-full">
-                    <Avatar className="inline-block static">
+                  <Button variant="outline" size="icon" className="rounded-full">
+                    <Avatar className="inline-block static size-8">
                       <AvatarImage src={currentUser?.avatar} />
-                      <AvatarFallback>{currentUser?.fs_name?.[0] || "A"}</AvatarFallback>
+                      <AvatarFallback className="font-semibold bg-primary text-background">
+                        {currentUser?.fs_name?.[0] || "A"}
+                      </AvatarFallback>
                     </Avatar>
                     <span className="sr-only">Toggle user menu</span>
                   </Button>
@@ -184,22 +195,86 @@ export default function Header() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-          ) : (
-            <AuthButtons
-              direction="col"
-              signin={() => router.push("/signin")}
-              signup={() => router.push("/signup")}
-            />
-          )}
-        </div>
-      )}
+            ) : (
+              <AuthButtons
+                signin={() => router.push("/signin")}
+                signup={() => router.push("/signup")}
+              />
+            )}
+          </div>
 
-      <RoleSelectionDialog
-        roles={currentUser?.roles || []}
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-      />
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center">
+            {isAuthenticated && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="rounded-full">
+                    <Avatar className="inline-block static size-8">
+                      <AvatarImage src={currentUser?.avatar} />
+                      <AvatarFallback className="font-semibold bg-primary text-background">
+                        {currentUser?.fs_name?.[0] || "A"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="sr-only">Toggle user menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>
+                    <p className="text-sm font-medium">{currentUser?.fs_name || "Anonymous"}</p>
+                    <p className="text-xs font-light">{currentUser?.email || "mail"}</p>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={async () => await logout()}>
+                    Se déconnecter
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            <div className="md:hidden flex items-center ml-4">
+              <button
+                className="md:hidden hover:text-primary inline-flex items-center justify-center p-2 hover:text-primary-blue transition-colors duration-200 hover:cursor-pointer"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-6 w-6 transition-transform duration-300" />
+                ) : (
+                  <Menu className="h-6 w-6 transition-transform duration-300" />
+                )}
+                <span className="sr-only">Toggle menu</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile nav links menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden py-4 border-t">
+            <NavLinks
+              isAuthenticated={isAuthenticated}
+              onDashboardClick={handleDashboardClick}
+              isMobile
+              closeMobileMenu={closeMobileMenu}
+              currentPath={pathname}
+            />
+
+            {!isAuthenticated && (
+              <AuthButtons
+                direction="col"
+                signin={() => router.push("/signin")}
+                signup={() => router.push("/signup")}
+                isMobile
+                closeMobileMenu={closeMobileMenu}
+              />
+            )}
+          </div>
+        )}
+
+        <RoleSelectionDialog
+          roles={currentUser?.roles || []}
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+        />
+      </div>
     </header>
   );
 }

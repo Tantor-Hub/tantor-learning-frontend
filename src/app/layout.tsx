@@ -1,16 +1,9 @@
 import { ReactNode } from "react";
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { poppins, workSans } from "../../public/fonts";
 import { ReduxProvider } from "@/components/provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
-
-const poppins = Poppins({
-  weight: ["400", "500", "600", "700"],
-  style: ["normal"],
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "TanTor Learning | Formations en ligne certifiantes partout en France",
@@ -24,8 +17,8 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${poppins.className} antialiased`}>
+    <html lang="fr" className={`${poppins.className} ${workSans.className}`}>
+      <body className={poppins.className}>
         <ReduxProvider>
           {children}
           <Toaster position="top-right" richColors />
