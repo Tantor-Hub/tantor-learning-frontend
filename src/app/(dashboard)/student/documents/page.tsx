@@ -25,8 +25,9 @@ import { useState } from "react";
 
 import { filters, documentsData } from "../courses/data";
 import { DocsTab } from "../courses/types";
+import { AfterTab } from "./after";
 
-export default function StudentDashboard() {
+export default function Page() {
   const [activeDocs, setActiveDocs] = useState<DocsTab>("all");
   return (
     <div>
@@ -44,42 +45,14 @@ export default function StudentDashboard() {
           <span className="text-[#ACACAC]">Filtres</span>
         </div>
       </div>
-      <div className="border p-8 flex flex-col items-end gap-7 bg-white">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 md:gap-10 w-full">
-          {filters.map((filter, i) => (
-            <div key={i} className="flex flex-col gap-[7px]">
-              <span>{filter.label}</span>
-              <Select>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={filter.value} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="most-recent">{filter.value}</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
-        </div>
-        <Button className="bg-transparent border border-[#cbd9e7] text-[#ACACAC]">
-          <Image src="/icons/close.svg" height={20} width={20} alt="close icon" />
-          Renitialiser les filtres
-        </Button>
-      </div>
 
-      <Tabs defaultValue="all" onValueChange={(val) => setActiveDocs(val as DocsTab)}>
-        <div className="overflow-x-auto bg-white p-8 shadow-md shadow-gray-300 my-5">
-          <TabsList className="flex w-full min-w-[1000px] mb-4 shadow-md shadow-gray-300 border-t  border-gray-50 bg-gray-100">
-            <TabsTrigger value="all" className="flex-[1] py-5 rounded-xl">
-              Tous les documents
-            </TabsTrigger>
-            <TabsTrigger value="shared" className="flex-[1] py-5 rounded-xl">
-              Partagés avec moi
-            </TabsTrigger>
-            <TabsTrigger value="recent" className="flex-[1] py-5 rounded-xl">
-              Récents
-            </TabsTrigger>
+      <Tabs defaultValue="all" onValueChange={(val) => setActiveDocs(val as DocsTab)} className="">
+        <div className="overflow-x-auto">
+          {/*  min-w-[1000px] */}
+          <TabsList className="flex min-w-[1000px] w-full bg-white border">
+            <TabsTrigger value="all">Avant La Formation</TabsTrigger>
+            <TabsTrigger value="shared">Pendant La Formation</TabsTrigger>
+            <TabsTrigger value="after">Après La Formation</TabsTrigger>
           </TabsList>
           <h2 className="text-[#0466C8] text-[18px] font-semibold mb-2.5">
             {documentsData[activeDocs]?.[0]?.title}
@@ -130,106 +103,11 @@ export default function StudentDashboard() {
               </div>
             </TabsContent>
           ))}
+          <TabsContent value="after">
+            <AfterTab />
+          </TabsContent>
         </div>
       </Tabs>
-
-      {/* Section des documents avec boutons d'action */}
-
-      {/* <div className="bg-white rounded-lg shadow-sm border">
-        <Tabs defaultValue="before" className="w-full">
-          <div className="border-b">
-            <TabsList className="bg-transparent w-full justify-start p-0 h-auto">
-              <TabsTrigger
-                value="before"
-                className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-[#0466C8] data-[state=active]:bg-transparent data-[state=active]:text-[#0466C8] font-semibold"
-              >
-                Avant La Formation
-              </TabsTrigger>
-              <TabsTrigger
-                value="during"
-                className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-[#0466C8] data-[state=active]:bg-transparent data-[state=active]:text-[#0466C8] font-semibold"
-              >
-                Pendant La Formation
-              </TabsTrigger>
-              <TabsTrigger
-                value="after"
-                className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-[#0466C8] data-[state=active]:bg-transparent data-[state=active]:text-[#0466C8] font-semibold"
-              >
-                Après La Formation
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="before" className="p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <div>
-                <h2 className="text-[#0466C8] text-xl font-semibold mb-2">
-                  Documents Avant La Formation
-                </h2>
-                <p className="text-gray-600 text-sm">
-                  Gérez les documents nécessaires avant le début de la formation
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => handleAddDocument("before")}
-                  className="bg-[#0466C8] hover:bg-[#0456b8] text-white flex items-center gap-2"
-                >
-                  <Plus size={16} />
-                  Ajouter Document
-                </Button>
-              </div>
-            </div>
-            <BeforeTab id_session={Number(sessionId)} id_student={Number(currentUser!.id)} />
-          </TabsContent>
-
-          <TabsContent value="during" className="p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <div>
-                <h2 className="text-[#0466C8] text-xl font-semibold mb-2">
-                  Documents Pendant La Formation
-                </h2>
-                <p className="text-gray-600 text-sm">
-                  Ressources et documents utilisés pendant la session de formation
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => handleAddDocument("before")}
-                  className="bg-[#0466C8] hover:bg-[#0456b8] text-white flex items-center gap-2"
-                >
-                  <Plus size={16} />
-                  Ajouter Document
-                </Button>
-              </div>
-            </div>
-            <DuringTab id_session={Number(sessionId)} id_student={Number(currentUser!.id)} />
-          </TabsContent>
-
-          <TabsContent value="after" className="p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <div>
-                <h2 className="text-[#0466C8] text-xl font-semibold mb-2">
-                  Documents Après La Formation
-                </h2>
-                <p className="text-gray-600 text-sm">
-                  Certificats, évaluations et documents de suivi post-formation
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => handleAddDocument("after")}
-                  className="bg-[#0466C8] hover:bg-[#0456b8] text-white flex items-center gap-2"
-                >
-                  <Plus size={16} />
-                  Ajouter Document
-                </Button>
-              </div>
-            </div>
-            <AfterTab id_session={Number(sessionId)} id_student={Number(currentUser!.id)} />
-          </TabsContent>
-        </Tabs>
-      </div> */}
     </div>
   );
 }

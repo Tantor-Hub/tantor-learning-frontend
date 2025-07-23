@@ -3,9 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { useRouter, usePathname } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuContent,
   DropdownMenuLabel,
-} from "./ui/dropdown-menu";
+} from "../ui/dropdown-menu";
 import { useSelector } from "react-redux";
 import { selectCurrentUser, selectIsAuthenticated } from "@/features/auth/auth-slice";
 import { useLogout } from "@/hooks/use-logout";
@@ -121,7 +121,45 @@ const AuthButtons = ({
   );
 };
 
-export default function Header() {
+const UserAvatar = ({
+  avatar,
+  firstName,
+  email,
+  handleLogout,
+  avatarName,
+}: {
+  avatar?: string;
+  firstName?: string;
+  avatarName?: string;
+  email?: string;
+  handleLogout: () => void;
+}) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon" className="rounded-full">
+          <Avatar className="inline-block static size-8">
+            <AvatarImage src={avatar} />
+            <AvatarFallback className="font-semibold bg-primary text-background">
+              {avatarName || "A"}
+            </AvatarFallback>
+          </Avatar>
+          <span className="sr-only">Toggle user menu</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>
+          <p className="text-sm font-medium">{firstName || "Anonymous"}</p>
+          <p className="text-xs font-light">{email || "mail"}</p>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleLogout}>Se déconnecter</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+export function Header() {
   const { logout } = useLogout();
   const currentUser = useSelector(selectCurrentUser);
   const { isDialogOpen, setIsDialogOpen, handleUserRoles } = useRoleSelection();
@@ -172,29 +210,13 @@ export default function Header() {
           {/* Action Buttons - fixed width desktop */}
           <div className="hidden flex-shrink-0 w-48 md:flex justify-end">
             {isAuthenticated ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="rounded-full">
-                    <Avatar className="inline-block static size-8">
-                      <AvatarImage src={currentUser?.avatar} />
-                      <AvatarFallback className="font-semibold bg-primary text-background">
-                        {currentUser?.fs_name?.[0] || "A"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="sr-only">Toggle user menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>
-                    <p className="text-sm font-medium">{currentUser?.fs_name || "Anonymous"}</p>
-                    <p className="text-xs font-light">{currentUser?.email || "mail"}</p>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={async () => await logout()}>
-                    Se déconnecter
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <UserAvatar
+                avatar={currentUser?.avatar}
+                firstName={currentUser?.fs_name}
+                email={currentUser?.email}
+                avatarName={currentUser?.fs_name?.[0]}
+                handleLogout={async () => await logout()}
+              />
             ) : (
               <AuthButtons
                 signin={() => router.push("/signin")}
@@ -206,29 +228,13 @@ export default function Header() {
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
             {isAuthenticated && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="rounded-full">
-                    <Avatar className="inline-block static size-8">
-                      <AvatarImage src={currentUser?.avatar} />
-                      <AvatarFallback className="font-semibold bg-primary text-background">
-                        {currentUser?.fs_name?.[0] || "A"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="sr-only">Toggle user menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>
-                    <p className="text-sm font-medium">{currentUser?.fs_name || "Anonymous"}</p>
-                    <p className="text-xs font-light">{currentUser?.email || "mail"}</p>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={async () => await logout()}>
-                    Se déconnecter
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <UserAvatar
+                avatar={currentUser?.avatar}
+                firstName={currentUser?.fs_name}
+                email={currentUser?.email}
+                avatarName={currentUser?.fs_name?.[0]}
+                handleLogout={async () => await logout()}
+              />
             )}
             <div className="md:hidden flex items-center ml-4">
               <button

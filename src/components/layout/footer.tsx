@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Facebook, Instagram, Linkedin, Youtube, Twitter } from "lucide-react";
-import { Separator } from "./ui/separator";
+import { Separator } from "../ui/separator";
 
 const footerLinks = [
   [
@@ -28,7 +28,7 @@ const socialsIcons = [
   { id: "youtube", icon: <Youtube className="w-4 h-4 text-white" /> },
 ];
 
-export default function Footer() {
+export function Footer() {
   return (
     <footer className="bg-primary py-12 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -60,10 +60,6 @@ export default function Footer() {
                   >
                     {social.icon}
                   </a>
-                  // <div key={social.id} className="hover:text-blue-300 cursor-pointer bg-none">
-                  // <FaInstagram className="w-4 h-4 text-white" />
-                  //   {social.icon}
-                  // </div>
                 ))}
               </div>
             </div>
