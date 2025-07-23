@@ -18,6 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className={`${poppins.className} ${workSans.className}`}>
+      <head>
+        <link rel="shortcut icon" href="/tantor-logo.svg" type="image/svg+xml" />
+      </head>
       <body className={poppins.className}>
         <ReduxProvider>
           {children}
