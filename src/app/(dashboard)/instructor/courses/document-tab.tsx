@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Upload, FileText, X, FileDown } from "lucide-react";
 import { useAddDocumentToCourseMutation } from "@/lib/apis/instructor/instructor";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 
 interface Document {

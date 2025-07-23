@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useResendCodeMutation, useVerifyBeforeResetPasswordMutation } from "@/lib/apis/auth-api";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { verifyAccountSchema, verifyAccountValues } from "@/lib/validators/verify-account-schema";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -30,9 +30,7 @@ export function VerifyCode() {
   const isFormValid = form.formState.isValid;
   const handleVerify = async (pin: string) => {
     try {
-      const loadingToast = toast.loading("Vérification en cours...", {
-        description: "Nous validons votre code de vérification",
-      });
+      const loadingToast = toast.loading("Vérification en cours...");
 
       const response = await verifyBeforeResetPassword({
         email_user: email,
@@ -42,65 +40,39 @@ export function VerifyCode() {
       toast.dismiss(loadingToast);
 
       if (response.status === 200) {
-        toast.success("Code validé avec succès", {
-          description: "Redirection vers la page de réinitialisation...",
-          duration: 3000,
-        });
+        toast.success("Code validé avec succès");
         router.push(`/reset?email=${encodeURIComponent(email)}&pin=${pin}`);
         return;
       }
 
       // Cas où le statut n'est pas 200
-      toast.error("Erreur inattendue", {
-        description: "La réponse du serveur est invalide",
-        duration: 5000,
-      });
+      toast.error("Erreur inattendue");
     } catch (error) {
       toast.dismiss();
-      toast.error("Code invalide", {
-        description: "Le code saisi est incorrect ou a expiré",
-        duration: 5000,
-      });
+      toast.error("Le code saisi est incorrect ou a expiré");
     }
   };
 
   const handleResend = async () => {
     try {
-      const loadingToast = toast.loading("Envoi en cours...", {
-        description: "Nous préparons un nouveau code de vérification",
-      });
+      const loadingToast = toast.loading("Envoi en cours...");
 
       await resendCode({ user_email: email }).unwrap();
 
       toast.dismiss(loadingToast);
 
-      toast.success("Nouveau code envoyé", {
-        description: `Un code de vérification a été renvoyé à ${email}`,
-        duration: 5000,
-      });
+      toast.success(`Un code de vérification a été renvoyé à ${email}`);
     } catch (error: any) {
       toast.dismiss();
 
       if (error?.status === 404) {
-        toast.error("Email non trouvé", {
-          description: "Aucun compte n'est associé à cette adresse email",
-          duration: 5000,
-        });
+        toast.error("Email non trouvé");
       } else if (error?.status === 429) {
-        toast.error("Trop de demandes", {
-          description: "Veuillez patienter avant de demander un nouveau code",
-          duration: 7000,
-        });
+        toast.error("Trop de demandes");
       } else if (error?.status === 500) {
-        toast.error("Erreur serveur", {
-          description: "Problème lors de l'envoi du code. Veuillez réessayer plus tard",
-          duration: 5000,
-        });
+        toast.error("Erreur serveur");
       } else {
-        toast.error("Échec de l'envoi", {
-          description: error?.data?.message || "Une erreur inattendue s'est produite",
-          duration: 5000,
-        });
+        toast.error("Échec de l'envoi");
       }
     }
   };

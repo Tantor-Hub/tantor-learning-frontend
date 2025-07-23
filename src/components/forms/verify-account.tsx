@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useResendCodeMutation, useVerifyMutation } from "@/lib/apis/auth-api";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { verifyAccountSchema, verifyAccountValues } from "@/lib/validators/verify-account-schema";
 import { useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";

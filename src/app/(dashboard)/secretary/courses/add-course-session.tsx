@@ -21,10 +21,9 @@ import {
 import { UserRoundPlus } from "lucide-react";
 import { useListUserByGroupQuery } from "@/lib/apis/admin/user-api";
 import { useGetAllTrainingsQuery } from "@/lib/apis/public/public-api";
-import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useAddNewCourseInSessionByIdMutation } from "@/lib/apis/secretary/training-secretary-api";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 export interface ISessionData {
   id_session: number;

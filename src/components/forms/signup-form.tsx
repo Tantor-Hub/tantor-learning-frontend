@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import Link from "next/link";
 import { signUpSchema, SignUpFormValues } from "@/lib/validators/signup-schema";
 import { useRouter } from "next/navigation";

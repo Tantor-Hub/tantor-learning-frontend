@@ -5,7 +5,7 @@ import { Loading } from "@/components/shared/loading";
 import { selectCurrentUser, selectIsAuthenticated } from "@/features/auth/auth-slice";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 export default function Page() {
   const { data, isLoading } = useGetAllBooksInLibraryQuery();
@@ -13,13 +13,7 @@ export default function Page() {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   if (isLoading) return <Loading />;
   if (!isAuthenticated) {
-    toast.info("Vous devez créer un compte pour accéder à cette fonctionnalité", {
-      action: {
-        label: "Créer un compte",
-        onClick: () => router.push("/signup"),
-      },
-      duration: 5000,
-    });
+    toast("Vous devez créer un compte pour accéder à cette fonctionnalité");
     router.push("/signin");
     return;
   }

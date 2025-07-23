@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAddCourseMutation } from "@/lib/apis/common/courses-api";
-import { toast } from "sonner"; // ou autre lib de notifications
+import { toast } from "react-hot-toast"; // ou autre lib de notifications
 
 const formSchema = z.object({
   title: z.string().min(1, "Veuillez entrer un titre pour le cours"),

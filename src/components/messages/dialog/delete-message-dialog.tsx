@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Trash } from "lucide-react";
 import { useDeleteChatMutation } from "@/lib/apis/common/chat-api";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 export function DeleteMessageDialog({ id }: { id: string }) {
   const router = useRouter();
@@ -23,7 +23,7 @@ export function DeleteMessageDialog({ id }: { id: string }) {
     try {
       await deleteMessage({ id: id }).unwrap();
       router.back();
-      toast.info("Message supprimé");
+      toast("Message supprimé");
     } catch {
       toast.error("Erreur lors de suppression du message");
     }

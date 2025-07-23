@@ -13,7 +13,7 @@ import { Loader2, ArrowRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useListSessionsByFormationIdQuery } from "@/lib/apis/public/public-api";
 import { useApplyToTrainingMutation } from "@/lib/apis/student/training-api";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -40,22 +40,16 @@ export function ListSeance({
       setLoadingSessionId(sessionId); // Marquer ce bouton comme en chargement
       // await applySessionMutation({ id_session: sessionId }).unwrap();
       router.push(`/trainings/${sessionId}/questions`);
-      toast.success("Candidature enregistrée", {
-        description:
-          "Votre demande a bien été prise en compte. Vous recevrez sous peu la liste des documents à fournir pour finaliser votre inscription.",
-      });
+      toast.success("Candidature enregistrée");
     } catch (error: any) {
       if (error.status === 401) {
-        toast.error("Erreur de candidature", {
-          description: "Vous devez vous connecter pour postuler",
-        });
+        toast.error("Erreur de candidature");
         router.push("/signin");
         return;
       }
-      toast.info("Information", {
-        description:
-          "Vous vous êtes déjà inscrit à cette session de formation; vous ne pouvez le faire deux fois.",
-      });
+      toast(
+        "Vous vous êtes déjà inscrit à cette session de formation; vous ne pouvez le faire deux fois."
+      );
     } finally {
       setLoadingSessionId(null); // Réinitialiser l'état de chargement
     }

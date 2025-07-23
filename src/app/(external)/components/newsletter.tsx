@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useSubscribeNewsLetterMutation } from "@/lib/apis/public/public-api";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { subscribeNewsLetterSchema, SubscribeNewsLetterSchemaFormValues } from "@/lib/validators";
 
 const contactInfo = {
@@ -53,21 +53,15 @@ export default function NewsLetter() {
       const response = await handleSubscribeNewsLetter({
         user_email: values.email,
       }).unwrap();
-      toast.success("Ajouté à la liste de diffusion", {
-        description:
-          "Vous recevrez régulièrement des mises à jour de notre part dans votre boîte mail.",
-      });
+      toast.success("Ajouté à la liste de diffusion");
       form.reset();
       if (response.status !== 201) {
-        toast.error("Erreur", {
-          description: "Une erreur s'est produite. Veuillez réessayer.",
-        });
+        toast.error("Une erreur s'est produite. Veuillez réessayer.");
       }
     } catch (error) {
-      toast.error("Échec de l'abonnement", {
-        description:
-          "Impossible de vous abonner pour le moment. Vérifiez votre connexion ou réessayez plus tard.",
-      });
+      toast.error(
+        "Impossible de vous abonner pour le moment. Vérifiez votre connexion ou réessayez plus tard."
+      );
       // console.error("Subscription error:", error);
     }
   };
@@ -75,10 +69,10 @@ export default function NewsLetter() {
   const isFormValid = form.formState.isValid;
 
   return (
-    <div className="max-w-[1440px] m-auto px-5 md:px-10 py-16 flex flex-col md:flex-row justify-between gap-5">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full m-auto md:px-10 py-16 flex flex-col md:flex-row justify-between gap-5">
       <div className="max-w-[430px] text-white flex flex-col gap-3.5 flex-[2/3]">
-        <h2 className="text-[25px] font-semibold">{contactInfo.title}</h2>
-        <p className="text-[14px]">{contactInfo.description}</p>
+        <h2 className="text-3xl font-work-sans font-semibold mb-2">{contactInfo.title}</h2>
+        <p className="font-light">{contactInfo.description}</p>
         {contactInfo.details.map((detail, i) => (
           <div key={detail.type} className="flex items-center gap-2 p-2">
             <picture className="h-8 w-8 p-2.5 rounded-full bg-white flex items-center justify-center">
@@ -93,8 +87,10 @@ export default function NewsLetter() {
       </div>
       <div className="flex flex-col gap-[28px] p-10 bg-white md:min-w-[350px]">
         <div>
-          <h2 className="text-[25px] font-semibold">Inscrivez-vous à notre newsletter</h2>
-          <p className="text-[#5C677D] text-[14px]">
+          <h2 className="text-3xl font-work-sans font-semibold text-primary mb-6">
+            Inscrivez-vous à notre newsletter
+          </h2>
+          <p className="text-muted-foreground max-w-sm">
             Restez informés de nos actualités, événements et nouvelles formations
           </p>
         </div>
@@ -105,11 +101,9 @@ export default function NewsLetter() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#001233] text-[14px] font-medium">
-                    Addresse Mail
-                  </FormLabel>
+                  <FormLabel className="font-medium">Addresse Mail</FormLabel>
                   <FormControl>
-                    <Input placeholder="Votre Address Mail" className="rounded-2xl" {...field} />
+                    <Input placeholder="Votre Address Mail" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -117,7 +111,8 @@ export default function NewsLetter() {
             />
             <Button
               type="submit"
-              className="rounded-[12px] w-full text-[12px] font-light"
+              size="lg"
+              className="w-full"
               disabled={!isFormValid || isLoading} // Désactivé si le formulaire n'est pas valide
             >
               {isLoading ? <Loader2 className="animate-spin" /> : "S'inscrire"}

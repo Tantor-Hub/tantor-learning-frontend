@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Eye, Loader2, Trash2 } from "lucide-react";
 import { useDeleteTrainingByIdMutation } from "@/lib/apis/secretary/training-secretary-api";
 import { ITraining } from "@/types/secretary/training-secretary";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 interface TrainingCardProps {
   formation: ITraining;
@@ -23,18 +23,13 @@ const TrainingCard: React.FC<TrainingCardProps> = ({
   const handleDelete = async (id: string) => {
     try {
       await deleteTrainingMutation({ id }).unwrap();
-      toast.success("Suppression réussie", {
-        description: "La formation a été supprimée avec succès.",
-      });
+      toast.success("Suppression réussie");
 
       refetchFormations();
     } catch (error) {
       console.error("Delete error:", error);
 
-      toast.error("Échec de la suppression", {
-        description:
-          "Une erreur est survenue lors de la suppression de la formation. Veuillez réessayer.",
-      });
+      toast.error("Échec de la suppression");
     }
   };
 

@@ -11,7 +11,7 @@ import {
   useListChatTreadQuery,
 } from "@/lib/apis/common/chat-api";
 import { DeleteMessageDialog } from "@/components/messages/dialog/delete-message-dialog";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
@@ -57,7 +57,7 @@ function MessageActions() {
   const handleArchivedMessage = async () => {
     try {
       await archivedMessage({ id: messageId }).unwrap();
-      toast.info("Message Archivé");
+      toast("Message Archivé");
     } catch {
       toast.error("Une erreur est survenue");
     }

@@ -26,7 +26,7 @@ import { useGetAllTrainingsQuery } from "@/lib/apis/student/training-api";
 import { useListCoursesQuery } from "@/lib/apis/common/courses-api";
 import { useListTrainingTypeQuery } from "@/lib/apis/secretary/training-secretary-api";
 import { useAddSeanceMutation } from "@/lib/apis/secretary/seance-secretary-api";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 export function AddSeance() {
   const { data: sessionsData, isSuccess } = useGetAllTrainingsQuery();
@@ -98,16 +98,11 @@ export function AddSeance() {
         id_cours: seanceData.id_cours.toString(),
       }).unwrap();
 
-      toast.success("Séance créée avec succès", {
-        description: "La nouvelle séance a été enregistrée dans le système.",
-      });
+      toast.success("Séance créée avec succès");
     } catch (error) {
       console.error("Erreur création séance:", error);
 
-      toast.error("Échec de la création", {
-        description:
-          "Une erreur est survenue lors de la création de la séance. Veuillez réessayer.",
-      });
+      toast.error("Échec de la création");
     }
   };
 

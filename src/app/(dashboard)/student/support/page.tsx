@@ -17,7 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useContactFormAPIMutation } from "@/lib/apis/public/public-api";
 import { contactUsFormSchema, type ContactUsFormValues } from "@/lib/validators/form-schema";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 
@@ -56,9 +56,7 @@ export default function Page() {
 
   // Form submission handler
   const handleSubmit = async (values: ContactUsFormValues) => {
-    const toastId = toast.loading("Envoi en cours...", {
-      description: "Soumission de votre message...",
-    });
+    const toastId = toast.loading("Envoi en cours...");
     try {
       const response = await contactForm({
         from_name: currentUser?.nick_name || "",
@@ -69,8 +67,6 @@ export default function Page() {
       // console.log(response);
       if (response.status === 201) {
         toast.success("Requête envoyée avec succès", {
-          description:
-            "Votre demande a été transmise à notre équipe support. Vous recevrez une réponse dans les plus brefs délais.",
           id: toastId,
         });
         form.reset();
@@ -79,7 +75,6 @@ export default function Page() {
       }
     } catch {
       toast.error("Échec de l'envoi", {
-        description: "Une erreur est survenue lors de l'envoi du message",
         id: toastId,
       });
       return values;

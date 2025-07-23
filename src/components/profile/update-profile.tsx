@@ -23,7 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { useState } from "react";
 import { useUpdateUserProfileMutation } from "@/lib/apis/users-api";
 import Image from "next/image";
@@ -81,9 +81,7 @@ export function UpdateProfile() {
 
   const onSubmit = async (values: z.infer<typeof profileFormSchema>) => {
     try {
-      toast.loading("En cours ...", {
-        description: "Mise à jour de votre profil en cours",
-      });
+      toast.loading("En cours ...");
 
       // Filter out empty values before sending to API
       const filteredValues = Object.fromEntries(
@@ -101,16 +99,12 @@ export function UpdateProfile() {
         ...(filteredValues.phone && { phone: filteredValues.phone }),
       });
 
-      toast.success("Profil mis à jour !", {
-        description: "Votre profil a été modifié avec succès",
-      });
+      toast.success("Votre profil a été modifié avec succès");
 
       form.reset();
       setPreview(null);
     } catch (e: any) {
-      toast.error("Erreur", {
-        description: e.message || "Une erreur s'est produite lors de la mise à jour",
-      });
+      toast.error("Une erreur s'est produite lors de la mise à jour");
     } finally {
       toast.dismiss();
     }

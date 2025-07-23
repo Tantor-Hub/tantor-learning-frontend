@@ -3,7 +3,7 @@ import { useState, ChangeEvent, FormEvent } from "react";
 import { GoogleIcon } from "@/components/icons/google";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { Label } from "@/components/ui/label";
@@ -61,7 +61,7 @@ export default function SignIn() {
       const errorMessage =
         error.data?.data ||
         "Échec de la connexion. Veuillez vérifier vos identifiants. Soit votre mot de passe ou email est invalide";
-      toast.error("Echec de la connexion", { description: errorMessage });
+      toast.error(errorMessage);
     } finally {
       toast.dismiss(loadingToast);
     }

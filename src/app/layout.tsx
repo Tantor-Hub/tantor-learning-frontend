@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import type { Metadata } from "next";
 import { poppins, workSans } from "../../public/fonts";
 import { ReduxProvider } from "@/components/provider";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ export default function RootLayout({
       <body className={poppins.className}>
         <ReduxProvider>
           {children}
-          <Toaster position="top-right" richColors />
+          <Toaster position="top-center" />
         </ReduxProvider>
       </body>
     </html>

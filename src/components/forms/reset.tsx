@@ -17,7 +17,7 @@ import { BadgeCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useResetPasswordMutation } from "@/lib/apis/auth-api";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 import { GoogleIcon } from "@/components/icons/google";
 import Link from "next/link";
@@ -54,7 +54,7 @@ export function Reset() {
   const handleClick = async () => {
     try {
       if (formData.password !== formData.confirm) {
-        toast.warning("Les mots de passe ne correspondent pas");
+        toast("Les mots de passe ne correspondent pas");
         return;
       }
       const promise = await resetPassword({
@@ -73,9 +73,7 @@ export function Reset() {
       //   })
       // );
       router.replace("/");
-      toast.success("Succès !", {
-        description: "Votre mot de passe a été réinitialisé avec succès.",
-      });
+      toast.success("Votre mot de passe a été réinitialisé avec succès.");
       if (!error) {
         setOpen(true);
       }

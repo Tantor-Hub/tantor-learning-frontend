@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { selectIsAuthenticated } from "@/features/auth/auth-slice";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 export default function DashboardLayout({
   children,
@@ -37,10 +37,7 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace("/signin");
-      toast.info("Connexion requise", {
-        description:
-          "Veuillez vous connecter ou créer un compte pour accéder à votre tableau de bord",
-      });
+      toast("Veuillez vous connecter ou créer un compte pour accéder à votre tableau de bord");
     }
 
     // Check for stored refresh token

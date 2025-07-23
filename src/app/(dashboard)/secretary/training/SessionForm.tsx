@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { useAddSessionMutation } from "@/lib/apis/secretary/session-secretary-api";
 import { useListTrainingTypeQuery } from "@/lib/apis/secretary/training-secretary-api";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import {
   Select,
   SelectContent,
@@ -222,9 +222,7 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
       }).unwrap();
 
       onSuccess();
-      toast.success("Session créée avec succès", {
-        description: "La nouvelle session a été créée et configurée.",
-      });
+      toast.success("Session créée avec succès");
 
       // Reset form
       setForm({
@@ -247,9 +245,7 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
         questions: formattedQuestions,
       });
     } catch (error) {
-      toast.error("Erreur lors de la création", {
-        description: "Une erreur est survenue lors de la création de la session.",
-      });
+      toast.error("Erreur lors de la création");
     }
   };
 

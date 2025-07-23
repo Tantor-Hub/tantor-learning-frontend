@@ -25,7 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { useState, useEffect } from "react";
 import {
   Command,
@@ -94,14 +94,10 @@ export function NewMessageAlert() {
         content: values.content,
         id_user_receiver: values.recipientId,
       }).unwrap();
-      toast.success("Message envoyé", {
-        description: "Message envoyé avec succès",
-      });
+      toast.success("Message envoyé");
       form.reset();
     } catch {
-      toast.error(`Un erreur est survenu`, {
-        description: `Nous n'avons pas pu envoye le message`,
-      });
+      toast.error(`Un erreur est survenu`);
     }
   };
 

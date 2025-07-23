@@ -16,7 +16,7 @@ import {
 import { contactUsFormSchema } from "@/lib/validators/form-schema";
 import type { ContactUsFormValues } from "@/lib/validators/form-schema";
 import { useContactFormAPIMutation } from "@/lib/apis/public/public-api";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 export default function ContactUs() {
   const [contactForm, { isLoading }] = useContactFormAPIMutation();
@@ -32,9 +32,7 @@ export default function ContactUs() {
 
   // Form submission handler
   const onSubmit = async (values: ContactUsFormValues) => {
-    const toastId = toast.loading("Envoi en cours...", {
-      description: "Soumission de votre message...",
-    });
+    const toastId = toast.loading("Envoi en cours...");
     try {
       const response = await contactForm({
         from_name: values.fullName || "",
@@ -45,7 +43,6 @@ export default function ContactUs() {
       // console.log(response);
       if (response.status === 201) {
         toast.success("Message envoyé", {
-          description: "Nous vous répondrons au plus vite",
           id: toastId,
         });
         form.reset();
@@ -54,7 +51,6 @@ export default function ContactUs() {
       }
     } catch {
       toast.error("Échec de l'envoi", {
-        description: "Une erreur est survenue lors de l'envoi du message",
         id: toastId,
       });
       return values;

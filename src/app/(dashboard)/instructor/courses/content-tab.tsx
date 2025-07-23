@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Plus, X, Save, Trash2, ChevronLeft } from "lucide-react";
 import { useAddMatiereMutation } from "@/lib/apis/instructor/instructor";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 interface Chapter {
   id: number;

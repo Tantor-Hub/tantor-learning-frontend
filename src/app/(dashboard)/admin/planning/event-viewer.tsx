@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Loader2, Trash2 } from "lucide-react";
 import { useDeleteEventMutation } from "@/lib/apis/common/planning";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 export interface EventProps {
   id: string;
@@ -57,13 +57,9 @@ export function EventViewer({ selected, events }: { selected: Date; events?: Eve
   const handleDeleteEvent = async (eventId: string) => {
     try {
       await deleteEvent({ id: eventId }).unwrap();
-      toast.success("Événement supprimé", {
-        description: "L'événement a été supprimé avec succès",
-      });
+      toast.success("Événement supprimé");
     } catch {
-      toast.error("Erreur de suppression", {
-        description: "Une erreur est survenue lors de la suppression de l'événement",
-      });
+      toast.error("Erreur de suppression");
     }
   };
 

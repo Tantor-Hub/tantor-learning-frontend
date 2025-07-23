@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import {
   useListTrainingTypeQuery,
@@ -77,16 +77,11 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
         objectif: form.objectif,
         alternance: form.alternance,
       }).unwrap();
-      toast.success("Création réussie", {
-        description: "La formation a été créée avec succès.",
-      });
+      toast.success("Création réussie");
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      toast.error("Erreur lors de la création", {
-        description:
-          "Une erreur est survenue lors de la création de la formation. Veuillez réessayer.",
-      });
+      toast.error("Erreur lors de la création");
     }
   };
 

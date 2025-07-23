@@ -38,7 +38,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { Loading } from "@/components/shared/loading";
 
 interface CategoryData {
@@ -85,24 +85,18 @@ export function CategoryFormation() {
   // Handle create category
   const handleCreateCategory = async () => {
     if (!createForm.category.trim() || !createForm.description.trim()) {
-      toast.error("Erreur", {
-        description: "Veuillez remplir tous les champs",
-      });
+      toast.error("Veuillez remplir tous les champs");
       return;
     }
 
     try {
       await addCategory(createForm).unwrap();
-      toast.success("Succès", {
-        description: "Catégorie créée avec succès",
-      });
+      toast.success("Catégorie créée avec succès");
       setCreateForm({ category: "", description: "" });
       setCreateDialogOpen(false);
       refetch();
     } catch (error) {
-      toast.error("Erreur", {
-        description: "Erreur lors de la création de la catégorie",
-      });
+      toast.error("Erreur lors de la création de la catégorie");
     }
   };
 
@@ -125,16 +119,12 @@ export function CategoryFormation() {
         ...editForm,
         id_thematique: Number(selectedCategory.id),
       }).unwrap();
-      toast.success("Succès", {
-        description: "Catégorie mise à jour avec succès",
-      });
+      toast.success("Catégorie mise à jour avec succès");
       setEditDialogOpen(false);
       setSelectedCategory(null);
       refetch();
     } catch (error) {
-      toast.error("Erreur", {
-        description: "Erreur lors de la mise à jour de la catégorie",
-      });
+      toast.error("Erreur lors de la mise à jour de la catégorie");
     }
   };
 
@@ -142,14 +132,10 @@ export function CategoryFormation() {
   const handleDeleteCategory = async (id: string) => {
     try {
       await removeCategory({ id_category: id }).unwrap();
-      toast.success("Succès", {
-        description: "Catégorie supprimée avec succès",
-      });
+      toast.success("Catégorie supprimée avec succès");
       refetch();
     } catch (error) {
-      toast.error("Erreur", {
-        description: "Erreur lors de la suppression de la catégorie",
-      });
+      toast.error("Erreur lors de la suppression de la catégorie");
     }
   };
 

@@ -15,7 +15,7 @@ import * as z from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useAddMutation } from "@/lib/apis/admin/user-api";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
@@ -88,14 +88,10 @@ export default function NewUserForm({ onCancel }: NewEventFormProps) {
 
       const p = await addUser(userData).unwrap();
       console.log(p);
-      toast.success("Utilisateur créé", {
-        description: "L'utilisateur recevra un message pour vérifier son compte",
-      });
+      toast.success("Utilisateur créé");
       form.reset();
     } catch (error) {
-      toast.error("Erreur lors de la création", {
-        description: "Une erreur est survenue lors de la création de l'utilisateur",
-      });
+      toast.error("Erreur lors de la création");
     }
   };
 

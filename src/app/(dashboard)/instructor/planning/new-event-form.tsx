@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAddEventMutation } from "@/lib/apis/common/planning";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 
 const formSchema = z
@@ -90,15 +90,10 @@ export function NewEventForm({ onCancel }: NewEventFormProps) {
         timeline: [startDate, endDate],
       }).unwrap();
 
-      toast.success("Evénement créé", {
-        description:
-          "L'événement a été créé avec succès, vous pouvez le voir dans la liste de vos événements",
-      });
+      toast.success("Evénement créé");
       form.reset();
     } catch {
-      toast.error("Erreur", {
-        description: "Une erreur s'est produite lors de la création de l'événement",
-      });
+      toast.error("Une erreur s'est produite lors de la création de l'événement");
     }
   };
 
