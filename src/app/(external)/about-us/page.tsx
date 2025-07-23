@@ -6,38 +6,39 @@ import { courseTypes, registrationSteps, accountingCourses } from "./data";
 import { Pricing } from "./components/pricing";
 import { useRouter } from "next/navigation";
 
-export default function AboutUs() {
-  const bgColor = "#B3D9FFB2";
+export default function Page() {
   const router = useRouter();
   return (
     <main>
-      <div className="max-w-[1440px] m-auto flex flex-col gap-4 lg:flex-row px-5 md:px-10 py-12">
-        <div className="flex-1">
-          <h1 className="text-primary text-5xl font-bold mb-4">TANTOR Learning Hub</h1>
-          <p>Formez-vous aux métiers de la comptabilité avec notre école spécialisée</p>
-          <p className="mb-4 leading-11">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12 grid gap-12 lg:grid-cols-2">
+        <div>
+          <h1 className="text-3xl font-work-sans font-semibold text-primary mb-6">
+            TANTOR Learning Hub
+          </h1>
+          <p className="text-medium text-muted-foreground">
+            Formez-vous aux métiers de la comptabilité avec notre école spécialisée
+          </p>
+          <p className="my-4 text-medium text-muted-foreground">
             Notre école de comptabilité vous offre des formations de qualité adaptées à vos besoins.
             Rejoignez TANTOR Learning Hub pour une carrière réussie dans le monde de la finance et
             de la comptabilité.
           </p>
-          <div className="flex flex-col md:flex-row items-center gap-4">
+          <div className="grid md:grid-cols-2 gap-4">
             <Button
+              size="lg"
               variant="outline"
               onClick={() => router.push("/trainings")}
-              className="cursor-pointer"
+              className="border-primary text-primary w-full"
             >
               Decourvir nos formations
             </Button>
-            <Button onClick={() => router.push("/contact-us")} className="cursor-pointer">
+            <Button onClick={() => router.push("/contact-us")} className="w-full" size="lg">
               Nous Contacter
             </Button>
           </div>
         </div>
 
-        <div
-          style={{ boxShadow: "0 0 8px #0466C8" }}
-          className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 border border-border rounded-md p-4"
-        >
+        <div className="flex-1 grid grid-cols-2 gap-4 border rounded-md p-4 border-ring shadow-sm shadow-ring">
           {courseTypes.map((course, index) => (
             <FeatureCard
               key={index}
@@ -50,13 +51,13 @@ export default function AboutUs() {
         </div>
       </div>
 
-      <div className="max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
-        <h2 className="font-bold text-4xl mb-4">Comment s'inscrire</h2>
-        <p className="leading-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-12 text-center">
+        <h2 className="text-3xl font-work-sans font-semibold mb-6">Comment s'inscrire</h2>
+        <p className="text-medium text-muted-foreground max-w-lg mx-auto">
           Nous avons simplifié le processus d'inscription pour vous permettre de vous inscrire
           rapidement et facilement. Suivez ces trois étapes simples
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
           {registrationSteps.map((step, index) => (
             <StepCard
               key={index}
@@ -67,16 +68,18 @@ export default function AboutUs() {
           ))}
         </div>
 
-        <Button size="lg" className="cursor-pointer" onClick={() => router.push("/signup")}>
+        <Button size="lg" className="mt-4" onClick={() => router.push("/signup")}>
           S'inscrire maintenant
         </Button>
       </div>
 
-      <div className="text-secondary-foreground mt-4">
-        <div className={`bg-[#B3D9FFB2] `}>
-          <div className="max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
-            <h2 className="font-bold text-4xl mb-4">Nos Formations Bac +3 en Comptabilité</h2>
-            <p className="leading-12 text-xl text-muted-foreground">
+      <div className="text-secondary-foreground">
+        <div className="bg-ring text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12 text-center">
+            <h2 className="text-3xl font-work-sans font-semibold mb-6">
+              Nos Formations Bac +3 en Comptabilité
+            </h2>
+            <p className="text-primary-foreground mb-4 w-full max-w-lg mx-auto">
               TANTOR Learning vous propose des formations Bac +3 en comptabilité, adaptées à tous
               les profils d'étudiants et professionnels souhaitant approfondir leurs compétences
               dans le domaine de la comptabilité et de la gestion.
@@ -95,16 +98,18 @@ export default function AboutUs() {
             </div>
           </div>
         </div>
-        <div className=" max-w-[1440px] m-auto text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full text-center">
           <Pricing />
         </div>
       </div>
 
-      <div className="text-secondary-foreground">
-        <div className={`bg-[#B3D9FFB2] `}>
-          <div className="max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
-            <h2 className="font-bold text-4xl mb-4">Nos Formations Bac +5 en Comptabilité</h2>
-            <p className="leading-12 text-xl text-muted-foreground">
+      <div className="text-primary-foreground">
+        <div className="bg-ring">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12 text-center">
+            <h2 className="text-3xl font-work-sans font-semibold mb-6">
+              Nos Formations Bac +5 en Comptabilité
+            </h2>
+            <p className="text-primary-foreground mb-4 w-full max-w-lg mx-auto">
               TANTOR Learning vous propose des formations Bac +3 en comptabilité, adaptées à tous
               les profils d'étudiants et professionnels souhaitant approfondir leurs compétences
               dans le domaine de la comptabilité et de la gestion.
@@ -123,16 +128,18 @@ export default function AboutUs() {
             </div>
           </div>
         </div>
-        <div className=" max-w-[1440px] m-auto text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full m-auto text-center">
           <Pricing />
         </div>
       </div>
 
-      <div className="text-secondary-foreground">
-        <div className={`bg-[#B3D9FFB2] `}>
-          <div className="max-w-[1440px] m-auto px-5 md:px-10 py-12 text-center">
-            <h2 className="font-bold text-4xl mb-4">Nos Formations en continu</h2>
-            <p className="leading-12 text-xl text-muted-foreground">
+      <div className="text-primary-foreground">
+        <div className="bg-ring">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12 text-center">
+            <h2 className="text-3xl font-work-sans font-semibold mb-6">
+              Nos Formations en continu
+            </h2>
+            <p className="text-primary-foreground mb-4 w-full max-w-lg mx-auto">
               TANTOR Learning vous propose des formations Bac +3 en comptabilité, adaptées à tous
               les profils d'étudiants et professionnels souhaitant approfondir leurs compétences
               dans le domaine de la comptabilité et de la gestion.
@@ -151,7 +158,7 @@ export default function AboutUs() {
             </div>
           </div>
         </div>
-        <div className=" max-w-[1440px] m-auto text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-12 text-center">
           <Pricing />
         </div>
       </div>

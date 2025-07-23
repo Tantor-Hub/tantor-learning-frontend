@@ -51,7 +51,7 @@ export function PricingCard({ cardData, index, isLast, className }: PricingCardI
 
   return (
     <Card
-      className={`flex-1 pt-0 overflow-hidden ${!isLast && index != 0 ? "scale-105" : ""} ${className}`}
+      className={`flex-1 pt-0 overflow-hidden border ${!isLast && index != 0 ? "scale-105" : ""} ${className}`}
     >
       <CardHeader className={getHeaderClasses()}>
         <div>

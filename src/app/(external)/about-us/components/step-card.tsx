@@ -10,7 +10,7 @@ export function StepCard({
   description: string;
 }) {
   return (
-    <Card>
+    <Card className="border-ring shadow-ring">
       <CardContent className="flex items-center justify-center">
         <div className="bg-primary text-white w-10 h-10 rounded-full flex items-center justify-center">
           {number}
@@ -18,7 +18,7 @@ export function StepCard({
       </CardContent>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription className="text-sm">{description}</CardDescription>
       </CardHeader>
     </Card>
   );

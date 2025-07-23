@@ -25,21 +25,21 @@ export function FeatureCard({
 }) {
   const router = useRouter();
   return (
-    <Card className={className}>
-      <CardContent>
-        <Icon size={40} />
-      </CardContent>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      {action && (
-        <CardFooter>
-          <Button variant="outline" className="w-full" onClick={() => router.push("/trainings")}>
+    <Card className={`p-4 m-0 border-none shadow-none ${className}`}>
+      <CardContent className="p-0 m-0 w-full text-muted-foreground">
+        <Icon size={32} />
+        <p className="font-semibold text-foreground py-2">{title}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
+        {action && (
+          <Button
+            variant="outline"
+            className="w-full text-primary border-primary mt-2"
+            onClick={() => router.push("/trainings")}
+          >
             {action}
           </Button>
-        </CardFooter>
-      )}
+        )}
+      </CardContent>
     </Card>
   );
 }
