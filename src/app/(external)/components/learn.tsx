@@ -13,7 +13,7 @@ const learningContent = {
 const Learn = () => {
   return (
     <section className="flex flex-col md:flex-row justify-between items-center">
-      <div className="max-w-[1440px] m-auto px-5 md:px-10 flex flex-col lg:flex-row gap-10 lg:gap-28">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex flex-col lg:flex-row gap-10 lg:gap-28">
         <picture className="flex-[1] md:min-w-[500px] m:py-7">
           <Image
             src="/icons/learn.svg"
@@ -23,12 +23,12 @@ const Learn = () => {
             className="object-cover w-full h-auto"
           />
         </picture>
-        <div className="flex-[1] font-semibold flex flex-col gap-4 py-7">
-          <h2 className="text-2xl md:text-3xl text-[#0353A4]">{learningContent.title}</h2>
-          <p>{learningContent.description}</p>
-          <ul className="list-disc marker:text-[#23BDEE] marker:text-xl">
+        <div className="flex-[1] font-semibold flex flex-col gap-4 py-6 max-w-lg">
+          <h2 className="text-2xl font-medium text-primary">{learningContent.title}</h2>
+          <p className="font-normal text-base leading-relaxed">{learningContent.description}</p>
+          <ul className="list-disc marker:text-ring marker:text-xl">
             {learningContent.features.map((feature) => (
-              <li key={feature} className="pb-1 ml-5">
+              <li key={feature} className="pb-1 ml-5 text-sm font-light">
                 {feature}
               </li>
             ))}

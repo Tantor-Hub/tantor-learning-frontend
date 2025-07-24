@@ -3,9 +3,9 @@ import Image from "next/image";
 const partners = ["france travail", "lk paie", "qualiopi", "voltaire", "mon compe", "la region"];
 const Partners = () => {
   return (
-    <section id="partners" className="">
-      <div className="max-w-[1440px] m-auto">
-        <h1 className="text-center text-[#001845] text-3xl px-5 md:px-10 pb-5 md:pb-10 pt-6 font-semibold">
+    <section id="partners" className="pt-6">
+      <div className="m-auto">
+        <h1 className="text-4xl font-medium font-work-sans text-[#001A40] mb-4 text-center">
           Nos partenaires
         </h1>
         <div className="overflow-x-clip [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
@@ -26,11 +26,11 @@ const Partners = () => {
             ))}
           </div>
         </div>
-        <div className="flex flex-col items-center">
-          <h2 className="text-center text-[#001845] text-[28px] md:text-3xl px-5 md:px-10 pb-5 pt-6 font-semibold">
+        <div className="flex flex-col items-center mb-6 space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full text-center">
+          <h2 className="text-2xl font-medium text-foreground">
             "Une plateforme complète pour une formation simplifiée."
           </h2>
-          <p className="max-w-[700px] pb-6 px-5 md:px-10 text-center text-base text-[#23BDEE]">
+          <p className="max-w-[700px] text-ring font-normal text-[16px] leading-relaxed">
             Que vous soyez étudiant, formateur ou administrateur, Tantor Learning vous offre tous
             les outils nécessaires pour apprendre, enseigner et gérer vos formations en toute
             simplicité.
