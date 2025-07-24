@@ -24,11 +24,11 @@ if (process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY === undefined) {
   throw new Error("NEXT_PUBLIC_STRIPE_PUBLIC_KEY is not defined");
 }
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
+const stripePromise = loadStripe((process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY as string) ?? "");
 
 export default function Page() {
   const [open, setOpen] = useState(false);
-  const amount = 40;
+  const amount = 50; // apartir de 43
   const router = useRouter();
 
   // Function to handle success
@@ -165,7 +165,7 @@ export default function Page() {
                   stripe={stripePromise}
                   options={{
                     mode: "payment",
-                    amount: convertToSubcurrency(amount),
+                    amount: amount,
                     currency: "eur",
                   }}
                 >

@@ -1,48 +1,31 @@
 "use client";
 import Image from "next/image";
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
-const Hero = () => {
+export default function Hero() {
   const router = useRouter();
   return (
-    <section className="hero relative mask-b-from-70% h-[780px] p-5 md:p-10">
-      <div className="relative max-w-[1440px] flex items-center h-full m-auto">
-        <div className="max-w-fit flex flex-col gap-10 h-fit justify-center md:pl-10">
-          <h1 className="text-[28px] md:text-[40px] relative z-20 text-shadow-md text-white font-bold">
+    <section className="hero relative mask-b-from-90% h-[600px]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-start h-full m-auto">
+        <div className="max-w-fit flex flex-col gap-3 py-12 h-fit justify-center text-center md:text-start">
+          <h1 className="text-[36px] md:text-[48px] lg:text-[60px] max-w-xl  md:leading-[90px] font-[600] relative z-20 text-shadow-md text-white font-work-sans">
             Bienvenue sur Tantor Learning
           </h1>
-          <p className="text-white text-xl md:text-2xl relative z-20 max-w-[750px] text-shadow-md">
+          <p className="text-[#FFFFFFCC] font-normal text-[20px] leading-[160%] mb-12 max-w-xl text-xl md:text-2xl relative z-20 text-shadow-md">
             Votre plateforme de formation en ligne professionnelle. Accedez a des formations de
             qualite, ou que vous soyez.
           </p>
-          {/* <div className="border border-white flex gap-2.5 items-center px-1.5 md:px-2.5 relative z-20 rounded-full w-full max-w-[500px]">
-            <Input
-              id="searchInput"
-              type="text"
-              className=" text-white text-base md:text-xl border-none shadow-none outline-0 focus-visible:ring-0 placeholder:text-white placeholder:text-base"
-              placeholder="Trouver votre formation"
-            />
-            <label
-              className="bg-[#0353A4] text-white p-1.5 m-1 rounded-full cursor-pointer"
-              htmlFor="searchInput"
-            >
-              <Search />
-            </label>
-          </div> */}
-          <div className="relative z-20 flex flex-col md:flex-row gap-5 max-w-[500px]">
+          <div className="relative z-20 flex flex-col w-full md:flex-row gap-6 md:max-w-xl">
             <Button
-              className=" bg-white text-[#0353A4] text-[18px] cursor-pointer p-5 py-6 rounded-xl"
+              size="lg"
+              variant="outline"
+              className="bg-transparent text-white"
               onClick={() => router.push("/trainings")}
             >
               Decouvrir nos formations
             </Button>
-            <Button
-              className="bg-[#0353A4] text-white  text-[18px] cursor-pointer p-5 py-6 rounded-xl"
-              onClick={() => router.push("/signup")}
-            >
+            <Button size="lg" onClick={() => router.push("/signup")}>
               S'inscrire maintenant
             </Button>
           </div>
@@ -54,9 +37,8 @@ const Hero = () => {
           alt="hero image"
           className="absolute z-0 right-5 top-0 h-full w-auto object-cover"
         />
-        <div className="absolute -inset-5 md:-inset-10 bg-[#000000c4] lg:hidden"></div>
+        <div className="absolute -inset-5 md:-inset-10 bg-ring lg:hidden"></div>
       </div>
     </section>
   );
-};
-export default Hero;
+}
