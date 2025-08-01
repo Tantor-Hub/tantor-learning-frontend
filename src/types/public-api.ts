@@ -98,24 +98,26 @@ export interface IListFormationResponse {
   message: string;
   data: {
     length: number;
-    list: Array<{
+    list: {
       id: number;
       titre: string;
       sous_titre: string;
       id_category: number;
       id_thematic: number | null;
+      type_formation: string;
       rnc: string;
       description: string;
       prerequis: string;
       alternance: string;
       status: number;
+      prix: number;
       createdAt: string;
       updatedAt: string;
       Category: {
         id: number;
         category: string;
       };
-    }>;
+    }[];
   };
 }
 

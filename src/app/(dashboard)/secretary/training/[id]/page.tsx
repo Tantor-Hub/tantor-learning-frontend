@@ -5,47 +5,69 @@ import { useRouter, useParams } from "next/navigation";
 import { Loading } from "@/components/shared/loading";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Clock, Users, Edit, Trash2, Eye, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Plus, MoreVertical } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { ISession } from "@/types/secretary/training-secretary";
 import { EmptyState } from "@/components/shared/empty-state";
 import SessionForm from "../SessionForm";
-import { useUpdateSessionMutation } from "@/lib/apis/secretary/session-secretary-api";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const SessionList = ({ sessions }: { sessions: ISession[] }) => {
   return (
     <div className="space-y-4">
       {sessions.map((session: ISession) => (
         <Card key={session.id}>
-          <CardContent>
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h4 className="font-semibold text-lg">{session.designation}</h4>
-                <p className="text-gray-600 mt-1">
-                  {session.date_session_debut} - {session.date_session_fin}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline">
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button size="sm" variant="outline">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>{session.designation}</CardTitle>
+              <CardDescription>
+                {session.description || "Aucune description disponible"}
+              </CardDescription>
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Modifier</DropdownMenuItem>
+                <DropdownMenuItem className="text-red-600">Supprimer</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </CardHeader>
+          <CardContent>
+            <p>{session.text_reglement || "Aucun règlement spécifié"}</p>
           </CardContent>
+          <CardFooter className="flex justify-between">
+            <div>
+              Places disponibles: {session.nb_places_disponible}/{session.nb_places}
+            </div>
+            <div>Paiement: {session.payment_method}</div>
+          </CardFooter>
         </Card>
       ))}
 
       {sessions.length === 0 && (
         <EmptyState
           icon="Calendar"
-          title="Aucune séance"
-          description="Ajoutez des séances pour structurer votre formation."
+          title="Aucune session"
+          description="Ajoutez des sessions pour structurer votre formation."
         />
       )}
     </div>
@@ -53,7 +75,10 @@ const SessionList = ({ sessions }: { sessions: ISession[] }) => {
 };
 
 const TrainingSummary = ({ formation }: { formation: any }) => {
-  const totalDuration = 10;
+  const totalDuration = formation.Sessions?.reduce((acc: number, session: ISession) => {
+    // You might want to parse the duration from session.duree here
+    return acc + 10; // Placeholder - implement actual duration calculation
+  }, 0);
 
   return (
     <Card>
@@ -66,8 +91,8 @@ const TrainingSummary = ({ formation }: { formation: any }) => {
           <span className="font-semibold text-xl text-blue-600">{formation.prix}€</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-600">Séances</span>
-          <span className="font-medium">{formation.seances?.length || 0}</span>
+          <span className="text-gray-600">Sessions</span>
+          <span className="font-medium">{formation.Sessions?.length || 0}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-600">Durée totale</span>
@@ -88,48 +113,24 @@ const TrainingSummary = ({ formation }: { formation: any }) => {
   );
 };
 
-const TrainingTabs = ({
-  formation,
-  trainingId,
-  refetchFormations,
-}: {
-  formation: any;
-  refetchFormations: () => void;
-  trainingId: string;
-}) => {
+const TrainingTabs = ({ formation, trainingId }: { formation: any; trainingId: string }) => {
   const [showSessionModal, setShowSessionModal] = React.useState(false);
-  const [sessions, setSessions] = React.useState<any[]>([]);
-  const {
-    data: sessionData,
-    isLoading: isLoadingSessionData,
-    isError,
-    refetch: refetchSessionData,
-  } = useListTrainingByIdQuery({ id: formation.id.toString() });
+  const { data, isLoading, refetch } = useListTrainingByIdQuery({ id: trainingId });
 
-  useEffect(() => {
-    if (sessionData?.data.Sessions) {
-      setSessions(sessionData.data.Sessions);
-    }
-  }, [sessionData?.data.Sessions]);
+  if (isLoading) return <Loading />;
 
-  if (isLoadingSessionData) {
-    return <Loading />;
-  }
+  const sessions = data?.data.Sessions || [];
 
   const handleAddSession = () => {
-    refetchSessionData();
+    refetch();
     setShowSessionModal(false);
   };
-
-  if (isError) {
-    return <div>Error loading sessions</div>;
-  }
 
   return (
     <Tabs defaultValue="info" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="info">Informations</TabsTrigger>
-        <TabsTrigger value="seances">Sessions ({sessions.length})</TabsTrigger>
+        <TabsTrigger value="sessions">Sessions ({sessions.length})</TabsTrigger>
       </TabsList>
 
       <TabsContent value="info" className="space-y-4">
@@ -140,15 +141,11 @@ const TrainingTabs = ({
           <CardContent className="space-y-4">
             <div>
               <Label className="text-sm font-medium text-gray-600">Description</Label>
-              <p className="mt-1">
-                {sessionData?.data.description ||
-                  formation.description ||
-                  "Aucune description disponible"}
-              </p>
+              <p className="mt-1">{formation.description || "Aucune description disponible"}</p>
             </div>
             <div>
               <Label className="text-sm font-medium text-gray-600">Prérequis</Label>
-              <p className="mt-1">{formation.prerequis || "Aucun prérequis spécifique"}</p>
+              <p className="mt-1">{formation.prerequis || "Aucun prérequis spécifié"}</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -157,12 +154,8 @@ const TrainingTabs = ({
               </div>
               <div>
                 <Label className="text-sm font-medium text-gray-600">Type</Label>
-                <p className="mt-1">
-                  {formation.Category.category === "onLine"
-                    ? "En ligne"
-                    : formation.Category.category === "presentiel"
-                      ? "Présentiel"
-                      : "Hybride"}
+                <p className="mt-1 capitalize">
+                  {formation.type_formation?.toLowerCase() || "Non spécifié"}
                 </p>
               </div>
             </div>
@@ -170,17 +163,16 @@ const TrainingTabs = ({
         </Card>
       </TabsContent>
 
-      <TabsContent value="seances" className="space-y-4">
+      <TabsContent value="sessions" className="space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold">Sessions de formation</h3>
           <SessionForm
             open={showSessionModal}
             onOpenChange={setShowSessionModal}
-            // training={formation}
             trainingId={trainingId}
             onSuccess={handleAddSession}
           >
-            <Button variant="outline">
+            <Button>
               <Plus className="mr-2 h-4 w-4" />
               Ajouter une session
             </Button>
@@ -197,50 +189,31 @@ function TrainingDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const trainingId = params.id as string;
-  const {
-    data,
-    isLoading,
-    isError,
-    refetch: refetchTraining,
-  } = useListTrainingByIdQuery({ id: trainingId }, { skip: !trainingId });
-
-  const [showSessionModal, setShowSessionModal] = React.useState(false);
+  const { data, isLoading, isError } = useListTrainingByIdQuery({ id: trainingId });
 
   if (isLoading) return <Loading />;
-  if (isError) return <div>Error loading training details</div>;
+  if (isError) return <div>Erreur lors du chargement des détails de la formation</div>;
 
   const formation = data?.data;
-
   if (!formation) return null;
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="space-y-6">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <Button variant="outline" onClick={() => router.back()}>
-                <ArrowLeft /> Retour à la liste
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Retour
               </Button>
-
-              <SessionForm
-                open={showSessionModal}
-                onOpenChange={setShowSessionModal}
-                // training={formation}
-                onSuccess={() => {
-                  setShowSessionModal(false);
-                  refetchTraining();
-                }}
-                trainingId={trainingId}
-              >
-                Ajouter une session
-              </SessionForm>
             </div>
+
             <div className="flex-1">
               <div className="flex justify-between items-center">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">{formation.titre}</h1>
-                  <p className="text-gray-600">{data.data.sous_titre}</p>
+                  <p className="text-gray-600">{formation.sous_titre}</p>
                 </div>
               </div>
             </div>
@@ -248,14 +221,10 @@ function TrainingDetailsPage() {
 
           <div className="grid gap-6 md:grid-cols-3">
             <div className="md:col-span-2">
-              <TrainingTabs
-                formation={formation}
-                refetchFormations={refetchTraining}
-                trainingId={trainingId}
-              />
+              <TrainingTabs formation={formation} trainingId={trainingId} />
             </div>
             <div>
-              <TrainingSummary formation={data.data.Sessions || []} />
+              <TrainingSummary formation={formation} />
             </div>
           </div>
         </div>

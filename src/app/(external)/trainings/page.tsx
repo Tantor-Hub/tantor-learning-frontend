@@ -28,13 +28,21 @@ interface Formation {
   id: number;
   titre: string;
   sous_titre: string;
+  id_category: number;
+  id_thematic: number | null;
+  type_formation: string;
+  rnc: string;
   description: string;
-  niveau?: string;
-  modalite?: string;
-  categorie?: string;
-  duree?: string;
-  prix?: string;
-  id_category?: string | number;
+  prerequis: string;
+  alternance: string;
+  status: number;
+  prix: number;
+  createdAt: string;
+  updatedAt: string;
+  Category: {
+    id: number;
+    category: string;
+  };
 }
 
 interface FormationsResponse {
@@ -90,7 +98,7 @@ export default function Page() {
   const filteredData = useMemo(() => {
     if (!data?.data?.list) return [];
 
-    return data?.data.list.filter((item: Formation) => {
+    return data?.data.list.filter((item: any) => {
       // Search by title only
       const matchesSearch =
         searchTerm === "" || item.titre.toLowerCase().includes(searchTerm.toLowerCase());
@@ -378,16 +386,12 @@ export default function Page() {
 
                   <div className="flex gap-2.5">
                     <Image src="/icons/house.svg" height={20} width={20} alt="house icon" />
-                    <p className="text-black">
-                      {dcgData.modalities.map((modality, index) => (
-                        <span key={index}>{modality + ", "}</span>
-                      ))}
-                    </p>
+                    <p className="text-black">{item.type_formation}</p>
                   </div>
 
                   <div className="flex items-center gap-2.5">
                     <Image src="/icons/clock.svg" height={20} width={20} alt="clock icon" />
-                    {item.id_category}
+                    {item.alternance}
                   </div>
                   <div className="flex items-center gap-2.5">
                     <Image
@@ -396,17 +400,28 @@ export default function Page() {
                       width={20}
                       alt="graduation icon"
                     />
-                    {dcgData.rncp}
+                    {item.rnc.startsWith("RNCP") ? item.rnc : `RNCP${item.rnc}`}
                   </div>
                   <div className="flex items-center gap-2.5">
                     <Image src="/icons/money.svg" height={20} width={20} alt="money icon" />
-                    {item.id_category}
+                    {item.prix} &euro;
                   </div>
-                  <ListSeance
+                  <Link href={`/trainings/${item.id}`}>
+                    <Button
+                      variant="outline"
+                      className="w-full border-primary text-primary"
+                      size="lg"
+                    >
+                      S'inscrire
+                      <ArrowRight />
+                    </Button>
+                  </Link>
+                  {/* to remove later */}
+                  {/* <ListSeance
                     title={item.titre}
                     description={item.description}
                     id={item.id.toString()}
-                  />
+                  /> */}
                 </div>
               </div>
             ))

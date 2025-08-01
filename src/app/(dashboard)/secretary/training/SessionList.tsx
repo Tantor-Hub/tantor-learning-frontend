@@ -52,7 +52,7 @@ const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
       {sessions.length === 0 && (
         <EmptyState
           icon="Calendar"
-          title="Aucune séance"
+          title="Aucune Session disponible"
           description="Ajoutez des séances pour structurer votre formation."
         />
       )}
