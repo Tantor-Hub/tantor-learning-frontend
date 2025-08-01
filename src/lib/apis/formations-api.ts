@@ -1,5 +1,5 @@
 // File: src/lib/api/formations-api.ts
-import { baseQuery, createApi } from "./base-api";
+import { baseQuery, createApi, enhancedBaseQuery } from "./base-api";
 
 // Formation related types
 export interface Formation {
@@ -38,34 +38,34 @@ export const formationsApi = createApi({
   tagTypes: ["Formation"],
   endpoints: (builder) => ({
     getAllFormations: builder.query<Formation[], void>({
-      query: () => "/api/formations/list",
+      query: () => "formations/list",
       providesTags: ["Formation"],
     }),
     getFormationsByThematic: builder.query<Formation[], string>({
-      query: (thematicId) => `/api/formations/list/bythematic/${thematicId}`,
+      query: (thematicId) => `formations/list/bythematic/${thematicId}`,
       providesTags: ["Formation"],
     }),
     getFormationsByCategory: builder.query<Formation[], string>({
-      query: (categoryId) => `/api/formations/list/bycategory/${categoryId}`,
+      query: (categoryId) => `formations/list/bycategory/${categoryId}`,
       providesTags: ["Formation"],
     }),
     getFormationsByThematicAndCategory: builder.query<
       Formation[],
       { thematicId: string; categoryId: string }
     >({
-      query: ({ thematicId, categoryId }) => `/api/formations/list/by/${thematicId}/${categoryId}`,
+      query: ({ thematicId, categoryId }) => `formations/list/by/${thematicId}/${categoryId}`,
       providesTags: ["Formation"],
     }),
     createFormation: builder.mutation<Formation, CreateFormationRequest>({
       query: (formationData) => ({
-        url: "/api/formations/formation/add",
+        url: "formations/formation/add",
         method: "POST",
         body: formationData,
       }),
       invalidatesTags: ["Formation"],
     }),
     getFormationTypes: builder.query<FormationType[], void>({
-      query: () => "/api/formations/types",
+      query: () => "formations/types",
       providesTags: ["Formation"],
     }),
   }),

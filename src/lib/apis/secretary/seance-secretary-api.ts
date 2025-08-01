@@ -48,7 +48,7 @@ export const seanceSecretaryApi = createApi({
     }),
     addSeance: builder.mutation<void, IAddSeance>({
       query: (request) => ({
-        url: "/api/sessions/session/addseance",
+        url: "sessions/session/addseance",
         method: "POST",
         body: request,
       }),
@@ -56,7 +56,7 @@ export const seanceSecretaryApi = createApi({
     }),
     updateSeance: builder.mutation<void, IUpdateSeance>({
       query: (request) => ({
-        url: `/api/sessions/session/addseance/${request.id_session}`,
+        url: `sessions/session/addseance/${request.id_session}`,
         method: "PUT",
         body: request,
       }),
@@ -64,7 +64,7 @@ export const seanceSecretaryApi = createApi({
     }),
     removeSeance: builder.mutation<void, { idseance: string | number }>({
       query: (request) => ({
-        url: `/api/sessions/session/addseance/${request.idseance}`,
+        url: `sessions/session/addseance/${request.idseance}`,
         method: "DELETE",
         body: request,
       }),

@@ -1,5 +1,5 @@
 import { IListPlanning } from "@/types/common/planning-api";
-import { baseQuery, createApi } from "../base-api";
+import { baseQuery, createApi, enhancedBaseQuery } from "../base-api";
 
 export interface AddEventRequest {
   titre: string;
@@ -23,12 +23,12 @@ export const EventApi = createApi({
   tagTypes: ["Event"],
   endpoints: (builder) => ({
     listEvents: builder.query<IListPlanning, void>({
-      query: () => "/api/cms/events/e/list",
+      query: () => "cms/events/e/list",
       providesTags: ["Event"],
     }),
     addEvent: builder.mutation<AddEventResponse, AddEventRequest>({
       query: (body) => ({
-        url: "/api/cms/events/event/add",
+        url: "cms/events/event/add",
         method: "POST",
         body: body,
       }),
@@ -36,7 +36,7 @@ export const EventApi = createApi({
     }),
     deleteEvent: builder.mutation<void, DeleteEventRequest>({
       query: ({ id }) => ({
-        url: `/api/cms/events/event/${id}`,
+        url: `cms/events/event/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Event"],

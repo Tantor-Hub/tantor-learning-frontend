@@ -1,5 +1,5 @@
 // File: src/lib/api/categories-api.ts
-import { baseQuery, createApi } from "./base-api";
+import { createApi, enhancedBaseQuery, baseQuery } from "./base-api";
 
 // Category related types
 export interface Thematic {
@@ -27,20 +27,20 @@ export const thematicsApi = createApi({
   tagTypes: ["Thematic"],
   endpoints: (builder) => ({
     createThematic: builder.mutation<Thematic, CreateThematicRequest>({
-      query: (thematicData) => ({
-        url: "/api/categories/thematic/add",
+      query: (thematicData: any) => ({
+        url: "categories/thematic/add",
         method: "POST",
         body: thematicData,
       }),
       invalidatesTags: ["Thematic"],
     }),
     getAllThematics: builder.query<Thematic[], void>({
-      query: () => "/api/categories/thematics",
+      query: () => "categories/thematics",
       providesTags: ["Thematic"],
     }),
     updateThematic: builder.mutation<Thematic, { id: string; data: UpdateThematicRequest }>({
       query: ({ id, data }) => ({
-        url: `/api/categories/thematic/${id}`,
+        url: `categories/thematic/${id}`,
         method: "PUT",
         body: data,
       }),

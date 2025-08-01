@@ -24,14 +24,14 @@ export const manageCoursesApi = createApi({
       }
     >({
       query: (body) => ({
-        url: "/api/courses/presets/add",
+        url: "courses/presets/add",
         method: "POST",
         body: body,
       }),
       invalidatesTags: ["ManageCourses"],
     }),
     listCourses: builder.query<ICoursesAPIResponse, void>({
-      query: () => "/api/courses/presets/list",
+      query: () => "courses/presets/list",
       providesTags: ["ManageCourses"],
     }),
 
@@ -45,7 +45,7 @@ export const manageCoursesApi = createApi({
       IAddDocumentsForACourseRequest
     >({
       query: (body) => ({
-        url: "/api/courses/course/adddocuments",
+        url: "courses/course/adddocuments",
         method: "POST",
         body: body,
       }),
@@ -61,7 +61,7 @@ export const manageCoursesApi = createApi({
       ICourseContentRequest
     >({
       query: (body) => ({
-        url: "/api/courses/course/adddocuments",
+        url: "courses/course/adddocuments",
         method: "POST",
         body: body,
       }),

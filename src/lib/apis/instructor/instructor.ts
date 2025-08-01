@@ -8,7 +8,7 @@ export const instructorApi = createApi({
   tagTypes: ["Instructor"],
   endpoints: (builder) => ({
     listSessionsCoursesByInstructorId: builder.query({
-      query: () => "/api/sessions/list/listebyformateur",
+      query: () => "sessions/list/listebyformateur",
       providesTags: ["Instructor"],
     }),
     assignCourseToInstructor: builder.mutation<
@@ -19,19 +19,19 @@ export const instructorApi = createApi({
       }
     >({
       query: (request) => ({
-        url: "/api/sessions/session/assign",
+        url: "sessions/session/assign",
         method: "PUT",
         body: request,
       }),
     }),
 
     listStudentBySessionId: builder.query<void, { idsession: string }>({
-      query: (request) => `/api/sessions/students/list/${request.idsession}`,
+      query: (request) => `sessions/students/list/${request.idsession}`,
       providesTags: ["Instructor"],
     }),
 
     listSessionByInstructorId: builder.query<void, { id_instructeur: string }>({
-      query: (request) => `/api/sessions/list/listebyformateur/${request.id_instructeur}`,
+      query: (request) => `sessions/list/listebyformateur/${request.id_instructeur}`,
       providesTags: ["Instructor"],
     }),
 
@@ -47,7 +47,7 @@ export const instructorApi = createApi({
 
     addMatiere: builder.mutation<void, IAddMatiere>({
       query: (request) => ({
-        url: "/api/courses/course/addcontent",
+        url: "courses/course/addcontent",
         method: "POST",
         body: request,
       }),
@@ -70,7 +70,7 @@ export const instructorApi = createApi({
         formData.append("id_session", request.id_session);
 
         return {
-          url: "/api/courses/course/adddocuments",
+          url: "courses/course/adddocuments",
           method: "POST",
           body: formData,
           // Don't set Content-Type header - the browser will set it automatically
@@ -85,12 +85,12 @@ export const instructorApi = createApi({
     // ========================================================================
     // Affichez le cours du formateur connecte
     listAllCoursesByIdInstructor: builder.query<IListAllCoursesResponse, void>({
-      query: () => "/api/courses/list",
+      query: () => "courses/list",
       providesTags: ["Instructor"],
     }),
     // get cours by id
     getCourseById: builder.query<IGetCourseByIdResponse, { id_cours: string }>({
-      query: (request) => `/api/courses/course/${request.id_cours}`,
+      query: (request) => `courses/course/${request.id_cours}`,
       providesTags: ["Instructor"],
     }),
   }),

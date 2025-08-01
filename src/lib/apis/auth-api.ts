@@ -1,4 +1,4 @@
-import { baseQuery, createApi } from "./base-api";
+import { baseQuery, createApi, enhancedBaseQuery } from "./base-api";
 
 // Types for better type safety
 export interface AuthCredentials {
@@ -87,7 +87,7 @@ export const authApi = createApi({
   endpoints: (builder) => ({
     signin: builder.mutation<TokenResponse, AuthCredentials>({
       query: (credentials) => ({
-        url: "/api/users/user/signin",
+        url: "users/user/signin",
         method: "POST",
         body: credentials,
       }),
@@ -96,28 +96,28 @@ export const authApi = createApi({
     }),
     signup: builder.mutation<TokenResponse, SignupData>({
       query: (data) => ({
-        url: "/api/users/user/signup",
+        url: "users/user/signup",
         method: "POST",
         body: data,
       }),
     }),
     verify: builder.mutation<TokenResponse, VerifyRequest>({
       query: (data) => ({
-        url: "/api/users/user/verify",
+        url: "users/user/verify",
         method: "PUT",
         body: data,
       }),
     }),
     refreshToken: builder.mutation<TokenResponse, RefreshRequest>({
       query: (data) => ({
-        url: "/api/users/user/refresh",
+        url: "users/user/refresh",
         method: "PUT",
         body: data,
       }),
     }),
     logout: builder.mutation<void, void>({
       query: () => ({
-        url: "/api/users/user/logout",
+        url: "users/user/logout",
         method: "POST",
       }),
       // Invalidate auth cache on logout
@@ -125,7 +125,7 @@ export const authApi = createApi({
     }),
     resendCode: builder.mutation<void, ResendCodeRequest>({
       query: (data) => ({
-        url: "/api/users/user/resendcode",
+        url: "users/user/resendcode",
         method: "PUT",
         body: data,
       }),
@@ -135,27 +135,27 @@ export const authApi = createApi({
       VerifyBeforeResetPasswordRequest
     >({
       query: (data) => ({
-        url: "/api/users/user/verify-before-reset-password",
+        url: "users/user/verify-before-reset-password",
         method: "PUT",
         body: data,
       }),
     }),
     authWithGoogle: builder.mutation<TokenResponse, void>({
       query: () => ({
-        url: "/api/users/user/authwithgoogle",
+        url: "users/user/authwithgoogle",
         method: "GET",
       }),
     }),
     forgotPassword: builder.mutation<void, ForgotPasswordRequest>({
       query: (data) => ({
-        url: "/api/users/user/forgotenpassword",
+        url: "users/user/forgotenpassword",
         method: "PUT",
         body: data,
       }),
     }),
     resetPassword: builder.mutation<void, ResetPasswordRequest>({
       query: (data) => ({
-        url: "/api/users/user/resetpassword",
+        url: "users/user/resetpassword",
         method: "PUT",
         body: data,
       }),

@@ -69,11 +69,32 @@ export default function SignIn() {
 
   const signInWithGoogle = async () => {
     try {
+      /*
+<script>
+        window.opener.postMessage(${JSON.stringify({
+          auth_token: token,
+          refresh_token: refreshToken,
+          expires_in: expiresIn
+        })}, 'https://your-frontend-domain.com');
+        window.close();
+      </script>
+      */
+      //  window.opener.postMessage()
       toast.loading("Connexion avec Google en cours...");
-      window.location.href = "https://tantor-learning.up.railway.app/api/users/user/authwithgoogle";
-
+      const w = 500;
+      const h = 600;
+      const left = (window.innerWidth - w) / 2;
+      const top = (window.innerHeight - h) / 2;
+      const url = "https://tantor-learning.up.railway.app/api/users/user/authwithgoogle";
+      // window.location.href = "https://tantor-learning.up.railway.app/api/users/user/authwithgoogle";
+      window.open(
+        url,
+        "Google Auth",
+        `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${window}, height=${h}, top=${top}, left=${left}`
+      );
       // const result = await triggerGoogleAuth().unwrap();
-
+      toast.dismiss();
+      toast.success("reached");
       // Rest remains the same
       // dispatch(
       //   setCredentials({
@@ -86,7 +107,7 @@ export default function SignIn() {
       // toast.success("Connexion avec Google réussie!");
       // router.push("/student");
     } catch (error) {
-      // toast.error("Échec de la connexion avec Google");
+      toast.error("Échec de la connexion avec Google");
     }
   };
   return (

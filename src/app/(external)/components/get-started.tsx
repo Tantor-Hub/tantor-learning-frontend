@@ -1,5 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -47,15 +48,15 @@ const GetStarted = () => {
   const router = useRouter();
   return (
     <section>
-      <div className="max-w-[1440px] m-auto px-5 md:px-10 mb-10">
-        <h2 className="text-center text-xl md:text-2xl lg:text-3xl font-bold text-[#023E7D] my-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12">
+        <h2 className="text-4xl font-medium font-work-sans text-primary mb-12 text-center">
           Démarrez en trois Étapes Simples
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-15">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {stepsData.map((step) => (
             <div
               key={step.id}
-              className="bg-white p-8 rounded-2xl shadow-lg border-t-[2px] border-[#00000008] text-center flex flex-col items-center min-h-60 md:min-h-80"
+              className="bg-white p-8 rounded-2xl shadow-lg  border text-center flex flex-col items-center min-h-60 md:min-h-80"
             >
               <Image
                 src={step.icon}
@@ -90,15 +91,13 @@ const GetStarted = () => {
             </div>
           ))}
         </div>
-        <div className="flex flex-col items-center gap-7 mt-7">
-          <p className="font-semibold text-[#0466C8]">
+        <div className="flex flex-col items-center gap-6 mt-6">
+          <p className="text-2xl font-medium font-work-sans text-primary text-center">
             Prêt à apprendre ? Rejoignez-nous aujourd'hui !{" "}
           </p>
-          <Button
-            className="px-[100px] text-[12px] text-white rounded-xl py-3.5 bg-[#0466C8] cursor-pointer"
-            onClick={() => router.push("/signup")}
-          >
+          <Button size="lg" onClick={() => router.push("/signup")}>
             S'inscrire
+            <ArrowRight />
           </Button>
         </div>
       </div>

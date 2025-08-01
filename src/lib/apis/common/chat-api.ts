@@ -16,19 +16,19 @@ export const chatApi = createApi({
     // TREAD
     // Liste des messages par thread
     listChatTread: builder.query<IListChatTreadResponse, { id: string }>({
-      query: ({ id }) => `/api/cms/messages/thread/${id}`,
+      query: ({ id }) => `cms/messages/thread/${id}`,
       providesTags: ["Chat"],
     }),
 
     listChat: builder.query<IGetAllMessagesResponse, void>({
-      query: () => "/api/cms/messages/list",
+      query: () => "cms/messages/list",
       providesTags: ["Chat"],
     }),
     // create Message By Thread -> a reply message -> pour tread ajouter messageID & tread
 
     createMessage: builder.mutation<ICreateMessageResponse, ICreateMessageRequest>({
       query: (request) => ({
-        url: "/api/cms/messages/message/send",
+        url: "cms/messages/message/send",
         method: "POST",
         body: request,
       }),
@@ -37,7 +37,7 @@ export const chatApi = createApi({
 
     deleteChat: builder.mutation<void, { id: string }>({
       query: ({ id }) => ({
-        url: `/api/cms/messages/message/delete/${id}`,
+        url: `cms/messages/message/delete/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Chat"],
@@ -45,7 +45,7 @@ export const chatApi = createApi({
 
     archivedChat: builder.mutation<void, { id: string }>({
       query: ({ id }) => ({
-        url: `/api/cms/messages/message/archive/${id}`,
+        url: `cms/messages/message/archive/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Chat"],
@@ -53,14 +53,14 @@ export const chatApi = createApi({
 
     listChatByCategory: builder.query<IGetAllMessagesResponse, { group: string }>({
       query: ({ group }) => ({
-        url: `/api/cms/messages/list/${group}`,
+        url: `cms/messages/list/${group}`,
         method: "GET",
       }),
       providesTags: ["Chat"],
     }),
     getMessageById: builder.query<IGetMessageByIdResponse, { id: string }>({
       query: ({ id }) => ({
-        url: `/api/cms/messages/message/${id}`,
+        url: `cms/messages/message/${id}`,
         method: "GET",
       }),
       providesTags: ["Chat"],

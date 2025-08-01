@@ -1,4 +1,4 @@
-import { baseQuery, createApi } from "./base-api";
+import { baseQuery, createApi, enhancedBaseQuery } from "./base-api";
 
 export interface StudentStatusResponse {
   status: number;
@@ -44,15 +44,15 @@ export const studentApi = createApi({
   tagTypes: ["Student"],
   endpoints: (builder) => ({
     studentStatus: builder.query<StudentStatusResponse, void>({
-      query: () => "/api/cms/dashboard/cards",
+      query: () => "cms/dashboard/cards",
       providesTags: ["Student"],
     }),
     nextLiveSession: builder.query<NextLiveSessionResponse, void>({
-      query: () => "/api/cms/dashboard/nextlivessessions",
+      query: () => "cms/dashboard/nextlivessessions",
       providesTags: ["Student"],
     }),
     averageScore: builder.query<AverageScoreResponse, void>({
-      query: () => "/api/cms/dashboard/averages",
+      query: () => "cms/dashboard/averages",
       providesTags: ["Student"],
     }),
   }),

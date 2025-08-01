@@ -94,27 +94,27 @@ export const usersApi = createApi({
   tagTypes: ["User"],
   endpoints: (builder) => ({
     publicListUsers: builder.query<IPublicUsers, void>({
-      query: () => "/api/users/list",
+      query: () => "users/list",
       providesTags: ["User"],
     }),
     getUserProfile: builder.query<User, void>({
-      query: () => "/api/users/user/profile",
+      query: () => "users/user/profile",
       providesTags: ["User"],
     }),
     updateUserProfile: builder.mutation<ProfileUpdateResponse, ProfileUpdateRequest>({
       query: (userData) => ({
-        url: "/api/users/user/update",
+        url: "users/user/update",
         method: "PUT",
         body: userData,
       }),
       invalidatesTags: ["User"],
     }),
     getAllUsers: builder.query<User[], void>({
-      query: () => "/api/users/listall",
+      query: () => "users/listall",
       providesTags: ["User"],
     }),
     getUserById: builder.query<User, string>({
-      query: (userId) => `/api/users/user/${userId}`,
+      query: (userId) => `users/user/${userId}`,
       providesTags: (result, error, userId) => [{ type: "User", id: userId }],
     }),
   }),

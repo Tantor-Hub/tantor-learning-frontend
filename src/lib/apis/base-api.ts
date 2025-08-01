@@ -6,7 +6,7 @@ import { tokenStorage } from "@/features/token-storage";
 
 // Base query with authentication
 export const baseQuery = fetchBaseQuery({
-  baseUrl: "https://tantor-learning.up.railway.app",
+  baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
   prepareHeaders: (headers, { getState }) => {
     headers.set("Content-Type", "application/json");
 
@@ -33,7 +33,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
       try {
         const refreshResult = await baseQuery(
           {
-            url: "/users/user/refresh",
+            url: "users/user/refresh",
             method: "PUT",
             body: { refresh_token: tokens.refreshToken },
           },

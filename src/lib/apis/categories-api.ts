@@ -1,5 +1,5 @@
 // File: src/lib/api/categories-api.ts
-import { baseQuery, createApi } from "./base-api";
+import { baseQuery, createApi, enhancedBaseQuery } from "./base-api";
 
 // Category related types
 export interface Category {
@@ -31,14 +31,14 @@ export const categoriesApi = createApi({
   endpoints: (builder) => ({
     createCategory: builder.mutation<Category, CreateCategoryRequest>({
       query: (categoryData) => ({
-        url: "/api/categories/category/add",
+        url: "categories/category/add",
         method: "POST",
         body: categoryData,
       }),
       invalidatesTags: ["Category"],
     }),
     getAllCategories: builder.query<Category[], void>({
-      query: () => "/api/categories/list",
+      query: () => "categories/list",
       providesTags: ["Category"],
     }),
     updateCategory: builder.mutation<
@@ -46,7 +46,7 @@ export const categoriesApi = createApi({
       { id_category: string; data: UpdateCategoryRequest }
     >({
       query: ({ id_category, data }) => ({
-        url: `/api/categories/category/${id_category}`,
+        url: `categories/category/${id_category}`,
         method: "PUT",
         body: data,
       }),
@@ -54,7 +54,7 @@ export const categoriesApi = createApi({
     }),
     deleteCategory: builder.mutation<void, string>({
       query: (id_category) => ({
-        url: `/api/categories/categorie/${id_category}`,
+        url: `categories/categorie/${id_category}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Category"],

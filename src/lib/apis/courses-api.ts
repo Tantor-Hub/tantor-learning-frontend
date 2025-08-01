@@ -1,4 +1,4 @@
-import { baseQuery, createApi } from "./base-api";
+import { baseQuery, createApi, enhancedBaseQuery } from "./base-api";
 
 export interface ContactForm {
   from_name: string;
@@ -21,7 +21,7 @@ export const coursesApi = createApi({
   endpoints: (builder) => ({
     contactFormAPI: builder.mutation<ResponseContactForm, ContactForm>({
       query: (data) => ({
-        url: "/api/cms/contactus",
+        url: "cms/contactus",
         method: "POST",
         body: data,
       }),

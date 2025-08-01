@@ -20,7 +20,6 @@ import {
   ArrowRight,
   CheckCircle,
   FileText,
-  Upload,
   CreditCard,
   Building,
   User,
@@ -28,7 +27,6 @@ import {
   X,
 } from "lucide-react";
 import { useAddSessionMutation } from "@/lib/apis/secretary/session-secretary-api";
-import { useListTrainingTypeQuery } from "@/lib/apis/secretary/training-secretary-api";
 import { toast } from "react-hot-toast";
 import {
   Select,
@@ -58,24 +56,23 @@ const DOCUMENT_TYPES = [
   { value: "CONDITIONS_VENTE", label: "Conditions de vente" },
   { value: "REGLEMENT_INTERIEUR", label: "Règlement intérieur" },
   { value: "CGV", label: "Conditions générales de vente (CGV)" },
-  { value: "FICHE_CONTROLE_INITIALE", label: "Fiche de contrôle initiale" },
 ];
 
-const FINANCEMENT_OPTIONS = [
+const PAYMENT_METHODS = [
   {
-    value: "fonds_propres",
+    value: "CARD",
     label: "Fonds propres",
     description: "Paiement personnel de l'étudiant",
     icon: User,
   },
   {
-    value: "opco",
+    value: "OPCO",
     label: "OPCO",
     description: "Opérateur de compétences (financement employeur)",
     icon: Building,
   },
   {
-    value: "cpf",
+    value: "CPF",
     label: "CPF",
     description: "Compte Personnel de Formation",
     icon: Euro,
@@ -84,23 +81,22 @@ const FINANCEMENT_OPTIONS = [
 
 type Question = {
   id: string;
-  text: string;
-  type: "text" | "radio" | "checkbox";
-  options?: string[];
-  required: boolean;
+  titre: string;
+  description: string;
+  type_question: "QCM" | "TXT" | "QCU";
+  options: Array<{ text: string; is_correct?: boolean }>;
+  is_required: boolean;
 };
 
 interface SessionFormState {
-  titre: string;
   description: string;
-  date_debut: string;
-  date_fin: string;
-  prix: string;
-  type_formation: string;
+  date_session_debut: string;
+  date_session_fin: string;
+  nb_places: string;
+  payment_methods: string[]; // Changé de payment_method à payment_methods array
   questions: Question[];
-  documents_requis: string[];
-  conditions_generales: string;
-  financement: string[];
+  required_documents: string[];
+  text_reglement: string;
 }
 
 const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess, trainingId }) => {
@@ -108,20 +104,28 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
   const totalSteps = 5;
 
   const [form, setForm] = useState<SessionFormState>({
-    titre: "",
     description: "",
-    date_debut: "",
-    date_fin: "",
-    prix: "900",
-    type_formation: "onLine",
+    date_session_debut: "",
+    date_session_fin: "",
+    nb_places: "",
+    payment_methods: [], // Initialisé comme array vide
     questions: [],
-    documents_requis: [],
-    conditions_generales: "",
-    financement: [],
+    required_documents: [],
+    text_reglement: "",
   });
 
   const [addSessionMutation, { isLoading }] = useAddSessionMutation();
-  const { data: trainingTypes, isLoading: isTrainingTypesLoading } = useListTrainingTypeQuery();
+
+  // Validation pour la première étape
+  const isStep1Valid = () => {
+    return (
+      form.description.trim() !== "" &&
+      form.date_session_debut !== "" &&
+      form.date_session_fin !== "" &&
+      form.nb_places.trim() !== "" &&
+      parseInt(form.nb_places) > 0
+    );
+  };
 
   const addQuestion = () => {
     setForm((prev) => ({
@@ -130,10 +134,11 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
         ...prev.questions,
         {
           id: uuidv4(),
-          text: "",
-          type: "text",
+          titre: "",
+          description: "",
+          type_question: "TXT",
           options: [],
-          required: false,
+          is_required: false,
         },
       ],
     }));
@@ -160,20 +165,25 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
         q.id === questionId
           ? {
               ...q,
-              options: [...(q.options || []), ""],
+              options: [...q.options, { text: "", is_correct: false }],
             }
           : q
       ),
     }));
   };
 
-  const updateOption = (questionId: string, optionIndex: number, value: string) => {
+  const updateOption = (
+    questionId: string,
+    optionIndex: number,
+    field: "text" | "is_correct",
+    value: string | boolean
+  ) => {
     setForm((prev) => ({
       ...prev,
       questions: prev.questions.map((q) => {
-        if (q.id === questionId && q.options) {
+        if (q.id === questionId) {
           const newOptions = [...q.options];
-          newOptions[optionIndex] = value;
+          newOptions[optionIndex] = { ...newOptions[optionIndex], [field]: value };
           return { ...q, options: newOptions };
         }
         return q;
@@ -185,7 +195,7 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
     setForm((prev) => ({
       ...prev,
       questions: prev.questions.map((q) => {
-        if (q.id === questionId && q.options) {
+        if (q.id === questionId) {
           const newOptions = [...q.options];
           newOptions.splice(optionIndex, 1);
           return { ...q, options: newOptions };
@@ -195,30 +205,54 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
     }));
   };
 
+  // Nouvelle fonction pour gérer les modes de paiement
+  const handlePaymentMethodToggle = (paymentMethod: string) => {
+    setForm((prev) => ({
+      ...prev,
+      payment_methods: prev.payment_methods.includes(paymentMethod)
+        ? prev.payment_methods.filter((method) => method !== paymentMethod)
+        : [...prev.payment_methods, paymentMethod],
+    }));
+  };
+
   const handleSubmit = async () => {
     try {
-      const formattedQuestions = form.questions.map((q) => ({
-        question: q.text,
-        type: q.type,
-        options: q.options || [],
-        required: q.required,
-      }));
+      const payload = {
+        id_formation: parseInt(trainingId),
+        description: form.description,
+        date_session_debut: form.date_session_debut + "T08:00:00",
+        date_session_fin: form.date_session_fin + "T17:30:00",
+        nb_places: parseInt(form.nb_places),
+        payment_method: form.payment_methods.join(","), // Jointure avec virgule
+        required_documents: form.required_documents,
+        text_reglement: form.text_reglement,
+        questions: form.questions.map((q) => ({
+          titre: q.titre,
+          description: q.description || "Description par défaut",
+          is_required: q.is_required,
+          type_question: q.type_question,
+          options: q.options.length > 0 ? q.options : undefined,
+        })),
+      };
 
-      console.log("Informations de la session créée:", {
-        ...form,
-        questions: formattedQuestions,
-      });
-      const promise = await addSessionMutation({
-        id_formation: trainingId,
-        descripiton: form.description,
-        date_session_debut: form.date_debut,
-        date_session_fin: form.date_fin,
-        prix: form.prix,
-        type_formation: form.type_formation,
-        // questions: formattedQuestions,
-        // documents_requis: form.documents_requis,
-        // conditions_generales: form.conditions_generales,
-        // financement: form.financement,
+      console.log("Données envoyées:", payload);
+
+      await addSessionMutation({
+        id_formation: parseInt(trainingId),
+        description: form.description,
+        date_session_debut: form.date_session_debut + "T08:00:00",
+        date_session_fin: form.date_session_fin + "T17:30:00",
+        nb_places: parseInt(form.nb_places),
+        payment_method: form.payment_methods.join(","), // Jointure avec virgule
+        required_documents: form.required_documents,
+        text_reglement: form.text_reglement,
+        questions: form.questions.map((q) => ({
+          titre: q.titre,
+          description: q.description || "Description par défaut",
+          is_required: q.is_required,
+          type_question: q.type_question,
+          options: q.options.length > 0 ? q.options : undefined,
+        })),
       }).unwrap();
 
       onSuccess();
@@ -226,30 +260,29 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
 
       // Reset form
       setForm({
-        titre: "",
         description: "",
-        date_debut: "",
-        date_fin: "",
-        prix: "900",
-        type_formation: "onLine",
+        date_session_debut: "",
+        date_session_fin: "",
+        nb_places: "",
+        payment_methods: [],
         questions: [],
-        documents_requis: [],
-        conditions_generales: "",
-        financement: [],
+        required_documents: [],
+        text_reglement: "",
       });
       setCurrentStep(1);
       onOpenChange(false);
-
-      console.log("Informations de la session créée:", {
-        ...form,
-        questions: formattedQuestions,
-      });
     } catch (error) {
+      console.error("Erreur:", error);
       toast.error("Erreur lors de la création");
     }
   };
 
   const nextStep = () => {
+    if (currentStep === 1 && !isStep1Valid()) {
+      toast.error("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+
     if (currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1);
     }
@@ -264,18 +297,9 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
   const handleDocumentToggle = (documentValue: string) => {
     setForm((prev) => ({
       ...prev,
-      documents_requis: prev.documents_requis.includes(documentValue)
-        ? prev.documents_requis.filter((doc) => doc !== documentValue)
-        : [...prev.documents_requis, documentValue],
-    }));
-  };
-
-  const handleFinancementToggle = (financementValue: string) => {
-    setForm((prev) => ({
-      ...prev,
-      financement: prev.financement.includes(financementValue)
-        ? prev.financement.filter((fin) => fin !== financementValue)
-        : [...prev.financement, financementValue],
+      required_documents: prev.required_documents.includes(documentValue)
+        ? prev.required_documents.filter((doc) => doc !== documentValue)
+        : [...prev.required_documents, documentValue],
     }));
   };
 
@@ -293,7 +317,7 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         {/* En-tête avec progression */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 -mx-6 -mt-6 mb-6 p-6 text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-primary -mx-6 -mt-6 mb-6 p-6 text-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-white">
               Nouvelle Session de Formation
@@ -334,51 +358,75 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
         {/* Étape 1: Informations de base */}
         {currentStep === 1 && (
           <div className="space-y-4 animate-in fade-in-50 duration-500">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Informations de base</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Informations de base <span className="text-red-500">*</span>
+            </h3>
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="titre">Titre de la session</Label>
-                <Input
-                  id="titre"
-                  value={form.titre}
-                  onChange={(e) => setForm({ ...form, titre: e.target.value })}
-                  placeholder="Ex: Introduction à NestJS - Session Intensive"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">
+                  Description <span className="text-red-500">*</span>
+                </Label>
                 <Textarea
                   id="description"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="Décrivez le contenu et les objectifs de cette session..."
                   rows={3}
+                  className={form.description.trim() === "" ? "border-red-300" : ""}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="date_debut">Date de début</Label>
+                  <Label htmlFor="date_session_debut">
+                    Date de début <span className="text-red-500">*</span>
+                  </Label>
                   <Input
-                    id="date_debut"
+                    id="date_session_debut"
                     type="date"
-                    value={form.date_debut}
-                    onChange={(e) => setForm({ ...form, date_debut: e.target.value })}
+                    value={form.date_session_debut}
+                    onChange={(e) => setForm({ ...form, date_session_debut: e.target.value })}
+                    className={form.date_session_debut === "" ? "border-red-300" : ""}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="date_fin">Date de fin</Label>
+                  <Label htmlFor="date_session_fin">
+                    Date de fin <span className="text-red-500">*</span>
+                  </Label>
                   <Input
-                    id="date_fin"
+                    id="date_session_fin"
                     type="date"
-                    value={form.date_fin}
-                    onChange={(e) => setForm({ ...form, date_fin: e.target.value })}
+                    value={form.date_session_fin}
+                    onChange={(e) => setForm({ ...form, date_session_fin: e.target.value })}
+                    className={form.date_session_fin === "" ? "border-red-300" : ""}
                   />
                 </div>
               </div>
+
+              <div>
+                <Label htmlFor="nb_places">
+                  Nombre de places <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="nb_places"
+                  type="number"
+                  min="1"
+                  className={`w-full ${form.nb_places.trim() === "" || parseInt(form.nb_places) <= 0 ? "border-red-300" : ""}`}
+                  value={form.nb_places}
+                  onChange={(e) => setForm({ ...form, nb_places: e.target.value })}
+                  placeholder="Ex: 30"
+                />
+              </div>
             </div>
+
+            {!isStep1Valid() && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-700">
+                  ⚠️ Tous les champs marqués d'une étoile (*) sont obligatoires pour continuer.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -401,80 +449,107 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
               <div className="space-y-4">
                 {form.questions.map((question) => (
                   <div key={question.id} className="p-4 bg-white rounded-lg border border-gray-200">
-                    <div className="flex justify-between items-start mb-2">
-                      <Input
-                        value={question.text}
-                        onChange={(e) => updateQuestion(question.id, "text", e.target.value)}
-                        placeholder="Entrez votre question"
-                        className="flex-1 mr-2"
-                      />
-                      <Select
-                        value={question.type}
-                        onValueChange={(value) => updateQuestion(question.id, "type", value)}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Type de réponse" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="text">Texte libre</SelectItem>
-                          <SelectItem value="radio">Choix unique</SelectItem>
-                          <SelectItem value="checkbox">Choix multiple</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="ml-2 text-red-500 hover:text-red-600"
-                        onClick={() => removeQuestion(question.id)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Checkbox
-                        id={`required-${question.id}`}
-                        checked={question.required}
-                        onCheckedChange={(checked) =>
-                          updateQuestion(question.id, "required", checked)
-                        }
-                      />
-                      <Label htmlFor={`required-${question.id}`}>Réponse obligatoire</Label>
-                    </div>
-
-                    {(question.type === "radio" || question.type === "checkbox") && (
-                      <div className="mt-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label>Options de réponse</Label>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addOption(question.id)}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 space-y-2">
+                          <Input
+                            value={question.titre}
+                            onChange={(e) => updateQuestion(question.id, "titre", e.target.value)}
+                            placeholder="Titre de la question"
+                            className="flex-1"
+                          />
+                          <Input
+                            value={question.description}
+                            onChange={(e) =>
+                              updateQuestion(question.id, "description", e.target.value)
+                            }
+                            placeholder="Description (optionnelle)"
+                            className="flex-1"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2 ml-2">
+                          <Select
+                            value={question.type_question}
+                            onValueChange={(value) =>
+                              updateQuestion(question.id, "type_question", value)
+                            }
                           >
-                            <Plus className="w-4 h-4 mr-1" />
-                            Ajouter une option
+                            <SelectTrigger className="w-[120px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="TXT">Texte libre</SelectItem>
+                              <SelectItem value="QCU">Choix unique</SelectItem>
+                              <SelectItem value="QCM">Choix multiple</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-500 hover:text-red-600"
+                            onClick={() => removeQuestion(question.id)}
+                          >
+                            <X className="w-4 h-4" />
                           </Button>
                         </div>
+                      </div>
 
-                        {question.options?.map((option, index) => (
-                          <div key={index} className="flex items-center space-x-2">
-                            <Input
-                              value={option}
-                              onChange={(e) => updateOption(question.id, index, e.target.value)}
-                              placeholder={`Option ${index + 1}`}
-                              className="flex-1"
-                            />
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`required-${question.id}`}
+                          checked={question.is_required}
+                          onCheckedChange={(checked) =>
+                            updateQuestion(question.id, "is_required", checked)
+                          }
+                        />
+                        <Label htmlFor={`required-${question.id}`}>Réponse obligatoire</Label>
+                      </div>
+
+                      {(question.type_question === "QCU" || question.type_question === "QCM") && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label>Options de réponse</Label>
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeOption(question.id, index)}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addOption(question.id)}
                             >
-                              <X className="w-4 h-4 text-red-500" />
+                              <Plus className="w-4 h-4 mr-1" />
+                              Ajouter une option
                             </Button>
                           </div>
-                        ))}
-                      </div>
-                    )}
+
+                          {question.options.map((option, index) => (
+                            <div key={index} className="flex items-center space-x-2">
+                              <Input
+                                value={option.text}
+                                onChange={(e) =>
+                                  updateOption(question.id, index, "text", e.target.value)
+                                }
+                                placeholder={`Option ${index + 1}`}
+                                className="flex-1"
+                              />
+                              <div className="flex items-center space-x-1">
+                                <Checkbox
+                                  checked={option.is_correct || false}
+                                  onCheckedChange={(checked) =>
+                                    updateOption(question.id, index, "is_correct", checked)
+                                  }
+                                />
+                                <Label className="text-xs">Correcte</Label>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeOption(question.id, index)}
+                              >
+                                <X className="w-4 h-4 text-red-500" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
 
@@ -483,13 +558,6 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
                   Ajouter une question
                 </Button>
               </div>
-            </div>
-
-            <div className="text-sm text-gray-600">
-              <p>
-                💡 Ces questions vous aideront à mieux connaître vos étudiants et adapter votre
-                enseignement.
-              </p>
             </div>
           </div>
         )}
@@ -518,7 +586,7 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
                 >
                   <Checkbox
                     id={document.value}
-                    checked={form.documents_requis.includes(document.value)}
+                    checked={form.required_documents.includes(document.value)}
                     onCheckedChange={() => handleDocumentToggle(document.value)}
                   />
                   <Label
@@ -532,27 +600,27 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
             </div>
 
             <div className="text-sm text-gray-600 mt-4">
-              <p>📋 Documents sélectionnés: {form.documents_requis.length}</p>
+              <p>📋 Documents sélectionnés: {form.required_documents.length}</p>
             </div>
           </div>
         )}
 
-        {/* Étape 4: Conditions générales */}
+        {/* Étape 4: Règlement intérieur */}
         {currentStep === 4 && (
           <div className="space-y-4 animate-in fade-in-50 duration-500">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Conditions générales</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Règlement intérieur</h3>
 
             <div className="bg-gray-50 p-4 rounded-lg border">
               <div className="flex items-center gap-2 mb-2">
                 <FileText className="w-5 h-5 text-gray-600" />
-                <span className="font-semibold text-gray-800">Conditions de participation</span>
+                <span className="font-semibold text-gray-800">Règlement de la session</span>
               </div>
               <p className="text-sm text-gray-600 mb-3">
-                Définissez les conditions générales de participation à cette session
+                Définissez le règlement intérieur de cette session
               </p>
               <Textarea
-                value={form.conditions_generales}
-                onChange={(e) => setForm({ ...form, conditions_generales: e.target.value })}
+                value={form.text_reglement}
+                onChange={(e) => setForm({ ...form, text_reglement: e.target.value })}
                 placeholder="Ex: Les participants doivent avoir un niveau minimum en programmation. L'assiduité est obligatoire. Les absences doivent être justifiées..."
                 rows={6}
                 className="bg-white"
@@ -561,19 +629,17 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
 
             <div className="text-sm text-gray-600">
               <p>
-                ⚖️ Ces conditions seront affichées lors de l'inscription et devront être acceptées
-                par les étudiants.
+                ⚖️ Ce règlement sera affiché lors de l'inscription et devra être accepté par les
+                étudiants.
               </p>
             </div>
           </div>
         )}
 
-        {/* Étape 5: Options de financement */}
+        {/* Étape 5: Modes de paiement (Modifiée pour utiliser des checkboxes) */}
         {currentStep === 5 && (
           <div className="space-y-4 animate-in fade-in-50 duration-500">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Options de financement acceptées
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Modes de paiement acceptés</h3>
 
             <div className="bg-green-50 p-4 rounded-lg border border-green-200 mb-4">
               <div className="flex items-center gap-2 mb-2">
@@ -581,22 +647,23 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
                 <span className="font-medium text-green-800">Modes de financement</span>
               </div>
               <p className="text-sm text-green-700">
-                Sélectionnez les options de financement que vous acceptez pour cette formation
+                Sélectionnez les modes de financement que vous acceptez pour cette formation
               </p>
             </div>
 
             <div className="grid grid-cols-1 gap-4">
-              {FINANCEMENT_OPTIONS.map((option) => {
+              {PAYMENT_METHODS.map((option) => {
                 const IconComponent = option.icon;
+                const isChecked = form.payment_methods.includes(option.value);
                 return (
                   <div
                     key={option.value}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      form.financement.includes(option.value)
+                      isChecked
                         ? "border-blue-500 bg-blue-50"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
-                    onClick={() => handleFinancementToggle(option.value)}
+                    onClick={() => handlePaymentMethodToggle(option.value)}
                   >
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
@@ -605,8 +672,8 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
                           <Checkbox
-                            checked={form.financement.includes(option.value)}
-                            aria-readonly
+                            checked={isChecked}
+                            onCheckedChange={() => handlePaymentMethodToggle(option.value)}
                           />
                           <span className="font-medium text-gray-800">{option.label}</span>
                         </div>
@@ -620,8 +687,14 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
 
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <p className="text-sm text-blue-800">
-                <strong>Note:</strong> Les étudiants pourront choisir leur mode de financement
-                préféré lors de l'inscription, parmi ceux que vous avez sélectionnés.
+                <strong>Modes sélectionnés:</strong>{" "}
+                {form.payment_methods.length > 0
+                  ? form.payment_methods.join(", ")
+                  : "Aucun mode sélectionné"}
+              </p>
+              <p className="text-sm text-blue-700 mt-1">
+                Vous pouvez sélectionner plusieurs modes de paiement pour offrir plus de flexibilité
+                aux étudiants.
               </p>
             </div>
           </div>
@@ -646,7 +719,11 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
           </div>
 
           {currentStep < totalSteps ? (
-            <Button onClick={nextStep} className="flex items-center gap-2">
+            <Button
+              onClick={nextStep}
+              disabled={currentStep === 1 && !isStep1Valid()}
+              className="flex items-center gap-2"
+            >
               Continuer
               <ArrowRight className="w-4 h-4" />
             </Button>

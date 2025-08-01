@@ -73,12 +73,12 @@ export const AdminApi = createApi({
   tagTypes: ["Admin"],
   endpoints: (builder) => ({
     listUsers: builder.query<UsersListResponse, void>({
-      query: () => "/api/users/listall",
+      query: () => "users/listall",
       providesTags: ["Admin"],
     }),
     add: builder.mutation<AddUserResponse, AddUserRequest>({
       query: (userData) => ({
-        url: "/api/users/user/add",
+        url: "users/user/add",
         method: "POST",
         body: userData,
       }),
@@ -88,7 +88,7 @@ export const AdminApi = createApi({
       IUsersListByGroupResponse,
       { group: "teacher" | "admin" | "student" | "secretary" | "all" }
     >({
-      query: (request) => `/api/users/list/bygroup/${request.group}`,
+      query: (request) => `users/list/bygroup/${request.group}`,
       providesTags: ["Admin"],
     }),
   }),

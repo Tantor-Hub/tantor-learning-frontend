@@ -1,4 +1,4 @@
-import { baseQuery, createApi } from "../base-api";
+import { baseQuery, createApi, enhancedBaseQuery } from "../base-api";
 
 export const documentStudentApi = createApi({
   reducerPath: "documentStudentApi",
@@ -11,7 +11,7 @@ export const documentStudentApi = createApi({
       { id_student: number; id_session: number; group: string }
     >({
       query: ({ id_student, id_session, group }) =>
-        `/api/sessions/session/documents/${id_student}/${id_session}/${group}`,
+        `sessions/session/documents/${id_student}/${id_session}/${group}`,
       providesTags: ["DocumentStudent"],
     }),
 
@@ -28,7 +28,7 @@ export const documentStudentApi = createApi({
         formData.append("description", description);
 
         return {
-          url: "/api/sessions/session/document/before",
+          url: "sessions/session/document/before",
           method: "POST",
           body: formData,
         };
@@ -49,7 +49,7 @@ export const documentStudentApi = createApi({
         formData.append("description", description);
 
         return {
-          url: "/api/sessions/session/document/during",
+          url: "sessions/session/document/during",
           method: "POST",
           body: formData,
         };
@@ -70,7 +70,7 @@ export const documentStudentApi = createApi({
         formData.append("description", description);
 
         return {
-          url: "/api/sessions/session/document/after",
+          url: "sessions/session/document/after",
           method: "POST",
           body: formData,
         };

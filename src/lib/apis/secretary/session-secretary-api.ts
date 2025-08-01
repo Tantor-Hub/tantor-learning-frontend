@@ -9,7 +9,7 @@ export const sessionSecretaryApi = createApi({
   endpoints: (builder) => ({
     addSession: builder.mutation<void, IAddSessionRequest>({
       query: (body) => ({
-        url: "/api/sessions/session/add",
+        url: "sessions/session/create",
         method: "POST",
         body: body,
       }),
@@ -17,7 +17,7 @@ export const sessionSecretaryApi = createApi({
     }),
     updateSession: builder.mutation<void, IUpdateSessionRequest>({
       query: (body) => ({
-        url: `/api/sessions/session/update/${body.id_formation}`,
+        url: `sessions/session/update/${body.id_formation}`,
         method: "POST",
         body: body,
       }),

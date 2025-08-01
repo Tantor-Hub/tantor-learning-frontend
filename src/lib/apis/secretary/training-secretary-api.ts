@@ -15,28 +15,28 @@ export const trainingSecretaryApi = createApi({
   tagTypes: ["TrainingSecretary"],
   endpoints: (builder) => ({
     trainingList: builder.query<ITrainingListResponse, void>({
-      query: () => "/api/formations/list",
+      query: () => "formations/list",
       providesTags: ["TrainingSecretary"],
     }),
     addTraining: builder.mutation<void, IAddTrainingRequest>({
       query: (body) => ({
-        url: "/api/formations/formation/add",
+        url: "formations/formation/add",
         method: "POST",
         body: body,
       }),
       invalidatesTags: ["TrainingSecretary"],
     }),
     listTrainingByCategory: builder.query<ITrainingListResponse, { id: string }>({
-      query: ({ id }) => `/api/formations/list/bycategory/${id}`,
+      query: ({ id }) => `formations/list/bycategory/${id}`,
       providesTags: ["TrainingSecretary"],
     }),
     listTrainingById: builder.query<ITrainingByIdResponse, { id: string }>({
-      query: ({ id }) => `/api/formations/formation/${id}`,
+      query: ({ id }) => `formations/formation/${id}`,
       providesTags: ["TrainingSecretary"],
     }),
     deleteTrainingById: builder.mutation<void, { id: string }>({
       query: ({ id }) => ({
-        url: `/api/formations/formation/${id}`,
+        url: `formations/formation/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["TrainingSecretary"],
@@ -46,14 +46,14 @@ export const trainingSecretaryApi = createApi({
     // Liste de Training Type
     // =======================================================================
     listTrainingType: builder.query<ITrainingTypesResponse, void>({
-      query: () => "/api/formations/types",
+      query: () => "formations/types",
       providesTags: ["TrainingSecretary"],
     }),
     // =================================================================================
     // Category de Formation
     //===================================================================================
     listCategoryTraining: builder.query<IListCategoryTrainingResponse, void>({
-      query: () => "/api/categories/list",
+      query: () => "categories/list",
       providesTags: ["TrainingSecretary"],
     }),
 
@@ -65,7 +65,7 @@ export const trainingSecretaryApi = createApi({
       }
     >({
       query: (request) => ({
-        url: "/api/categories/category/add",
+        url: "categories/category/add",
         method: "POST",
         body: request,
       }),
@@ -80,7 +80,7 @@ export const trainingSecretaryApi = createApi({
       }
     >({
       query: (request) => ({
-        url: `/api/categories/category/${request.id_thematique}`,
+        url: `categories/category/${request.id_thematique}`,
         method: "PUT",
         body: request,
       }),
@@ -88,7 +88,7 @@ export const trainingSecretaryApi = createApi({
 
     removeCategoryTrainingById: builder.mutation<void, { id_category: string }>({
       query: (request) => ({
-        url: `/api/categories/categorie/${request.id_category}`,
+        url: `categories/categorie/${request.id_category}`,
         method: "DELETE",
       }),
     }),
@@ -106,7 +106,7 @@ export const trainingSecretaryApi = createApi({
       }
     >({
       query: (request) => ({
-        url: "/api/courses/course/add",
+        url: "courses/course/add",
         method: "POST",
         body: request,
       }),
@@ -115,7 +115,7 @@ export const trainingSecretaryApi = createApi({
     // LISTE DE COURS PAR ID DE LA SESSION
     // ====================================================================
     listCourseBySessionId: builder.query<IListCourseBySessionIdResponse, { id_session: string }>({
-      query: (request) => `/api/courses/listall/${request.id_session}`,
+      query: (request) => `courses/listall/${request.id_session}`,
       providesTags: ["TrainingSecretary"],
     }),
   }),

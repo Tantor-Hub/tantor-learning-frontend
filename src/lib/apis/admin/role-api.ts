@@ -1,5 +1,5 @@
 import { IRoleResponse } from "@/types/admin/role-api";
-import { baseQuery, createApi } from "../base-api";
+import { baseQuery, createApi, enhancedBaseQuery } from "../base-api";
 
 // ROLE API
 export const roleApi = createApi({
@@ -16,7 +16,7 @@ export const roleApi = createApi({
       }
     >({
       query: (body) => ({
-        url: "/api/roles/role/add",
+        url: "roles/role/add",
         method: "POST",
         body: body,
       }),
@@ -24,7 +24,7 @@ export const roleApi = createApi({
     }),
     // LIST ALL AVAILABLE ROLE
     listRole: builder.query<IRoleResponse, void>({
-      query: () => "/api/roles/list",
+      query: () => "roles/list",
       providesTags: ["Role"],
     }),
     // ATTRIBUTE A USER A NEW ROLE
@@ -37,7 +37,7 @@ export const roleApi = createApi({
       }
     >({
       query: (body) => ({
-        url: `/api/roles/role/attribute`,
+        url: `roles/role/attribute`,
         method: "PUT",
         body: body,
       }),
