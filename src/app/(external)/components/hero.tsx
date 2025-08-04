@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 export default function Hero() {
   const router = useRouter();
   return (
-    <section className="hero relative mask-b-from-90% h-[600px]">
+    <section className="hero relative mask-b-from-90% h-[100vh] flex items-center justify-center">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-start h-full m-auto">
         <div className="max-w-fit flex flex-col gap-3 py-12 h-fit justify-center text-center md:text-start">
           <h1 className="text-[36px] md:text-[48px] lg:text-[60px] max-w-xl  md:leading-[90px] font-[600] relative z-20 text-shadow-md text-white font-work-sans">

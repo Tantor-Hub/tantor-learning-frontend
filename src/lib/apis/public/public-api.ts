@@ -3,6 +3,7 @@ import {
   IContactFormRequest,
   IContactFormResponse,
   IGetAllTrainingsResponse,
+  IGetSessionByIdResponse,
   ILibraryResponse,
   IListFormationResponse,
   IListSessionsByFormationIdResponse,
@@ -51,6 +52,11 @@ export const publicApi = createApi({
       query: ({ id }) => `sessions/byidformation/${id}`,
       providesTags: ["Public"],
     }),
+    // get Formations by Id -> sessions
+    getSessionById: builder.query<IGetSessionByIdResponse, { id_session: string }>({
+      query: (request) => `sessions/session/${request.id_session}`,
+      providesTags: ["Public"],
+    }),
   }),
 });
 
@@ -61,4 +67,5 @@ export const {
   useContactFormAPIMutation,
   useListFormationsQuery,
   useListSessionsByFormationIdQuery,
+  useGetSessionByIdQuery,
 } = publicApi;

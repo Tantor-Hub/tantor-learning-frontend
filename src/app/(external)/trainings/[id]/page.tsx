@@ -1,109 +1,98 @@
 "use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import { ArrowRight, Users, ArrowLeft, Calendar, Clock } from "lucide-react";
 import { Loading } from "@/components/shared/loading";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Loader2, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { useListSessionsByFormationIdQuery } from "@/lib/apis/public/public-api";
-import { useApplyToTrainingMutation } from "@/lib/apis/student/training-api";
-import { toast } from "react-hot-toast";
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 
 export default function Page() {
   const router = useRouter();
   const params = useParams();
   const trainingId = params.id as string;
-
-  useEffect(() => {
-    // router.push("/trainings/id/questions");
-  }, [router]);
-
   const { data, isLoading } = useListSessionsByFormationIdQuery({ id: trainingId });
-  const [applySessionMutation] = useApplyToTrainingMutation();
-
-  // État pour suivre quel bouton est en cours de chargement
-  const [loadingSessionId, setLoadingSessionId] = useState<number | null>(null);
 
   if (isLoading) return <Loading />;
 
-  const handleApplySessionMutation = async (sessionId: number) => {
-    try {
-      setLoadingSessionId(sessionId); // Marquer ce bouton comme en chargement
-      // await applySessionMutation({ id_session: sessionId }).unwrap();
-      router.push(`/trainings/${sessionId}/questions`);
-      toast.success("Candidature enregistrée");
-    } catch (error: any) {
-      if (error.status === 401) {
-        toast.error("Erreur de candidature");
-        router.push("/signin");
-        return;
-      }
-      toast(
-        "Vous vous êtes déjà inscrit à cette session de formation; vous ne pouvez le faire deux fois."
-      );
-    } finally {
-      setLoadingSessionId(null); // Réinitialiser l'état de chargement
-    }
-  };
+  const formation = data?.data.list[0]?.Formation;
+
   return (
-    <div>
-      <Card>
-        <CardHeader>
-          <CardTitle>{"title"}</CardTitle>
-          <CardDescription>{"description"}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 py-2">
-            {data?.data.length === 0 ? (
-              <EmptyState
-                title="Aucune session disponible"
-                description="Il n'y a actuellement aucune session programmée pour cette formation. Veuillez vérifier ultérieurement ou nous contacter pour plus d'informations."
-                icon="Calendar"
-              />
-            ) : (
-              data?.data.list.map((item) => (
-                <div
-                  key={item.uuid}
-                  className="p-4 border rounded-lg hover:shadow-md transition-shadow"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold">{item.designation}</h3>
-                      <div className="text-sm text-gray-500 mt-1">
-                        <p>Durée: {item.duree}</p>
-                        <p>
-                          Du {new Date(item.date_session_debut).toLocaleDateString("fr-FR")}
-                          {" au "}
-                          {new Date(item.date_session_fin).toLocaleDateString("fr-FR")}
-                        </p>
-                        <p>Prix: {item.prix} €</p>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => handleApplySessionMutation(item.id)}
-                      disabled={loadingSessionId !== null} // Désactiver tous les boutons pendant le chargement
-                      className="ml-4"
-                    >
-                      {loadingSessionId === item.id ? (
-                        <Loader2 className="animate-spin" />
-                      ) : (
-                        <>
-                          S'inscrire
-                          <ArrowRight />
-                        </>
-                      )}
-                    </Button>
-                  </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12 space-y-8">
+      <Button
+        variant="outline"
+        onClick={() => router.back()}
+        className="border-primary text-primary"
+        size="lg"
+      >
+        <ArrowLeft />
+        Retour aux formations
+      </Button>
+
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">{formation?.titre}</h1>
+        <p className="text-muted-foreground">{formation?.sous_titre}</p>
+        <p className="text-muted-foreground">{formation?.description}</p>
+      </div>
+
+      {data?.data.length === 0 ? (
+        <EmptyState
+          title="Aucune session disponible"
+          description="Il n'y a actuellement aucune session programmée pour cette formation."
+          icon="Calendar"
+        />
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {data?.data.list.map((session) => (
+            <Card key={session.id} className="border hover:cursor-pointer hover:shadow-2xl">
+              <CardHeader className="pb-3">
+                <h3 className="font-semibold text-lg">{session.designation}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {session.description || "Aucune description disponible"}
+                </p>
+              </CardHeader>
+
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <span>
+                    {new Date(session.date_session_debut).toLocaleDateString("fr-FR")}
+                    {" - "}
+                    {new Date(session.date_session_fin).toLocaleDateString("fr-FR")}
+                  </span>
                 </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
+
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span>{session.duree}</span>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm">
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                  <span>
+                    Places:{" "}
+                    <Badge variant="outline">
+                      {session.nb_places_disponible}/{session.nb_places}
+                    </Badge>
+                  </span>
+                </div>
+              </CardContent>
+
+              <CardFooter>
+                <Button
+                  disabled={session.nb_places === session.nb_places_disponible}
+                  onClick={() => router.push(`/trainings/${trainingId}/${session.id}`)}
+                  className="w-full gap-2"
+                >
+                  S'inscrire
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
