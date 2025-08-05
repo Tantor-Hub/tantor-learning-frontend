@@ -98,10 +98,22 @@ export default function Page() {
     if (!session)
       return { hasQuestions: false, hasDocuments: false, hasPayment: false, totalSteps: 0 };
 
+    // Check if there are any questions (not just if Surveys exists)
     const hasQuestions = (session.Surveys?.[0]?.Questionnaires?.length ?? 0) > 0;
+
+    // Check if there are any required documents
     const hasDocuments = (session.required_documents?.length ?? 0) > 0;
-    const hasPayment = (session.payment_methods?.length ?? 0) > 0 && session.prix !== "0";
-    const totalSteps = [hasQuestions, hasDocuments, true, hasPayment].filter(Boolean).length;
+
+    // Check if there are payment methods AND price is not 0 AND payment methods array is not empty
+    const hasPayment =
+      (session.payment_methods?.length ?? 0) > 0 && session.prix !== "0" && session.prix !== "0.00";
+
+    // Calculate total steps based on what's actually available
+    const totalSteps =
+      (hasQuestions ? 1 : 0) +
+      (hasDocuments ? 1 : 0) +
+      1 + // Always include signature step
+      (hasPayment ? 1 : 0);
 
     return { hasQuestions, hasDocuments, hasPayment, totalSteps };
   }, [session]);
@@ -150,49 +162,52 @@ export default function Page() {
   };
 
   const canProceedToNext = (): boolean => {
-    switch (getActualStep(currentStep)) {
-      case 1:
-        return isQuestionsValid();
-      case 2:
-        return isDocumentsValid() || documentsGenerated;
-      case 3:
-        return isSignatureValid();
-      case 4:
-        return true;
-      default:
-        return false;
+    const currentStepNumber = getCurrentStepNumber();
+
+    if (hasQuestions && currentStepNumber === 1) {
+      return isQuestionsValid();
     }
+
+    if (hasDocuments && currentStepNumber === (hasQuestions ? 2 : 1)) {
+      return isDocumentsValid() || documentsGenerated;
+    }
+
+    // Signature step
+    const signatureStepNumber = (hasQuestions ? 1 : 0) + (hasDocuments ? 1 : 0) + 1;
+    if (currentStepNumber === signatureStepNumber) {
+      return isSignatureValid();
+    }
+
+    // Payment step
+    if (hasPayment && currentStepNumber === totalSteps) {
+      return true;
+    }
+
+    return false;
   };
 
-  // Maps the virtual step to the actual step based on which sections are available
-  const getActualStep = (step: number): number => {
-    let actualStep = 0;
-    let virtualStep = 0;
+  // Get the current step number in the sequence
+  const getCurrentStepNumber = (): number => {
+    return currentStep;
+  };
 
-    if (hasQuestions) {
-      actualStep++;
-      virtualStep++;
-      if (step === virtualStep) return actualStep;
+  // Check if we're currently on a specific step type
+  const isCurrentStep = (
+    stepType: "questions" | "documents" | "signature" | "payment"
+  ): boolean => {
+    let stepNumber = 0;
+
+    if (stepType === "questions" && hasQuestions) {
+      stepNumber = 1;
+    } else if (stepType === "documents" && hasDocuments) {
+      stepNumber = hasQuestions ? 2 : 1;
+    } else if (stepType === "signature") {
+      stepNumber = (hasQuestions ? 1 : 0) + (hasDocuments ? 1 : 0) + 1;
+    } else if (stepType === "payment" && hasPayment) {
+      stepNumber = totalSteps;
     }
 
-    if (hasDocuments) {
-      actualStep++;
-      virtualStep++;
-      if (step === virtualStep) return actualStep;
-    }
-
-    // Signature step is always present
-    actualStep++;
-    virtualStep++;
-    if (step === virtualStep) return actualStep;
-
-    if (hasPayment) {
-      actualStep++;
-      virtualStep++;
-      if (step === virtualStep) return actualStep;
-    }
-
-    return actualStep;
+    return currentStep === stepNumber;
   };
 
   const getStepTitle = (step: number): string => {
@@ -211,7 +226,7 @@ export default function Page() {
       return;
     }
 
-    if (getActualStep(currentStep) === 2 && !documentsGenerated) {
+    if (isCurrentStep("documents") && !documentsGenerated) {
       setDocumentsGenerated(true);
       return;
     }
@@ -222,7 +237,7 @@ export default function Page() {
   };
 
   const handlePrevious = () => {
-    if (getActualStep(currentStep) === 2 && documentsGenerated) {
+    if (isCurrentStep("documents") && documentsGenerated) {
       setDocumentsGenerated(false);
       return;
     }
@@ -378,6 +393,7 @@ export default function Page() {
       <Button className="mb-8" size="lg" onClick={() => router.back()}>
         <ArrowLeft /> Retour à toutes les sessions
       </Button>
+
       {/* Progress Bar */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -407,8 +423,8 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Step 1: Questions */}
-      {hasQuestions && getActualStep(currentStep) === 1 && (
+      {/* Step 1: Questions - Only show if hasQuestions is true */}
+      {hasQuestions && isCurrentStep("questions") && (
         <Card className="border">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-center">
@@ -457,8 +473,8 @@ export default function Page() {
         </Card>
       )}
 
-      {/* Step 2: Documents */}
-      {hasDocuments && getActualStep(currentStep) === 2 && (
+      {/* Step 2: Documents - Only show if hasDocuments is true */}
+      {hasDocuments && isCurrentStep("documents") && (
         <Card className="border">
           {!documentsGenerated ? (
             <>
@@ -541,19 +557,14 @@ export default function Page() {
                   Nous avons généré automatiquement votre contrat d'inscription basé sur les
                   informations et documents fournis.
                 </p>
-                <Button className="mt-4" variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  Télécharger le contrat
-                </Button>
               </div>
             </CardContent>
           )}
         </Card>
       )}
 
-      {/* Step 3: Signature */}
-      {getActualStep(currentStep) ===
-        (hasQuestions && hasDocuments ? 3 : hasQuestions || hasDocuments ? 2 : 1) && (
+      {/* Step 3: Signature - Always show */}
+      {isCurrentStep("signature") && (
         <Card className="border">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">Signature du contrat de formation</CardTitle>
@@ -594,8 +605,8 @@ export default function Page() {
         </Card>
       )}
 
-      {/* Step 4: Payment */}
-      {hasPayment && getActualStep(currentStep) === 4 && (
+      {/* Step 4: Payment - Only show if hasPayment is true */}
+      {hasPayment && isCurrentStep("payment") && (
         <div className="grid md:grid-cols-2 gap-8">
           {/* Left - Course Info */}
           <div>
