@@ -81,7 +81,7 @@ export function CheckoutPage({
       elements,
       clientSecret,
       confirmParams: {
-        return_url: `${process.env.NEXT_PUBLIC_APP_URL}/trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}`,
+        return_url: `${process.env.NEXT_PUBLIC_APP_URL}trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}`,
       },
     });
 
