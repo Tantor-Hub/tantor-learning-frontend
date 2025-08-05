@@ -36,6 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { v4 as uuidv4 } from "uuid";
+import { IAddSessionRequest } from "@/types/secretary/session-secretary";
 
 interface SessionFormProps {
   open: boolean;
@@ -83,7 +84,7 @@ type Question = {
   id: string;
   titre: string;
   description: string;
-  type_question: "QCM" | "TXT" | "QCU";
+  type_question: "QCM" | "TEXTE_LIBRE" | "QCU";
   options: Array<{ text: string; is_correct?: boolean }>;
   is_required: boolean;
 };
@@ -93,7 +94,7 @@ interface SessionFormState {
   date_session_debut: string;
   date_session_fin: string;
   nb_places: string;
-  payment_methods: string[]; // Changé de payment_method à payment_methods array
+  payment_methods: string[];
   questions: Question[];
   required_documents: string[];
   text_reglement: string;
@@ -108,7 +109,7 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
     date_session_debut: "",
     date_session_fin: "",
     nb_places: "",
-    payment_methods: [], // Initialisé comme array vide
+    payment_methods: [],
     questions: [],
     required_documents: [],
     text_reglement: "",
@@ -116,7 +117,6 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
 
   const [addSessionMutation, { isLoading }] = useAddSessionMutation();
 
-  // Validation pour la première étape
   const isStep1Valid = () => {
     return (
       form.description.trim() !== "" &&
@@ -136,7 +136,7 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
           id: uuidv4(),
           titre: "",
           description: "",
-          type_question: "TXT",
+          type_question: "TEXTE_LIBRE",
           options: [],
           is_required: false,
         },
@@ -205,7 +205,6 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
     }));
   };
 
-  // Nouvelle fonction pour gérer les modes de paiement
   const handlePaymentMethodToggle = (paymentMethod: string) => {
     setForm((prev) => ({
       ...prev,
@@ -217,43 +216,63 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
 
   const handleSubmit = async () => {
     try {
-      const payload = {
+      // Build the payload according to API structure
+      const payload: IAddSessionRequest = {
         id_formation: parseInt(trainingId),
         description: form.description,
         date_session_debut: form.date_session_debut + "T08:00:00",
         date_session_fin: form.date_session_fin + "T17:30:00",
         nb_places: parseInt(form.nb_places),
-        payment_method: form.payment_methods.join(","), // Jointure avec virgule
-        required_documents: form.required_documents,
-        text_reglement: form.text_reglement,
-        questions: form.questions.map((q) => ({
-          titre: q.titre,
-          description: q.description || "Description par défaut",
-          is_required: q.is_required,
-          type_question: q.type_question,
-          options: q.options.length > 0 ? q.options : undefined,
-        })),
+        required_documents: [],
+        payment_methods: [],
+        text_reglement: "",
       };
+
+      // Only include optional fields if they have values
+      if (form.payment_methods.length > 0) {
+        payload.payment_methods = form.payment_methods;
+      }
+
+      if (form.required_documents.length > 0) {
+        payload.required_documents = form.required_documents;
+      }
+
+      if (form.text_reglement.trim() !== "") {
+        payload.text_reglement = form.text_reglement;
+      }
+
+      if (form.questions.length > 0) {
+        // Filter out incomplete questions and format them properly
+        const validQuestions = form.questions
+          .filter((q) => q.titre.trim() !== "") // Only include questions with titles
+          .map((q) => {
+            const questionData: any = {
+              titre: q.titre,
+              description: q.description || "",
+              is_required: q.is_required,
+              type_question: q.type_question,
+            };
+
+            // Only include options for QCM and QCU questions
+            if ((q.type_question === "QCM" || q.type_question === "QCU") && q.options.length > 0) {
+              // Filter out empty options
+              const validOptions = q.options.filter((option) => option.text.trim() !== "");
+              if (validOptions.length > 0) {
+                questionData.options = validOptions;
+              }
+            }
+
+            return questionData;
+          });
+
+        if (validQuestions.length > 0) {
+          payload.questions = validQuestions;
+        }
+      }
 
       console.log("Données envoyées:", payload);
 
-      await addSessionMutation({
-        id_formation: parseInt(trainingId),
-        description: form.description,
-        date_session_debut: form.date_session_debut + "T08:00:00",
-        date_session_fin: form.date_session_fin + "T17:30:00",
-        nb_places: parseInt(form.nb_places),
-        payment_method: form.payment_methods.join(","), // Jointure avec virgule
-        required_documents: form.required_documents,
-        text_reglement: form.text_reglement,
-        questions: form.questions.map((q) => ({
-          titre: q.titre,
-          description: q.description || "Description par défaut",
-          is_required: q.is_required,
-          type_question: q.type_question,
-          options: q.options.length > 0 ? q.options : undefined,
-        })),
-      }).unwrap();
+      await addSessionMutation(payload).unwrap();
 
       onSuccess();
       toast.success("Session créée avec succès");
@@ -434,7 +453,8 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
         {currentStep === 2 && (
           <div className="space-y-4 animate-in fade-in-50 duration-500">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Questions pour les étudiants
+              Questions pour les étudiants{" "}
+              <span className="text-sm text-gray-500">(Optionnel)</span>
             </h3>
 
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
@@ -478,7 +498,7 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="TXT">Texte libre</SelectItem>
+                              <SelectItem value="TEXTE_LIBRE">Texte libre</SelectItem>
                               <SelectItem value="QCU">Choix unique</SelectItem>
                               <SelectItem value="QCM">Choix multiple</SelectItem>
                             </SelectContent>
@@ -529,15 +549,17 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
                                 placeholder={`Option ${index + 1}`}
                                 className="flex-1"
                               />
-                              <div className="flex items-center space-x-1">
-                                <Checkbox
-                                  checked={option.is_correct || false}
-                                  onCheckedChange={(checked) =>
-                                    updateOption(question.id, index, "is_correct", checked)
-                                  }
-                                />
-                                <Label className="text-xs">Correcte</Label>
-                              </div>
+                              {question.type_question === "QCM" && (
+                                <div className="flex items-center space-x-1">
+                                  <Checkbox
+                                    checked={option.is_correct || false}
+                                    onCheckedChange={(checked) =>
+                                      updateOption(question.id, index, "is_correct", checked)
+                                    }
+                                  />
+                                  <Label className="text-xs">Correcte</Label>
+                                </div>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -565,7 +587,9 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
         {/* Étape 3: Documents requis */}
         {currentStep === 3 && (
           <div className="space-y-4 animate-in fade-in-50 duration-500">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Documents requis</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Documents requis <span className="text-sm text-gray-500">(Optionnel)</span>
+            </h3>
 
             <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 mb-4">
               <div className="flex items-center gap-2 mb-2">
@@ -608,7 +632,9 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
         {/* Étape 4: Règlement intérieur */}
         {currentStep === 4 && (
           <div className="space-y-4 animate-in fade-in-50 duration-500">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Règlement intérieur</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Règlement intérieur <span className="text-sm text-gray-500">(Optionnel)</span>
+            </h3>
 
             <div className="bg-gray-50 p-4 rounded-lg border">
               <div className="flex items-center gap-2 mb-2">
@@ -636,10 +662,12 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
           </div>
         )}
 
-        {/* Étape 5: Modes de paiement (Modifiée pour utiliser des checkboxes) */}
+        {/* Étape 5: Modes de paiement */}
         {currentStep === 5 && (
           <div className="space-y-4 animate-in fade-in-50 duration-500">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Modes de paiement acceptés</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Modes de paiement acceptés <span className="text-sm text-gray-500">(Optionnel)</span>
+            </h3>
 
             <div className="bg-green-50 p-4 rounded-lg border border-green-200 mb-4">
               <div className="flex items-center gap-2 mb-2">

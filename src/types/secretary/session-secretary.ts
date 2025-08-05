@@ -4,8 +4,8 @@ export interface IAddSessionRequest {
   date_session_debut: string; // or Date if you prefer
   date_session_fin: string; // or Date if you prefer
   nb_places: number;
-  payment_method: string; //"OPCO" | "CPF" | "CARD";
-  required_documents: string[];
+  payment_methods?: string[]; //"OPCO" | "CPF" | "CARD";
+  required_documents?: string[];
   // required_documents: Array<
   //   | "CARTE_IDENTITE"
   //   | "CONTRAT_OU_CONVENTION"
@@ -18,8 +18,8 @@ export interface IAddSessionRequest {
   //   | "REGLEMENT_INTERIEUR"
   //   | "CGV"
   // >;
-  text_reglement: string;
-  questions: Array<{
+  text_reglement?: string;
+  questions?: Array<{
     titre: string;
     description: string;
     is_required: boolean;
