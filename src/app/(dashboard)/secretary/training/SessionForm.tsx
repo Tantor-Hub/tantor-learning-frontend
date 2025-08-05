@@ -216,6 +216,7 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
 
   const handleSubmit = async () => {
     try {
+      toast.loading("Creation de la ssession");
       // Build the payload according to API structure
       const payload: IAddSessionRequest = {
         id_formation: parseInt(trainingId),
@@ -223,57 +224,47 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
         date_session_debut: form.date_session_debut + "T08:00:00",
         date_session_fin: form.date_session_fin + "T17:30:00",
         nb_places: parseInt(form.nb_places),
-        required_documents: [],
-        payment_methods: [],
-        text_reglement: "",
+        required_documents: form.required_documents,
+        payment_methods: form.payment_methods,
+        text_reglement: form.text_reglement,
       };
 
-      // Only include optional fields if they have values
-      if (form.payment_methods.length > 0) {
-        payload.payment_methods = form.payment_methods;
-      }
+      const validQuestions = form.questions
+        .filter((q) => q.titre.trim() !== "") // Only include questions with titles
+        .map((q) => {
+          const questionData: any = {
+            titre: q.titre,
+            description: q.description || "",
+            is_required: q.is_required,
+            type_question: q.type_question,
+          };
 
-      if (form.required_documents.length > 0) {
-        payload.required_documents = form.required_documents;
-      }
-
-      if (form.text_reglement.trim() !== "") {
-        payload.text_reglement = form.text_reglement;
-      }
-
-      if (form.questions.length > 0) {
-        // Filter out incomplete questions and format them properly
-        const validQuestions = form.questions
-          .filter((q) => q.titre.trim() !== "") // Only include questions with titles
-          .map((q) => {
-            const questionData: any = {
-              titre: q.titre,
-              description: q.description || "",
-              is_required: q.is_required,
-              type_question: q.type_question,
-            };
-
-            // Only include options for QCM and QCU questions
-            if ((q.type_question === "QCM" || q.type_question === "QCU") && q.options.length > 0) {
-              // Filter out empty options
-              const validOptions = q.options.filter((option) => option.text.trim() !== "");
-              if (validOptions.length > 0) {
-                questionData.options = validOptions;
-              }
+          // Only include options for QCM and QCU questions
+          if ((q.type_question === "QCM" || q.type_question === "QCU") && q.options.length > 0) {
+            // Filter out empty options
+            const validOptions = q.options.filter((option) => option.text.trim() !== "");
+            if (validOptions.length > 0) {
+              questionData.options = validOptions;
             }
+          }
 
-            return questionData;
-          });
-
-        if (validQuestions.length > 0) {
-          payload.questions = validQuestions;
-        }
-      }
+          return questionData;
+        });
 
       console.log("Données envoyées:", payload);
 
-      await addSessionMutation(payload).unwrap();
-
+      await addSessionMutation({
+        id_formation: parseInt(trainingId),
+        description: form.description,
+        date_session_debut: form.date_session_debut + "T08:00:00",
+        date_session_fin: form.date_session_fin + "T17:30:00",
+        nb_places: parseInt(form.nb_places),
+        required_documents: form.required_documents,
+        payment_methods: form.payment_methods,
+        text_reglement: form.text_reglement,
+        questions: validQuestions,
+      }).unwrap();
+      toast.dismiss();
       onSuccess();
       toast.success("Session créée avec succès");
 
@@ -291,6 +282,7 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
       setCurrentStep(1);
       onOpenChange(false);
     } catch (error) {
+      toast.dismiss();
       console.error("Erreur:", error);
       toast.error("Erreur lors de la création");
     }
