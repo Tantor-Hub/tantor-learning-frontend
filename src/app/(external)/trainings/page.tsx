@@ -10,18 +10,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight, Funnel, Loader2, Router, X } from "lucide-react";
+import { ArrowRight, Funnel, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import NewsLetter from "../components/newsletter";
-import CourseModal from "@/components/course-modal";
-import { dcgData } from "./data/index";
-import { useGetAllTrainingsQuery, useListFormationsQuery } from "@/lib/apis/public/public-api";
+import { useListFormationsQuery } from "@/lib/apis/public/public-api";
 import { Loading } from "@/components/shared/loading";
 import { useApplyToTrainingMutation } from "@/lib/apis/student/training-api";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { ListSeance } from "./ListeSeance";
 
 // Define types for your formation data
 interface Formation {

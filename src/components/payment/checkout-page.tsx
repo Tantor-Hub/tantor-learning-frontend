@@ -9,7 +9,15 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { useRouter } from "next/navigation";
 
-export function CheckoutPage({ amount }: { amount: number }) {
+export function CheckoutPage({
+  amount,
+  sessionId,
+  trainingId,
+}: {
+  amount: number;
+  sessionId: string;
+  trainingId: string;
+}) {
   const router = useRouter();
   const stripe = useStripe();
   const elements = useElements();
@@ -73,7 +81,7 @@ export function CheckoutPage({ amount }: { amount: number }) {
       elements,
       clientSecret,
       confirmParams: {
-        return_url: `http://www.localhost:3000/trainings/id/payment/success-payment?amount=${amount}`,
+        return_url: `${process.env.NEXT_PUBLIC_APP_URL}/trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}`,
       },
     });
 
@@ -281,7 +289,7 @@ export function CheckoutPage({ amount }: { amount: number }) {
           className="w-full font-bold disabled:opacity-50 disabled:animate-pulse mt-4"
           size="lg"
         >
-          {!loading ? `Payer maintenant $${amount}` : "Traitement..."}
+          {!loading ? `Payer ${amount},00 €` : "Traitement..."}
         </Button>
       </form>
     </div>

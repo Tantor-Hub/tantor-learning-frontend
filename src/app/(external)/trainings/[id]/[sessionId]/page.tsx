@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -9,13 +9,22 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, Download, Lock, CheckCircle, Router } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useGetSessionByIdQuery } from "@/lib/apis/public/public-api";
 import { Loading } from "@/components/shared/loading";
 import { EmptyState } from "@/components/shared/empty-state";
 import toast from "react-hot-toast";
 import { useApplyToTrainingMutation } from "@/lib/apis/student/training-api";
+import { CheckoutPage } from "@/components/payment/checkout-page";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+
+if (process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY === undefined) {
+  throw new Error("NEXT_PUBLIC_STRIPE_PUBLIC_KEY is not defined");
+}
+
+const stripePromise = loadStripe((process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY as string) ?? "");
 
 interface Document {
   id: string;
@@ -62,9 +71,11 @@ interface DocumentsState {
 
 export default function Page() {
   const params = useParams();
-  const sessionId = params.sessionId as string;
   const router = useRouter();
-
+  const pathname = usePathname();
+  const sessionId = params.sessionId as string;
+  const pathSegments = pathname.split("/");
+  const trainingId = pathSegments[2];
   // All hooks at the top level - never conditional
   const { data: sessionResponse, isLoading: getSessionIsLoading } = useGetSessionByIdQuery({
     id_session: sessionId,
@@ -77,7 +88,6 @@ export default function Page() {
   const [documents, setDocuments] = useState<DocumentsState>({});
   const [documentsGenerated, setDocumentsGenerated] = useState<boolean>(false);
   const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
-  const [paymentCompleted, setPaymentCompleted] = useState<boolean>(false);
   const [loadingSessionId, setLoadingSessionId] = useState<number | null>(null);
 
   const session: SessionData | undefined | any = sessionResponse?.data;
@@ -335,18 +345,10 @@ export default function Page() {
     console.log("Réponses au questionnaire:", selectedOptions);
     console.log("Documents téléversés:", documents);
     console.log("Contrat signé:", termsAccepted);
-    if (hasPayment) {
-      console.log("Paiement effectué:", paymentCompleted);
-    }
     console.log("=========================");
   };
 
   // Call logAllData when payment is completed - use useEffect instead of during render
-  useEffect(() => {
-    if (paymentCompleted) {
-      logAllData();
-    }
-  }, [paymentCompleted]);
 
   const handleApplyToSession = async (sessionId: number) => {
     try {
@@ -390,7 +392,12 @@ export default function Page() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12">
-      <Button className="mb-8" size="lg" onClick={() => router.back()}>
+      <Button
+        variant="outline"
+        className="mb-8 border-primary text-primary"
+        size="lg"
+        onClick={() => router.back()}
+      >
         <ArrowLeft /> Retour à toutes les sessions
       </Button>
 
@@ -682,7 +689,7 @@ export default function Page() {
                     <div className="bg-blue-100 p-1 rounded-full">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="text-blue-800"
+                        className="text-ring"
                         width="16"
                         height="16"
                         fill="none"
@@ -714,50 +721,28 @@ export default function Page() {
           <div>
             <Card className="border">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold text-blue-600">
+                <CardTitle className="text-xl font-semibold text-primary">
                   Méthode de paiement
                 </CardTitle>
-                <p className="text-muted-foreground">
-                  Sécurisé par SSL et cryptage 256-bit
-                  {session.payment_methods && (
-                    <span className="block text-xs mt-1">
-                      Méthodes acceptées: {session.payment_methods.join(", ")}
-                    </span>
-                  )}
-                </p>
+                <CardDescription className="text-muted-foreground">
+                  Ajouter un nouveau CardDescriptionaiement à votre compte
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="cardNumber">Numéro de carte</Label>
-                    <Input id="cardNumber" placeholder="1234 5678 9012 3456" className="mt-1" />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="expiry">Date d'expiration</Label>
-                      <Input id="expiry" placeholder="MM/YY" className="mt-1" />
-                    </div>
-                    <div>
-                      <Label htmlFor="cvc">CVC</Label>
-                      <Input id="cvc" placeholder="123" className="mt-1" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="cardName">Nom sur la carte</Label>
-                    <Input id="cardName" placeholder="John Doe" className="mt-1" />
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2 pt-4">
-                  <Lock className="w-4 h-4 text-green-600" />
-                  <span className="text-sm text-gray-600">Paiement sécurisé SSL 256-bit</span>
-                </div>
-
-                <Button className="w-full" size="lg" onClick={() => setPaymentCompleted(true)}>
-                  Payer {session.prix},00 €
-                </Button>
+              <CardContent>
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    mode: "payment",
+                    amount: session.prix,
+                    currency: "eur",
+                  }}
+                >
+                  <CheckoutPage
+                    amount={session.prix}
+                    sessionId={sessionId}
+                    trainingId={trainingId}
+                  />
+                </Elements>
               </CardContent>
             </Card>
           </div>
@@ -789,29 +774,6 @@ export default function Page() {
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
-
-      {/* Success Message */}
-      {paymentCompleted && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="border max-w-md mx-4">
-            <CardContent className="p-6 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
-                <CheckCircle className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-semibold text-green-800 mb-2">
-                Inscription réussie ! 🎉
-              </h3>
-              <p className="text-green-700 mb-4">
-                Merci pour votre inscription à "{session.Formation?.titre}". Vous recevrez un email
-                de confirmation sous peu.
-              </p>
-              <Button onClick={() => setPaymentCompleted(false)} className="w-full">
-                Fermer
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

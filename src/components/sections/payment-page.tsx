@@ -169,7 +169,7 @@ export function PaymentPage() {
                     currency: "eur",
                   }}
                 >
-                  <CheckoutPage amount={amount} />
+                  <CheckoutPage amount={amount} sessionId="10" trainingId="20" />
                 </Elements>
               </CardContent>
 
