@@ -58,7 +58,7 @@ const SessionList = ({ sessions }: { sessions: ISession[] }) => {
             <div>
               Places disponibles: {session.nb_places_disponible}/{session.nb_places}
             </div>
-            <div>Paiement: {session.payment_method}</div>
+            {/* <div>Paiement: {session.payment_method.map(item) => <span>{item}</span>}</div> */}
           </CardFooter>
         </Card>
       ))}

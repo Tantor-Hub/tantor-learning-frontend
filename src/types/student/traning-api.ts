@@ -35,8 +35,33 @@ export interface IGetAllTrainingsResponse {
 
 export interface IApplyToTrainingRequest {
   id_session: number;
-  id_user?: number; // optional, taken from auth header
-  id_formation?: number; // optional, not required
+  responses_survey?: {
+    id_question: number;
+    answer: string;
+  }[];
+  roi_accepted: boolean;
+  payment: {
+    method: "CARD" | "OPCO" | "CPF";
+    card?: {
+      full_name: string;
+      card_number: string;
+      cvv: number;
+      year: number;
+      month: number;
+      id_stripe_payment: string;
+    };
+    opco?: {
+      nom_opco?: string;
+      nom_entreprise: string;
+      siren: string;
+      nom_responsable: string;
+      telephone_responsable: string;
+      email_responsable: string;
+    };
+    cpf?: {
+      full_name: string;
+    };
+  };
 }
 
 export interface ISessionDetailsResponse {

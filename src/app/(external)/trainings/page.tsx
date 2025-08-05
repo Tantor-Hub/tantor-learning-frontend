@@ -16,7 +16,7 @@ import Link from "next/link";
 import NewsLetter from "../components/newsletter";
 import { useListFormationsQuery } from "@/lib/apis/public/public-api";
 import { Loading } from "@/components/shared/loading";
-import { useApplyToTrainingMutation } from "@/lib/apis/student/training-api";
+// import { useApplyToTrainingMutation } from "@/lib/apis/student/training-api";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -74,8 +74,8 @@ const filterOptions = {
 
 export default function Page() {
   const router = useRouter();
-  const [applySessionMutation, { isLoading: isLoadingApplySessionMutation }] =
-    useApplyToTrainingMutation();
+  // const [applySessionMutation, { isLoading: isLoadingApplySessionMutation }] =
+  // useApplyToTrainingMutation();
 
   // States for search and filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -159,7 +159,7 @@ export default function Page() {
 
   const handleApplySessionMutation = async (id: number) => {
     try {
-      await applySessionMutation({ id_session: id }).unwrap();
+      // await applySessionMutation({ id_session: id }).unwrap();
       toast.success(
         "Votre demande a bien été prise en compte. Vous recevrez sous peu la liste des documents à fournir pour finaliser votre inscription."
       );

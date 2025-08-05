@@ -6,7 +6,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
@@ -25,14 +24,6 @@ if (process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY === undefined) {
 }
 
 const stripePromise = loadStripe((process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY as string) ?? "");
-
-interface Document {
-  id: string;
-  label: string;
-  accept: string;
-  description: string;
-  required: boolean;
-}
 
 interface SessionData {
   Formation?: {
@@ -65,10 +56,6 @@ interface SessionData {
   required_documents?: string[];
 }
 
-interface DocumentsState {
-  [key: string]: boolean;
-}
-
 export default function Page() {
   const params = useParams();
   const router = useRouter();
@@ -76,7 +63,7 @@ export default function Page() {
   const sessionId = params.sessionId as string;
   const pathSegments = pathname.split("/");
   const trainingId = pathSegments[2];
-  // All hooks at the top level - never conditional
+
   const { data: sessionResponse, isLoading: getSessionIsLoading } = useGetSessionByIdQuery({
     id_session: sessionId,
   });
@@ -85,66 +72,73 @@ export default function Page() {
 
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [documents, setDocuments] = useState<DocumentsState>({});
-  const [documentsGenerated, setDocumentsGenerated] = useState<boolean>(false);
   const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
   const [loadingSessionId, setLoadingSessionId] = useState<number | null>(null);
 
   const session: SessionData | undefined | any = sessionResponse?.data;
 
-  // Initialize documents state using useEffect instead of during render
-  useEffect(() => {
-    if (session?.required_documents && Object.keys(documents).length === 0) {
-      const initialState: DocumentsState = {};
-      session.required_documents.forEach((doc: any) => {
-        initialState[doc] = false;
-      });
-      setDocuments(initialState);
-    }
-  }, [session?.required_documents, documents]);
+  const handleApplyToSessionMutation = async () => {
+    // when click to the button pay
+    /*
+interface SessionPayload {
+  id_session: number;
+  responses_survey?: {
+    id_question: number;
+    answer: string;
+  }[];
+  roi_accepted: boolean;
+  payment: {
+    method: 'CARD' | 'OPCO' | 'CPF';
+    card?: {
+      full_name: string;
+      card_number: string;
+      cvv: number;
+      year: number;
+      month: number;
+      id_stripe_payment: string;
+    };
+    opco?: {
+      nom_opco?: string;
+      nom_entreprise: string;
+      siren: string;
+      nom_responsable: string;
+      telephone_responsable: string;
+      email_responsable: string;
+    };
+    cpf?: {
+      full_name: string;
+    };
+  };
+}
 
-  // Memoize step calculations to avoid recalculating on every render
+    */
+    // to submit to api
+    // api look like
+  };
+
   const stepConfig = useMemo(() => {
-    if (!session)
-      return { hasQuestions: false, hasDocuments: false, hasPayment: false, totalSteps: 0 };
+    if (!session) return { hasQuestions: false, hasPayment: false, totalSteps: 0 };
 
-    // Check if there are any questions (not just if Surveys exists)
     const hasQuestions = (session.Surveys?.[0]?.Questionnaires?.length ?? 0) > 0;
-
-    // Check if there are any required documents
-    const hasDocuments = (session.required_documents?.length ?? 0) > 0;
-
-    // Check if there are payment methods AND price is not 0 AND payment methods array is not empty
     const hasPayment =
       (session.payment_methods?.length ?? 0) > 0 && session.prix !== "0" && session.prix !== "0.00";
 
-    // Calculate total steps based on what's actually available
+    // Order: Questions -> Signature -> Payment
     const totalSteps =
       (hasQuestions ? 1 : 0) +
-      (hasDocuments ? 1 : 0) +
-      1 + // Always include signature step
+      1 + // Signature (toujours présente)
       (hasPayment ? 1 : 0);
 
-    return { hasQuestions, hasDocuments, hasPayment, totalSteps };
+    return { hasQuestions, hasPayment, totalSteps };
   }, [session]);
 
-  const { hasQuestions, hasDocuments, hasPayment, totalSteps } = stepConfig;
+  const { hasQuestions, hasPayment, totalSteps } = stepConfig;
 
-  // Adjust current step if it's out of bounds - use useEffect instead of during render
   useEffect(() => {
     if (currentStep > totalSteps && totalSteps > 0) {
       setCurrentStep(totalSteps);
     }
   }, [currentStep, totalSteps]);
-
-  const handleFileUpload = (docType: string) => {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
-      setDocuments((prev) => ({
-        ...prev,
-        [docType]: !!e.target.files?.length,
-      }));
-    };
-  };
 
   const handleOptionSelect = (questionId: string, optionId: string) => {
     setSelectedOptions((prev) => ({
@@ -155,16 +149,9 @@ export default function Page() {
 
   const isQuestionsValid = (): boolean => {
     if (!hasQuestions) return true;
-
-    // Check if all required questions are answered
     const requiredQuestions =
       session?.Surveys?.[0]?.Questionnaires?.filter((q: any) => q.is_required) || [];
     return requiredQuestions.every((q: any) => selectedOptions[q.id] !== undefined);
-  };
-
-  const isDocumentsValid = (): boolean => {
-    if (!hasDocuments) return true;
-    return Object.entries(documents).every(([doc, uploaded]) => uploaded);
   };
 
   const isSignatureValid = (): boolean => {
@@ -178,43 +165,31 @@ export default function Page() {
       return isQuestionsValid();
     }
 
-    if (hasDocuments && currentStepNumber === (hasQuestions ? 2 : 1)) {
-      return isDocumentsValid() || documentsGenerated;
-    }
-
-    // Signature step
-    const signatureStepNumber = (hasQuestions ? 1 : 0) + (hasDocuments ? 1 : 0) + 1;
-    if (currentStepNumber === signatureStepNumber) {
+    if (currentStepNumber === (hasQuestions ? 2 : 1)) {
+      // Signature
       return isSignatureValid();
     }
 
-    // Payment step
-    if (hasPayment && currentStepNumber === totalSteps) {
-      return true;
+    if (hasPayment && currentStepNumber === (hasQuestions ? 3 : 2)) {
+      return true; // Pas de validation nécessaire pour le paiement
     }
 
     return false;
   };
 
-  // Get the current step number in the sequence
   const getCurrentStepNumber = (): number => {
     return currentStep;
   };
 
-  // Check if we're currently on a specific step type
-  const isCurrentStep = (
-    stepType: "questions" | "documents" | "signature" | "payment"
-  ): boolean => {
+  const isCurrentStep = (stepType: "questions" | "signature" | "payment"): boolean => {
     let stepNumber = 0;
 
     if (stepType === "questions" && hasQuestions) {
       stepNumber = 1;
-    } else if (stepType === "documents" && hasDocuments) {
-      stepNumber = hasQuestions ? 2 : 1;
     } else if (stepType === "signature") {
-      stepNumber = (hasQuestions ? 1 : 0) + (hasDocuments ? 1 : 0) + 1;
+      stepNumber = (hasQuestions ? 1 : 0) + 1;
     } else if (stepType === "payment" && hasPayment) {
-      stepNumber = totalSteps;
+      stepNumber = (hasQuestions ? 1 : 0) + 1 + 1;
     }
 
     return currentStep === stepNumber;
@@ -223,7 +198,6 @@ export default function Page() {
   const getStepTitle = (step: number): string => {
     const steps = [];
     if (hasQuestions) steps.push("Questionnaire d'évaluation");
-    if (hasDocuments) steps.push("Documents requis");
     steps.push("Signature du contrat");
     if (hasPayment) steps.push("Paiement");
 
@@ -236,96 +210,24 @@ export default function Page() {
       return;
     }
 
-    if (isCurrentStep("documents") && !documentsGenerated) {
-      setDocumentsGenerated(true);
-      return;
-    }
-
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
+    } else {
+      // If we're at the last step and there are documents required, redirect to documents page
+      if (session?.required_documents && session.required_documents.length > 0) {
+        router.push(`${pathname}/documents`);
+      } else {
+        // Complete the process
+        toast.success("Inscription complétée avec succès!");
+      }
     }
   };
 
   const handlePrevious = () => {
-    if (isCurrentStep("documents") && documentsGenerated) {
-      setDocumentsGenerated(false);
-      return;
-    }
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
   };
-
-  const documentTypeToLabel = (type: string): string => {
-    const labels: Record<string, string> = {
-      CARTE_IDENTITE: "Pièce d'identité",
-      CONTRAT_OU_CONVENTION: "Contrat ou convention",
-      JUSTIFICATIF_DOMICILE: "Justificatif de domicile",
-      ANALYSE_BESOIN: "Analyse de besoin",
-      FORMULAIRE_HANDICAP: "Formulaire handicap",
-      CONVOCATION: "Convocation",
-      PROGRAMME: "Programme",
-      CONDITIONS_VENTE: "Conditions de vente",
-      REGLEMENT_INTERIEUR: "Règlement intérieur",
-      CGV: "Conditions générales de vente",
-      FICHE_CONTROLE_INITIALE: "Fiche de contrôle initiale",
-      CONVOCATION_EXAMEN: "Convocation examen",
-      ATTESTATION_FORMATION: "Attestation de formation",
-      CERTIFICATION: "Certification",
-      FICHE_CONTROLE_COURS: "Fiche de contrôle cours",
-      FICHES_EMARGEMENT: "Fiches d'émargement",
-      QUESTIONNAIRE_SATISFACTION: "Questionnaire de satisfaction",
-      PAIEMENT: "Preuve de paiement",
-      DOCUMENTS_FINANCEUR: "Documents financeur",
-      FICHE_CONTROLE_FINALE: "Fiche de contrôle finale",
-    };
-
-    return labels[type] || type;
-  };
-
-  const documentTypeToAccept = (type: string): string => {
-    // Default accept all common document types
-    return ".pdf,.jpg,.jpeg,.png,.doc,.docx";
-  };
-
-  const documentTypeToDescription = (type: string): string => {
-    const descriptions: Record<string, string> = {
-      CARTE_IDENTITE: "Carte d'identité, passeport ou permis de conduire valide",
-      CONTRAT_OU_CONVENTION: "Contrat de travail ou convention de stage",
-      JUSTIFICATIF_DOMICILE: "Facture récente (électricité, gaz, téléphone) de moins de 3 mois",
-      ANALYSE_BESOIN: "Document d'analyse de besoin de formation",
-      FORMULAIRE_HANDICAP: "Formulaire de déclaration de situation de handicap le cas échéant",
-      CONVOCATION: "Convocation à la formation",
-      PROGRAMME: "Programme détaillé de la formation",
-      CONDITIONS_VENTE: "Conditions générales de vente de la formation",
-      REGLEMENT_INTERIEUR: "Règlement intérieur de l'organisme de formation",
-      CGV: "Conditions générales de vente",
-      FICHE_CONTROLE_INITIALE: "Fiche d'évaluation initiale des compétences",
-      CONVOCATION_EXAMEN: "Convocation à l'examen de certification",
-      ATTESTATION_FORMATION: "Attestation de fin de formation",
-      CERTIFICATION: "Certificat ou diplôme obtenu",
-      FICHE_CONTROLE_COURS: "Fiche de suivi des cours",
-      FICHES_EMARGEMENT: "Feuilles d'émargement signées",
-      QUESTIONNAIRE_SATISFACTION: "Questionnaire d'évaluation de la formation",
-      PAIEMENT: "Justificatif de paiement de la formation",
-      DOCUMENTS_FINANCEUR: "Documents relatifs au financement de la formation",
-      FICHE_CONTROLE_FINALE: "Fiche d'évaluation finale des compétences",
-    };
-
-    return descriptions[type] || "Document requis pour l'inscription";
-  };
-
-  const requiredDocuments: Document[] = useMemo(() => {
-    return (
-      session?.required_documents?.map((doc: any) => ({
-        id: doc,
-        label: documentTypeToLabel(doc),
-        accept: documentTypeToAccept(doc),
-        description: documentTypeToDescription(doc),
-        required: true,
-      })) || []
-    );
-  }, [session?.required_documents]);
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("fr-FR", {
@@ -339,23 +241,9 @@ export default function Page() {
     return session?.Surveys?.[0]?.Questionnaires || [];
   }, [session?.Surveys]);
 
-  // Log all collected data at the end
-  const logAllData = () => {
-    console.log("=== Données collectées ===");
-    console.log("Réponses au questionnaire:", selectedOptions);
-    console.log("Documents téléversés:", documents);
-    console.log("Contrat signé:", termsAccepted);
-    console.log("=========================");
-  };
-
-  // Call logAllData when payment is completed - use useEffect instead of during render
-
   const handleApplyToSession = async (sessionId: number) => {
     try {
       setLoadingSessionId(sessionId);
-      // Note: trainingId is not defined in the original code, you'll need to get it from somewhere
-      // await applySessionMutation({ id_session: sessionId }).unwrap();
-      // router.push(`/trainings/${trainingId}/${sessionId}`);
       toast.success("Candidature enregistrée");
     } catch (error: any) {
       if (error.status === 401) {
@@ -430,7 +318,7 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Step 1: Questions - Only show if hasQuestions is true */}
+      {/* Step 1: Questions */}
       {hasQuestions && isCurrentStep("questions") && (
         <Card className="border">
           <CardHeader>
@@ -480,97 +368,7 @@ export default function Page() {
         </Card>
       )}
 
-      {/* Step 2: Documents - Only show if hasDocuments is true */}
-      {hasDocuments && isCurrentStep("documents") && (
-        <Card className="border">
-          {!documentsGenerated ? (
-            <>
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold">
-                  Documents requis pour l'inscription
-                </CardTitle>
-                <p className="text-muted-foreground">
-                  Veuillez téléverser tous les documents nécessaires pour finaliser votre
-                  inscription
-                </p>
-              </CardHeader>
-              <Separator />
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {requiredDocuments.map((doc) => (
-                    <div key={doc.id} className="relative">
-                      <Card
-                        className={`transition-all duration-200 border ${
-                          documents[doc.id]
-                            ? "border-green-300 bg-green-50"
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}
-                      >
-                        <CardContent className="p-6">
-                          <div className="flex items-start gap-4">
-                            <div className="text-3xl">📄</div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Label
-                                  htmlFor={doc.id}
-                                  className="text-lg font-semibold text-gray-900"
-                                >
-                                  {doc.label}
-                                </Label>
-                                {doc.required && <span className="text-red-500 text-sm">*</span>}
-                              </div>
-                              <p className="text-sm text-gray-600 mb-4">{doc.description}</p>
-
-                              <div className="space-y-2">
-                                <Input
-                                  id={doc.id}
-                                  type="file"
-                                  accept={doc.accept}
-                                  onChange={handleFileUpload(doc.id)}
-                                  className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                />
-                                <p className="text-xs text-gray-500">
-                                  Formats acceptés: {doc.accept.replace(/\./g, "").toUpperCase()} •
-                                  Max 5MB
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          {documents[doc.id] && (
-                            <div className="absolute top-4 right-4">
-                              <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">
-                                <CheckCircle className="w-5 h-5 text-green-600" />
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </>
-          ) : (
-            <CardContent className="space-y-6">
-              <div className="rounded-lg border border-green-200 bg-green-50 p-6 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
-                  <CheckCircle className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-semibold text-green-800 mb-2">
-                  Votre document d'inscription est prêt
-                </h3>
-                <p className="text-green-700">
-                  Nous avons généré automatiquement votre contrat d'inscription basé sur les
-                  informations et documents fournis.
-                </p>
-              </div>
-            </CardContent>
-          )}
-        </Card>
-      )}
-
-      {/* Step 3: Signature - Always show */}
+      {/* Step 2: Signature */}
       {isCurrentStep("signature") && (
         <Card className="border">
           <CardHeader className="text-center">
@@ -612,7 +410,7 @@ export default function Page() {
         </Card>
       )}
 
-      {/* Step 4: Payment - Only show if hasPayment is true */}
+      {/* Step 3: Payment */}
       {hasPayment && isCurrentStep("payment") && (
         <div className="grid md:grid-cols-2 gap-8">
           {/* Left - Course Info */}
@@ -725,7 +523,7 @@ export default function Page() {
                   Méthode de paiement
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Ajouter un nouveau CardDescriptionaiement à votre compte
+                  Ajouter un nouveau paiement à votre compte
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -733,12 +531,12 @@ export default function Page() {
                   stripe={stripePromise}
                   options={{
                     mode: "payment",
-                    amount: session.prix,
+                    amount: parseInt(session.prix),
                     currency: "eur",
                   }}
                 >
                   <CheckoutPage
-                    amount={session.prix}
+                    amount={parseInt(session.prix)}
                     sessionId={sessionId}
                     trainingId={trainingId}
                   />
@@ -754,7 +552,7 @@ export default function Page() {
         <Button
           variant="outline"
           onClick={handlePrevious}
-          disabled={currentStep === 1 && !documentsGenerated}
+          disabled={currentStep === 1}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -770,7 +568,11 @@ export default function Page() {
           disabled={!canProceedToNext()}
           className="flex items-center gap-2"
         >
-          {currentStep === totalSteps ? "Terminer" : "Continuer"}
+          {currentStep === totalSteps
+            ? session?.required_documents && session.required_documents.length > 0
+              ? "Continuer vers les documents"
+              : "Terminer"
+            : "Continuer"}
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>

@@ -57,8 +57,8 @@ export function CheckoutPage({
 
   useEffect(() => {
     if (selectedOption === "CPF") {
-      router.replace("/");
-      window.open("https://www.wikipedia.org", "_blank");
+      // router.replace("/");
+      window.open("https://www.moncompteformation.gouv.fr", "_blank");
     }
   }, [selectedOption]);
 
