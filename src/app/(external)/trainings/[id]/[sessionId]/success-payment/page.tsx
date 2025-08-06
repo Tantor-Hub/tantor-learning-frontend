@@ -6,6 +6,10 @@ import { useSearchParams } from "next/navigation";
 export default function PageSuccess() {
   const searchParams = useSearchParams();
   const amount = searchParams.get("amount") as string;
+  const hasDocument = searchParams.get("hasDocument");
+  const trainingId = searchParams.get("trainingId");
+  const sessionId = searchParams.get("sessionId");
+  // trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}&hasDocument=${hasDocument}`,
   const [countdown, setCountdown] = useState(5);
   const router = useRouter();
 
@@ -14,7 +18,12 @@ export default function PageSuccess() {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          router.push("/"); // Changez cette route selon votre structure
+          if (hasDocument) {
+            router.push(`/trainings/${trainingId}/${sessionId}/documents`);
+          } else {
+            router.replace("/");
+          }
+
           return 0;
         }
         return prev - 1;

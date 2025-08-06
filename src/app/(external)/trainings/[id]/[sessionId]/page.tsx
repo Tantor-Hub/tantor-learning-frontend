@@ -18,6 +18,8 @@ import { useApplyToTrainingMutation } from "@/lib/apis/student/training-api";
 import { CheckoutPage, OpcoFormData } from "@/components/payment/checkout-page";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
 
 if (process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY === undefined) {
   throw new Error("NEXT_PUBLIC_STRIPE_PUBLIC_KEY is not defined");
@@ -92,14 +94,15 @@ export default function Page() {
   const router = useRouter();
   const pathname = usePathname();
   const sessionId = params.sessionId as string;
+
   const pathSegments = pathname.split("/");
   const trainingId = pathSegments[2];
-
+  const currentUser = useSelector(selectCurrentUser);
   const { data: sessionResponse, isLoading: getSessionIsLoading } = useGetSessionByIdQuery({
     id_session: sessionId,
   });
 
-  const [applySessionMutation] = useApplyToTrainingMutation();
+  const [applySessionMutation, { isLoading }] = useApplyToTrainingMutation();
 
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
@@ -111,6 +114,7 @@ export default function Page() {
 
   const session: SessionData | undefined | any = sessionResponse?.data;
 
+  const hasDocument = session?.required_documents && session.required_documents.length > 0;
   // Préparer les données de la session pour l'API
   const prepareSessionPayload = (): SessionPayload => {
     // Convertir les réponses du questionnaire
@@ -137,20 +141,21 @@ export default function Page() {
     try {
       setIsProcessingPayment(true);
       const payload = prepareSessionPayload();
-
-      console.log("Payload envoyé:", payload);
+      // console.log(JSON.stringify(payload));
+      // console.log("Payload envoyé:", payload);
 
       // Appel à votre API
       const result = await applySessionMutation(payload).unwrap();
       console.log(result);
+      // console.log(result);
       toast.success("Inscription complétée avec succès!");
 
       // Redirection selon le contexte
-      if (session?.required_documents && session.required_documents.length > 0) {
-        router.push(`${pathname}/documents`);
-      } else {
-        router.push("/"); // ou une autre page de confirmation
-      }
+      // if (session?.required_documents && session.required_documents.length > 0) {
+      //   router.push(`${pathname}/documents`);
+      // } else {
+      //   router.push("/"); // ou une autre page de confirmation
+      // }
     } catch (error: any) {
       console.error("Erreur lors de l'inscription:", error);
       if (error.status === 401) {
@@ -168,10 +173,10 @@ export default function Page() {
 
   const handleCPFPayment = async () => {
     try {
-      console.log("Paiement CPF initié");
+      // console.log("Paiement CPF initié");
 
       // Vous pourriez demander le nom complet de l'utilisateur ici
-      const fullName = prompt("Veuillez entrer votre nom complet pour le CPF:");
+      const fullName = `${currentUser?.fs_name} ${currentUser?.ls_name}`;
       if (!fullName) return;
 
       setPaymentData({
@@ -180,20 +185,25 @@ export default function Page() {
           full_name: fullName,
         },
       });
-
+      await handleApplyToSessionMutation();
       // Rediriger vers MonCompteFormation
       window.open("https://www.moncompteformation.gouv.fr", "_blank");
-
       toast.success("Redirection vers Mon Compte Formation");
+      if (hasDocument) {
+        router.push(`/trainings/${trainingId}/${sessionId}/documents`);
+      } else {
+        router.push("/");
+      }
     } catch (error) {
       console.error("Erreur paiement CPF:", error);
       toast.error("Erreur lors du paiement CPF");
     }
   };
 
+  // OPCO PAYMENT
   const handleOPCOPayment = async (formData: OpcoFormData) => {
     try {
-      console.log("Paiement OPCO initié avec les données:", formData);
+      // console.log("Paiement OPCO initié avec les données:", formData);
 
       setPaymentData({
         method: "OPCO",
@@ -206,17 +216,23 @@ export default function Page() {
           // nom_opco peut être ajouté si vous avez cette info
         },
       });
-
+      await handleApplyToSessionMutation();
       toast.success("Informations OPCO enregistrées");
+      if (hasDocument) {
+        router.push(`/trainings/${trainingId}/${sessionId}/documents`);
+      } else {
+        router.replace("/");
+      }
     } catch (error) {
-      console.error("Erreur paiement OPCO:", error);
-      throw error;
+      // console.error("Erreur paiement OPCO:", error);
+      toast.error("Une erreur est survenue");
+      // throw error;
     }
   };
 
   const handleCARDPayment = async (stripePaymentData: any) => {
     try {
-      console.log("Paiement par carte initié");
+      // console.log("Paiement par carte initié");
 
       const { stripe, elements, clientSecret, confirmParams } = stripePaymentData;
 
@@ -246,10 +262,12 @@ export default function Page() {
         },
       });
 
+      await handleApplyToSessionMutation();
       toast.success("Paiement par carte réussi");
     } catch (error) {
-      console.error("Erreur paiement carte:", error);
-      throw error;
+      // console.error("Erreur paiement carte:", error);
+      toast.error("Erreur paiement carte");
+      // throw error;
     }
   };
 
@@ -676,6 +694,7 @@ export default function Page() {
                     handleCPFPayment={handleCPFPayment}
                     handleOPCOPayment={handleOPCOPayment}
                     handleCARDPayment={handleCARDPayment}
+                    hasDocument={hasDocument}
                   />
                 </Elements>
               </CardContent>
