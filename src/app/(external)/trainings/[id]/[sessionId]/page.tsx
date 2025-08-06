@@ -15,7 +15,7 @@ import { Loading } from "@/components/shared/loading";
 import { EmptyState } from "@/components/shared/empty-state";
 import toast from "react-hot-toast";
 import { useApplyToTrainingMutation } from "@/lib/apis/student/training-api";
-import { CheckoutPage } from "@/components/payment/checkout-page";
+import { CheckoutPage, OpcoFormData } from "@/components/payment/checkout-page";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
@@ -56,30 +56,6 @@ interface SessionData {
   required_documents?: string[];
 }
 
-export default function Page() {
-  const params = useParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const sessionId = params.sessionId as string;
-  const pathSegments = pathname.split("/");
-  const trainingId = pathSegments[2];
-
-  const { data: sessionResponse, isLoading: getSessionIsLoading } = useGetSessionByIdQuery({
-    id_session: sessionId,
-  });
-
-  const [applySessionMutation] = useApplyToTrainingMutation();
-
-  const [currentStep, setCurrentStep] = useState<number>(1);
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
-  const [loadingSessionId, setLoadingSessionId] = useState<number | null>(null);
-
-  const session: SessionData | undefined | any = sessionResponse?.data;
-
-  const handleApplyToSessionMutation = async () => {
-    // when click to the button pay
-    /*
 interface SessionPayload {
   id_session: number;
   responses_survey?: {
@@ -88,7 +64,7 @@ interface SessionPayload {
   }[];
   roi_accepted: boolean;
   payment: {
-    method: 'CARD' | 'OPCO' | 'CPF';
+    method: "CARD" | "OPCO" | "CPF";
     card?: {
       full_name: string;
       card_number: string;
@@ -111,9 +87,170 @@ interface SessionPayload {
   };
 }
 
-    */
-    // to submit to api
-    // api look like
+export default function Page() {
+  const params = useParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const sessionId = params.sessionId as string;
+  const pathSegments = pathname.split("/");
+  const trainingId = pathSegments[2];
+
+  const { data: sessionResponse, isLoading: getSessionIsLoading } = useGetSessionByIdQuery({
+    id_session: sessionId,
+  });
+
+  const [applySessionMutation] = useApplyToTrainingMutation();
+
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
+
+  // Payment state
+  const [paymentData, setPaymentData] = useState<SessionPayload["payment"] | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  const session: SessionData | undefined | any = sessionResponse?.data;
+
+  // Préparer les données de la session pour l'API
+  const prepareSessionPayload = (): SessionPayload => {
+    // Convertir les réponses du questionnaire
+    const responses_survey = Object.entries(selectedOptions).map(([questionId, answerId]) => ({
+      id_question: parseInt(questionId),
+      answer: answerId,
+    }));
+
+    return {
+      id_session: parseInt(sessionId),
+      responses_survey: responses_survey.length > 0 ? responses_survey : undefined,
+      roi_accepted: termsAccepted,
+      payment: paymentData!,
+    };
+  };
+
+  // Soumettre la session complète à l'API
+  const handleApplyToSessionMutation = async () => {
+    if (!paymentData) {
+      toast.error("Aucune méthode de paiement sélectionnée");
+      return;
+    }
+
+    try {
+      setIsProcessingPayment(true);
+      const payload = prepareSessionPayload();
+
+      console.log("Payload envoyé:", payload);
+
+      // Appel à votre API
+      const result = await applySessionMutation(payload).unwrap();
+      console.log(result);
+      toast.success("Inscription complétée avec succès!");
+
+      // Redirection selon le contexte
+      if (session?.required_documents && session.required_documents.length > 0) {
+        router.push(`${pathname}/documents`);
+      } else {
+        router.push("/"); // ou une autre page de confirmation
+      }
+    } catch (error: any) {
+      console.error("Erreur lors de l'inscription:", error);
+      if (error.status === 401) {
+        toast.error("Erreur d'authentification");
+        router.push("/signin");
+        return;
+      }
+      toast.error(error.message || "Erreur lors de l'inscription");
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  // HANDLERS POUR LES DIFFÉRENTS TYPES DE PAIEMENT
+
+  const handleCPFPayment = async () => {
+    try {
+      console.log("Paiement CPF initié");
+
+      // Vous pourriez demander le nom complet de l'utilisateur ici
+      const fullName = prompt("Veuillez entrer votre nom complet pour le CPF:");
+      if (!fullName) return;
+
+      setPaymentData({
+        method: "CPF",
+        cpf: {
+          full_name: fullName,
+        },
+      });
+
+      // Rediriger vers MonCompteFormation
+      window.open("https://www.moncompteformation.gouv.fr", "_blank");
+
+      toast.success("Redirection vers Mon Compte Formation");
+    } catch (error) {
+      console.error("Erreur paiement CPF:", error);
+      toast.error("Erreur lors du paiement CPF");
+    }
+  };
+
+  const handleOPCOPayment = async (formData: OpcoFormData) => {
+    try {
+      console.log("Paiement OPCO initié avec les données:", formData);
+
+      setPaymentData({
+        method: "OPCO",
+        opco: {
+          nom_entreprise: formData.companyName,
+          siren: formData.siren,
+          nom_responsable: formData.managerName,
+          telephone_responsable: formData.phone,
+          email_responsable: formData.email,
+          // nom_opco peut être ajouté si vous avez cette info
+        },
+      });
+
+      toast.success("Informations OPCO enregistrées");
+    } catch (error) {
+      console.error("Erreur paiement OPCO:", error);
+      throw error;
+    }
+  };
+
+  const handleCARDPayment = async (stripePaymentData: any) => {
+    try {
+      console.log("Paiement par carte initié");
+
+      const { stripe, elements, clientSecret, confirmParams } = stripePaymentData;
+
+      // Traitement Stripe
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        clientSecret,
+        confirmParams,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Récupérer les informations de la carte (vous pourriez avoir besoin de les collecter différemment)
+      const paymentMethod = paymentIntent.payment_method;
+
+      setPaymentData({
+        method: "CARD",
+        card: {
+          full_name: paymentMethod?.billing_details?.name || "Nom non fourni",
+          card_number: `****-****-****-${paymentMethod?.card?.last4 || "0000"}`,
+          cvv: 0, // Le CVV n'est pas retourné par Stripe pour des raisons de sécurité
+          year: paymentMethod?.card?.exp_year || new Date().getFullYear(),
+          month: paymentMethod?.card?.exp_month || 1,
+          id_stripe_payment: paymentIntent.id,
+        },
+      });
+
+      toast.success("Paiement par carte réussi");
+    } catch (error) {
+      console.error("Erreur paiement carte:", error);
+      throw error;
+    }
   };
 
   const stepConfig = useMemo(() => {
@@ -123,7 +260,6 @@ interface SessionPayload {
     const hasPayment =
       (session.payment_methods?.length ?? 0) > 0 && session.prix !== "0" && session.prix !== "0.00";
 
-    // Order: Questions -> Signature -> Payment
     const totalSteps =
       (hasQuestions ? 1 : 0) +
       1 + // Signature (toujours présente)
@@ -158,6 +294,10 @@ interface SessionPayload {
     return termsAccepted;
   };
 
+  const isPaymentValid = (): boolean => {
+    return paymentData !== null;
+  };
+
   const canProceedToNext = (): boolean => {
     const currentStepNumber = getCurrentStepNumber();
 
@@ -166,12 +306,11 @@ interface SessionPayload {
     }
 
     if (currentStepNumber === (hasQuestions ? 2 : 1)) {
-      // Signature
       return isSignatureValid();
     }
 
     if (hasPayment && currentStepNumber === (hasQuestions ? 3 : 2)) {
-      return true; // Pas de validation nécessaire pour le paiement
+      return isPaymentValid();
     }
 
     return false;
@@ -206,20 +345,21 @@ interface SessionPayload {
 
   const handleNext = () => {
     if (!canProceedToNext()) {
-      alert("Veuillez compléter toutes les étapes requises");
+      let message = "Veuillez compléter toutes les étapes requises";
+
+      if (hasPayment && isCurrentStep("payment") && !isPaymentValid()) {
+        message = "Veuillez sélectionner et valider une méthode de paiement";
+      }
+
+      toast.error(message);
       return;
     }
 
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     } else {
-      // If we're at the last step and there are documents required, redirect to documents page
-      if (session?.required_documents && session.required_documents.length > 0) {
-        router.push(`${pathname}/documents`);
-      } else {
-        // Complete the process
-        toast.success("Inscription complétée avec succès!");
-      }
+      // Dernière étape - soumettre les données
+      handleApplyToSessionMutation();
     }
   };
 
@@ -240,24 +380,6 @@ interface SessionPayload {
   const surveyQuestions = useMemo(() => {
     return session?.Surveys?.[0]?.Questionnaires || [];
   }, [session?.Surveys]);
-
-  const handleApplyToSession = async (sessionId: number) => {
-    try {
-      setLoadingSessionId(sessionId);
-      toast.success("Candidature enregistrée");
-    } catch (error: any) {
-      if (error.status === 401) {
-        toast.error("Erreur de candidature");
-        router.push("/signin");
-        return;
-      }
-      toast.error(
-        "Vous vous êtes déjà inscrit à cette session de formation; vous ne pouvez le faire deux fois."
-      );
-    } finally {
-      setLoadingSessionId(null);
-    }
-  };
 
   if (getSessionIsLoading) {
     return <Loading />;
@@ -511,6 +633,18 @@ interface SessionPayload {
                     <span className="text-xl font-bold text-blue-600">{session.prix},00 €</span>
                   </div>
                 </div>
+
+                {/* Afficher la méthode de paiement sélectionnée */}
+                {paymentData && (
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-800">
+                        Paiement {paymentData.method} configuré
+                      </span>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -523,7 +657,7 @@ interface SessionPayload {
                   Méthode de paiement
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Ajouter un nouveau paiement à votre compte
+                  Choisissez votre méthode de paiement préférée
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -531,7 +665,7 @@ interface SessionPayload {
                   stripe={stripePromise}
                   options={{
                     mode: "payment",
-                    amount: parseInt(session.prix),
+                    amount: parseInt(session.prix) * 100, // Stripe utilise les centimes
                     currency: "eur",
                   }}
                 >
@@ -539,6 +673,9 @@ interface SessionPayload {
                     amount={parseInt(session.prix)}
                     sessionId={sessionId}
                     trainingId={trainingId}
+                    handleCPFPayment={handleCPFPayment}
+                    handleOPCOPayment={handleOPCOPayment}
+                    handleCARDPayment={handleCARDPayment}
                   />
                 </Elements>
               </CardContent>
@@ -552,7 +689,7 @@ interface SessionPayload {
         <Button
           variant="outline"
           onClick={handlePrevious}
-          disabled={currentStep === 1}
+          disabled={currentStep === 1 || isProcessingPayment}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -565,15 +702,24 @@ interface SessionPayload {
 
         <Button
           onClick={handleNext}
-          disabled={!canProceedToNext()}
+          disabled={!canProceedToNext() || isProcessingPayment}
           className="flex items-center gap-2"
         >
-          {currentStep === totalSteps
-            ? session?.required_documents && session.required_documents.length > 0
-              ? "Continuer vers les documents"
-              : "Terminer"
-            : "Continuer"}
-          <ArrowRight className="w-4 h-4" />
+          {isProcessingPayment ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Traitement...
+            </>
+          ) : currentStep === totalSteps ? (
+            session?.required_documents && session.required_documents.length > 0 ? (
+              "Continuer vers les documents"
+            ) : (
+              "Finaliser l'inscription"
+            )
+          ) : (
+            "Continuer"
+          )}
+          {!isProcessingPayment && <ArrowRight className="w-4 h-4" />}
         </Button>
       </div>
     </div>

@@ -1,32 +1,49 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
-import { convertToSubcurrency } from "@/lib/convert-to-subcurrency";
 import { Button } from "../ui/button";
-import { Building, Euro } from "lucide-react";
+import { Building, Euro, CreditCard } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { useRouter } from "next/navigation";
 
+// Types pour les données OPCO
+export interface OpcoFormData {
+  companyName: string;
+  siren: string;
+  managerName: string;
+  phone: string;
+  email: string;
+}
+
+// Types pour les props du composant
+export interface CheckoutPageProps {
+  amount: number;
+  sessionId: string;
+  trainingId: string;
+  handleCPFPayment: () => void;
+  handleOPCOPayment: (formData: OpcoFormData) => Promise<void>;
+  handleCARDPayment: (paymentData: any) => Promise<void>;
+}
+
 export function CheckoutPage({
   amount,
   sessionId,
   trainingId,
-}: {
-  amount: number;
-  sessionId: string;
-  trainingId: string;
-}) {
+  handleCPFPayment,
+  handleOPCOPayment,
+  handleCARDPayment,
+}: CheckoutPageProps) {
   const router = useRouter();
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string>();
   const [clientSecret, setClientSecret] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<"OPCO" | "CPF" | null>(null);
+  const [selectedOption, setSelectedOption] = useState<"OPCO" | "CPF" | "CARD" | null>(null);
   const [showOpcoForm, setShowOpcoForm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<OpcoFormData>({
     companyName: "",
     siren: "",
     managerName: "",
@@ -49,24 +66,30 @@ export function CheckoutPage({
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ amount: convertToSubcurrency(amount) }),
+      body: JSON.stringify({ amount: amount * 100 }), // Stripe utilise les centimes
     })
       .then((res) => res.json())
-      .then((data) => setClientSecret(data.clientSecret));
+      .then((data) => setClientSecret(data.clientSecret))
+      .catch((error) => {
+        console.error("Erreur lors de la création du payment intent:", error);
+        setErrorMessage("Erreur lors de l'initialisation du paiement");
+      });
   }, [amount]);
 
-  useEffect(() => {
-    if (selectedOption === "CPF") {
-      // router.replace("/");
-      window.open("https://www.moncompteformation.gouv.fr", "_blank");
-    }
-  }, [selectedOption]);
+  // Gérer la sélection CPF
+  const handleCPFSelection = () => {
+    setSelectedOption("CPF");
+    handleCPFPayment();
+  };
 
+  // Gérer le paiement par carte
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
+    setErrorMessage(undefined);
 
     if (!stripe || !elements) {
+      setLoading(false);
       return;
     }
 
@@ -77,18 +100,24 @@ export function CheckoutPage({
       return;
     }
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      clientSecret,
-      confirmParams: {
-        return_url: `${process.env.NEXT_PUBLIC_APP_URL}trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}`,
-      },
-    });
+    try {
+      // Préparer les données de paiement
+      const paymentData = {
+        stripe,
+        elements,
+        clientSecret,
+        confirmParams: {
+          return_url: `${process.env.NEXT_PUBLIC_APP_URL}trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}`,
+        },
+      };
 
-    if (error) {
-      setErrorMessage(error.message);
+      // Appeler la fonction du parent pour gérer le paiement par carte
+      await handleCARDPayment(paymentData);
+    } catch (error: any) {
+      setErrorMessage(error.message || "Erreur lors du paiement");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const validateForm = () => {
@@ -108,19 +137,15 @@ export function CheckoutPage({
 
     setSubmissionLoading(true);
     try {
-      await fetch("/api/submit-opco-request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      // Appeler la fonction du parent pour gérer le paiement OPCO
+      await handleOPCOPayment(formData);
       setSubmissionSuccess(true);
       setTimeout(() => {
-        router.push("/");
-      }, 3000);
-    } catch (error) {
-      setErrorMessage("Erreur lors de la soumission");
+        setShowOpcoForm(false);
+        setSubmissionSuccess(false);
+      }, 2000);
+    } catch (error: any) {
+      setErrorMessage(error.message || "Erreur lors de la soumission");
     } finally {
       setSubmissionLoading(false);
     }
@@ -142,54 +167,86 @@ export function CheckoutPage({
   }
 
   return (
-    <div className="">
-      <div className="grid grid-cols-2 gap-2 mb-2">
+    <div className="space-y-6">
+      {/* Options de paiement */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        {/* Option OPCO */}
         <div
           tabIndex={0}
-          className={`rounded-sm border p-3 hover:cursor-pointer shadow m-0 ${
+          className={`rounded-lg border-2 p-4 hover:cursor-pointer transition-all duration-200 ${
             selectedOption === "OPCO"
-              ? "border border-ring text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 rounded-md p-2"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary bg-primary/5 text-primary"
+              : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-900"
           }`}
           onClick={() => {
             setSelectedOption("OPCO");
             setShowOpcoForm(true);
           }}
         >
-          <div className="p-0">
-            <Building size={18} className="mb-1" />
-            <p className="text-sm font-semibold">OPCO</p>
+          <div className="flex flex-col items-center text-center space-y-2">
+            <Building size={24} />
+            <p className="font-semibold">OPCO</p>
+            <p className="text-xs text-gray-500">Prise en charge employeur</p>
           </div>
         </div>
+
+        {/* Option CPF */}
         <div
           tabIndex={1}
-          className={`rounded-sm border p-3 hover:cursor-pointer shadow m-0 ${
+          className={`rounded-lg border-2 p-4 hover:cursor-pointer transition-all duration-200 ${
             selectedOption === "CPF"
-              ? "border border-ring text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 rounded-md p-2"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary bg-primary/5 text-primary"
+              : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-900"
           }`}
-          onClick={() => setSelectedOption("CPF")}
+          onClick={handleCPFSelection}
         >
-          <div className="p-0">
-            <Euro size={18} className="mb-1" />
-            <p className="text-sm font-semibold">CPF</p>
+          <div className="flex flex-col items-center text-center space-y-2">
+            <Euro size={24} />
+            <p className="font-semibold">CPF</p>
+            <p className="text-xs text-gray-500">Mon Compte Formation</p>
+          </div>
+        </div>
+
+        {/* Option Carte */}
+        <div
+          tabIndex={2}
+          className={`rounded-lg border-2 p-4 hover:cursor-pointer transition-all duration-200 ${
+            selectedOption === "CARD"
+              ? "border-primary bg-primary/5 text-primary"
+              : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-900"
+          }`}
+          onClick={() => setSelectedOption("CARD")}
+        >
+          <div className="flex flex-col items-center text-center space-y-2">
+            <CreditCard size={24} />
+            <p className="font-semibold">Carte</p>
+            <p className="text-xs text-gray-500">Paiement immédiat</p>
           </div>
         </div>
       </div>
 
+      {/* Message d'erreur global */}
+      {errorMessage && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-3">
+          <p className="text-sm text-red-600">{errorMessage}</p>
+        </div>
+      )}
+
       {/* Formulaire OPCO */}
       <Dialog open={showOpcoForm} onOpenChange={setShowOpcoForm}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Informations employeur</DialogTitle>
           </DialogHeader>
 
           {submissionSuccess ? (
-            <div className="space-y-4">
-              <p>
-                Votre demande a été envoyée au secrétariat. Votre inscription sera validée après
-                vérification. Vous serez redirigé vers la page d'accueil.
-              </p>
+            <div className="space-y-4 text-center">
+              <div className="bg-green-50 border border-green-200 rounded-md p-4">
+                <p className="text-green-800 font-medium">✓ Demande OPCO enregistrée avec succès</p>
+                <p className="text-sm text-green-600 mt-2">
+                  Votre dossier sera traité par notre équipe
+                </p>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -199,11 +256,13 @@ export function CheckoutPage({
               </p>
 
               <div className="space-y-2">
-                <Label>Nom de l'entreprise</Label>
+                <Label htmlFor="companyName">Nom de l'entreprise *</Label>
                 <Input
+                  id="companyName"
                   placeholder="Entrez le nom de l'entreprise"
                   value={formData.companyName}
                   onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                  className={formErrors.companyName ? "border-red-500" : ""}
                 />
                 {formErrors.companyName && (
                   <p className="text-sm text-red-500">Ce champ est obligatoire</p>
@@ -211,11 +270,13 @@ export function CheckoutPage({
               </div>
 
               <div className="space-y-2">
-                <Label>Numéro SIREN (9 chiffres)</Label>
+                <Label htmlFor="siren">Numéro SIREN (9 chiffres) *</Label>
                 <Input
+                  id="siren"
                   placeholder="123456789"
                   value={formData.siren}
                   onChange={(e) => setFormData({ ...formData, siren: e.target.value })}
+                  className={formErrors.siren ? "border-red-500" : ""}
                 />
                 {formErrors.siren && (
                   <p className="text-sm text-red-500">
@@ -227,11 +288,13 @@ export function CheckoutPage({
               </div>
 
               <div className="space-y-2">
-                <Label>Responsable formation</Label>
+                <Label htmlFor="managerName">Responsable formation *</Label>
                 <Input
+                  id="managerName"
                   placeholder="Nom du responsable"
                   value={formData.managerName}
                   onChange={(e) => setFormData({ ...formData, managerName: e.target.value })}
+                  className={formErrors.managerName ? "border-red-500" : ""}
                 />
                 {formErrors.managerName && (
                   <p className="text-sm text-red-500">Ce champ est obligatoire</p>
@@ -239,11 +302,13 @@ export function CheckoutPage({
               </div>
 
               <div className="space-y-2">
-                <Label>Téléphone</Label>
+                <Label htmlFor="phone">Téléphone *</Label>
                 <Input
+                  id="phone"
                   placeholder="+33 6 12 34 56 78"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className={formErrors.phone ? "border-red-500" : ""}
                 />
                 {formErrors.phone && (
                   <p className="text-sm text-red-500">
@@ -255,11 +320,13 @@ export function CheckoutPage({
               </div>
 
               <div className="space-y-2">
-                <Label>Email</Label>
+                <Label htmlFor="email">Email *</Label>
                 <Input
+                  id="email"
                   placeholder="contact@entreprise.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className={formErrors.email ? "border-red-500" : ""}
                 />
                 {formErrors.email && (
                   <p className="text-sm text-red-500">
@@ -273,25 +340,74 @@ export function CheckoutPage({
                 disabled={submissionLoading}
                 className="w-full mt-4"
               >
-                {submissionLoading ? "Envoi en cours..." : "Soumettre"}
+                {submissionLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Envoi en cours...
+                  </>
+                ) : (
+                  "Soumettre la demande OPCO"
+                )}
               </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Paiement standard */}
-      <form onSubmit={handleSubmit}>
-        {clientSecret && <PaymentElement options={{ layout: "tabs" }} />}
-        {errorMessage && <div className="text-red-500 mt-2">{errorMessage}</div>}
-        <Button
-          disabled={!stripe || loading}
-          className="w-full font-bold disabled:opacity-50 disabled:animate-pulse mt-4"
-          size="lg"
-        >
-          {!loading ? `Payer ${amount},00 €` : "Traitement..."}
-        </Button>
-      </form>
+      {/* Paiement par carte - affiché seulement si CARD est sélectionné */}
+      {selectedOption === "CARD" && (
+        <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+            <h3 className="font-medium text-blue-900 mb-2">Paiement par carte bancaire</h3>
+            <p className="text-sm text-blue-700">
+              Votre paiement sera sécurisé via Stripe. Aucune donnée bancaire n'est stockée sur nos
+              serveurs.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {clientSecret && <PaymentElement options={{ layout: "tabs" }} />}
+
+            <Button
+              type="submit"
+              disabled={!stripe || loading}
+              className="w-full font-bold disabled:opacity-50 disabled:animate-pulse"
+              size="lg"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Traitement en cours...
+                </>
+              ) : (
+                `Payer ${amount},00 €`
+              )}
+            </Button>
+          </form>
+        </div>
+      )}
+
+      {/* Message de confirmation pour CPF */}
+      {selectedOption === "CPF" && (
+        <div className="bg-green-50 border border-green-200 rounded-md p-4">
+          <h3 className="font-medium text-green-900 mb-2">Paiement CPF sélectionné</h3>
+          <p className="text-sm text-green-700">
+            Vous avez choisi de payer via votre Compte Personnel de Formation. Une nouvelle fenêtre
+            s'est ouverte vers MonCompteFormation.gouv.fr
+          </p>
+        </div>
+      )}
+
+      {/* Message de confirmation pour OPCO */}
+      {selectedOption === "OPCO" && !showOpcoForm && (
+        <div className="bg-orange-50 border border-orange-200 rounded-md p-4">
+          <h3 className="font-medium text-orange-900 mb-2">Demande OPCO en cours</h3>
+          <p className="text-sm text-orange-700">
+            Votre demande de prise en charge OPCO a été enregistrée. Notre équipe traitera votre
+            dossier dans les plus brefs délais.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
