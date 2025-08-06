@@ -115,8 +115,9 @@ export default function Page() {
   const session: SessionData | undefined | any = sessionResponse?.data;
 
   const hasDocument = session?.required_documents && session.required_documents.length > 0;
+
   // Préparer les données de la session pour l'API
-  const prepareSessionPayload = (): SessionPayload => {
+  const prepareSessionPayload = (paymentInfo: SessionPayload["payment"]): SessionPayload => {
     // Convertir les réponses du questionnaire
     const responses_survey = Object.entries(selectedOptions).map(([questionId, answerId]) => ({
       id_question: parseInt(questionId),
@@ -125,45 +126,46 @@ export default function Page() {
 
     return {
       id_session: parseInt(sessionId),
-      responses_survey: responses_survey.length > 0 ? responses_survey : undefined,
+      responses_survey: responses_survey.length > 0 ? responses_survey : [],
       roi_accepted: termsAccepted,
-      payment: paymentData!,
+      payment: paymentInfo,
     };
   };
 
   // Soumettre la session complète à l'API
-  const handleApplyToSessionMutation = async () => {
-    if (!paymentData) {
+  const handleApplyToSessionMutation = async (paymentInfo: SessionPayload["payment"]) => {
+    if (!paymentInfo) {
       toast.error("Aucune méthode de paiement sélectionnée");
-      return;
+      return false;
     }
 
     try {
       setIsProcessingPayment(true);
-      const payload = prepareSessionPayload();
-      // console.log(JSON.stringify(payload));
-      // console.log("Payload envoyé:", payload);
+      const payload = prepareSessionPayload(paymentInfo);
+      console.log("Payload envoyé:", payload);
 
       // Appel à votre API
       const result = await applySessionMutation(payload).unwrap();
-      console.log(result);
-      // console.log(result);
+      console.log("Résultat API:", result);
       toast.success("Inscription complétée avec succès!");
 
       // Redirection selon le contexte
-      // if (session?.required_documents && session.required_documents.length > 0) {
-      //   router.push(`${pathname}/documents`);
-      // } else {
-      //   router.push("/"); // ou une autre page de confirmation
-      // }
+      if (hasDocument) {
+        router.push(`/trainings/${trainingId}/${sessionId}/documents`);
+      } else {
+        router.push("/");
+      }
+
+      return true;
     } catch (error: any) {
       console.error("Erreur lors de l'inscription:", error);
       if (error.status === 401) {
         toast.error("Erreur d'authentification");
         router.push("/signin");
-        return;
+        return false;
       }
       toast.error(error.message || "Erreur lors de l'inscription");
+      return false;
     } finally {
       setIsProcessingPayment(false);
     }
@@ -173,39 +175,46 @@ export default function Page() {
 
   const handleCPFPayment = async () => {
     try {
-      // console.log("Paiement CPF initié");
+      console.log("Paiement CPF initié");
 
-      // Vous pourriez demander le nom complet de l'utilisateur ici
-      const fullName = `${currentUser?.fs_name} ${currentUser?.ls_name}`;
-      if (!fullName) return;
+      const fullName = `${currentUser?.fs_name} ${currentUser?.ls_name}`.trim();
+      if (!fullName) {
+        toast.error("Nom d'utilisateur manquant");
+        return;
+      }
 
-      setPaymentData({
+      const cpfPaymentData: SessionPayload["payment"] = {
         method: "CPF",
         cpf: {
           full_name: fullName,
         },
-      });
-      await handleApplyToSessionMutation();
-      // Rediriger vers MonCompteFormation
-      window.open("https://www.moncompteformation.gouv.fr", "_blank");
-      toast.success("Redirection vers Mon Compte Formation");
-      if (hasDocument) {
-        router.push(`/trainings/${trainingId}/${sessionId}/documents`);
-      } else {
-        router.push("/");
+      };
+
+      // Set the payment data for UI feedback
+      setPaymentData(cpfPaymentData);
+
+      // Submit to API
+      const success = await handleApplyToSessionMutation(cpfPaymentData);
+
+      if (success) {
+        // Only redirect to external site after successful API call
+        window.open("https://www.moncompteformation.gouv.fr", "_blank");
+        toast.success("Redirection vers Mon Compte Formation");
       }
     } catch (error) {
       console.error("Erreur paiement CPF:", error);
       toast.error("Erreur lors du paiement CPF");
+      // Reset payment data on error
+      setPaymentData(null);
     }
   };
 
   // OPCO PAYMENT
   const handleOPCOPayment = async (formData: OpcoFormData) => {
     try {
-      // console.log("Paiement OPCO initié avec les données:", formData);
+      console.log("Paiement OPCO initié avec les données:", formData);
 
-      setPaymentData({
+      const opcoPaymentData: SessionPayload["payment"] = {
         method: "OPCO",
         opco: {
           nom_entreprise: formData.companyName,
@@ -215,26 +224,36 @@ export default function Page() {
           email_responsable: formData.email,
           // nom_opco peut être ajouté si vous avez cette info
         },
-      });
-      await handleApplyToSessionMutation();
-      toast.success("Informations OPCO enregistrées");
-      if (hasDocument) {
-        router.push(`/trainings/${trainingId}/${sessionId}/documents`);
+      };
+
+      // Set the payment data for UI feedback
+      setPaymentData(opcoPaymentData);
+
+      // Submit to API
+      const success = await handleApplyToSessionMutation(opcoPaymentData);
+
+      if (success) {
+        toast.success("Informations OPCO enregistrées");
       } else {
-        router.replace("/");
+        // Reset payment data on failure
+        setPaymentData(null);
       }
     } catch (error) {
-      // console.error("Erreur paiement OPCO:", error);
+      console.error("Erreur paiement OPCO:", error);
       toast.error("Une erreur est survenue");
-      // throw error;
+      // Reset payment data on error
+      setPaymentData(null);
     }
   };
 
   const handleCARDPayment = async (stripePaymentData: any) => {
     try {
-      // console.log("Paiement par carte initié");
+      console.log("Paiement par carte initié");
 
       const { stripe, elements, clientSecret, confirmParams } = stripePaymentData;
+
+      // Set processing state early
+      setIsProcessingPayment(true);
 
       // Traitement Stripe
       const { error, paymentIntent } = await stripe.confirmPayment({
@@ -247,27 +266,42 @@ export default function Page() {
         throw new Error(error.message);
       }
 
-      // Récupérer les informations de la carte (vous pourriez avoir besoin de les collecter différemment)
+      // Récupérer les informations de la carte
       const paymentMethod = paymentIntent.payment_method;
 
-      setPaymentData({
+      const cardPaymentData: SessionPayload["payment"] = {
         method: "CARD",
         card: {
-          full_name: paymentMethod?.billing_details?.name || "Nom non fourni",
+          full_name:
+            paymentMethod?.billing_details?.name ||
+            currentUser?.fs_name + " " + currentUser?.ls_name ||
+            "Nom non fourni",
           card_number: `****-****-****-${paymentMethod?.card?.last4 || "0000"}`,
           cvv: 0, // Le CVV n'est pas retourné par Stripe pour des raisons de sécurité
           year: paymentMethod?.card?.exp_year || new Date().getFullYear(),
           month: paymentMethod?.card?.exp_month || 1,
           id_stripe_payment: paymentIntent.id,
         },
-      });
+      };
 
-      await handleApplyToSessionMutation();
-      toast.success("Paiement par carte réussi");
-    } catch (error) {
-      // console.error("Erreur paiement carte:", error);
-      toast.error("Erreur paiement carte");
-      // throw error;
+      // Set the payment data for UI feedback
+      setPaymentData(cardPaymentData);
+
+      // Submit to API
+      const success = await handleApplyToSessionMutation(cardPaymentData);
+
+      if (success) {
+        toast.success("Paiement par carte réussi");
+      } else {
+        // Reset payment data on failure
+        setPaymentData(null);
+      }
+    } catch (error: any) {
+      console.error("Erreur paiement carte:", error);
+      toast.error(error.message || "Erreur paiement carte");
+      // Reset payment data on error
+      setPaymentData(null);
+      setIsProcessingPayment(false);
     }
   };
 
@@ -375,10 +409,9 @@ export default function Page() {
 
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
-    } else {
-      // Dernière étape - soumettre les données
-      handleApplyToSessionMutation();
     }
+    // Note: For payment step, the submission is handled by the payment handlers
+    // No need to call handleApplyToSessionMutation here as it's already handled in payment methods
   };
 
   const handlePrevious = () => {
@@ -719,27 +752,29 @@ export default function Page() {
           Étape {currentStep} sur {totalSteps}
         </div>
 
-        <Button
-          onClick={handleNext}
-          disabled={!canProceedToNext() || isProcessingPayment}
-          className="flex items-center gap-2"
-        >
-          {isProcessingPayment ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Traitement...
-            </>
-          ) : currentStep === totalSteps ? (
-            session?.required_documents && session.required_documents.length > 0 ? (
-              "Continuer vers les documents"
+        {/* Only show Next button for non-payment steps */}
+        {(!hasPayment || !isCurrentStep("payment")) && (
+          <Button
+            onClick={handleNext}
+            disabled={!canProceedToNext() || isProcessingPayment}
+            className="flex items-center gap-2"
+          >
+            {isProcessingPayment ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Traitement...
+              </>
             ) : (
-              "Finaliser l'inscription"
-            )
-          ) : (
-            "Continuer"
-          )}
-          {!isProcessingPayment && <ArrowRight className="w-4 h-4" />}
-        </Button>
+              "Continuer"
+            )}
+            {!isProcessingPayment && <ArrowRight className="w-4 h-4" />}
+          </Button>
+        )}
+
+        {/* For payment step, the CheckoutPage component should handle submission */}
+        {hasPayment && isCurrentStep("payment") && (
+          <div className="text-sm text-gray-500">Complétez le paiement ci-dessus</div>
+        )}
       </div>
     </div>
   );
