@@ -42,7 +42,7 @@ export default function Page() {
   if (isLoading) {
     return <Loading />;
   }
-  console.log(JSON.stringify(listSessions.data?.data.list));
+  // console.log(JSON.stringify(listSessions.data?.data.list));
   return (
     <>
       <div className="flex justify-start mb-4">

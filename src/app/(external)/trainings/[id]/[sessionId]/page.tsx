@@ -126,7 +126,7 @@ export default function Page() {
 
     return {
       id_session: parseInt(sessionId),
-      responses_survey: responses_survey.length > 0 ? responses_survey : [],
+      ...(responses_survey.length > 0 && { responses_survey: responses_survey }),
       roi_accepted: termsAccepted,
       payment: paymentInfo,
     };
@@ -146,7 +146,7 @@ export default function Page() {
 
       // Appel à votre API
       const result = await applySessionMutation(payload).unwrap();
-      console.log("Résultat API:", result);
+      console.log("Résultat API:", JSON.stringify(result));
       toast.success("Inscription complétée avec succès!");
 
       // Redirection selon le contexte
@@ -231,7 +231,6 @@ export default function Page() {
 
       // Submit to API
       const success = await handleApplyToSessionMutation(opcoPaymentData);
-
       if (success) {
         toast.success("Informations OPCO enregistrées");
       } else {

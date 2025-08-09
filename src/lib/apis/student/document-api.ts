@@ -1,5 +1,33 @@
 import { baseQuery, createApi, enhancedBaseQuery } from "../base-api";
 
+interface IListDocByStudentSessionResponse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    list: Array<{
+      id: number;
+      id_student: number;
+      id_session: number;
+      id_session_student: number;
+      document: string;
+      piece_jointe: string;
+      group: string;
+      key_document: string;
+      description: string | null;
+      createdAt: string;
+      updatedAt: string;
+    }>;
+  };
+}
+
+interface IUploadDocRequest {
+  id_session: string;
+  piece_jointe: File;
+  key_document: string;
+  description: string;
+}
+
 export const documentStudentApi = createApi({
   reducerPath: "documentStudentApi",
   baseQuery,
@@ -7,7 +35,7 @@ export const documentStudentApi = createApi({
   endpoints: (builder) => ({
     // Get documents for a specific session/group/student
     listStudentDocBySessionId: builder.query<
-      void,
+      IListDocByStudentSessionResponse,
       { id_student: number; id_session: number; group: string }
     >({
       query: ({ id_student, id_session, group }) =>
@@ -16,23 +44,12 @@ export const documentStudentApi = createApi({
     }),
 
     // Upload document BEFORE the training
-    uploadDocumentBefore: builder.mutation<
-      void,
-      { id_session: string; document: File; key_document: string; description: string }
-    >({
-      query: ({ id_session, document, key_document, description }) => {
-        const formData = new FormData();
-        formData.append("id_session", id_session);
-        formData.append("document", document);
-        formData.append("key_document", key_document);
-        formData.append("description", description);
-
-        return {
-          url: "sessions/session/document/before",
-          method: "POST",
-          body: formData,
-        };
-      },
+    uploadDocumentBefore: builder.mutation<void, IUploadDocRequest>({
+      query: (request) => ({
+        url: "sessions/session/document/before",
+        method: "PUT",
+        body: request,
+      }),
       invalidatesTags: ["DocumentStudent"],
     }),
 
@@ -50,7 +67,7 @@ export const documentStudentApi = createApi({
 
         return {
           url: "sessions/session/document/during",
-          method: "POST",
+          method: "PUT",
           body: formData,
         };
       },
@@ -60,19 +77,18 @@ export const documentStudentApi = createApi({
     // Upload document AFTER the training
     uploadDocumentAfter: builder.mutation<
       void,
-      { id_session: string; document: File; key_document: string; description: string }
+      { id_session: string; piece_jointe: File; key_document: string; description: string }
     >({
-      query: ({ id_session, document, key_document, description }) => {
-        const formData = new FormData();
-        formData.append("id_session", id_session);
-        formData.append("document", document);
-        formData.append("key_document", key_document);
-        formData.append("description", description);
-
+      query: ({ id_session, piece_jointe, key_document, description }) => {
         return {
           url: "sessions/session/document/after",
-          method: "POST",
-          body: formData,
+          method: "PUT",
+          body: {
+            id_session,
+            piece_jointe,
+            key_document,
+            description,
+          },
         };
       },
       invalidatesTags: ["DocumentStudent"],

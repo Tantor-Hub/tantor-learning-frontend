@@ -33,70 +33,60 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface FileData {
-  nom: string;
-  type: string;
-  taille: string;
-  date: string;
-  categorie: string;
-}
+import {
+  useListStudentDocBySessionIdQuery,
+  useUploadDocumentAfterMutation,
+} from "@/lib/apis/student/document-api";
+import { Loading } from "@/components/shared/loading";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
 
 type ActionType = "download" | "view" | "edit" | "share" | "delete";
 
 type DocumentType =
-  | "questionnaire_satisfaction"
-  | "paiement"
-  | "documents_financeur"
-  | "fiche_controle_finale";
+  | "QUESTIONNAIRE_SATISFACTION"
+  | "PAIEMENT"
+  | "DOCUMENTS_FINANCEUR"
+  | "FICHE_CONTROLE_FINAL";
 
-export function AfterTab() {
+export function AfterTab({ sessionId }: { sessionId: number | any }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [files, setFiles] = useState<FileData[]>([
-    {
-      nom: "Microsoft Excel",
-      type: "pdf",
-      taille: "2.5MB",
-      date: "24/04/2024",
-      categorie: "contrat d'engagement",
-    },
-    {
-      nom: "Rapport Q1",
-      type: "xlsx",
-      taille: "1.2MB",
-      date: "15/03/2024",
-      categorie: "rapport financier",
-    },
-    {
-      nom: "Présentation",
-      type: "pptx",
-      taille: "5.8MB",
-      date: "02/03/2024",
-      categorie: "présentation",
-    },
-  ]);
-  const [newFiles, setNewFiles] = useState<{ file: File | null; type: DocumentType }[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedType, setSelectedType] = useState<DocumentType>("QUESTIONNAIRE_SATISFACTION");
+  const [isUploading, setIsUploading] = useState(false);
+  const currentUser = useSelector(selectCurrentUser);
+  const [uploadDocument] = useUploadDocumentAfterMutation();
+  const {
+    data: documents,
+    isLoading,
+    refetch,
+  } = useListStudentDocBySessionIdQuery({
+    id_session: sessionId,
+    group: "after",
+    id_student: +currentUser!.id,
+  });
 
-  const handleAction = (action: ActionType, fileName: string): void => {
-    console.log(`Action: ${action} sur le fichier: ${fileName}`);
+  if (isLoading) return <Loading />;
+
+  const documentList = documents?.data?.list || [];
+
+  const handleAction = (action: ActionType, documentId: number, documentName: string): void => {
+    console.log(`Action: ${action} on document: ${documentName}`);
 
     switch (action) {
       case "download":
-        alert(`Téléchargement de ${fileName}`);
-        break;
-      case "view":
-        alert(`Visualisation de ${fileName}`);
-        break;
-      case "edit":
-        alert(`Modification de ${fileName}`);
-        break;
-      case "share":
-        alert(`Partage de ${fileName}`);
+        // Find the document in the list
+        const documentToDownload = documentList.find((doc) => doc.id === documentId);
+        if (documentToDownload) {
+          window.open(documentToDownload.piece_jointe, "_blank");
+        }
         break;
       case "delete":
-        if (confirm(`Êtes-vous sûr de vouloir supprimer ${fileName} ?`)) {
-          setFiles(files.filter((f) => f.nom !== fileName));
-          alert(`${fileName} supprimé`);
+        if (confirm(`Êtes-vous sûr de vouloir supprimer ${documentName} ?`)) {
+          // Here you would typically call an API to delete the document
+          // For now, we'll just log it
+          console.log(`Deleting document with ID: ${documentId}`);
         }
         break;
       default:
@@ -104,62 +94,113 @@ export function AfterTab() {
     }
   };
 
-  const handleAddFiles = () => {
+  const handleAddDocument = () => {
+    setSelectedFile(null);
+    setSelectedType("QUESTIONNAIRE_SATISFACTION");
     setIsDialogOpen(true);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const fileList = e.target.files;
-    if (fileList && fileList.length > 0) {
-      const updatedFiles = [...newFiles];
-      updatedFiles[index] = { ...updatedFiles[index], file: fileList[0] };
-      setNewFiles(updatedFiles);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // const fileList = e.target.files;
+    // if (fileList && fileList.length > 0) {
+    //   setSelectedFile(fileList[1]);
+    // }
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
     }
   };
 
-  const handleTypeChange = (value: DocumentType, index: number) => {
-    const updatedFiles = [...newFiles];
-    updatedFiles[index] = { ...updatedFiles[index], type: value };
-    setNewFiles(updatedFiles);
+  const handleTypeChange = (value: DocumentType) => {
+    setSelectedType(value);
   };
 
-  const addFileInput = () => {
-    setNewFiles([...newFiles, { file: null, type: "questionnaire_satisfaction" }]);
-  };
+  const handleSubmit = async () => {
+    if (!selectedFile) {
+      toast.error("Veuillez sélectionner un fichier");
+      return;
+    }
 
-  const removeFileInput = (index: number) => {
-    const updatedFiles = [...newFiles];
-    updatedFiles.splice(index, 1);
-    setNewFiles(updatedFiles);
-  };
+    setIsUploading(true);
 
-  const handleSubmit = () => {
-    const today = new Date();
-    const formattedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+    try {
+      const formData = new FormData();
+      formData.append("id_session", String(sessionId));
+      formData.append("piece_jointe", selectedFile); // key must match backend expectation
+      formData.append("key_document", String(selectedType));
+      formData.append("description", String(selectedFile.name));
 
-    const addedFiles = newFiles
-      .filter((item) => item.file)
-      .map((item) => {
-        const file = item.file as File;
-        return {
-          nom: file.name,
-          type: file.name.split(".").pop() || "",
-          taille: `${(file.size / (1024 * 1024)).toFixed(1)}MB`,
-          date: formattedDate,
-          categorie: item.type,
-        };
+      console.log("Uploading with data:", {
+        fileName: selectedFile.name,
+        fileType: selectedFile.type,
+        keyDocument: selectedType,
+        sessionId: sessionId,
       });
 
-    setFiles([...files, ...addedFiles]);
-    setNewFiles([]);
+      const response = await uploadDocument({
+        id_session: String(sessionId),
+        piece_jointe: selectedFile,
+        key_document: String(selectedType),
+        description: String(selectedFile.name),
+      }).unwrap();
+      console.log(response);
+
+      toast.success(`Document ${selectedFile.name} uploadé avec succès!`);
+      await refetch(); // Refresh the document list
+      setIsDialogOpen(false);
+      setSelectedFile(null);
+      setSelectedType("QUESTIONNAIRE_SATISFACTION");
+    } catch (error) {
+      console.error("Error uploading document:", error);
+
+      // Better error handling
+      if (error && typeof error === "object" && "data" in error) {
+        const errorData = error.data as any;
+        if (errorData?.message) {
+          toast.error(`Erreur: ${errorData.message}`);
+        } else {
+          toast.error(`Échec de l'upload du document`);
+        }
+      } else {
+        toast.error(`Échec de l'upload du document`);
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleCancel = () => {
     setIsDialogOpen(false);
+    setSelectedFile(null);
+    setSelectedType("QUESTIONNAIRE_SATISFACTION");
+  };
+
+  // Helper function to get file extension from URL
+  const getFileExtension = (url: string) => {
+    return url.split(".").pop()?.toLowerCase() || "file";
+  };
+
+  // Helper function to format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("fr-FR");
+  };
+
+  // Helper function to translate document key to readable format
+  const translateDocumentKey = (key: string) => {
+    const translations: Record<string, string> = {
+      QUESTIONNAIRE_SATISFACTION: "Questionnaire de satisfaction",
+      PAIEMENT: "Paiement",
+      DOCUMENTS_FINANCEUR: "Documents financeur",
+      FICHE_CONTROLE_FINAL: "Fiche contrôle final",
+    };
+    return translations[key] || key;
   };
 
   return (
     <div className="mx-auto">
-      <Button className="my-4" onClick={handleAddFiles}>
+      <Button className="my-4" onClick={handleAddDocument}>
         <Plus className="mr-2 h-4 w-4" />
-        Ajouter les documents
+        Ajouter un document
       </Button>
 
       <Table className="border">
@@ -167,102 +208,102 @@ export function AfterTab() {
           <TableRow>
             <TableHead>Nom</TableHead>
             <TableHead>Type</TableHead>
-            <TableHead>Taille</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Catégorie</TableHead>
+            <TableHead>Date d'ajout</TableHead>
+            <TableHead>Type de document</TableHead>
             <TableHead className="text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {files.map((file, index) => (
-            <TableRow key={index}>
-              <TableCell className="font-medium">{file.nom}</TableCell>
-              <TableCell>
-                <Badge variant={"outline"}>{file.type.toLocaleLowerCase()}</Badge>
-              </TableCell>
-              <TableCell>{file.taille}</TableCell>
-              <TableCell>{file.date}</TableCell>
-              <TableCell className="capitalize">{file.categorie.replace(/_/g, " ")}</TableCell>
-              <TableCell className="text-center">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Badge variant="secondary" className="hover:cursor-pointer">
-                      <Ellipsis />
-                      <span className="sr-only">Ouvrir le menu</span>
-                    </Badge>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleAction("download", file.nom)}>
-                      <Download className="mr-2 h-4 w-4" />
-                      Télécharger
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => handleAction("delete", file.nom)}
-                      className="text-red-600 focus:text-red-600"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Supprimer
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+          {documentList.length > 0 ? (
+            documentList.map((document) => (
+              <TableRow key={document.id}>
+                <TableCell className="font-medium">{document.document}</TableCell>
+                <TableCell>
+                  <Badge variant={"outline"}>{getFileExtension(document.piece_jointe)}</Badge>
+                </TableCell>
+                <TableCell>{formatDate(document.createdAt)}</TableCell>
+                <TableCell>{translateDocumentKey(document.key_document)}</TableCell>
+                <TableCell className="text-center">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Badge variant="secondary" className="hover:cursor-pointer">
+                        <Ellipsis />
+                        <span className="sr-only">Ouvrir le menu</span>
+                      </Badge>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => handleAction("download", document.id, document.document)}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Télécharger
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleAction("delete", document.id, document.document)}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Supprimer
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                Aucun document disponible pour le moment
               </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[625px]">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Ajouter des documents</DialogTitle>
+            <DialogTitle>Ajouter un document</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            {newFiles.map((item, index) => (
-              <div key={index} className="grid grid-cols-12 items-center gap-4">
-                <div className="col-span-5">
-                  <Input
-                    id={`file-${index}`}
-                    type="file"
-                    onChange={(e) => handleFileChange(e, index)}
-                  />
-                </div>
-                <div className="col-span-5">
-                  <Select
-                    value={item.type}
-                    onValueChange={(value) => handleTypeChange(value as DocumentType, index)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Type de document" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="questionnaire_satisfaction">
-                        Questionnaire de satisfaction
-                      </SelectItem>
-                      <SelectItem value="paiement">Paiement</SelectItem>
-                      <SelectItem value="documents_financeur">Documents financeur</SelectItem>
-                      <SelectItem value="fiche_controle_finale">Fiche contrôle finale</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="col-span-2">
-                  <Button variant="outline" size="icon" onClick={() => removeFileInput(index)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            <Button variant="outline" className="mt-2" onClick={addFileInput}>
-              <Plus className="mr-2 h-4 w-4" />
-              Ajouter un autre document
-            </Button>
+            <div className="grid gap-2">
+              <Label htmlFor="file-input">Sélectionner un fichier</Label>
+              <Input
+                id="file-input"
+                type="file"
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
+              {selectedFile && (
+                <p className="text-sm text-muted-foreground">
+                  Fichier sélectionné: {selectedFile.name}
+                </p>
+              )}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="document-type">Type de document</Label>
+              <Select value={selectedType} onValueChange={handleTypeChange} disabled={isUploading}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner le type de document" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="QUESTIONNAIRE_SATISFACTION">
+                    Questionnaire de satisfaction
+                  </SelectItem>
+                  <SelectItem value="PAIEMENT">Paiement</SelectItem>
+                  <SelectItem value="DOCUMENTS_FINANCEUR">Documents financeur</SelectItem>
+                  <SelectItem value="FICHE_CONTROLE_FINAL">Fiche contrôle final</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button type="button" variant="outline" onClick={handleCancel} disabled={isUploading}>
               Annuler
             </Button>
-            <Button type="button" onClick={handleSubmit}>
-              Enregistrer
+            <Button type="button" onClick={handleSubmit} disabled={isUploading || !selectedFile}>
+              {isUploading ? "Envoi en cours..." : "Enregistrer"}
             </Button>
           </DialogFooter>
         </DialogContent>
