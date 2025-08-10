@@ -63,7 +63,7 @@ export default function Page() {
             <SelectContent>
               {listSessions.data?.data.list.map((session) => (
                 <SelectItem key={session.id} value={String(session.id)}>
-                  {session.designation || "Session sans nom"}
+                  {`${session.designation} - ${session.Formation.titre}` || "Session sans nom"}
                 </SelectItem>
               ))}
             </SelectContent>
