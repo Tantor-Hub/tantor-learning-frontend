@@ -63,9 +63,9 @@ export default function Page() {
         </div>
       </div>
 
-      <Tabs defaultValue="all" className="">
+      <Tabs defaultValue="before">
         <div className="overflow-x-auto">
-          <TabsList className="flex min-w-[1000px] w-full bg-white border" defaultValue={"before"}>
+          <TabsList className="flex min-w-[1000px] w-full bg-white border">
             <TabsTrigger value="before">Avant La Formation</TabsTrigger>
             <TabsTrigger value="during">Pendant La Formation</TabsTrigger>
             <TabsTrigger value="after">Après La Formation</TabsTrigger>

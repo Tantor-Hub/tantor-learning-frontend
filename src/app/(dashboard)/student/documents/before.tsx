@@ -145,29 +145,29 @@ export function BeforeTab({ sessionId }: { sessionId: number | any }) {
     formData.append("key_document", selectedType);
     formData.append("description", selectedFile.name);
     try {
-      // const response = await uploadDocument({
-      //   id_session: String(sessionId),
-      //   piece_jointe: selectedFile,
-      //   key_document: selectedType,
-      //   description: String(selectedFile.name),
-      // }).unwrap();
+      const response = await uploadDocument({
+        id_session: String(sessionId),
+        piece_jointe: selectedFile,
+        key_document: selectedType,
+        description: String(selectedFile.name),
+      }).unwrap();
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}sessions/session/document/before`,
-        {
-          method: "PUT",
-          body: formData,
-          // Don't set Content-Type header - let the browser set it with boundary
-          headers: {
-            Authorization: `Bearer ${token}`, // Add if needed
-          },
-        }
-      );
+      // const response = await fetch(
+      //   `${process.env.NEXT_PUBLIC_BASE_URL}sessions/session/document/before`,
+      //   {
+      //     method: "PUT",
+      //     body: formData,
+      //     // Don't set Content-Type header - let the browser set it with boundary
+      //     headers: {
+      //       Authorization: `Bearer ${token}`, // Add if needed
+      //     },
+      //   }
+      // );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Upload failed");
-      }
+      // if (!response.ok) {
+      //   const errorData = await response.json();
+      //   throw new Error(errorData.message || "Upload failed");
+      // }
 
       toast.success(`Document ${selectedFile.name} uploadé avec succès!`);
       await refetch();
