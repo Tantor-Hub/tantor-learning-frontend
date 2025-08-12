@@ -20,6 +20,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
+import { convertToSubcurrency } from "@/lib/convert-to-subcurrency";
 
 if (process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY === undefined) {
   throw new Error("NEXT_PUBLIC_STRIPE_PUBLIC_KEY is not defined");
@@ -52,7 +53,7 @@ interface SessionData {
   date_session_debut: string;
   date_session_fin: string;
   duree: string;
-  prix: string;
+  prix: number;
   payment_methods?: string[];
   designation?: string;
   required_documents?: string[];
@@ -688,7 +689,7 @@ export default function Page() {
                 <div className="mt-6 pt-6 border-t border-blue-200">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-600">Total à payer</span>
-                    <span className="text-xl font-bold text-blue-600">{session.prix},00 €</span>
+                    <span className="text-xl font-bold text-blue-600">{session.prix} €</span>
                   </div>
                 </div>
 
@@ -723,7 +724,7 @@ export default function Page() {
                   stripe={stripePromise}
                   options={{
                     mode: "payment",
-                    amount: parseInt(session.prix) * 100, // Stripe utilise les centimes
+                    amount: convertToSubcurrency(session.prix),
                     currency: "eur",
                   }}
                 >

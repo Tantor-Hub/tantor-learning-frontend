@@ -6,7 +6,6 @@ import { Building, Euro, CreditCard } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { useRouter } from "next/navigation";
 
 // Types pour les données OPCO
 export interface OpcoFormData {
@@ -39,7 +38,7 @@ export function CheckoutPage({
   handleCARDPayment,
   hasDocument,
 }: CheckoutPageProps) {
-  const router = useRouter();
+  // const amount = parseFloat((0.5 * 100).toFixed(2));
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string>();
@@ -70,7 +69,8 @@ export function CheckoutPage({
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ amount: amount }), // Stripe utilise les centimes
+      // parseFloat((amount * 100).toFixed(2))
+      body: JSON.stringify({ amount: amount * 100 }), // Stripe utilise les centimes
     })
       .then((res) => res.json())
       .then((data) => setClientSecret(data.clientSecret))
@@ -384,7 +384,7 @@ export function CheckoutPage({
                   Traitement en cours...
                 </>
               ) : (
-                `Payer ${amount},00 €`
+                `Payer ${amount} €`
               )}
             </Button>
           </form>
