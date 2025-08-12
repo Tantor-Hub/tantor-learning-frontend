@@ -26,6 +26,7 @@ export interface CheckoutPageProps {
   handleOPCOPayment: (formData: OpcoFormData) => Promise<void>;
   handleCARDPayment: (paymentData: any) => Promise<void>;
   hasDocument: boolean;
+  isValidOPCO: boolean;
 }
 
 export function CheckoutPage({
@@ -33,6 +34,7 @@ export function CheckoutPage({
   sessionId,
   trainingId,
   handleCPFPayment,
+  isValidOPCO,
   handleOPCOPayment,
   handleCARDPayment,
   hasDocument,
@@ -68,7 +70,7 @@ export function CheckoutPage({
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ amount: amount * 100 }), // Stripe utilise les centimes
+      body: JSON.stringify({ amount: amount }), // Stripe utilise les centimes
     })
       .then((res) => res.json())
       .then((data) => setClientSecret(data.clientSecret))
@@ -144,8 +146,8 @@ export function CheckoutPage({
       setSubmissionSuccess(true);
       setTimeout(() => {
         setShowOpcoForm(false);
-        setSubmissionSuccess(false);
-      }, 2000);
+        setSubmissionSuccess(isValidOPCO);
+      });
     } catch (error: any) {
       setErrorMessage(error.message || "Erreur lors de la soumission");
     } finally {

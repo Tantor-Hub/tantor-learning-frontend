@@ -93,6 +93,7 @@ export default function Page() {
   const params = useParams();
   const router = useRouter();
   const pathname = usePathname();
+  const [isValidOPCO, setIsValidOPCO] = useState<boolean>(false);
   const sessionId = params.sessionId as string;
 
   const pathSegments = pathname.split("/");
@@ -134,7 +135,9 @@ export default function Page() {
 
   // Soumettre la session complète à l'API
   const handleApplyToSessionMutation = async (paymentInfo: SessionPayload["payment"]) => {
+    toast.loading("Inscription en cours...");
     if (!paymentInfo) {
+      toast.dismiss();
       toast.error("Aucune méthode de paiement sélectionnée");
       return false;
     }
@@ -142,11 +145,12 @@ export default function Page() {
     try {
       setIsProcessingPayment(true);
       const payload = prepareSessionPayload(paymentInfo);
-      console.log("Payload envoyé:", payload);
+      // console.log("Payload envoyé:", payload);
 
       // Appel à votre API
       const result = await applySessionMutation(payload).unwrap();
       console.log("Résultat API:", JSON.stringify(result));
+      toast.dismiss();
       toast.success("Inscription complétée avec succès!");
 
       // Redirection selon le contexte
@@ -155,10 +159,14 @@ export default function Page() {
       } else {
         router.push("/");
       }
-
       return true;
     } catch (error: any) {
-      console.error("Erreur lors de l'inscription:", error);
+      toast.dismiss();
+      // console.error("Erreur lors de l'inscription:", error);
+      if (error.status === 400) {
+        toast.error("Vous êtes déjà inscrit à la formation");
+        // toast.error(error?.data?.data);
+      }
       if (error.status === 401) {
         toast.error("Erreur d'authentification");
         router.push("/signin");
@@ -175,7 +183,7 @@ export default function Page() {
 
   const handleCPFPayment = async () => {
     try {
-      console.log("Paiement CPF initié");
+      // console.log("Paiement CPF initié");
 
       const fullName = `${currentUser?.fs_name} ${currentUser?.ls_name}`.trim();
       if (!fullName) {
@@ -195,15 +203,14 @@ export default function Page() {
 
       // Submit to API
       const success = await handleApplyToSessionMutation(cpfPaymentData);
-
+      // console.log(success);
       if (success) {
         // Only redirect to external site after successful API call
         window.open("https://www.moncompteformation.gouv.fr", "_blank");
         toast.success("Redirection vers Mon Compte Formation");
       }
-    } catch (error) {
-      console.error("Erreur paiement CPF:", error);
-      toast.error("Erreur lors du paiement CPF");
+    } catch (error: any) {
+      toast.error("Une erreur est survenue");
       // Reset payment data on error
       setPaymentData(null);
     }
@@ -212,7 +219,7 @@ export default function Page() {
   // OPCO PAYMENT
   const handleOPCOPayment = async (formData: OpcoFormData) => {
     try {
-      console.log("Paiement OPCO initié avec les données:", formData);
+      // console.log("Paiement OPCO initié avec les données:", formData);
 
       const opcoPaymentData: SessionPayload["payment"] = {
         method: "OPCO",
@@ -231,6 +238,7 @@ export default function Page() {
 
       // Submit to API
       const success = await handleApplyToSessionMutation(opcoPaymentData);
+      setIsValidOPCO(success);
       if (success) {
         toast.success("Informations OPCO enregistrées");
       } else {
@@ -238,8 +246,8 @@ export default function Page() {
         setPaymentData(null);
       }
     } catch (error) {
-      console.error("Erreur paiement OPCO:", error);
-      toast.error("Une erreur est survenue");
+      // console.error("Erreur paiement OPCO:", error);
+      // toast.error("Une erreur est survenue");
       // Reset payment data on error
       setPaymentData(null);
     }
@@ -297,7 +305,7 @@ export default function Page() {
       }
     } catch (error: any) {
       console.error("Erreur paiement carte:", error);
-      toast.error(error.message || "Erreur paiement carte");
+      toast.error("Erreur paiement carte");
       // Reset payment data on error
       setPaymentData(null);
       setIsProcessingPayment(false);
@@ -722,6 +730,7 @@ export default function Page() {
                   <CheckoutPage
                     amount={parseInt(session.prix)}
                     sessionId={sessionId}
+                    isValidOPCO={isValidOPCO}
                     trainingId={trainingId}
                     handleCPFPayment={handleCPFPayment}
                     handleOPCOPayment={handleOPCOPayment}
