@@ -19,10 +19,10 @@ export const trainingSecretaryApi = createApi({
       providesTags: ["TrainingSecretary"],
     }),
     addTraining: builder.mutation<void, IAddTrainingRequest>({
-      query: (body) => ({
+      query: (request) => ({
         url: "formations/formation/add",
         method: "POST",
-        body: body,
+        body: request,
       }),
       invalidatesTags: ["TrainingSecretary"],
     }),

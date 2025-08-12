@@ -43,7 +43,7 @@ export interface IAddTrainingRequest {
   prix: string;
   rnc: string; // RNCP35526 -> number
   description: string;
-  objectif: string;
+  // objectif: string;
   prerequis: string;
   alternance: string; // durree -> 3ans
 }

@@ -74,7 +74,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
         description: form.description,
         prerequis: form.prerequis,
         rnc: form.rnc,
-        objectif: form.objectif,
+        // objectif: form.objectif,
         alternance: form.alternance,
       }).unwrap();
       toast.success("Création réussie");
