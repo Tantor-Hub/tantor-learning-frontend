@@ -5,12 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Upload, X } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useGetSessionByIdQuery } from "@/lib/apis/public/public-api";
 import { Loading } from "@/components/shared/loading";
 import { EmptyState } from "@/components/shared/empty-state";
 import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
+import { selectToken } from "@/features/auth/auth-slice";
 
 interface Document {
   id: string;
@@ -25,7 +27,11 @@ interface SessionData {
 }
 
 interface DocumentsState {
-  [key: string]: boolean;
+  [key: string]: {
+    uploaded: boolean;
+    file: File | null;
+    uploading: boolean;
+  };
 }
 
 export default function DocumentsPage() {
@@ -33,10 +39,15 @@ export default function DocumentsPage() {
   const router = useRouter();
   const sessionId = params.sessionId as string;
 
-  const { data: sessionResponse, isLoading: getSessionIsLoading } = useGetSessionByIdQuery({
+  const {
+    data: sessionResponse,
+    isLoading: getSessionIsLoading,
+    refetch,
+  } = useGetSessionByIdQuery({
     id_session: sessionId,
   });
 
+  const token = useSelector(selectToken);
   const [documents, setDocuments] = useState<DocumentsState>({});
   const [documentsGenerated, setDocumentsGenerated] = useState<boolean>(false);
 
@@ -46,23 +57,121 @@ export default function DocumentsPage() {
     if (session?.required_documents && Object.keys(documents).length === 0) {
       const initialState: DocumentsState = {};
       session.required_documents.forEach((doc: any) => {
-        initialState[doc] = false;
+        initialState[doc] = {
+          uploaded: false,
+          file: null,
+          uploading: false,
+        };
       });
       setDocuments(initialState);
     }
   }, [session?.required_documents, documents]);
 
-  const handleFileUpload = (docType: string) => {
+  const handleFileSelect = (docType: string) => {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0] || null;
       setDocuments((prev) => ({
         ...prev,
-        [docType]: !!e.target.files?.length,
+        [docType]: {
+          ...prev[docType],
+          file,
+          uploaded: false, // Reset uploaded status when new file is selected
+        },
       }));
     };
   };
 
+  const handleSubmitDocument = async (docType: string) => {
+    const docData = documents[docType];
+    if (!docData?.file) {
+      toast.error("Veuillez sélectionner un fichier");
+      return;
+    }
+
+    // Set uploading state
+    setDocuments((prev) => ({
+      ...prev,
+      [docType]: {
+        ...prev[docType],
+        uploading: true,
+      },
+    }));
+
+    toast.loading("Envoi en cours...");
+
+    const formData = new FormData();
+    formData.append("piece_jointe", docData.file);
+    formData.append("id_session", String(sessionId));
+    formData.append("key_document", docType);
+    formData.append("description", docData.file.name);
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}sessions/session/document/before`,
+        {
+          method: "PUT",
+          body: formData,
+          headers: {
+            "x-connexion-tantor": `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Upload failed");
+      }
+
+      const responseData = await response.json();
+      toast.dismiss();
+      toast.success(`Document ${docData.file.name} uploadé avec succès!`);
+
+      // Mark as uploaded
+      setDocuments((prev) => ({
+        ...prev,
+        [docType]: {
+          ...prev[docType],
+          uploaded: true,
+          uploading: false,
+        },
+      }));
+
+      await refetch();
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error uploading document:", error);
+      if (error instanceof Error) {
+        toast.error(`Erreur: ${error.message}`);
+      } else {
+        toast.error(`Échec de l'upload du document`);
+      }
+
+      // Reset uploading state on error
+      setDocuments((prev) => ({
+        ...prev,
+        [docType]: {
+          ...prev[docType],
+          uploading: false,
+        },
+      }));
+    } finally {
+      toast.dismiss();
+    }
+  };
+
+  const handleRemoveFile = (docType: string) => {
+    setDocuments((prev) => ({
+      ...prev,
+      [docType]: {
+        ...prev[docType],
+        file: null,
+        uploaded: false,
+      },
+    }));
+  };
+
   const isDocumentsValid = (): boolean => {
-    return Object.entries(documents).every(([doc, uploaded]) => uploaded);
+    return Object.entries(documents).every(([doc, data]) => data.uploaded);
   };
 
   const canProceedToNext = (): boolean => {
@@ -151,6 +260,7 @@ export default function DocumentsPage() {
     // Complete the process
     toast.success("Inscription complétée avec succès!");
     // You can redirect to a success page or dashboard here
+    router.push("/student");
   };
 
   const handlePrevious = () => {
@@ -215,57 +325,124 @@ export default function DocumentsPage() {
             <Separator />
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {requiredDocuments.map((doc) => (
-                  <div key={doc.id} className="relative">
-                    <Card
-                      className={`transition-all duration-200 border ${
-                        documents[doc.id]
-                          ? "border-green-300 bg-green-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <CardContent className="p-6">
-                        <div className="flex items-start gap-4">
-                          <div className="text-3xl">📄</div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Label
-                                htmlFor={doc.id}
-                                className="text-lg font-semibold text-gray-900"
-                              >
-                                {doc.label}
-                              </Label>
-                              {doc.required && <span className="text-red-500 text-sm">*</span>}
-                            </div>
-                            <p className="text-sm text-gray-600 mb-4">{doc.description}</p>
+                {requiredDocuments.map((doc) => {
+                  const docData = documents[doc.id];
+                  const isUploaded = docData?.uploaded || false;
+                  const isUploading = docData?.uploading || false;
+                  const hasFile = !!docData?.file;
 
-                            <div className="space-y-2">
-                              <Input
-                                id={doc.id}
-                                type="file"
-                                accept={doc.accept}
-                                onChange={handleFileUpload(doc.id)}
-                                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                              />
-                              <p className="text-xs text-gray-500">
-                                Formats acceptés: {doc.accept.replace(/\./g, "").toUpperCase()} •
-                                Max 5MB
-                              </p>
+                  return (
+                    <div key={doc.id} className="relative">
+                      <Card
+                        className={`transition-all duration-200 border ${
+                          isUploaded
+                            ? "border-green-300 bg-green-50"
+                            : hasFile
+                              ? "border-blue-300 bg-blue-50"
+                              : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-start gap-4">
+                            <div className="text-3xl">📄</div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Label
+                                  htmlFor={doc.id}
+                                  className="text-lg font-semibold text-gray-900"
+                                >
+                                  {doc.label}
+                                </Label>
+                                {doc.required && <span className="text-red-500 text-sm">*</span>}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-4">{doc.description}</p>
+
+                              <div className="space-y-3">
+                                {/* File Input */}
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    id={doc.id}
+                                    type="file"
+                                    accept={doc.accept}
+                                    onChange={handleFileSelect(doc.id)}
+                                    disabled={isUploading || isUploaded}
+                                    className="flex-1 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                  />
+                                  {hasFile && !isUploaded && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleRemoveFile(doc.id)}
+                                      disabled={isUploading}
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </Button>
+                                  )}
+                                </div>
+
+                                {/* File Info and Upload Button */}
+                                {hasFile && (
+                                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex-1">
+                                      <p className="text-sm font-medium text-gray-900">
+                                        {docData.file?.name}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {(docData.file?.size || 0 / (1024 * 1024)).toFixed(2)} MB
+                                      </p>
+                                    </div>
+                                    {!isUploaded && (
+                                      <Button
+                                        onClick={() => handleSubmitDocument(doc.id)}
+                                        disabled={isUploading}
+                                        size="sm"
+                                        className="ml-3"
+                                      >
+                                        {isUploading ? (
+                                          <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            Envoi...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Upload className="w-4 h-4 mr-2" />
+                                            Envoyer
+                                          </>
+                                        )}
+                                      </Button>
+                                    )}
+                                  </div>
+                                )}
+
+                                <p className="text-xs text-gray-500">
+                                  Formats acceptés: {doc.accept.replace(/\./g, "").toUpperCase()} •
+                                  Max 5MB
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {documents[doc.id] && (
+                          {/* Status Indicator */}
                           <div className="absolute top-4 right-4">
-                            <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">
-                              <CheckCircle className="w-5 h-5 text-green-600" />
-                            </div>
+                            {isUploaded ? (
+                              <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">
+                                <CheckCircle className="w-5 h-5 text-green-600" />
+                              </div>
+                            ) : isUploading ? (
+                              <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                              </div>
+                            ) : hasFile ? (
+                              <div className="flex items-center justify-center w-8 h-8 bg-yellow-100 rounded-full">
+                                <Upload className="w-5 h-5 text-yellow-600" />
+                              </div>
+                            ) : null}
                           </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                ))}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </>

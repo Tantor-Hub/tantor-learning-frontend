@@ -288,7 +288,7 @@ export default function Page() {
 
       // Submit to API
       const success = await handleApplyToSessionMutation(cardPaymentData);
-
+      console.log(success);
       if (success) {
         toast.success("Paiement par carte réussi");
       } else {

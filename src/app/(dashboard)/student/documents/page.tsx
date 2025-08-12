@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -9,26 +10,15 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
-import { BookOpen, Download } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useState } from "react";
 import { useGetMySessionsQuery } from "@/lib/apis/student/training-api";
-import { documentsData } from "../courses/data";
 import { DocsTab } from "../courses/types";
 import { AfterTab } from "./after";
 import { Loading } from "@/components/shared/loading";
 import { BeforeTab } from "./before";
+import { DuringTab } from "./during";
 
 export default function Page() {
   const listSessions = useGetMySessionsQuery();
-  const [activeDocs, setActiveDocs] = useState<DocsTab>("all");
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
   if (listSessions.isLoading) return <Loading />;
@@ -76,7 +66,7 @@ export default function Page() {
             <BeforeTab sessionId={selectedSession} />
           </TabsContent>
           <TabsContent value="during">
-            <BeforeTab sessionId={selectedSession} />
+            <DuringTab sessionId={selectedSession} />
           </TabsContent>
           <TabsContent value="after">
             <AfterTab sessionId={selectedSession} />

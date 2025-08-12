@@ -33,30 +33,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  useListStudentDocBySessionIdQuery,
-  useUploadDocumentAfterMutation,
-} from "@/lib/apis/student/document-api";
+import { useListStudentDocBySessionIdQuery } from "@/lib/apis/student/document-api";
 import { Loading } from "@/components/shared/loading";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
-import { selectCurrentUser } from "@/features/auth/auth-slice";
+import { selectCurrentUser, selectToken } from "@/features/auth/auth-slice";
 
 type ActionType = "download" | "view" | "edit" | "share" | "delete";
 
+/*
+{"status":400,"message":"La requête envoyée est invalide. Veuillez vérifier les informations saisies.","data":[{"field":"id_session","errors":["id_session must be a number string"]},{"field":"key_document","errors":["La clé \"undefined\" n'est pas valide. Elle doit être l'un des types de document suivants : CARTE_IDENTITE, CONTRAT_OU_CONVENTION, JUSTIFICATIF_DOMICILE, ANALYSE_BESOIN, FORMULAIRE_HANDICAP, CONVOCATION, PROGRAMME, CONDITIONS_VENTE, REGLEMENT_INTERIEUR, CGV, FICHE_CONTROLE_INITIALE, CONVOCATION_EXAMEN, ATTESTATION_FORMATION, CERTIFICATION, FICHE_CONTROLE_COURS, FICHES_EMARGEMENT, QUESTIONNAIRE_SATISFACTION, PAIEMENT, DOCUMENTS_FINANCEUR, FICHE_CONTROLE_FINALE","key_document should not be empty","key_document must be a string"]}]}
+*/
+
 type DocumentType =
-  | "QUESTIONNAIRE_SATISFACTION"
-  | "PAIEMENT"
-  | "DOCUMENTS_FINANCEUR"
-  | "FICHE_CONTROLE_FINAL";
+  | "CARTE_IDENTITE"
+  | "CONTRAT_OU_CONVENTION"
+  | "JUSTIFICATIF_DOMICILE"
+  | "ANALYSE_BESOIN"
+  | "FORMULAIRE_HANDICAP"
+  | "PROGRAMME"
+  | "CONDITIONS_VENTE"
+  | "REGLEMENT_INTERIEUR"
+  | "CGV"
+  | "FICHE_CONTROLE_INITIALE";
 
 export function AfterTab({ sessionId }: { sessionId: number | any }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedType, setSelectedType] = useState<DocumentType>("QUESTIONNAIRE_SATISFACTION");
+  const [selectedType, setSelectedType] = useState<DocumentType>("CARTE_IDENTITE");
   const [isUploading, setIsUploading] = useState(false);
   const currentUser = useSelector(selectCurrentUser);
-  const [uploadDocument] = useUploadDocumentAfterMutation();
+  const token = useSelector(selectToken);
   const {
     data: documents,
     isLoading,
@@ -76,7 +83,6 @@ export function AfterTab({ sessionId }: { sessionId: number | any }) {
 
     switch (action) {
       case "download":
-        // Find the document in the list
         const documentToDownload = documentList.find((doc) => doc.id === documentId);
         if (documentToDownload) {
           window.open(documentToDownload.piece_jointe, "_blank");
@@ -84,8 +90,6 @@ export function AfterTab({ sessionId }: { sessionId: number | any }) {
         break;
       case "delete":
         if (confirm(`Êtes-vous sûr de vouloir supprimer ${documentName} ?`)) {
-          // Here you would typically call an API to delete the document
-          // For now, we'll just log it
           console.log(`Deleting document with ID: ${documentId}`);
         }
         break;
@@ -96,15 +100,11 @@ export function AfterTab({ sessionId }: { sessionId: number | any }) {
 
   const handleAddDocument = () => {
     setSelectedFile(null);
-    setSelectedType("QUESTIONNAIRE_SATISFACTION");
+    setSelectedType("CARTE_IDENTITE");
     setIsDialogOpen(true);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // const fileList = e.target.files;
-    // if (fileList && fileList.length > 0) {
-    //   setSelectedFile(fileList[1]);
-    // }
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
     }
@@ -115,55 +115,53 @@ export function AfterTab({ sessionId }: { sessionId: number | any }) {
   };
 
   const handleSubmit = async () => {
+    toast.loading("Envoie en cours...");
     if (!selectedFile) {
       toast.error("Veuillez sélectionner un fichier");
       return;
     }
-
     setIsUploading(true);
 
+    const formData = new FormData();
+    formData.append("piece_jointe", selectedFile);
+    formData.append("id_session", String(sessionId));
+    formData.append("key_document", selectedType);
+    formData.append("description", selectedFile.name);
+
     try {
-      const formData = new FormData();
-      formData.append("id_session", String(sessionId));
-      formData.append("piece_jointe", selectedFile); // key must match backend expectation
-      formData.append("key_document", String(selectedType));
-      formData.append("description", String(selectedFile.name));
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}sessions/session/document/after`,
+        {
+          method: "PUT",
+          body: formData,
+          headers: {
+            "x-connexion-tantor": `Bearer ${token}`,
+          },
+        }
+      );
 
-      console.log("Uploading with data:", {
-        fileName: selectedFile.name,
-        fileType: selectedFile.type,
-        keyDocument: selectedType,
-        sessionId: sessionId,
-      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Upload failed");
+      }
 
-      const response = await uploadDocument({
-        id_session: String(sessionId),
-        piece_jointe: selectedFile,
-        key_document: String(selectedType),
-        description: String(selectedFile.name),
-      }).unwrap();
-      console.log(response);
-
+      const responseData = await response.json();
+      toast.dismiss();
       toast.success(`Document ${selectedFile.name} uploadé avec succès!`);
-      await refetch(); // Refresh the document list
+      await refetch();
       setIsDialogOpen(false);
       setSelectedFile(null);
-      setSelectedType("QUESTIONNAIRE_SATISFACTION");
+      setSelectedType("CARTE_IDENTITE");
     } catch (error) {
+      toast.dismiss();
       console.error("Error uploading document:", error);
-
-      // Better error handling
-      if (error && typeof error === "object" && "data" in error) {
-        const errorData = error.data as any;
-        if (errorData?.message) {
-          toast.error(`Erreur: ${errorData.message}`);
-        } else {
-          toast.error(`Échec de l'upload du document`);
-        }
+      if (error instanceof Error) {
+        toast.error(`Erreur: ${error.message}`);
       } else {
         toast.error(`Échec de l'upload du document`);
       }
     } finally {
+      toast.dismiss();
       setIsUploading(false);
     }
   };
@@ -171,23 +169,30 @@ export function AfterTab({ sessionId }: { sessionId: number | any }) {
   const handleCancel = () => {
     setIsDialogOpen(false);
     setSelectedFile(null);
-    setSelectedType("QUESTIONNAIRE_SATISFACTION");
+    setSelectedType("CARTE_IDENTITE");
   };
 
-  // Helper function to get file extension from URL
   const getFileExtension = (url: string) => {
     return url.split(".").pop()?.toLowerCase() || "file";
   };
 
-  // Helper function to format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("fr-FR");
   };
 
-  // Helper function to translate document key to readable format
   const translateDocumentKey = (key: string) => {
     const translations: Record<string, string> = {
+      CARTE_IDENTITE: "Carte d'identité",
+      CONTRAT_OU_CONVENTION: "Contrat ou convention",
+      JUSTIFICATIF_DOMICILE: "Justificatif de domicile",
+      ANALYSE_BESOIN: "Analyse de besoin",
+      FORMULAIRE_HANDICAP: "Formulaire handicap",
+      PROGRAMME: "Programme",
+      CONDITIONS_VENTE: "Conditions de vente",
+      REGLEMENT_INTERIEUR: "Règlement intérieur",
+      CGV: "Conditions générales de vente",
+      FICHE_CONTROLE_INITIALE: "Fiche contrôle initiale",
       QUESTIONNAIRE_SATISFACTION: "Questionnaire de satisfaction",
       PAIEMENT: "Paiement",
       DOCUMENTS_FINANCEUR: "Documents financeur",
@@ -288,12 +293,16 @@ export function AfterTab({ sessionId }: { sessionId: number | any }) {
                   <SelectValue placeholder="Sélectionner le type de document" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="QUESTIONNAIRE_SATISFACTION">
-                    Questionnaire de satisfaction
-                  </SelectItem>
-                  <SelectItem value="PAIEMENT">Paiement</SelectItem>
-                  <SelectItem value="DOCUMENTS_FINANCEUR">Documents financeur</SelectItem>
-                  <SelectItem value="FICHE_CONTROLE_FINAL">Fiche contrôle final</SelectItem>
+                  <SelectItem value="CARTE_IDENTITE">Carte d'identité</SelectItem>
+                  <SelectItem value="CONTRAT_OU_CONVENTION">Contrat ou convention</SelectItem>
+                  <SelectItem value="JUSTIFICATIF_DOMICILE">Justificatif de domicile</SelectItem>
+                  <SelectItem value="ANALYSE_BESOIN">Analyse de besoin</SelectItem>
+                  <SelectItem value="FORMULAIRE_HANDICAP">Formulaire handicap</SelectItem>
+                  <SelectItem value="PROGRAMME">Programme</SelectItem>
+                  <SelectItem value="CONDITIONS_VENTE">Conditions de vente</SelectItem>
+                  <SelectItem value="REGLEMENT_INTERIEUR">Règlement intérieur</SelectItem>
+                  <SelectItem value="CGV">Conditions générales de vente</SelectItem>
+                  <SelectItem value="FICHE_CONTROLE_INITIALE">Fiche contrôle initiale</SelectItem>
                 </SelectContent>
               </Select>
             </div>

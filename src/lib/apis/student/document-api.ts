@@ -45,11 +45,28 @@ export const documentStudentApi = createApi({
 
     // Upload document BEFORE the training
     uploadDocumentBefore: builder.mutation<void, IUploadDocRequest>({
-      query: (request) => ({
-        url: "sessions/session/document/before",
-        method: "PUT",
-        body: request,
-      }),
+      query: ({ id_session, piece_jointe, key_document, description }) => {
+        const formData = new FormData();
+
+        formData.append("id_session", String(id_session));
+        formData.append("key_document", key_document);
+        formData.append("description", description);
+
+        // Assuming piece_jointe is a File or Blob
+        if (piece_jointe) {
+          formData.append("piece_jointe", piece_jointe);
+        }
+
+        return {
+          url: "sessions/session/document/before",
+          method: "PUT",
+          body: formData,
+          headers: {
+            Accept: "image/png, text/plain, application/json, */*",
+            // Don't set Content-Type — browser will set it for FormData
+          },
+        };
+      },
       invalidatesTags: ["DocumentStudent"],
     }),
 

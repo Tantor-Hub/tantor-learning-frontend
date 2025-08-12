@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -33,10 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  useListStudentDocBySessionIdQuery,
-  useUploadDocumentBeforeMutation,
-} from "@/lib/apis/student/document-api";
+import { useListStudentDocBySessionIdQuery } from "@/lib/apis/student/document-api";
 import { Loading } from "@/components/shared/loading";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
@@ -62,10 +59,7 @@ export function BeforeTab({ sessionId }: { sessionId: number | any }) {
   const [selectedType, setSelectedType] = useState<DocumentType>("CARTE_IDENTITE");
   const [isUploading, setIsUploading] = useState(false);
   const currentUser = useSelector(selectCurrentUser);
-  // const token = useSelector(selectToken);
-  const [token, setToken] = useState<string>("");
-  // console.log(token);
-  const [uploadDocument] = useUploadDocumentBeforeMutation();
+  const token = useSelector(selectToken);
   const {
     data: documents,
     isLoading,
@@ -75,21 +69,6 @@ export function BeforeTab({ sessionId }: { sessionId: number | any }) {
     group: "before",
     id_student: +currentUser!.id,
   });
-
-  useEffect(() => {
-    // This code runs only on client side
-    if (typeof window !== "undefined") {
-      const authState = localStorage.getItem("authState");
-      if (authState) {
-        try {
-          const parsedAuthState = JSON.parse(authState);
-          setToken(parsedAuthState.token);
-        } catch (error) {
-          console.error("Error parsing authState:", error);
-        }
-      }
-    }
-  }, []);
 
   if (isLoading) return <Loading />;
 
@@ -132,11 +111,11 @@ export function BeforeTab({ sessionId }: { sessionId: number | any }) {
   };
 
   const handleSubmit = async () => {
+    toast.loading("Envoie en cours...");
     if (!selectedFile) {
       toast.error("Veuillez sélectionner un fichier");
       return;
     }
-
     setIsUploading(true);
 
     const formData = new FormData();
@@ -144,49 +123,41 @@ export function BeforeTab({ sessionId }: { sessionId: number | any }) {
     formData.append("id_session", String(sessionId));
     formData.append("key_document", selectedType);
     formData.append("description", selectedFile.name);
+
     try {
-      const response = await uploadDocument({
-        id_session: String(sessionId),
-        piece_jointe: selectedFile,
-        key_document: selectedType,
-        description: String(selectedFile.name),
-      }).unwrap();
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}sessions/session/document/before`,
+        {
+          method: "PUT",
+          body: formData,
+          headers: {
+            "x-connexion-tantor": `Bearer ${token}`,
+          },
+        }
+      );
 
-      // const response = await fetch(
-      //   `${process.env.NEXT_PUBLIC_BASE_URL}sessions/session/document/before`,
-      //   {
-      //     method: "PUT",
-      //     body: formData,
-      //     // Don't set Content-Type header - let the browser set it with boundary
-      //     headers: {
-      //       Authorization: `Bearer ${token}`, // Add if needed
-      //     },
-      //   }
-      // );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Upload failed");
+      }
 
-      // if (!response.ok) {
-      //   const errorData = await response.json();
-      //   throw new Error(errorData.message || "Upload failed");
-      // }
-
+      const responseData = await response.json();
+      toast.dismiss();
       toast.success(`Document ${selectedFile.name} uploadé avec succès!`);
       await refetch();
       setIsDialogOpen(false);
       setSelectedFile(null);
       setSelectedType("CARTE_IDENTITE");
     } catch (error) {
+      toast.dismiss();
       console.error("Error uploading document:", error);
-      if (error && typeof error === "object" && "data" in error) {
-        const errorData = error.data as any;
-        if (errorData?.message) {
-          toast.error(`Erreur: ${errorData.message}`);
-        } else {
-          toast.error(`Échec de l'upload du document`);
-        }
+      if (error instanceof Error) {
+        toast.error(`Erreur: ${error.message}`);
       } else {
         toast.error(`Échec de l'upload du document`);
       }
     } finally {
+      toast.dismiss();
       setIsUploading(false);
     }
   };
