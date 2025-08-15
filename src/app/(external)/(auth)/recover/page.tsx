@@ -56,8 +56,8 @@ export default function ResetPasswordPage() {
   return (
     <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Mot de passe oublié</h1>
-        <p className="text-balance text-sm text-muted-foreground">
+        <h1 className="text-xl font-bold">Mot de passe oublié</h1>
+        <p className="text-sm text-muted-foreground">
           Entrez votre adresse e-mail pour réinitialiser votre compte
         </p>
       </div>
@@ -67,7 +67,7 @@ export default function ResetPasswordPage() {
           <Input
             id="email"
             type="email"
-            placeholder="sofia@gmail.com"
+            placeholder="jacquesdupont@gmail.com"
             required
             value={formData.email}
             onChange={handleInputChange}

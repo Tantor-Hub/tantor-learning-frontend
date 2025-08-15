@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { VerifyAccount } from "@/components/forms/verify-account";
+import { VerifyAccountForm } from "@/components/forms/verify-account-form";
 import { Loading } from "@/components/shared/loading";
 
 export default function Page() {
@@ -11,7 +11,7 @@ export default function Page() {
         </div>
       }
     >
-      <VerifyAccount />
+      <VerifyAccountForm />
     </Suspense>
   );
 }

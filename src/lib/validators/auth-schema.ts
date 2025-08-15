@@ -57,3 +57,22 @@ export const signUpSchema = z
   });
 
 export type SignUpFormValues = z.infer<typeof signUpSchema>;
+
+/*
+============================================================
+VERIFY ACCOUNT OR CODE SCHEMA -> Register
+============================================================
+*/
+
+export const verifyAccountCodeSchema = z.object({
+  pin: z
+    .string()
+    .min(6, { message: "Le code doit contenir exactement 6 chiffres." })
+    .max(6, { message: "Le code doit contenir exactement 6 chiffres." })
+    .regex(/^\d{6}$/, {
+      message:
+        "Le code ne doit contenir que des chiffres (0-9), sans espaces ni caractères spéciaux.",
+    }),
+});
+
+export type verifyAccountCodeValues = z.infer<typeof verifyAccountCodeSchema>;
