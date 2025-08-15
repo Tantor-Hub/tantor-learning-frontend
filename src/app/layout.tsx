@@ -21,10 +21,10 @@ export default function RootLayout({
       <head>
         <link rel="shortcut icon" href="/tantor-logo.svg" type="image/svg+xml" />
       </head>
-      <body className={poppins.className}>
+      <body className={`${poppins.className} text-base leading-relaxed`}>
         <ReduxProvider>
           {children}
-          <Toaster position="top-center" />
+          <Toaster position="bottom-right" />
         </ReduxProvider>
       </body>
     </html>
