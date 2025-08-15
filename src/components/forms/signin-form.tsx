@@ -22,20 +22,7 @@ import { setCredentials } from "@/features/auth/auth-slice";
 import { useAuthWithGoogleMutation, useSigninMutation } from "@/lib/apis/auth-api";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
-
-// Zod validation schema
-const signInSchema = z.object({
-  email: z.string().min(1, "L'email est requis").email("Veuillez entrer une adresse email valide"),
-  password: z
-    .string()
-    .min(6, "Le mot de passe doit contenir au moins 6 caractères")
-    .regex(/[a-z]/, "Le mot de passe doit contenir au moins une lettre minuscule")
-    .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une lettre majuscule")
-    .regex(/\d/, "Le mot de passe doit contenir au moins un chiffre")
-    .regex(/[@$!%*?&]/, "Le mot de passe doit contenir au moins un caractère spécial (@$!%*?&)"),
-});
-
-type SignInFormValues = z.infer<typeof signInSchema>;
+import { signInSchema, SignInFormValues } from "@/lib/validators/auth-schema";
 
 export function SignInForm() {
   const router = useRouter();
@@ -137,7 +124,7 @@ export function SignInForm() {
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="dupontpierre@gmail.com"
+                      placeholder="jeandupont@gmail.com"
                       className="py-5"
                       {...field}
                     />
@@ -166,7 +153,7 @@ export function SignInForm() {
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Mot de passe"
+                        placeholder="••••••••"
                         className="pr-10 py-5"
                         {...field}
                       />
