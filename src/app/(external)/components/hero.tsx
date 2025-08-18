@@ -2,9 +2,12 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { selectIsAuthenticated } from "@/features/auth/auth-slice";
 
 export default function Hero() {
   const router = useRouter();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
   return (
     <section className="hero relative mask-b-from-90% h-[100vh] flex items-center justify-center">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-start h-full m-auto">
@@ -26,7 +29,8 @@ export default function Hero() {
               Decouvrir nos formations
             </Button>
             <Button size="lg" onClick={() => router.push("/signup")}>
-              S'inscrire maintenant
+              {isAuthenticated && "Télécharger le module de Formation"}
+              {!isAuthenticated && "S'inscrire maintenant"}
             </Button>
           </div>
         </div>

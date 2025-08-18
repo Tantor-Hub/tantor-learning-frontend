@@ -17,7 +17,6 @@ import {
 import { useSelector } from "react-redux";
 import { selectCurrentUser, selectIsAuthenticated } from "@/features/auth/auth-slice";
 import { useLogout } from "@/hooks/use-logout";
-import { RoleSelectionDialog, useRoleSelection } from "@/components/role-selection-dialog";
 
 const publicLinks = [
   { href: "/trainings", label: "Formation" },
@@ -25,12 +24,12 @@ const publicLinks = [
   { href: "/about-us", label: "À propos" },
 ];
 
-const privateLinks = [{ href: "#", label: "Tableau de bord" }, ...publicLinks];
+const privateLinks = [{ href: "/dashboard", label: "Tableau de bord" }, ...publicLinks];
 
 interface NavLinksProps {
   className?: string;
   isAuthenticated: boolean;
-  onDashboardClick?: () => void;
+  role?: string;
   isMobile?: boolean;
   closeMobileMenu?: () => void;
   currentPath: string;
@@ -39,31 +38,22 @@ interface NavLinksProps {
 const NavLinks = ({
   className,
   isAuthenticated,
-  onDashboardClick,
+  role,
   isMobile = false,
   closeMobileMenu,
   currentPath,
 }: NavLinksProps) => (
   <nav
-    className={`${isMobile ? "flex" : "hidden md:flex"} items-center ${isMobile ? "flex-col space-y-4 mt-4" : "space-x-8"} ${className}`}
+    className={`${isMobile ? "flex" : "hidden md:flex"} items-center ${
+      isMobile ? "flex-col space-y-4 mt-4" : "space-x-8"
+    } ${className}`}
   >
     {(isAuthenticated ? privateLinks : publicLinks).map(({ href, label }) => {
-      const isActive = href === "#" ? false : currentPath === href;
+      const isActive = currentPath === href;
 
-      return href === "#" ? (
-        <div
-          key={label}
-          onClick={() => {
-            onDashboardClick?.();
-            closeMobileMenu?.();
-          }}
-          className="text-foreground hover:text-primary font-normal flex items-center hover:cursor-pointer whitespace-nowrap"
-        >
-          {label}
-        </div>
-      ) : (
+      return (
         <Link
-          href={href}
+          href={href === "/dashboard" ? `/${role}` : href}
           key={label}
           onClick={closeMobileMenu}
           className={`font-normal flex items-center whitespace-nowrap transition-colors ${
@@ -127,12 +117,14 @@ const UserAvatar = ({
   email,
   handleLogout,
   avatarName,
+  currentRole,
 }: {
   avatar?: string;
   firstName?: string;
   avatarName?: string;
   email?: string;
   handleLogout: () => void;
+  currentRole?: string;
 }) => {
   return (
     <DropdownMenu>
@@ -149,7 +141,12 @@ const UserAvatar = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>
-          <p className="text-sm font-medium">{firstName || "Anonymous"}</p>
+          <Link
+            className="text-sm font-medium text-primary hover:underline"
+            href={`/${currentRole}/profile`}
+          >
+            {firstName || "Anonymous"}
+          </Link>
           <p className="text-xs font-light">{email || "mail"}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -162,18 +159,11 @@ const UserAvatar = ({
 export function Header() {
   const { logout } = useLogout();
   const currentUser = useSelector(selectCurrentUser);
-  const { isDialogOpen, setIsDialogOpen, handleUserRoles } = useRoleSelection();
-  const roles = currentUser?.roles;
+  const role = currentUser?.roles[0]?.role?.toLowerCase() || "dashboard";
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
-  const pathname = usePathname(); // Add this hook to get current path
+  const pathname = usePathname();
   const isAuthenticated = useSelector(selectIsAuthenticated);
-
-  const handleDashboardClick = () => {
-    if (roles && roles.length > 0) {
-      handleUserRoles(roles);
-    }
-  };
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
@@ -201,7 +191,7 @@ export function Header() {
           <div className="hidden md:flex flex-1 justify-center px-4">
             <NavLinks
               isAuthenticated={isAuthenticated}
-              onDashboardClick={handleDashboardClick}
+              role={role}
               className="flex-1 justify-center"
               currentPath={pathname}
             />
@@ -215,7 +205,8 @@ export function Header() {
                 firstName={currentUser?.fs_name}
                 email={currentUser?.email}
                 avatarName={currentUser?.fs_name?.[0]}
-                handleLogout={async () => await logout()}
+                handleLogout={logout}
+                currentRole={role}
               />
             ) : (
               <AuthButtons
@@ -233,7 +224,8 @@ export function Header() {
                 firstName={currentUser?.fs_name}
                 email={currentUser?.email}
                 avatarName={currentUser?.fs_name?.[0]}
-                handleLogout={async () => await logout()}
+                handleLogout={logout}
+                currentRole={role}
               />
             )}
             <div className="md:hidden flex items-center ml-4">
@@ -257,7 +249,7 @@ export function Header() {
           <div className="md:hidden py-4 border-t">
             <NavLinks
               isAuthenticated={isAuthenticated}
-              onDashboardClick={handleDashboardClick}
+              role={role}
               isMobile
               closeMobileMenu={closeMobileMenu}
               currentPath={pathname}
@@ -274,12 +266,6 @@ export function Header() {
             )}
           </div>
         )}
-
-        <RoleSelectionDialog
-          roles={currentUser?.roles || []}
-          isOpen={isDialogOpen}
-          onClose={() => setIsDialogOpen(false)}
-        />
       </div>
     </header>
   );

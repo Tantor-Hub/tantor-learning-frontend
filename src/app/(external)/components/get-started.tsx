@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { selectIsAuthenticated } from "@/features/auth/auth-slice";
 
 const stepsData = [
   {
@@ -31,20 +33,21 @@ const stepsData = [
 
 export const features = [
   {
-    title: "Financements publics",
-    subtitle: "(CPF, OPCO)",
+    title: "Prise en charge employeur",
+    subtitle: "(OPCO)",
   },
   {
-    title: "Paiement par Cartes,",
-    subtitle: "ApplePay ou PayPal",
+    title: "Mon Compte Formation",
+    subtitle: "(CPF)",
   },
   {
-    title: "Abonnements",
-    subtitle: "flexibles",
+    title: "Paiement par Cartes",
+    subtitle: "(CARD)",
   },
 ];
 
-const GetStarted = () => {
+export function GetStarted() {
+  const isAuthenticated = useSelector(selectIsAuthenticated);
   const router = useRouter();
   return (
     <section>
@@ -95,13 +98,14 @@ const GetStarted = () => {
           <p className="text-2xl font-medium font-work-sans text-primary text-center">
             Prêt à apprendre ? Rejoignez-nous aujourd'hui !{" "}
           </p>
-          <Button size="lg" onClick={() => router.push("/signup")}>
-            S'inscrire
-            <ArrowRight />
-          </Button>
+          {!isAuthenticated && (
+            <Button size="lg" onClick={() => router.push("/signup")}>
+              S'inscrire
+              <ArrowRight />
+            </Button>
+          )}
         </div>
       </div>
     </section>
   );
-};
-export default GetStarted;
+}

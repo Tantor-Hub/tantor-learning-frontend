@@ -18,7 +18,7 @@ import type { ContactUsFormValues } from "@/lib/validators/form-schema";
 import { useContactFormAPIMutation } from "@/lib/apis/public/public-api";
 import { toast } from "react-hot-toast";
 
-export default function ContactUs() {
+export default function Page() {
   const [contactForm, { isLoading }] = useContactFormAPIMutation();
   const form = useForm<ContactUsFormValues>({
     resolver: zodResolver(contactUsFormSchema),
@@ -58,11 +58,13 @@ export default function ContactUs() {
   };
 
   return (
-    <main className="max-w-[1440px] m-auto px-5 md:px-10">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
       <div className="my-16 grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left Column - Contact Information */}
         <div>
-          <h1 className="text-4xl text-primary font-bold mb-6">Besoin de plus d'informations ?</h1>
+          <h1 className="text-xl text-primary font-semibold mb-6">
+            Besoin de plus d'informations ?
+          </h1>
           <p className="leading-8">
             Notre équipe est à votre disposition pour répondre à toutes vos questions concernant nos
             formations, le processus d'admission ou l'alternance. N'hésitez pas à nous contacter !
