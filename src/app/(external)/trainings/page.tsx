@@ -181,8 +181,8 @@ export default function Page() {
   return (
     <section className="mt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <hgroup className="max-w-md mx-auto flex flex-col gap-[14px] mb-8">
-          <h1 className="text-3xl text-primary font-semibold mb-6">Catalogue des Formations</h1>
+        <hgroup className="max-w-lg w-full mx-auto space-y-4 mb-4 text-center">
+          <h1 className="text-2xl text-primary font-semibold mb-4">Catalogue des Formations</h1>
           <p className="font-normal text-muted-foreground text-center">
             Découvrez notre catalogue complet de formations professionnelles adaptées à vos besoins
             et à votre parcours.
