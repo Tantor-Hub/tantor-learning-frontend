@@ -6,6 +6,7 @@ import { Building, Euro, CreditCard } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { convertToSubcurrency } from "@/lib/convert-to-subcurrency";
 
 // Types pour les données OPCO
 export interface OpcoFormData {
@@ -70,7 +71,7 @@ export function CheckoutPage({
         "Content-Type": "application/json",
       },
       // parseFloat((amount * 100).toFixed(2))
-      body: JSON.stringify({ amount: amount * 100 }), // Stripe utilise les centimes
+      body: JSON.stringify({ amount: convertToSubcurrency(amount) }), // Stripe utilise les centimes
     })
       .then((res) => res.json())
       .then((data) => setClientSecret(data.clientSecret))

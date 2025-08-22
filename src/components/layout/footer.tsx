@@ -5,13 +5,18 @@ import { Separator } from "../ui/separator";
 const footerLinks = [
   [
     { href: "/about-us", label: "À propos" },
+    { href: "/#partners", label: "Nos partenaires" },
     { href: "#", label: "FAQ" },
     { href: "/contact-us", label: "Contacts" },
+    { href: "/legales?tab=reclamations", label: "Politique globale de reclamations" },
+    { href: "/legales?tab=donnees", label: "Politique de protection des données personnelles" },
   ],
   [
-    { href: "/#partners", label: "Nos partenaires" },
-    { href: "#", label: "Politiques de Confidentialite" },
-    { href: "#", label: "Termes & Conditions" },
+    { href: "/legales?tab=codeEthique", label: "Code Éthique" },
+    { href: "/legales?tab=mentions", label: "Mentions Légales" },
+    { href: "/legales?tab=reglement", label: "Reglement Interieur" },
+    { href: "/legales?tab=cgu", label: "Conditions générales d'utilisation" },
+    { href: "/legales?tab=cgs", label: "Conditions générales de service" },
   ],
   [
     { href: "/trainings", label: "Nos Formations" },

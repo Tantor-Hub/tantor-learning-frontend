@@ -409,7 +409,7 @@ export default function Page() {
                       className="w-full border-primary text-primary"
                       size="lg"
                     >
-                      S'inscrire
+                      En savoir plus
                       <ArrowRight />
                     </Button>
                   </Link>

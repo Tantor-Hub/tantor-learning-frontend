@@ -729,7 +729,7 @@ export default function Page() {
                   }}
                 >
                   <CheckoutPage
-                    amount={parseInt(session.prix)}
+                    amount={session.prix}
                     sessionId={sessionId}
                     isValidOPCO={isValidOPCO}
                     trainingId={trainingId}
