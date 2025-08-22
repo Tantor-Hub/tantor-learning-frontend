@@ -278,11 +278,11 @@ export function VerifyAccountForm() {
       <div className="text-center text-xs text-muted-foreground">
         <p>
           En vérifiant votre compte, vous acceptez nos{" "}
-          <Link href="/" className="text-primary hover:underline">
+          <Link href="/legales?tab=cgu" target="_blank" className="text-primary hover:underline">
             conditions d&apos;utilisation
           </Link>{" "}
           et notre
-          <Link href="/" className="text-primary hover:underline">
+          <Link href="/legales?tab=donnees" className="text-primary hover:underline">
             politique de confidentialité
           </Link>
           .

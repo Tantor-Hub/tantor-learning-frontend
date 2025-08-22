@@ -209,11 +209,19 @@ export function SignUpForm() {
                     </FormLabel>
                     <p className="text-sm ml-2">
                       J'accepte{" "}
-                      <Link href="/" className="text-primary hover:underline">
+                      <Link
+                        href="/legales?tab=mentions"
+                        target="_blank"
+                        className="text-primary hover:underline"
+                      >
                         les termes
                       </Link>{" "}
                       et{" "}
-                      <Link href="/" className="text-primary hover:underline">
+                      <Link
+                        href="/legales?tab=cgu"
+                        target="_blank"
+                        className="text-primary hover:underline"
+                      >
                         les conditions
                       </Link>
                     </p>
