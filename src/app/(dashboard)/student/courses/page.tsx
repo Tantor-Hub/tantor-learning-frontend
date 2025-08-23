@@ -9,7 +9,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Clock, Euro, GraduationCap, Play, ArrowRight, BookOpen } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Euro,
+  GraduationCap,
+  Play,
+  ArrowRight,
+  BookOpen,
+  Lock,
+} from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface Session {
@@ -60,19 +69,39 @@ export default function Page() {
     });
   };
 
+  // Calculer la progression basée sur le temps écoulé
+  const calculateProgress = (session: Session): number => {
+    const now = new Date();
+    const startDate = new Date(session.Session.date_session_debut);
+    const endDate = new Date(session.Session.date_session_fin);
+
+    // Si la session n'a pas encore commencé
+    if (now < startDate) return 0;
+
+    // Si la session est terminée
+    if (now > endDate) return 100;
+
+    // Calculer la progression en pourcentage
+    const totalDuration = endDate.getTime() - startDate.getTime();
+    const elapsedTime = now.getTime() - startDate.getTime();
+    const progress = Math.min(100, Math.max(0, Math.round((elapsedTime / totalDuration) * 100)));
+
+    return progress;
+  };
+
   const getSessionStatus = (session: Session) => {
     const now = new Date();
     const startDate = new Date(session.Session.date_session_debut);
     const endDate = new Date(session.Session.date_session_fin);
 
-    if (now < startDate) return { status: "À venir", color: "bg-blue-100 text-blue-800" };
+    if (now < startDate) return { status: "Programmée", color: "bg-blue-100 text-blue-800" };
     if (now > endDate) return { status: "Terminée", color: "bg-gray-100 text-gray-800" };
     return { status: "En cours", color: "bg-green-100 text-green-800" };
   };
 
   // Filtrer les sessions par statut
   const upcomingSessions = sessions.filter(
-    (session) => getSessionStatus(session).status === "À venir"
+    (session) => getSessionStatus(session).status === "Programmée"
   );
   const currentSessions = sessions.filter(
     (session) => getSessionStatus(session).status === "En cours"
@@ -83,12 +112,17 @@ export default function Page() {
 
   const renderSessionCard = (session: Session) => {
     const sessionStatus = getSessionStatus(session);
+    const progress = calculateProgress(session);
+    const isSessionStarted = progress > 0;
+    const isSessionAvailable = progress > 0 || sessionStatus.status === "En cours";
 
     return (
       <Card
         key={session.id}
-        className="group transition-all duration-200 cursor-pointer shadow-md hover:shadow-xl hover:-translate-y-1 border"
-        onClick={() => router.push(`/student/courses/${session.id}`)}
+        className={`group transition-all duration-200 cursor-pointer shadow-md hover:shadow-xl hover:-translate-y-1 border ${
+          !isSessionAvailable ? "opacity-80" : ""
+        }`}
+        onClick={() => isSessionAvailable && router.push(`/student/courses/${session.id}`)}
       >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
@@ -107,8 +141,14 @@ export default function Page() {
                 <span className="text-primary">{session.Formation.titre}</span>
               </CardDescription>
             </div>
-            <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <ArrowRight className="h-4 w-4 text-gray-400" />
+            <div
+              className={`ml-2 ${isSessionAvailable ? "opacity-0 group-hover:opacity-100" : "opacity-50"} transition-opacity`}
+            >
+              {isSessionAvailable ? (
+                <ArrowRight className="h-4 w-4 text-gray-400" />
+              ) : (
+                <Lock className="h-4 w-4 text-gray-400" />
+              )}
             </div>
           </div>
         </CardHeader>
@@ -142,21 +182,45 @@ export default function Page() {
             <div className="space-y-2">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-600">Progression</span>
-                <span className="font-medium">{session.Session.progression}%</span>
+                <span className="font-medium">{progress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${session.Session.progression}%` }}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    progress === 100 ? "bg-green-500" : "bg-blue-500"
+                  }`}
+                  style={{ width: `${progress}%` }}
                 />
               </div>
             </div>
 
             {/* Action Button */}
             <div className="pt-2">
-              <Button className="w-full group-hover:bg-blue-600 transition-colors" size="sm">
-                <Play className="h-4 w-4 mr-2" />
-                {session.is_started ? "Continuer" : "Commencer"}
+              <Button
+                className="w-full group-hover:bg-blue-600 transition-colors"
+                size="sm"
+                disabled={!isSessionAvailable}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  isSessionAvailable && router.push(`/student/courses/${session.id}`);
+                }}
+              >
+                {!isSessionAvailable ? (
+                  <>
+                    <Lock className="h-4 w-4 mr-2" />
+                    Non disponible
+                  </>
+                ) : isSessionStarted ? (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Continuer
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Commencer
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -195,7 +259,7 @@ export default function Page() {
             Terminées ({completedSessions.length})
           </TabsTrigger>
           <TabsTrigger value="upcoming" className="p-3.5">
-            À venir ({upcomingSessions.length})
+            Programmé ({upcomingSessions.length})
           </TabsTrigger>
         </TabsList>
 
@@ -214,7 +278,7 @@ export default function Page() {
             ) : (
               <EmptyState
                 icon="Calendar"
-                title="Aucune session à venir"
+                title="Aucune session programmée"
                 description="Vous n'avez aucune session programmée pour le moment."
                 className="col-span-full"
               />

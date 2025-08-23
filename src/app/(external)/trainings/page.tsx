@@ -156,28 +156,6 @@ export default function Page() {
     ) || searchTerm !== "";
 
   if (isLoading) return <Loading />;
-
-  const handleApplySessionMutation = async (id: number) => {
-    try {
-      // await applySessionMutation({ id_session: id }).unwrap();
-      toast.success(
-        "Votre demande a bien été prise en compte. Vous recevrez sous peu la liste des documents à fournir pour finaliser votre inscription."
-      );
-    } catch (error: any) {
-      let errorMessage = "Une erreur est survenue lors de votre candidature";
-
-      if (error.data?.message) {
-        errorMessage = error.data.message;
-      } else if (error.status === 403) {
-        errorMessage = "Vous devez compléter votre profil avant de postuler";
-      } else if (error.status === 409) {
-        errorMessage = "Vous avez déjà postulé à cette session";
-      }
-
-      toast.error(errorMessage);
-    }
-  };
-
   return (
     <section className="mt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
