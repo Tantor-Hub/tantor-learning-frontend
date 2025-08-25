@@ -130,7 +130,7 @@ export function DuringTab({ sessionId }: { sessionId: number | any }) {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}sessions/session/document/during`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/sessions/session/document/during`,
         {
           method: "PUT",
           body: formData,
@@ -143,7 +143,8 @@ export function DuringTab({ sessionId }: { sessionId: number | any }) {
       if (!response.ok) {
         const errorData = await response.json();
         console.error("API Error Response:", errorData);
-        throw new Error(errorData.message || "Upload failed");
+        toast.error("Échec de l'upload du document");
+        // throw new Error(errorData.message || "Upload failed");
       }
 
       const responseData = await response.json();

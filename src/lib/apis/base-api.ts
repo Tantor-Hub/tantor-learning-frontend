@@ -1,4 +1,3 @@
-// File: src/lib/api/base-api.ts
 import { RootState } from "@/store/store";
 import { fetchBaseQuery, createApi } from "@reduxjs/toolkit/query/react";
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query";

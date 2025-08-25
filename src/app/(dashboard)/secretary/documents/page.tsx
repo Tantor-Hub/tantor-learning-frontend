@@ -27,14 +27,14 @@ export default function Page() {
   return (
     <div>
       <div className="flex flex-col sm:flex-row gap-5 md:gap-10 mb-5">
-        <div className="flex items-center border px-2.5 w-full rounded-md bg-white">
+        {/* <div className="flex items-center border px-2.5 w-full rounded-md bg-white">
           <Image src="/icons/search.svg" height={20} width={20} alt="search icon" />
           <Input
             type="search"
             className="text-[#ACACAC] border-none focus-visible:outline-none focus-visible:ring-0"
             placeholder="Rechercher Un cours ..."
           />
-        </div>
+        </div> */}
         <div className="flex justify-start mb-4">
           <Select
             onValueChange={(value) => setSelectedUserId(value)}

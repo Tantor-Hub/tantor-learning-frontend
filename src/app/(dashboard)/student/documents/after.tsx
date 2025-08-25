@@ -41,26 +41,16 @@ import { selectCurrentUser, selectToken } from "@/features/auth/auth-slice";
 
 type ActionType = "download" | "view" | "edit" | "share" | "delete";
 
-/*
-{"status":400,"message":"La requête envoyée est invalide. Veuillez vérifier les informations saisies.","data":[{"field":"id_session","errors":["id_session must be a number string"]},{"field":"key_document","errors":["La clé \"undefined\" n'est pas valide. Elle doit être l'un des types de document suivants : CARTE_IDENTITE, CONTRAT_OU_CONVENTION, JUSTIFICATIF_DOMICILE, ANALYSE_BESOIN, FORMULAIRE_HANDICAP, CONVOCATION, PROGRAMME, CONDITIONS_VENTE, REGLEMENT_INTERIEUR, CGV, FICHE_CONTROLE_INITIALE, CONVOCATION_EXAMEN, ATTESTATION_FORMATION, CERTIFICATION, FICHE_CONTROLE_COURS, FICHES_EMARGEMENT, QUESTIONNAIRE_SATISFACTION, PAIEMENT, DOCUMENTS_FINANCEUR, FICHE_CONTROLE_FINALE","key_document should not be empty","key_document must be a string"]}]}
-*/
-
 type DocumentType =
-  | "CARTE_IDENTITE"
-  | "CONTRAT_OU_CONVENTION"
-  | "JUSTIFICATIF_DOMICILE"
-  | "ANALYSE_BESOIN"
-  | "FORMULAIRE_HANDICAP"
-  | "PROGRAMME"
-  | "CONDITIONS_VENTE"
-  | "REGLEMENT_INTERIEUR"
-  | "CGV"
-  | "FICHE_CONTROLE_INITIALE";
+  | "QUESTIONNAIRE_SATISFACTION"
+  | "PAIEMENT"
+  | "DOCUMENTS_FINANCEUR"
+  | "FICHE_CONTROLE_FINALE";
 
 export function AfterTab({ sessionId }: { sessionId: number | any }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedType, setSelectedType] = useState<DocumentType>("CARTE_IDENTITE");
+  const [selectedType, setSelectedType] = useState<DocumentType>("QUESTIONNAIRE_SATISFACTION");
   const [isUploading, setIsUploading] = useState(false);
   const currentUser = useSelector(selectCurrentUser);
   const token = useSelector(selectToken);
@@ -100,7 +90,7 @@ export function AfterTab({ sessionId }: { sessionId: number | any }) {
 
   const handleAddDocument = () => {
     setSelectedFile(null);
-    setSelectedType("CARTE_IDENTITE");
+    setSelectedType("QUESTIONNAIRE_SATISFACTION");
     setIsDialogOpen(true);
   };
 
@@ -130,7 +120,7 @@ export function AfterTab({ sessionId }: { sessionId: number | any }) {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}sessions/session/document/after`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/sessions/session/document/after`,
         {
           method: "PUT",
           body: formData,
@@ -142,16 +132,15 @@ export function AfterTab({ sessionId }: { sessionId: number | any }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Upload failed");
+        toast.error("Échec de l'upload du document");
+        // throw new Error(errorData.message || "Upload failed");
       }
-
-      const responseData = await response.json();
       toast.dismiss();
       toast.success(`Document ${selectedFile.name} uploadé avec succès!`);
       await refetch();
       setIsDialogOpen(false);
       setSelectedFile(null);
-      setSelectedType("CARTE_IDENTITE");
+      setSelectedType("QUESTIONNAIRE_SATISFACTION");
     } catch (error) {
       toast.dismiss();
       console.error("Error uploading document:", error);
@@ -169,7 +158,7 @@ export function AfterTab({ sessionId }: { sessionId: number | any }) {
   const handleCancel = () => {
     setIsDialogOpen(false);
     setSelectedFile(null);
-    setSelectedType("CARTE_IDENTITE");
+    setSelectedType("QUESTIONNAIRE_SATISFACTION");
   };
 
   const getFileExtension = (url: string) => {
@@ -183,16 +172,6 @@ export function AfterTab({ sessionId }: { sessionId: number | any }) {
 
   const translateDocumentKey = (key: string) => {
     const translations: Record<string, string> = {
-      CARTE_IDENTITE: "Carte d'identité",
-      CONTRAT_OU_CONVENTION: "Contrat ou convention",
-      JUSTIFICATIF_DOMICILE: "Justificatif de domicile",
-      ANALYSE_BESOIN: "Analyse de besoin",
-      FORMULAIRE_HANDICAP: "Formulaire handicap",
-      PROGRAMME: "Programme",
-      CONDITIONS_VENTE: "Conditions de vente",
-      REGLEMENT_INTERIEUR: "Règlement intérieur",
-      CGV: "Conditions générales de vente",
-      FICHE_CONTROLE_INITIALE: "Fiche contrôle initiale",
       QUESTIONNAIRE_SATISFACTION: "Questionnaire de satisfaction",
       PAIEMENT: "Paiement",
       DOCUMENTS_FINANCEUR: "Documents financeur",
@@ -293,16 +272,12 @@ export function AfterTab({ sessionId }: { sessionId: number | any }) {
                   <SelectValue placeholder="Sélectionner le type de document" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CARTE_IDENTITE">Carte d'identité</SelectItem>
-                  <SelectItem value="CONTRAT_OU_CONVENTION">Contrat ou convention</SelectItem>
-                  <SelectItem value="JUSTIFICATIF_DOMICILE">Justificatif de domicile</SelectItem>
-                  <SelectItem value="ANALYSE_BESOIN">Analyse de besoin</SelectItem>
-                  <SelectItem value="FORMULAIRE_HANDICAP">Formulaire handicap</SelectItem>
-                  <SelectItem value="PROGRAMME">Programme</SelectItem>
-                  <SelectItem value="CONDITIONS_VENTE">Conditions de vente</SelectItem>
-                  <SelectItem value="REGLEMENT_INTERIEUR">Règlement intérieur</SelectItem>
-                  <SelectItem value="CGV">Conditions générales de vente</SelectItem>
-                  <SelectItem value="FICHE_CONTROLE_INITIALE">Fiche contrôle initiale</SelectItem>
+                  <SelectItem value="QUESTIONNAIRE_SATISFACTION">
+                    Questionnaire de satisfaction
+                  </SelectItem>
+                  <SelectItem value="PAIEMENT">Paiement</SelectItem>
+                  <SelectItem value="DOCUMENTS_FINANCEUR">Documents financeur</SelectItem>
+                  <SelectItem value="FICHE_CONTROLE_FINAL">Fiche contrôle final</SelectItem>
                 </SelectContent>
               </Select>
             </div>

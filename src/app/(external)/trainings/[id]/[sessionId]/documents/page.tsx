@@ -107,7 +107,7 @@ export default function DocumentsPage() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}sessions/session/document/before`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/sessions/session/document/before`,
         {
           method: "PUT",
           body: formData,

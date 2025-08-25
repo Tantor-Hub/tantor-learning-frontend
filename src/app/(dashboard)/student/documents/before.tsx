@@ -126,7 +126,7 @@ export function BeforeTab({ sessionId }: { sessionId: number | any }) {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}sessions/session/document/before`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/sessions/session/document/before`,
         {
           method: "PUT",
           body: formData,
@@ -138,10 +138,10 @@ export function BeforeTab({ sessionId }: { sessionId: number | any }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Upload failed");
+        toast.error("Échec de l'upload du document");
+        // throw new Error(errorData.message || "Upload failed");
       }
 
-      const responseData = await response.json();
       toast.dismiss();
       toast.success(`Document ${selectedFile.name} uploadé avec succès!`);
       await refetch();
