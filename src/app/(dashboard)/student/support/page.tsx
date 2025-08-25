@@ -158,7 +158,7 @@ export default function Page() {
                 )}
               />
 
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="file"
                 render={({ field }) => (
@@ -169,7 +169,7 @@ export default function Page() {
                         <span className="text-sm font-medium text-gray-700">
                           Joindre un fichier (optionnel)
                         </span>
-                        <span className="text-xs text-gray-500">PNG, JPG, PDF jusqu'à 10MB</span>
+                         <span className="text-xs text-gray-500">PNG, JPG, PDF jusqu'à 10MB</span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -202,7 +202,7 @@ export default function Page() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
 
               <div className="flex flex-col sm:flex-row gap-4 justify-end pt-6 border-t">
                 <Button
@@ -235,7 +235,7 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="bg-secondary text-secondary-foreground rounded-lg p-6 border">
+      {/* <div className="bg-secondary text-secondary-foreground rounded-lg p-6 border">
         <h3 className="font-semibold mb-3">Besoin d'aide immédiate ?</h3>
         <div className="grid sm:grid-cols-2 gap-4 text-sm">
           <div>
@@ -247,7 +247,7 @@ export default function Page() {
             <p className="text-ring text-sm">Disponible du lundi au vendredi, 9h-18h</p>
           </div>
         </div>
-      </div>
+      </div> */}
     </section>
   );
 }
