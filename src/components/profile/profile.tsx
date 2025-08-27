@@ -65,7 +65,17 @@ export function ProfilePage() {
           </h2>
           <div className="flex flex-col gap-4">
             <p className="text-sm text-gray-500">{userData.email || "Email non disponible"}</p>
-            <UpdateProfile />
+            <UpdateProfile
+              address={userData?.adresse_physique || ""}
+              country={userData?.pays_residance || ""}
+              identityNumber={userData?.num_piece_identite || ""}
+              phone={userData?.phone}
+              city={userData?.ville_residance?.toString()}
+              avatarURL={userData.avatar || ""}
+              fs_name={userData.fs_name}
+              ls_name={userData.ls_name}
+              email={userData.email}
+            />
           </div>
         </div>
 
