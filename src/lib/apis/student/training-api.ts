@@ -52,8 +52,8 @@ export const trainingStudentApi = createApi({
       providesTags: ["TrainingStudent"],
     }),
 
-    getTrainingById: builder.query<ISessionDetailsResponse, number>({
-      query: (id_session) => `sessions/session/${id_session}`,
+    getTrainingById: builder.query<ISessionDetailsResponse, { id_session: number }>({
+      query: (request) => `sessions/session/${request.id_session}`,
       providesTags: ["TrainingStudent"],
     }),
 
@@ -75,4 +75,5 @@ export const {
   useListCoursesBySessionIdQuery,
   useGetMySessionsQuery,
   useGetCoursesByIdQuery,
+  useGetTrainingByIdQuery,
 } = trainingStudentApi;

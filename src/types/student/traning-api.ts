@@ -65,15 +65,85 @@ export interface IApplyToTrainingRequest {
 }
 
 export interface ISessionDetailsResponse {
-  id: number;
-  title: string;
-  description: string;
-  date_start: string;
-  date_end: string;
-  formation: string;
-  thematic: string;
-  category: string;
-  // add other fields as needed
+  status: number;
+  message: string;
+  data: {
+    id: number;
+    uuid: string;
+    designation: string;
+    id_controleur: number | null;
+    createdBy: number | null;
+    id_superviseur: number | null;
+    date_mise_a_jour: string | null;
+    duree: string;
+    text_reglement: string;
+    payment_methods: string[];
+    required_documents: string[];
+    nb_places: number;
+    nb_places_disponible: number;
+    progression: number;
+    id_formation: number;
+    piece_jointe: string | null;
+    type_formation: string;
+    id_category: number;
+    date_session_debut: string;
+    date_session_fin: string;
+    description: string | null;
+    prix: number;
+    initial_price: number | null;
+    status: number;
+    createdAt: string;
+    updatedAt: string;
+    Formation: {
+      id: number;
+      titre: string;
+      sous_titre: string;
+      description: string;
+    };
+    Surveys: {
+      id: number;
+      id_session: number;
+      description: string;
+      created_by: number;
+      createdAt: string;
+      updatedAt: string;
+      Questionnaires: {
+        id: number;
+        titre: string;
+        is_required: boolean;
+        description: string;
+        type: string;
+        id_questionnaire: number;
+        id_session: number | null;
+        createdAt: string;
+        updatedAt: string;
+        Options: {
+          id: number;
+          id_question: number;
+          text: string;
+          is_correct: boolean;
+          createdAt: string;
+          updatedAt: string;
+        }[];
+      }[];
+    }[];
+    Creator: any | null;
+    Cours: {
+      id: number;
+      id_preset_cours: number;
+      duree: number | null;
+      ponderation: number | null;
+      is_published: boolean;
+      createdBy: number;
+      id_session: number;
+      id_formateur: number | null;
+      Title: {
+        id: number;
+        title: string;
+        description: string;
+      };
+    }[];
+  };
 }
 
 export interface IListCourses {

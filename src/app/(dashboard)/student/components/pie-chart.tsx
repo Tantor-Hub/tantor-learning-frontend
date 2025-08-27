@@ -1,160 +1,253 @@
 "use client";
-
 import * as React from "react";
-import { Label, Pie, PieChart, Sector } from "recharts";
-import { PieSectorDataItem } from "recharts/types/polar/Pie";
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartStyle,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-const desktopData = [
-  { month: "january", desktop: 156, fill: "#0466C8" },
-  { month: "february", desktop: 500, fill: "#94A3B8" },
-  { month: "march", desktop: 160, fill: "#8FAEF9" },
-  { month: "april", desktop: 40, fill: "#A9CDFF" },
-  { month: "may", desktop: 90, fill: "#CDE1FF" },
-];
+import { Loading } from "@/components/shared/loading";
+import { useGetTrainingByIdQuery } from "@/lib/apis/student/training-api";
 
-const chartConfig = {
-  january: {
-    label: "Janvier",
-    color: "#0466C8",
-  },
-  february: {
-    label: "Fevrier",
-    color: "#94A3B8",
-  },
-  march: {
-    label: "Mars",
-    color: "#8FAEF9",
-  },
-  april: {
-    label: "Avril",
-    color: "#A9CDFF",
-  },
-  may: {
-    label: "Mai",
-    color: "#CDE1FF",
-  },
-} satisfies ChartConfig;
+// Types pour les données de session
+interface Formation {
+  id: number;
+  titre: string;
+  sous_titre?: string;
+  description?: string;
+}
 
-export function PieVisual() {
-  const id = "pie-interactive";
-  const [activeMonth, setActiveMonth] = React.useState(desktopData[0].month);
+interface Cours {
+  id: number;
+  id_preset_cours: number;
+  duree: number | null;
+  ponderation: number | null;
+  is_published: boolean;
+  createdBy: number;
+  id_session: number;
+  id_formateur: number | null;
+  Title: {
+    id: number;
+    title: string;
+    description: string;
+  };
+}
 
-  const activeIndex = React.useMemo(
-    () => desktopData.findIndex((item) => item.month === activeMonth),
-    [activeMonth]
-  );
-  const months = React.useMemo(() => desktopData.map((item) => item.month), []);
+interface SessionData {
+  id: number;
+  uuid: string;
+  designation: string;
+  date_session_debut: string;
+  date_session_fin: string;
+  nb_places: number;
+  nb_places_disponible: number;
+  progression: number;
+  id_formation: number;
+  type_formation: string;
+  Formation: Formation;
+  Cours: Cours[];
+  // Autres champs non utilisés dans ce composant
+  [key: string]: any;
+}
+
+interface SessionResponse {
+  status: number;
+  message: string;
+  data: SessionData;
+}
+
+// Function to calculate progress percentage
+const calculateProgress = (startDate: string, endDate: string): number => {
+  const now = new Date();
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  // Ensure dates are valid
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+
+  const totalDuration = end.getTime() - start.getTime();
+  const elapsed = now.getTime() - start.getTime();
+
+  // Handle cases where session hasn't started or has ended
+  if (now < start) return 0;
+  if (now > end) return 100;
+
+  return Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+};
+
+// Function to format the remaining time
+const formatRemainingTime = (startDate: string, endDate: string): string => {
+  const now = new Date();
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  if (now < start) {
+    const daysUntil = Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return `Commence dans ${daysUntil} jour${daysUntil > 1 ? "s" : ""}`;
+  }
+
+  if (now > end) {
+    return "Session terminée";
+  }
+
+  const daysRemaining = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  return `${daysRemaining} jour${daysRemaining > 1 ? "s" : ""} restant${daysRemaining > 1 ? "s" : ""}`;
+};
+
+// Function to calculate total course duration
+const calculateTotalDuration = (cours: Cours[]): number => {
+  return cours.reduce((total, coursItem) => {
+    return total + (coursItem.duree || 0);
+  }, 0);
+};
+
+// Function to format duration in hours and minutes
+const formatDuration = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  if (hours === 0) return `${mins}min`;
+  if (mins === 0) return `${hours}h`;
+
+  return `${hours}h ${mins}min`;
+};
+
+export function SessionProgress({ id_session }: { id_session: number }) {
+  const { data: sessionResponse, isLoading } = useGetTrainingByIdQuery({ id_session });
+
+  if (isLoading) {
+    return (
+      <Card className="w-full max-w-md mx-auto border flex-[2]">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl">Progression de la session</CardTitle>
+          <CardDescription>Chargement des données...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center h-64">
+          <Loading />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!sessionResponse?.data) {
+    return (
+      <Card className="w-full max-w-md mx-auto border flex-[2]">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl">Progression de la session</CardTitle>
+          <CardDescription>Session non trouvée</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center h-64">
+          <p className="text-muted-foreground">Aucune donnée disponible</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const session = sessionResponse?.data;
+  const progress = calculateProgress(session.date_session_debut, session.date_session_fin);
+  const totalDuration = calculateTotalDuration(session.Cours);
+  const remainingText = formatRemainingTime(session.date_session_debut, session.date_session_fin);
+
+  // Format dates for display
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  // Get session status
+  const getSessionStatus = (): { text: string; color: string } => {
+    const now = new Date();
+    const start = new Date(session.date_session_debut);
+    const end = new Date(session.date_session_fin);
+
+    if (now < start) {
+      return { text: "À venir", color: "text-blue-500" };
+    } else if (now > end) {
+      return { text: "Terminée", color: "text-green-500" };
+    } else {
+      return { text: "En cours", color: "text-orange-500" };
+    }
+  };
+
+  const status = getSessionStatus();
 
   return (
-    <Card data-chart={id} className="flex flex-col gap-0">
-      <ChartStyle id={id} config={chartConfig} />
-      <CardHeader className="flex-row items-start space-y-0 pb-0">
-        <div className="grid gap-1">
-          <CardTitle className="text-xl font-medium">Resumés des lecons apprises </CardTitle>
-          <CardDescription>Janvier - Juin 2025</CardDescription>
-        </div>
-        <Select value={activeMonth} onValueChange={setActiveMonth}>
-          <SelectTrigger
-            className="ml-auto h-7 w-[130px] rounded-lg pl-2.5"
-            aria-label="Select a value"
+    <Card className="w-full mx-auto border flex-[2]">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-xl">Progression de la session</CardTitle>
+            <CardDescription>
+              {formatDate(session.date_session_debut)} - {formatDate(session.date_session_fin)}
+            </CardDescription>
+            <CardDescription>{session.Formation.titre}</CardDescription>
+          </div>
+          <span
+            className={`text-sm font-medium px-2 py-1 rounded-full ${status.color} bg-opacity-20`}
           >
-            <SelectValue placeholder="Select month" />
-          </SelectTrigger>
-          <SelectContent align="end" className="rounded-xl">
-            {months.map((key) => {
-              const config = chartConfig[key as keyof typeof chartConfig];
-
-              if (!config) {
-                return null;
-              }
-
-              return (
-                <SelectItem key={key} value={key} className="rounded-lg [&_span]:flex">
-                  <div className="flex items-center gap-2 text-xs">
-                    <span
-                      className="flex h-3 w-3 shrink-0 rounded-sm"
-                      style={{
-                        backgroundColor: `var(--color-${key})`,
-                      }}
-                    />
-                    {config?.label}
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
+            {status.text}
+          </span>
+        </div>
       </CardHeader>
-      <CardContent className="flex flex-1 justify-center p-0">
-        <ChartContainer
-          id={id}
-          config={chartConfig}
-          className="mx-auto aspect-square w-full max-w-[270px]"
-        >
-          <PieChart>
-            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-            <Pie
-              data={desktopData}
-              dataKey="desktop"
-              nameKey="month"
-              innerRadius={60}
-              activeIndex={activeIndex}
-              paddingAngle={1.5}
-              cornerRadius={4}
-              activeShape={({ outerRadius = 0, ...props }: PieSectorDataItem) => (
-                <g>
-                  <Sector {...props} outerRadius={outerRadius + 6} />
-                  <Sector {...props} outerRadius={outerRadius + 13} innerRadius={outerRadius + 8} />
-                </g>
-              )}
+      <CardContent className="flex flex-col items-center">
+        <div className="relative w-48 h-48">
+          <svg className="w-full h-full" viewBox="0 0 100 100">
+            {/* Background circle */}
+            <circle
+              className="text-gray-200 stroke-current"
+              strokeWidth="10"
+              cx="50"
+              cy="50"
+              r="40"
+              fill="transparent"
+            />
+            {/* Progress circle */}
+            <circle
+              className="text-ring stroke-current"
+              strokeWidth="10"
+              strokeLinecap="round"
+              cx="50"
+              cy="50"
+              r="40"
+              fill="transparent"
+              strokeDasharray="251.2"
+              strokeDashoffset={251.2 - (progress / 100) * 251.2}
+              transform="rotate(-90 50 50)"
+            />
+            {/* Text */}
+            <text
+              x="50"
+              y="50"
+              dominantBaseline="middle"
+              textAnchor="middle"
+              className="text-sm font-bold fill-foreground text-primary"
             >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        <tspan
-                          x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
-                        >
-                          {desktopData[activeIndex].desktop.toLocaleString()}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
-                        >
-                          Leçons au total
-                        </tspan>
-                      </text>
-                    );
-                  }
-                }}
-              />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
+              {Math.round(progress)}%
+            </text>
+          </svg>
+        </div>
+        {/* 
+        <div className="mt-6 w-full space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-muted p-3 rounded-lg text-center">
+              <p className="text-sm text-muted-foreground">Places disponibles</p>
+              <p className="text-lg font-semibold">
+                {session.nb_places_disponible} / {session.nb_places}
+              </p>
+            </div>
+            <div className="bg-muted p-3 rounded-lg text-center">
+              <p className="text-sm text-muted-foreground">Durée totale</p>
+              <p className="text-lg font-semibold">{formatDuration(totalDuration)}</p>
+            </div>
+          </div>
+
+          <div className="bg-muted p-3 rounded-lg">
+            <p className="text-sm text-muted-foreground mb-2">Formation</p>
+            <p className="font-medium">{session.Formation?.titre || "Formation"}</p>
+            {session.Formation?.sous_titre && (
+              <p className="text-sm text-muted-foreground mt-1">{session.Formation.sous_titre}</p>
+            )}
+          </div>
+
+        </div> */}
       </CardContent>
     </Card>
   );

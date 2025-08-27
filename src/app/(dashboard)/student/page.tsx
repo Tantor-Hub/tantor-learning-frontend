@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import {
   useAverageScoreQuery,
   useNextLiveSessionQuery,
@@ -6,7 +7,7 @@ import {
 } from "@/lib/apis/student-api";
 import { BarVisual } from "./components/bar-chart";
 import OngoingCourse from "./components/ongoing-course";
-import { PieVisual } from "./components/pie-chart";
+import { SessionProgress } from "./components/pie-chart";
 import CourseTab from "./courses/components/courses-tab";
 import { ongoingCourse } from "./data";
 import { BookOpen, ClipboardList, ListCheck, Percent, UserPlus } from "lucide-react";
@@ -19,17 +20,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGetMySessionsQuery } from "@/lib/apis/student/training-api";
+import { useGetMySessionsQuery, useGetTrainingByIdQuery } from "@/lib/apis/student/training-api";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { useRouter } from "next/navigation";
 
 export default function Page() {
   const router = useRouter();
+  const [selectedSessionId, setSelectedSessionId] = useState<string>("");
   const studentsStatus = useStudentStatusQuery();
   const nextLiveSession = useNextLiveSessionQuery();
   const average = useAverageScoreQuery();
   const listSessions = useGetMySessionsQuery();
+  // const sessionById = useGetTrainingByIdQuery({ id_session: +selectedSessionId });
 
   // Check if any of the queries are loading
   const isLoading =
@@ -38,22 +41,31 @@ export default function Page() {
     average.isLoading ||
     listSessions.isLoading;
 
+  const handleSessionChange = (value: string) => {
+    setSelectedSessionId(value);
+  };
   // Show loader when data is loading
   if (isLoading) {
-    return <Loading />;
+    return (
+      <div className="flex flex-col items-center justify-center h-[50vh]">
+        {" "}
+        <Loading />
+      </div>
+    );
   }
   // console.log(JSON.stringify(listSessions.data?.data.list));
+
   return (
     <>
       <div className="flex justify-start mb-4">
-        <Select>
+        <Select onValueChange={handleSessionChange} value={selectedSessionId}>
           <SelectTrigger className="min-w-[300px]">
             <SelectValue placeholder="Sélectionner une session" />
           </SelectTrigger>
           <SelectContent>
             {listSessions.data?.data.list.map((session) => (
               <SelectItem key={session.id} value={String(session.id)}>
-                {session.Session.designation || "Session sans nom"}
+                {session.Session.designation || "Session sans nom"} - {session.Formation.titre}
               </SelectItem>
             ))}
           </SelectContent>
@@ -175,18 +187,14 @@ export default function Page() {
       </div>
       {(nextLiveSession.data?.data?.length ?? 0) > 0 && <OngoingCourse ongoing={ongoingCourse} />}
       <div className="flex flex-col lg:flex-row gap-5 my-5">
-        <div className="flex-[3] border border-border rounded-xl py-6  bg-white">
-          <h3 className="text-[#001845] font-medium text-xl pb-2.5 px-5">Productivite</h3>
-
-          <div className="h-[300px]">
-            <BarVisual />
+        <div className="flex-[3] border border-border rounded-xl py-4  bg-white">
+          <div className="h-auto">
+            <BarVisual id_session={selectedSessionId} />
           </div>
         </div>
-        <div className="flex-[2]">
-          <PieVisual />
-        </div>
+        <SessionProgress id_session={+selectedSessionId} />
       </div>
-      <CourseTab spec="Progrression de vos cours actuels" />
+      <CourseTab id_session={+selectedSessionId} />
     </>
   );
 }
