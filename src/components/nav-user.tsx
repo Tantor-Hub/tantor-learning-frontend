@@ -29,6 +29,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
+import { useRouter } from "next/navigation";
 
 type UserDataProps = {
   id: number;
@@ -61,6 +64,9 @@ type UserDataProps = {
 export function NavUser() {
   const { isMobile } = useSidebar();
   const { logout } = useLogout();
+  const router = useRouter();
+  const currentUser = useSelector(selectCurrentUser);
+  const role = currentUser?.roles[0].role.toLowerCase();
   const { data, isLoading, isError } = useGetUserProfileQuery();
   const [preview, setPreview] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserDataProps | null>(null);
@@ -128,7 +134,7 @@ export function NavUser() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(`/${role}/notifications`)}>
                   <Bell className="mr-2 h-4 w-4" />
                   Notifications
                 </DropdownMenuItem>

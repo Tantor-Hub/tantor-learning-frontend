@@ -13,6 +13,7 @@ import {
   CircleHelp,
   LucideIcon,
   Shapes,
+  Bell,
 } from "lucide-react";
 
 interface NavigationMenu {
@@ -66,6 +67,11 @@ const navigationMenus: NavigationMenus = {
       title: "Planning",
       url: "student/planning",
       icon: CalendarDays,
+    },
+    {
+      title: "Notifications",
+      url: "student/notifications",
+      icon: Bell,
     },
   ],
   admin: [
@@ -133,6 +139,11 @@ const navigationMenus: NavigationMenus = {
       url: "instructor/planning",
       icon: CalendarDays,
     },
+    {
+      title: "Notifications",
+      url: "student/notifications",
+      icon: Bell,
+    },
   ],
   secretary: [
     {
@@ -171,6 +182,11 @@ const navigationMenus: NavigationMenus = {
       title: "Planning",
       url: "secretary/planning",
       icon: CalendarDays,
+    },
+    {
+      title: "Notifications",
+      url: "student/notifications",
+      icon: Bell,
     },
   ],
 };

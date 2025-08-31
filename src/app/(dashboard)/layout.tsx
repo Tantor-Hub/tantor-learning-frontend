@@ -6,8 +6,10 @@ import { Notification } from "./notification";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-import { selectIsAuthenticated } from "@/features/auth/auth-slice";
+import { selectCurrentUser, selectIsAuthenticated } from "@/features/auth/auth-slice";
 import { toast } from "react-hot-toast";
+import { Bell } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardLayout({
   children,
@@ -15,6 +17,9 @@ export default function DashboardLayout({
   children: ReactNode;
 }>) {
   const router = useRouter();
+  const currentUser = useSelector(selectCurrentUser);
+  const role = currentUser?.roles[0].role.toLowerCase();
+  // console.log(role);
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const path = usePathname();
 
@@ -58,7 +63,14 @@ export default function DashboardLayout({
                 <SidebarTrigger className="-ml-1" />
                 <h1 className="text-xl font-semibold text-blue-600">{title}</h1>
               </div>
-              <Notification />
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => router.push(`/${role}/notifications`)}
+              >
+                <Bell />
+              </Button>
+              {/* <Notification /> */}
             </header>
             <div className="p-3.5 h-full w-full bg-background">{children}</div>
           </SidebarInset>
