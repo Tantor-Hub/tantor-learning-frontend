@@ -33,11 +33,11 @@ export default function DashboardLayout({
   const currentUser = useSelector(selectCurrentUser);
   const selectedSessionId = useSelector(selectSelectedSessionId);
   // console.log(currentUser?.roles);
-  /* Later I will change with roles[0] */
+  /* Later I will change with roles[0] - dev 1 - prod - 0 */
   const listSessions = useGetMySessionsQuery(undefined, {
-    skip: currentUser?.roles[1]?.role.toLowerCase() !== "étudiants",
+    skip: currentUser?.roles[0]?.role.toLowerCase() !== "étudiants",
   });
-  const role = currentUser?.roles[1]?.role.toLowerCase();
+  const role = currentUser?.roles[0]?.role.toLowerCase();
   const isStudent = role === "étudiants";
   /* Later I will change with roles[0] */
   const handleSessionChange = (value: string) => {
