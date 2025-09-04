@@ -8,6 +8,7 @@ import authReducer, {
   selectIsAuthenticated,
   setCredentials,
 } from "../features/auth/auth-slice";
+import dashboardReducer from "@/features/dashboard/dashboard-slice";
 
 let isRefreshing = false;
 let refreshPromise: Promise<any> | null = null;
@@ -110,6 +111,7 @@ const localStorageMiddleware: Middleware = (store: MiddlewareAPI) => (next) => (
 // Create the root reducer with all API reducers
 const rootReducer = combineReducers({
   auth: authReducer,
+  dashboard: dashboardReducer,
   ...apiReducers,
 });
 

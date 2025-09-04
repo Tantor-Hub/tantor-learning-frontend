@@ -36,7 +36,7 @@ export const documentStudentApi = createApi({
     // Get documents for a specific session/group/student
     listStudentDocBySessionId: builder.query<
       IListDocByStudentSessionResponse,
-      { id_student: number; id_session: number; group: string }
+      { id_student: string; id_session: string; group: string }
     >({
       query: ({ id_student, id_session, group }) =>
         `sessions/session/documents/${id_student}/${id_session}/${group}`,

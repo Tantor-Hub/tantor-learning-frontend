@@ -4,8 +4,8 @@ import { useListStudentDocBySessionIdQuery } from "@/lib/apis/student/document-a
 
 export function AfterTab({ id_session, id_student }: { id_session: number; id_student: number }) {
   const { data, isLoading } = useListStudentDocBySessionIdQuery({
-    id_session: id_session,
-    id_student: id_student,
+    id_session: String(id_session),
+    id_student: String(id_student),
     group: "after",
   });
   if (isLoading) return <Loading />;

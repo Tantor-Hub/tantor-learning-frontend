@@ -51,7 +51,7 @@ type DocumentType =
   | "FICHE_CONTROLE_COURS"
   | "FICHES_EMARGEMENT";
 
-export function DuringTab({ sessionId }: { sessionId: number | any }) {
+export function DuringTab({ sessionId }: { sessionId: string }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedType, setSelectedType] = useState<DocumentType>("CONVOCATION_EXAMEN");
@@ -65,7 +65,7 @@ export function DuringTab({ sessionId }: { sessionId: number | any }) {
   } = useListStudentDocBySessionIdQuery({
     id_session: sessionId,
     group: "during",
-    id_student: +currentUser!.id,
+    id_student: currentUser?.id || "",
   });
 
   if (isLoading) return <Loading />;

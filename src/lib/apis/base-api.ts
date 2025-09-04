@@ -119,6 +119,7 @@ export const commonTagTypes = [
   "Admin",
   "Event",
   "Message",
+  "Document",
 ];
 
 // Re-export for convenience

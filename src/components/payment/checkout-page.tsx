@@ -65,7 +65,7 @@ export function CheckoutPage({
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
   useEffect(() => {
-    fetch("/api/create-payment-intent", {
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/sessions/session/payment/card`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

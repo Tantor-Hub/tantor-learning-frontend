@@ -53,7 +53,7 @@ type DocumentType =
   | "CGV"
   | "FICHE_CONTROLE_INITIALE";
 
-export function BeforeTab({ sessionId }: { sessionId: number | any }) {
+export function BeforeTab({ sessionId }: { sessionId: string }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedType, setSelectedType] = useState<DocumentType>("CARTE_IDENTITE");
@@ -67,7 +67,7 @@ export function BeforeTab({ sessionId }: { sessionId: number | any }) {
   } = useListStudentDocBySessionIdQuery({
     id_session: sessionId,
     group: "before",
-    id_student: +currentUser!.id,
+    id_student: currentUser?.id || "",
   });
 
   if (isLoading) return <Loading />;

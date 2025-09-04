@@ -33,11 +33,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useListStudentDocBySessionIdQuery } from "@/lib/apis/student/document-api";
 import { Loading } from "@/components/shared/loading";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { selectCurrentUser, selectToken } from "@/features/auth/auth-slice";
+import { useListDocumentsByStudentSessionIdQuery } from "@/lib/apis/common/document-api";
 
 type ActionType = "download" | "view" | "edit" | "share" | "delete";
 
@@ -47,7 +47,7 @@ type DocumentType =
   | "DOCUMENTS_FINANCEUR"
   | "FICHE_CONTROLE_FINALE";
 
-export function AfterTab({ sessionId }: { sessionId: number | any }) {
+export function AfterTab({ sessionId }: { sessionId: string }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedType, setSelectedType] = useState<DocumentType>("QUESTIONNAIRE_SATISFACTION");
@@ -58,11 +58,16 @@ export function AfterTab({ sessionId }: { sessionId: number | any }) {
     data: documents,
     isLoading,
     refetch,
-  } = useListStudentDocBySessionIdQuery({
-    id_session: sessionId,
-    group: "after",
-    id_student: +currentUser!.id,
-  });
+  } = useListDocumentsByStudentSessionIdQuery(
+    {
+      id_session: sessionId?.toString() || "",
+      group: "after",
+      id_student: currentUser?.id.toString() || "",
+    },
+    {
+      skip: !sessionId || !currentUser?.id,
+    }
+  );
 
   if (isLoading) return <Loading />;
 

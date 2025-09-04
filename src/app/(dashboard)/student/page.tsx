@@ -24,13 +24,15 @@ import { useGetMySessionsQuery, useGetTrainingByIdQuery } from "@/lib/apis/stude
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { useRouter } from "next/navigation";
+import { useSelectedSession } from "@/hooks/use-selected-session";
 
 export default function Page() {
   const router = useRouter();
-  const [selectedSessionId, setSelectedSessionId] = useState<string>("");
   const studentsStatus = useStudentStatusQuery();
   const nextLiveSession = useNextLiveSessionQuery();
   const average = useAverageScoreQuery();
+  const selectedSessionId = useSelectedSession();
+
   const listSessions = useGetMySessionsQuery();
   // const sessionById = useGetTrainingByIdQuery({ id_session: +selectedSessionId });
 
@@ -41,9 +43,6 @@ export default function Page() {
     average.isLoading ||
     listSessions.isLoading;
 
-  const handleSessionChange = (value: string) => {
-    setSelectedSessionId(value);
-  };
   // Show loader when data is loading
   if (isLoading) {
     return (
@@ -57,20 +56,6 @@ export default function Page() {
 
   return (
     <>
-      <div className="flex justify-start mb-4">
-        <Select onValueChange={handleSessionChange} value={selectedSessionId}>
-          <SelectTrigger className="min-w-[300px]">
-            <SelectValue placeholder="Sélectionner une session" />
-          </SelectTrigger>
-          <SelectContent>
-            {listSessions.data?.data.list.map((session) => (
-              <SelectItem key={session.id} value={String(session.id)}>
-                {session.Session.designation || "Session sans nom"} - {session.Formation.titre}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 md:gap-5">
         <Card
           className="gap-0 py-4 border hover:cursor-pointer hover:shadow-lg"
