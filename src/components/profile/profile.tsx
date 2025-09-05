@@ -54,7 +54,7 @@ export function ProfilePage() {
       <div className="flex flex-col md:flex-row items-start gap-5 md:gap-20 p-6 rounded-xl border justify-center">
         <div className="flex flex-col items-center w-full md:w-fit">
           <Avatar className="w-40 h-40">
-            <AvatarImage src={userData.avatar || ""} alt="Profile Image" />
+            <AvatarImage src={userData.avatar || ""} alt="Profile Image" className="object-cover" />
             <AvatarFallback className="text-2xl font-bold">
               {userData.fs_name[0]}
               {userData.ls_name[0]}

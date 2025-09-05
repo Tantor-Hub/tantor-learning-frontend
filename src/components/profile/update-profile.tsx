@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, SquarePen, User, CheckCircle } from "lucide-react";
+import { Loader2, SquarePen, User, CheckCircle, Camera, Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,8 +26,9 @@ import {
 import { toast } from "react-hot-toast";
 import { useState, useEffect } from "react";
 import { useUpdateUserProfileMutation } from "@/lib/apis/users-api";
-
-// Updated validation schema - all fields are truly optional
+import { useSelector } from "react-redux";
+import { selectToken } from "@/features/auth/auth-slice";
+// Schema de validation sans la photo
 const profileFormSchema = z.object({
   phone: z
     .string()
@@ -59,7 +60,6 @@ const profileFormSchema = z.object({
       message: "Le numéro d'identité doit contenir au moins 2 caractères",
     })
     .optional(),
-  photo: z.any().optional(),
 });
 
 type UserProfileData = {
@@ -73,6 +73,18 @@ type UserProfileData = {
   identityNumber?: string;
   avatarURL?: string;
 };
+
+// Composant pour la barre de progression de l'upload
+function UploadProgress({ progress }: { progress: number }) {
+  return (
+    <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+      <div
+        className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
+        style={{ width: `${progress}%` }}
+      ></div>
+    </div>
+  );
+}
 
 function ProfileCompletionBar({
   userData,
@@ -92,7 +104,7 @@ function ProfileCompletionBar({
       { label: "Ville", value: formValues.city || userData.city },
       { label: "Pays", value: formValues.country || userData.country },
       { label: "Pièce d'identité", value: formValues.identityNumber || userData.identityNumber },
-      { label: "Photo de profil", value: formValues.photo || userData.avatarURL },
+      { label: "Photo de profil", value: userData.avatarURL },
     ];
 
     const completedFields = allFields.filter(
@@ -197,8 +209,14 @@ export function UpdateProfile({
   email?: string;
 }) {
   const [updateProfile, { isLoading }] = useUpdateUserProfileMutation();
-  const [preview, setPreview] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const token = useSelector(selectToken);
+  // États pour la photo
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -231,9 +249,8 @@ export function UpdateProfile({
       return currentValue !== originalValue;
     });
 
-    const hasPhotoChange = preview !== null;
-    setHasChanges(hasFormChanges || hasPhotoChange);
-  }, [watchedFields, preview, address, country, identityNumber, phone, city]);
+    setHasChanges(hasFormChanges);
+  }, [watchedFields, address, country, identityNumber, phone, city]);
 
   const userData: UserProfileData = {
     fs_name,
@@ -247,6 +264,67 @@ export function UpdateProfile({
     avatarURL,
   };
 
+  // Fonction pour uploader la photo séparément
+  const handlePhotoUpload = async () => {
+    if (!selectedPhoto) {
+      toast.error("Veuillez sélectionner une photo");
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    setUploadProgress(0);
+
+    try {
+      const formData = new FormData();
+      formData.append("avatar", selectedPhoto);
+
+      // const token = localStorage.getItem("authState.token"); // Ajustez selon votre méthode de stockage du token
+      // console.log(token);
+      // Simuler le progrès
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => Math.min(prev + 10, 90));
+      }, 100);
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/user/update`, {
+        method: "PUT",
+        body: formData,
+        headers: {
+          "x-connexion-tantor": `Bearer ${token}`,
+        },
+      });
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Upload failed");
+      }
+
+      toast.success("Vous avez changé votre photo avec succès!");
+
+      // Réinitialiser les états de la photo
+      setSelectedPhoto(null);
+      setPhotoPreview(null);
+      setUploadProgress(0);
+
+      // Fermer le modal
+      setTimeout(() => {
+        setIsDialogOpen(false);
+      }, 1000);
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      if (error instanceof Error) {
+        toast.error(`Erreur: ${error.message}`);
+      } else {
+        toast.error("Échec de l'upload de la photo");
+      }
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  // Fonction pour soumettre les autres informations
   const onSubmit = async (values: z.infer<typeof profileFormSchema>) => {
     if (!hasChanges) {
       toast.error("Aucune modification détectée");
@@ -264,7 +342,6 @@ export function UpdateProfile({
       );
 
       await updateProfile({
-        ...(filteredValues.photo && { avatar: filteredValues.photo }),
         ...(filteredValues.address && { adresse_physique: filteredValues.address }),
         ...(filteredValues.country && { pays_residance: filteredValues.country }),
         ...(filteredValues.identityNumber && { num_piece_identite: filteredValues.identityNumber }),
@@ -276,13 +353,11 @@ export function UpdateProfile({
       toast.success("Votre profil a été modifié avec succès");
 
       form.reset();
-      setPreview(null);
       setHasChanges(false);
+      setIsDialogOpen(false);
     } catch (e: any) {
       toast.dismiss();
       toast.error("Une erreur s'est produite lors de la mise à jour");
-    } finally {
-      toast.dismiss();
     }
   };
 
@@ -294,12 +369,23 @@ export function UpdateProfile({
       phone: phone || "",
       city: city || "",
     });
-    setPreview(null);
+    setSelectedPhoto(null);
+    setPhotoPreview(null);
     setHasChanges(false);
+    setUploadProgress(0);
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedPhoto(file);
+      const url = URL.createObjectURL(file);
+      setPhotoPreview(url);
+    }
   };
 
   return (
-    <AlertDialog>
+    <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <AlertDialogTrigger asChild>
         <Button size="lg">
           <SquarePen className="mr-2 h-4 w-4" />
@@ -316,6 +402,85 @@ export function UpdateProfile({
 
         {/* Profile Completion Bar */}
         <ProfileCompletionBar userData={userData} formValues={watchedFields} />
+
+        {/* Section Photo de Profil Séparée */}
+        <div className="p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+          <div className="flex items-center gap-4 mb-4">
+            <Camera className="h-6 w-6 text-gray-600" />
+            <div>
+              <h4 className="font-semibold text-gray-800">Photo de Profil</h4>
+              <p className="text-sm text-gray-600">Changez votre photo de profil</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 items-center">
+            {/* Photo actuelle ou preview */}
+            <div className="flex gap-4">
+              {avatarURL && !photoPreview && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Photo actuelle:</p>
+                  <img
+                    src={avatarURL}
+                    alt="Photo de profil actuelle"
+                    className="w-20 h-20 rounded-full object-cover border-2 border-green-500"
+                  />
+                </div>
+              )}
+              {photoPreview && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Nouvelle photo:</p>
+                  <img
+                    src={photoPreview}
+                    alt="Nouvelle photo de profil"
+                    className="w-20 h-20 rounded-full object-cover border-2 border-blue-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Contrôles photo */}
+            <div className="flex-1 space-y-3">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoSelect}
+                className="cursor-pointer"
+              />
+
+              {selectedPhoto && (
+                <div>
+                  <Button
+                    type="button"
+                    onClick={handlePhotoUpload}
+                    disabled={isUploadingPhoto}
+                    className="w-full sm:w-auto"
+                  >
+                    {isUploadingPhoto ? (
+                      <>
+                        <Loader2 className="animate-spin w-4 h-4 mr-2" />
+                        Upload en cours...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Changer l'Avatar
+                      </>
+                    )}
+                  </Button>
+
+                  {isUploadingPhoto && (
+                    <div className="mt-2">
+                      <UploadProgress progress={uploadProgress} />
+                      <p className="text-sm text-gray-600 text-center mt-1">
+                        {uploadProgress}% terminé
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         <Form {...form}>
           <div className="space-y-4">
@@ -427,59 +592,6 @@ export function UpdateProfile({
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="photo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Photo de profil
-                    {avatarURL && <span className="text-green-600 ml-1">✓</span>}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const url = URL.createObjectURL(file);
-                          setPreview(url);
-                          field.onChange(file);
-                        }
-                      }}
-                      className={avatarURL ? "border-green-200 bg-green-50" : ""}
-                    />
-                  </FormControl>
-                  {(preview || avatarURL) && (
-                    <div className="mt-2 flex gap-4">
-                      {preview && (
-                        <div>
-                          <p className="text-sm text-gray-600 mb-1">Nouvelle photo:</p>
-                          <img
-                            src={preview}
-                            alt="Nouvelle photo de profil"
-                            className="w-24 h-24 rounded-full object-cover border-2 border-blue-500"
-                          />
-                        </div>
-                      )}
-                      {avatarURL && !preview && (
-                        <div>
-                          <p className="text-sm text-gray-600 mb-1">Photo actuelle:</p>
-                          <img
-                            src={avatarURL}
-                            alt="Photo de profil actuelle"
-                            className="w-24 h-24 rounded-full object-cover border-2 border-green-500"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             {!hasChanges && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                 <p className="text-amber-800 text-sm">
@@ -500,7 +612,7 @@ export function UpdateProfile({
                 {form.formState.isSubmitting || isLoading ? (
                   <Loader2 className="animate-spin w-4 h-4" />
                 ) : (
-                  "Mettre à jour"
+                  "Enregistrer"
                 )}
               </Button>
             </AlertDialogFooter>
