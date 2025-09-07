@@ -76,13 +76,14 @@ export function SignInForm() {
       const h = 600;
       const left = (window.innerWidth - w) / 2;
       const top = (window.innerHeight - h) / 2;
-      const url = "https://tantor-learning.up.railway.app/api/users/user/authwithgoogle";
-
-      window.open(
-        url,
-        "Google Auth",
-        `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${w}, height=${h}, top=${top}, left=${left}`
-      );
+      // const url = `${process.env.NEXT_PUBLIC_BASE_URL}/users/user/authwithgoogle`;
+      const url = "http://192.168.1.66:3737/api/users/user/authwithgoogle";
+      router.push(url);
+      // window.open(
+      //   url,
+      //   "Google Auth",
+      //   `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${w}, height=${h}, top=${top}, left=${left}`
+      // );
 
       toast.dismiss(loadingToast);
       toast.success("Fenêtre d'authentification Google ouverte");

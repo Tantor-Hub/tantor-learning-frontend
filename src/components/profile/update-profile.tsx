@@ -278,8 +278,6 @@ export function UpdateProfile({
       const formData = new FormData();
       formData.append("avatar", selectedPhoto);
 
-      // const token = localStorage.getItem("authState.token"); // Ajustez selon votre méthode de stockage du token
-      // console.log(token);
       // Simuler le progrès
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => Math.min(prev + 10, 90));
@@ -324,7 +322,7 @@ export function UpdateProfile({
     }
   };
 
-  // Fonction pour soumettre les autres informations
+  // Fonction pour soumettre les autres informations (sans l'avatar)
   const onSubmit = async (values: z.infer<typeof profileFormSchema>) => {
     if (!hasChanges) {
       toast.error("Aucune modification détectée");
@@ -347,6 +345,7 @@ export function UpdateProfile({
         ...(filteredValues.identityNumber && { num_piece_identite: filteredValues.identityNumber }),
         ...(filteredValues.city && { ville_residance: filteredValues.city }),
         ...(filteredValues.phone && { phone: filteredValues.phone }),
+        // Note: We don't include avatar here to avoid sending null
       }).unwrap();
 
       toast.dismiss(toastId);

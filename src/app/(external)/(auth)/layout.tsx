@@ -37,7 +37,7 @@ export default function AuthLayout({
       <div className="mx-auto py-16 max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex items-center justify-center">
           <div className="w-full max-w-lg">
-            <Card className="border shadow-none">
+            <Card className="border shadow-none rounded">
               <CardContent>{children}</CardContent>
             </Card>
           </div>
