@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "./ui/card";
-import { Button } from "./ui/button";
-export function CookieMessageAlert() {
+import { Card, CardContent } from "../ui/card";
+import { Button } from "../ui/button";
+
+export function CookieMessage() {
   const [showCookieMessage, setShowCookieMessage] = useState(false);
 
   useEffect(() => {

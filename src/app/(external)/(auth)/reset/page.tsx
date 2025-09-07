@@ -1,15 +1,15 @@
+import { Metadata } from "next";
 import { Suspense } from "react";
 import { Reset } from "@/components/forms/reset";
+import { AuthSkeleton } from "@/components/skeletons/auth-skeleton";
+
+export const metadata: Metadata = {
+  title: "Réinitialiser le mot de passe",
+};
 
 export default function Page() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex h-screen items-center justify-center text-2xl text-primary">
-          Chargement en cours...
-        </div>
-      }
-    >
+    <Suspense fallback={<AuthSkeleton />}>
       <Reset />
     </Suspense>
   );

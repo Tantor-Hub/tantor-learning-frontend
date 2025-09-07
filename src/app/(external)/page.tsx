@@ -1,4 +1,3 @@
-import { CookieMessageAlert } from "@/components/cookie-message-alert";
 import Features from "./components/features";
 import { GetStarted } from "./components/get-started";
 import Hero from "./components/hero";
@@ -15,7 +14,6 @@ export default function Page() {
       <Features />
       <Teaching />
       <GetStarted />
-      <CookieMessageAlert />
     </main>
   );
 }

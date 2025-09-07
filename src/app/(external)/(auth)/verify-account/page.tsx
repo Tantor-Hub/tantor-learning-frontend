@@ -1,16 +1,14 @@
+import { Metadata } from "next";
 import { Suspense } from "react";
 import { VerifyAccountForm } from "@/components/forms/verify-account-form";
-import { Loading } from "@/components/shared/loading";
+import { AuthSkeleton } from "@/components/skeletons/auth-skeleton";
 
+export const metadata: Metadata = {
+  title: "Vérifier le compte",
+};
 export default function Page() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex h-screen items-center justify-center text-2xl text-primary">
-          <Loading />
-        </div>
-      }
-    >
+    <Suspense fallback={<AuthSkeleton />}>
       <VerifyAccountForm />
     </Suspense>
   );

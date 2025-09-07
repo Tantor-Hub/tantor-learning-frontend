@@ -1,15 +1,10 @@
-import { ReactNode } from "react";
-import type { Metadata } from "next";
+import { ReactNode, Suspense } from "react";
+import { CookieMessage } from "@/components/shared/cookie-message";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { Loading } from "@/components/shared/loading";
 
-export const metadata: Metadata = {
-  title: "TanTor Learning | Formations en ligne certifiantes partout en France",
-  description:
-    "Accédez à des formations professionnelles de qualité avec TanTor Learning. Formations en ligne ou en présentiel, bibliothèque numérique, suivi personnalisé et certification officielle. Une plateforme complète pour apprendre, progresser et réussir.",
-};
-
-export default function RootLayout({
+export default function ExternalLayout({
   children,
 }: Readonly<{
   children: ReactNode;
@@ -17,8 +12,17 @@ export default function RootLayout({
   return (
     <>
       <Header />
-      {children}
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Loading />;
+          </div>
+        }
+      >
+        {children}
+      </Suspense>
       <Footer />
+      <CookieMessage />
     </>
   );
 }
