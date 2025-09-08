@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
 import type { Metadata } from "next";
+import { ReactNode } from "react";
 import { poppins, workSans } from "../../public/fonts";
 import { ReduxProvider } from "@/components/provider";
 import { Toaster } from "react-hot-toast";
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description: "Formations certifiantes en ligne et en présentiel, partout en France.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;

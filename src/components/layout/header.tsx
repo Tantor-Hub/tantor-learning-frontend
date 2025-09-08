@@ -131,11 +131,7 @@ const UserAvatar = ({
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon" className="rounded-full">
           <Avatar className="inline-block static size-8">
-            <AvatarImage
-              src={avatar}
-              alt={`${avatarName} | "A"`}
-              className="object-cover object-center"
-            />
+            <AvatarImage src={avatar} />
             <AvatarFallback className="font-semibold bg-primary text-background">
               {avatarName || "A"}
             </AvatarFallback>

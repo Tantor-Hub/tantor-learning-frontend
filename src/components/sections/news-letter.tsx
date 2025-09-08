@@ -39,7 +39,7 @@ const contactInfo = {
   ],
 };
 
-export default function NewsLetter() {
+export function NewsLetter() {
   const [handleSubscribeNewsLetter, { isLoading }] = useSubscribeNewsLetterMutation();
   const form = useForm<SubscribeNewsLetterSchemaFormValues>({
     resolver: zodResolver(subscribeNewsLetterSchema),
