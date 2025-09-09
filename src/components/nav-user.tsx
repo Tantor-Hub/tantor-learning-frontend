@@ -98,7 +98,11 @@ export function NavUser() {
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={userData?.avatar || ""} alt={userData?.fs_name} />
+                  <AvatarImage
+                    src={userData?.avatar || ""}
+                    alt={userData?.fs_name}
+                    className="object-cover object-center"
+                  />
                   <AvatarFallback className="rounded-lg">
                     {userData?.fs_name[0]}
                     {userData?.ls_name[0]}

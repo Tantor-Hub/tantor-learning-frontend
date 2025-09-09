@@ -6,7 +6,7 @@ import { useDispatch } from "react-redux";
 import { setCredentials, clearCredentials } from "@/features/auth/auth-slice";
 import { tokenStorage } from "@/features/token-storage";
 
-export default function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch();
   const router = useRouter();
 
