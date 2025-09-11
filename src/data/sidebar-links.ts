@@ -183,11 +183,11 @@ const navigationMenus: NavigationMenus = {
       url: "secretary/planning",
       icon: CalendarDays,
     },
-    {
-      title: "Notifications",
-      url: "student/notifications",
-      icon: Bell,
-    },
+    // {
+    //   title: "Notifications",
+    //   url: "student/notifications",
+    //   icon: Bell,
+    // },
   ],
 };
 

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GoogleIcon } from "@/components/icons/google";
@@ -17,27 +17,68 @@ import { toast } from "react-hot-toast";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/features/auth/auth-slice";
-import { useAuthWithGoogleMutation, useSigninMutation } from "@/lib/apis/auth-api";
-import { useRouter } from "next/navigation";
+import { useSigninMutation } from "@/lib/apis/auth-api";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
 import { signInSchema, SignInFormValues } from "@/lib/validators/auth-schema";
 
 export function SignInForm() {
   const router = useRouter();
   const dispatch = useDispatch();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
-
+  const [loadingGoogle, setLoadingGoogle] = useState<boolean>(false);
   const [signin, { isLoading: isSignInLoading }] = useSigninMutation();
-  const [triggerGoogleAuth, { isLoading: isGoogleAuthLoading }] = useAuthWithGoogleMutation();
 
   const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
-    mode: "onChange", // Enable real-time validation
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",
     },
   });
+
+  // Handle Google authentication response
+  useEffect(() => {
+    const successParam = searchParams.get("success");
+    // console.log(successParam);
+
+    if (successParam) {
+      setLoadingGoogle(true);
+
+      try {
+        // Decode base64 and parse JSON
+        const decodedData = atob(successParam);
+        const response = JSON.parse(decodedData);
+
+        if (response.status === 200) {
+          dispatch(
+            setCredentials({
+              token: response.auth_token,
+              refreshToken: response.refresh_token,
+              expiresIn: response.expires_in,
+              user: response.user,
+            })
+          );
+
+          toast.success("Connexion avec Google réussie!");
+          router.push("/");
+        } else {
+          toast.error("Échec de la connexion avec Google");
+        }
+      } catch (error) {
+        console.error("Error parsing Google auth response:", error);
+        toast.error("Erreur lors du traitement de la réponse Google");
+      } finally {
+        setLoadingGoogle(false);
+
+        // Clean up the URL by removing the success parameter
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    }
+  }, [searchParams, dispatch, router]);
 
   const handleSubmit = async (values: SignInFormValues) => {
     const loadingToast = toast.loading("Connexion en cours...");
@@ -70,28 +111,22 @@ export function SignInForm() {
 
   const signInWithGoogle = async () => {
     try {
+      setLoadingGoogle(true);
       const loadingToast = toast.loading("Connexion avec Google en cours...");
 
       const w = 500;
       const h = 600;
       const left = (window.innerWidth - w) / 2;
       const top = (window.innerHeight - h) / 2;
-      // const url = `${process.env.NEXT_PUBLIC_BASE_URL}/users/user/authwithgoogle`;
-      const url = "http://192.168.1.66:3737/api/users/user/authwithgoogle";
+      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/users/user/authwithgoogle`;
       router.push(url);
-      // window.open(
-      //   url,
-      //   "Google Auth",
-      //   `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${w}, height=${h}, top=${top}, left=${left}`
-      // );
+      // Open Google auth in a popup window
+      // window.open(url, "GoogleAuth", `width=${w},height=${h},left=${left},top=${top}`);
 
       toast.dismiss(loadingToast);
-      toast.success("Fenêtre d'authentification Google ouverte");
-
-      // TODO: Handle the response from the popup window
-      // You'll need to implement a message listener for window.postMessage
     } catch (error) {
-      toast.error("Échec de la connexion avec Google");
+      setLoadingGoogle(false);
+      toast.error("Échec de l'ouverture de l'authentification Google");
     }
   };
 
@@ -199,15 +234,15 @@ export function SignInForm() {
         <span className="relative z-10 bg-background px-2 text-muted-foreground">OU</span>
       </div>
 
-      {/* Google Sign In Button - Outside of form */}
+      {/* Google Sign In Button */}
       <Button
         variant="outline"
         className="w-full border-primary"
         onClick={signInWithGoogle}
-        disabled={isGoogleAuthLoading}
+        disabled={loadingGoogle}
         type="button"
       >
-        {isGoogleAuthLoading ? (
+        {loadingGoogle ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
           <GoogleIcon className="mr-2" />

@@ -4,12 +4,20 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Bell } from "lucide-react";
+import { Bell, MessageCircle, MessageCircleMore } from "lucide-react";
 import { SessionSelector } from "./session-selector";
 import {
   selectSelectedSessionId,
   setSelectedSessionId,
 } from "@/features/dashboard/dashboard-slice";
+
+// Map role IDs to route names
+const roleIdToRouteMap: Record<number, string> = {
+  1: "admin",
+  2: "secretary",
+  3: "instructor",
+  4: "student",
+};
 
 export function DashboardHeader() {
   const router = useRouter();
@@ -19,8 +27,12 @@ export function DashboardHeader() {
   const path = usePathname();
 
   const activeMenuItem = path.split("/")[2];
-  const role = currentUser?.roles[1]?.role.toLowerCase();
-  const isStudent = role === "étudiants";
+
+  // Get the role based on ID mapping
+  const primaryRoleId = currentUser?.roles[0]?.id;
+  const role = primaryRoleId ? roleIdToRouteMap[primaryRoleId] : "";
+
+  const isStudent = primaryRoleId === 4; // Check if role ID is 4 (Étudiants)
 
   const title = getPageTitle(activeMenuItem);
 
@@ -43,8 +55,8 @@ export function DashboardHeader() {
           />
         )}
 
-        <Button size="icon" variant="outline" onClick={() => router.push(`/${role}/notifications`)}>
-          <Bell />
+        <Button size="icon" variant="outline" onClick={() => router.push(`/${role}/messages`)}>
+          <MessageCircleMore />
         </Button>
       </div>
     </header>
