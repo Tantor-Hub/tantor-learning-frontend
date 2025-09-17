@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { convertToSubcurrency } from "@/lib/convert-to-subcurrency";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
 
 // Types pour les données OPCO
 export interface OpcoFormData {
@@ -54,6 +56,7 @@ export function CheckoutPage({
     phone: "",
     email: "",
   });
+  const currentUser = useSelector(selectCurrentUser);
   const [formErrors, setFormErrors] = useState({
     companyName: false,
     siren: false,
@@ -65,13 +68,13 @@ export function CheckoutPage({
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/sessions/session/payment/card`, {
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/stripe/payment/card`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       // parseFloat((amount * 100).toFixed(2))
-      body: JSON.stringify({ amount: convertToSubcurrency(amount) }), // Stripe utilise les centimes
+      body: JSON.stringify({ amount: amount, session_id: sessionId, user_id: currentUser?.id }), // Stripe utilise les centimes
     })
       .then((res) => res.json())
       .then((data) => setClientSecret(data.clientSecret))
@@ -107,17 +110,17 @@ export function CheckoutPage({
 
     try {
       // Préparer les données de paiement
-      const paymentData = {
-        stripe,
-        elements,
-        clientSecret,
-        confirmParams: {
-          return_url: `${process.env.NEXT_PUBLIC_APP_URL}/trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}&hasDocument=${hasDocument}&trainingId=${trainingId}&sessionId=${sessionId}`,
-        },
-      };
+      // const paymentData = {
+      //   stripe,
+      //   elements,
+      //   clientSecret,
+      //   confirmParams: {
+      //     return_url: `${process.env.NEXT_PUBLIC_APP_URL}/trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}&hasDocument=${hasDocument}&trainingId=${trainingId}&sessionId=${sessionId}`,
+      //   },
+      // };
 
       // Appeler la fonction du parent pour gérer le paiement par carte
-      await handleCARDPayment(paymentData);
+      await handleCARDPayment({ id_session: "kddk" });
     } catch (error: any) {
       setErrorMessage(error.message || "Erreur lors du paiement");
     } finally {

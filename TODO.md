@@ -1,0 +1,7 @@
+- [x] Add missing imports to signup-form.tsx: useEffect, useSearchParams, useDispatch, setCredentials
+- [x] Add loadingGoogle state variable, remove isGoogleLoading, googleError, googleSignup
+- [x] Remove useAuthWithGoogleMutation import
+- [x] Add useEffect to handle Google auth response (decode base64, parse JSON, dispatch credentials)
+- [x] Update signInWithGoogle function to use router.push with env var and set loading state
+- [x] Update Google button to use loadingGoogle state instead of isGoogleLoading
+- [x] Test the implementation to ensure it works like signin

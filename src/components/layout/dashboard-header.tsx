@@ -32,7 +32,7 @@ export function DashboardHeader() {
   const primaryRoleId = currentUser?.roles[0]?.id;
   const role = primaryRoleId ? roleIdToRouteMap[primaryRoleId] : "";
 
-  const isStudent = primaryRoleId === 4; // Check if role ID is 4 (Étudiants)
+  const isStudent = primaryRoleId === 1; // Check if role ID is 4 (Étudiants)
 
   const title = getPageTitle(activeMenuItem);
 

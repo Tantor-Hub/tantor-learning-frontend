@@ -6,7 +6,11 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useResendCodeMutation, useVerifyMutation } from "@/lib/apis/auth-api";
+import {
+  useResendCodeMutation,
+  useVerifyMutation,
+  useVerifyPasswordLessMutation,
+} from "@/lib/apis/auth-api";
 import { toast } from "react-hot-toast";
 import { verifyAccountCodeSchema, verifyAccountCodeValues } from "@/lib/validators/auth-schema";
 import { useSearchParams } from "next/navigation";
@@ -24,7 +28,7 @@ export function VerifyAccountForm() {
   const dispatch = useDispatch();
   const email = searchParams.get("email") as string;
   const [resendCode, { isLoading: isResending }] = useResendCodeMutation();
-  const [verifyAccount, { isLoading }] = useVerifyMutation();
+  const [verifyAccount, { isLoading }] = useVerifyPasswordLessMutation();
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
   const [canResend, setCanResend] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -94,23 +98,23 @@ export function VerifyAccountForm() {
       toastRef.current = toast.loading("Vérification en cours...");
 
       const response = await verifyAccount({
-        email_user: email,
-        verication_code: parseInt(pin),
+        email: email,
+        otp: String(pin),
       }).unwrap();
 
       // Stocker les credentials dans Redux
       dispatch(
         setCredentials({
-          token: response.auth_token,
-          refreshToken: response.refresh_token,
-          expiresIn: response.expires_in,
+          token: response.data.auth_token,
+          refreshToken: response.data.refresh_token,
+          expiresIn: 44048394,
         })
       );
 
       toast.dismiss(toastRef.current);
       toastRef.current = null;
 
-      toast.success("Compte vérifié avec succès");
+      toast.success(response.message);
 
       // Navigation vers la page d'accueil
       router.replace("/");

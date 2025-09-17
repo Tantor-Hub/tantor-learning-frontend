@@ -85,6 +85,69 @@ export const authApi = createApi({
   // Tags for cache invalidation
   tagTypes: ["Auth"],
   endpoints: (builder) => ({
+    loginPasswordLess: builder.mutation<
+      {
+        statusCode: number;
+        status?: string;
+        message: string;
+      },
+      { email: string }
+    >({
+      query: (request) => ({
+        url: "users/user/passwordless/login",
+        method: "POST",
+        body: { email: request.email },
+      }),
+      // Invalidate auth cache on successful login
+      invalidatesTags: ["Auth"],
+    }),
+    registerPasswordLess: builder.mutation<
+      {
+        statusCode: number;
+        status?: string;
+        message: string;
+      },
+      { firstName?: string; lastName?: string; email: string }
+    >({
+      query: (request) => ({
+        url: "users/user/passwordless/register",
+        method: "POST",
+        body: request,
+      }),
+      // Invalidate auth cache on successful login
+      invalidatesTags: ["Auth"],
+    }),
+    verifyPasswordLess: builder.mutation<
+      {
+        statusCode: number;
+        status?: string;
+        message: string;
+        data: {
+          auth_token: string;
+          refresh_token: string;
+          user: {
+            id: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+            avatar: string;
+            role: string;
+          };
+        };
+      },
+      {
+        email: string;
+        otp: string;
+      }
+    >({
+      query: (request) => ({
+        url: "users/user/passwordless/verify",
+        method: "POST",
+        body: request,
+      }),
+      // Invalidate auth cache on successful login
+      invalidatesTags: ["Auth"],
+    }),
     signin: builder.mutation<TokenResponse, AuthCredentials>({
       query: (credentials) => ({
         url: "users/user/signin",
@@ -174,4 +237,7 @@ export const {
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useVerifyBeforeResetPasswordMutation,
+  useLoginPasswordLessMutation,
+  useRegisterPasswordLessMutation,
+  useVerifyPasswordLessMutation,
 } = authApi;
