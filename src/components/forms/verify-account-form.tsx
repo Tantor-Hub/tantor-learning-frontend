@@ -107,7 +107,8 @@ export function VerifyAccountForm() {
         setCredentials({
           token: response.data.auth_token,
           refreshToken: response.data.refresh_token,
-          expiresIn: 44048394,
+          expiresIn: 86400,
+          user: response.data.user,
         })
       );
 

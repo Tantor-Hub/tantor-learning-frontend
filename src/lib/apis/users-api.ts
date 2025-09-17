@@ -1,7 +1,35 @@
-// File: src/lib/api/users-api.ts
+import { IUser } from "@/types/user";
 import { createApi, enhancedBaseQuery } from "./base-api";
 
 // User related types
+export interface UserProfile {
+  id: number;
+  fs_name: string;
+  ls_name: string;
+  nick_name: string;
+  email: string;
+  phone?: string;
+  avatar?: string | null;
+  adresse_physique?: string | null;
+  pays_residance?: string | null;
+  ville_residance?: string | null;
+  num_piece_identite?: string | null;
+  createdAt: string;
+  roles: {
+    id: number;
+    role: string;
+    description: string;
+    HasRoles: {
+      id: number;
+      UserId: number;
+      RoleId: number;
+      status: number;
+      createdAt: string;
+      updatedAt: string;
+    };
+  }[];
+}
+
 export interface ProfileUpdateResponse {
   // username: string;
   fs_name: string;
@@ -44,33 +72,7 @@ export interface ProfileUpdateRequest {
 export interface User {
   status: number;
   message: string;
-  data: {
-    id: number;
-    fs_name: string;
-    ls_name: string;
-    nick_name: string;
-    email: string;
-    phone?: string;
-    avatar?: string | null;
-    adresse_physique?: string | null;
-    pays_residance?: string | null;
-    ville_residance?: string | null;
-    num_piece_identite?: string | null;
-    createdAt: string;
-    roles: {
-      id: number;
-      role: string;
-      description: string;
-      HasRoles: {
-        id: number;
-        UserId: number;
-        RoleId: number;
-        status: number;
-        createdAt: string;
-        updatedAt: string;
-      };
-    }[];
-  };
+  data: UserProfile;
 }
 
 interface IPublicUsers {

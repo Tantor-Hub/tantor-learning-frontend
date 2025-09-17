@@ -238,7 +238,7 @@ export default function Page() {
             <GraduationCap className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="heading-one">Bonjour {currentUser?.fs_name} ! 👋</h1>
+            <h1 className="heading-one">Bonjour {currentUser?.firstName} ! 👋</h1>
             <p className="text-muted-foreground mt-1 text-sm">
               La liste de vos sessions de formation
             </p>

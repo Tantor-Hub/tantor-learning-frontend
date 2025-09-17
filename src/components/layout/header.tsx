@@ -119,8 +119,8 @@ const UserAvatar = ({
   avatarName,
   currentRole,
 }: {
-  avatar?: string;
-  firstName?: string;
+  avatar?: string | null;
+  firstName?: string | null;
   avatarName?: string;
   email?: string;
   handleLogout: () => void;
@@ -131,7 +131,7 @@ const UserAvatar = ({
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon" className="rounded-full">
           <Avatar className="inline-block static size-8">
-            <AvatarImage src={avatar} />
+            <AvatarImage src={avatar || undefined} />
             <AvatarFallback className="font-semibold bg-primary text-background">
               {avatarName || "A"}
             </AvatarFallback>
@@ -159,7 +159,7 @@ const UserAvatar = ({
 export function Header() {
   const { logout } = useLogout();
   const currentUser = useSelector(selectCurrentUser);
-  const role = currentUser?.roles[0]?.role?.toLowerCase() || "dashboard";
+  const role = currentUser?.role ?? "";
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -201,10 +201,10 @@ export function Header() {
           <div className="hidden flex-shrink-0 w-48 md:flex justify-end">
             {isAuthenticated ? (
               <UserAvatar
-                avatar={currentUser?.avatar}
-                firstName={currentUser?.fs_name}
+                avatar={currentUser?.avatar || undefined}
+                firstName={currentUser?.firstName || null}
                 email={currentUser?.email}
-                avatarName={currentUser?.fs_name?.[0]}
+                avatarName={currentUser?.firstName?.[0] || "A"}
                 handleLogout={logout}
                 currentRole={role}
               />
@@ -220,10 +220,10 @@ export function Header() {
           <div className="md:hidden flex items-center">
             {isAuthenticated && (
               <UserAvatar
-                avatar={currentUser?.avatar}
-                firstName={currentUser?.fs_name}
+                avatar={currentUser?.avatar || undefined}
+                firstName={currentUser?.firstName || null}
                 email={currentUser?.email}
-                avatarName={currentUser?.fs_name?.[0]}
+                avatarName={currentUser?.firstName?.[0] || "A"}
                 handleLogout={logout}
                 currentRole={role}
               />

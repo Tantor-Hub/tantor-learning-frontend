@@ -19,7 +19,7 @@ export function SessionSelector({ selectedSessionId, onSessionChange }: SessionS
   const currentUser = useSelector(selectCurrentUser);
 
   const { data: sessions, isLoading } = useGetMySessionsQuery(undefined, {
-    skip: currentUser?.roles[1]?.role.toLowerCase() !== "étudiants",
+    skip: currentUser?.role !== "student",
   });
 
   if (isLoading) {

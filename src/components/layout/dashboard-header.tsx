@@ -11,13 +11,7 @@ import {
   setSelectedSessionId,
 } from "@/features/dashboard/dashboard-slice";
 
-// Map role IDs to route names
-const roleIdToRouteMap: Record<number, string> = {
-  1: "admin",
-  2: "secretary",
-  3: "instructor",
-  4: "student",
-};
+// Map role strings to route names if needed, but now role is already the string
 
 export function DashboardHeader() {
   const router = useRouter();
@@ -28,11 +22,10 @@ export function DashboardHeader() {
 
   const activeMenuItem = path.split("/")[2];
 
-  // Get the role based on ID mapping
-  const primaryRoleId = currentUser?.roles[0]?.id;
-  const role = primaryRoleId ? roleIdToRouteMap[primaryRoleId] : "";
+  // Get the role
+  const role = currentUser?.role || "";
 
-  const isStudent = primaryRoleId === 1; // Check if role ID is 4 (Étudiants)
+  const isStudent = role === "student";
 
   const title = getPageTitle(activeMenuItem);
 

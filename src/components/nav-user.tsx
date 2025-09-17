@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkle } from "lucide-react";
 import { useLogout } from "@/hooks/use-logout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,7 +18,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useGetUserProfileQuery } from "@/lib/apis/users-api";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,50 +32,13 @@ import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { useRouter } from "next/navigation";
 
-type UserDataProps = {
-  id: number;
-  fs_name: string;
-  ls_name: string;
-  nick_name: string;
-  email: string;
-  phone?: string;
-  avatar?: string | null;
-  adresse_physique?: string | null;
-  pays_residance?: string | null;
-  ville_residance?: string | null;
-  num_piece_identite?: string | null;
-  createdAt: string;
-  roles: {
-    id: number;
-    role: string;
-    description: string;
-    HasRoles: {
-      id: number;
-      UserId: number;
-      RoleId: number;
-      status: number;
-      createdAt: string;
-      updatedAt: string;
-    };
-  }[];
-};
-
 export function NavUser() {
   const { isMobile } = useSidebar();
   const { logout } = useLogout();
   const router = useRouter();
   const currentUser = useSelector(selectCurrentUser);
-  const role = currentUser?.roles[0].role.toLowerCase();
-  const { data, isLoading, isError } = useGetUserProfileQuery();
-  const [preview, setPreview] = useState<string | null>(null);
-  const [userData, setUserData] = useState<UserDataProps | null>(null);
+  const role = currentUser?.role;
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-
-  useEffect(() => {
-    if (data) {
-      setUserData(data.data);
-    }
-  }, [data]);
 
   const handleLogoutClick = () => {
     setShowLogoutDialog(true);
@@ -99,18 +61,18 @@ export function NavUser() {
               >
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage
-                    src={userData?.avatar || ""}
-                    alt={userData?.fs_name}
+                    src={currentUser?.avatar || undefined}
+                    alt={currentUser?.firstName || undefined}
                     className="object-cover object-center"
                   />
                   <AvatarFallback className="rounded-lg">
-                    {userData?.fs_name[0]}
-                    {userData?.ls_name[0]}
+                    {currentUser?.firstName?.[0]}
+                    {currentUser?.lastName?.[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{userData?.nick_name}</span>
-                  <span className="truncate text-xs">{userData?.email}</span>
+                  <span className="truncate font-semibold">{currentUser?.firstName}</span>
+                  <span className="truncate text-xs">{currentUser?.email}</span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4" />
               </SidebarMenuButton>
@@ -124,15 +86,18 @@ export function NavUser() {
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src={userData?.avatar || ""} alt={userData?.fs_name} />
+                    <AvatarImage
+                      src={currentUser?.avatar || undefined}
+                      alt={currentUser?.firstName || undefined}
+                    />
                     <AvatarFallback className="rounded-lg">
-                      {userData?.fs_name[0]}
-                      {userData?.ls_name[0]}
+                      {currentUser?.firstName?.[0]}
+                      {currentUser?.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{userData?.nick_name}</span>
-                    <span className="truncate text-xs">{userData?.email}</span>
+                    <span className="truncate font-semibold">{currentUser?.firstName}</span>
+                    <span className="truncate text-xs">{currentUser?.email}</span>
                   </div>
                 </div>
               </DropdownMenuLabel>

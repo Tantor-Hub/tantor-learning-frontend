@@ -59,7 +59,7 @@ export default function Page() {
     const toastId = toast.loading("Envoi en cours...");
     try {
       const response = await contactForm({
-        from_name: currentUser?.nick_name || "",
+        from_name: currentUser?.firstName || "",
         from_mail: currentUser?.email || "",
         subject: values.subject,
         content: values.message,

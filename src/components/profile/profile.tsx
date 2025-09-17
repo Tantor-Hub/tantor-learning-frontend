@@ -2,41 +2,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, Home, MapPin, Calendar, IdCard } from "lucide-react";
-import { useGetUserProfileQuery } from "@/lib/apis/users-api";
+import { useGetUserProfileQuery, UserProfile } from "@/lib/apis/users-api";
 import { Loading } from "../shared/loading";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { UpdateProfile } from "./update-profile";
 
-type UserDataProps = {
-  id: number;
-  fs_name: string;
-  ls_name: string;
-  nick_name: string;
-  email: string;
-  phone?: string;
-  avatar?: string | null;
-  adresse_physique?: string | null;
-  pays_residance?: string | null;
-  ville_residance?: string | null;
-  num_piece_identite?: string | null;
-  createdAt: string;
-  roles: {
-    id: number;
-    role: string;
-    description: string;
-    HasRoles: {
-      id: number;
-      UserId: number;
-      RoleId: number;
-      status: number;
-      createdAt: string;
-      updatedAt: string;
-    };
-  }[];
-};
 export function ProfilePage() {
   const { data, isLoading, isError } = useGetUserProfileQuery();
-  const [userData, setUserData] = useState<UserDataProps | null>(null);
+  const [userData, setUserData] = useState<UserProfile | null>(null);
 
   // Vérifier et mettre à jour les données utilisateur quand elles sont chargées
   useEffect(() => {

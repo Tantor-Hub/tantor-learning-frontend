@@ -1,5 +1,6 @@
-import { authApi, SignupData } from "@/lib/apis/auth-api";
+import { authApi } from "@/lib/apis/auth-api";
 import { usersApi } from "@/lib/apis/users-api";
+import { IUser, UserRole } from "@/types/user";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface AuthState {
@@ -7,30 +8,7 @@ export interface AuthState {
   refreshToken: string | null;
   expiresAt: number | null;
   isAuthenticated: boolean;
-  user: null | {
-    id: string;
-    username: string;
-    email: string;
-    fs_name?: string;
-    ls_name?: string;
-    nick_name?: string;
-    // Added additional user properties
-    phone?: string;
-    avatar?: string;
-    roles: {
-      id: number;
-      role: string;
-      description: string;
-      HasRoles: {
-        id: number;
-        UserId: number;
-        RoleId: number;
-        status: number;
-        createdAt: string;
-        updatedAt: string;
-      };
-    }[];
-  };
+  user: IUser | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -172,66 +150,51 @@ export const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Auth API matchers
-      .addMatcher(authApi.endpoints.signin.matchPending, (state) => {
+      .addMatcher(authApi.endpoints.loginPasswordLess.matchPending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addMatcher(authApi.endpoints.signin.matchFulfilled, (state, { payload }) => {
-        state.token = payload.auth_token;
-        state.refreshToken = payload.refresh_token;
-        state.expiresAt = Date.now() + payload.expires_in * 1000;
+      .addMatcher(authApi.endpoints.loginPasswordLess.matchFulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addMatcher(authApi.endpoints.loginPasswordLess.matchRejected, (state, { error }) => {
+        state.isLoading = false;
+        state.error = error.message || "Passwordless login failed";
+      })
+
+      .addMatcher(authApi.endpoints.registerPasswordLess.matchPending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addMatcher(authApi.endpoints.registerPasswordLess.matchFulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addMatcher(authApi.endpoints.registerPasswordLess.matchRejected, (state, { error }) => {
+        state.isLoading = false;
+        state.error = error.message || "Passwordless register failed";
+      })
+
+      .addMatcher(authApi.endpoints.verifyPasswordLess.matchPending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addMatcher(authApi.endpoints.verifyPasswordLess.matchFulfilled, (state, { payload }) => {
+        state.token = payload.data.auth_token;
+        state.refreshToken = payload.data.refresh_token;
+        state.expiresAt = Date.now() + 3600 * 1000; // Default 1 hour, since expires_in not in response
         state.isAuthenticated = true;
         state.isLoading = false;
 
-        // If user data exists in the response
-        if (payload.data?.user) {
-          state.user = {
-            id: "", // Will be populated later when getting user profile
-            username: payload.data.user.nick_name || "",
-            email: payload.data.user.email || "",
-            fs_name: payload.data.user.fs_name,
-            ls_name: payload.data.user.ls_name,
-            nick_name: payload.data.user.nick_name,
-            roles: payload.data.user.roles || [],
-          };
+        // Set user from payload.data.user
+        if (payload.data.user) {
+          state.user = payload.data.user;
         }
 
         persistAuthState(state);
       })
-      .addMatcher(authApi.endpoints.signin.matchRejected, (state, { error }) => {
+      .addMatcher(authApi.endpoints.verifyPasswordLess.matchRejected, (state, { error }) => {
         state.isLoading = false;
-        state.error = error.message || "Login failed";
-      })
-
-      .addMatcher(authApi.endpoints.signup.matchPending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addMatcher(authApi.endpoints.signup.matchFulfilled, (state, { payload }) => {
-        state.token = payload.auth_token;
-        state.refreshToken = payload.refresh_token;
-        state.expiresAt = Date.now() + payload.expires_in * 1000;
-        state.isAuthenticated = true;
-        state.isLoading = false;
-
-        // If user data exists in the response
-        if (payload.data?.user) {
-          state.user = {
-            id: "",
-            username: payload.data.user.nick_name || "",
-            email: payload.data.user.email || "",
-            fs_name: payload.data.user.fs_name,
-            ls_name: payload.data.user.ls_name,
-            nick_name: payload.data.user.nick_name,
-            roles: payload.data.user.roles || [],
-          };
-        }
-
-        persistAuthState(state);
-      })
-      .addMatcher(authApi.endpoints.signup.matchRejected, (state, { error }) => {
-        state.isLoading = false;
-        state.error = error.message || "Signup failed";
+        state.error = error.message || "Passwordless verify failed";
       })
 
       .addMatcher(authApi.endpoints.verify.matchFulfilled, (state, { payload }) => {
@@ -317,7 +280,21 @@ export const authSlice = createSlice({
         if (payload && state.user) {
           state.user = {
             ...state.user,
-            ...payload,
+            firstName: payload.fs_name || state.user.firstName,
+            lastName: payload.ls_name || state.user.lastName,
+            email: payload.email || state.user.email,
+            avatar: state.user.avatar,
+            address: payload.adresse_physique || state.user.address,
+            country: payload.pays_residance || state.user.country,
+            city: payload.ville_residance || state.user.city,
+            identityNumber: payload.num_piece_identite
+              ? parseInt(payload.num_piece_identite)
+              : state.user.identityNumber,
+            createdAt: new Date(payload.createdAt),
+            role:
+              payload.roles && payload.roles.length > 0
+                ? (payload.roles[0].role as UserRole)
+                : state.user.role,
           };
           persistAuthState(state);
         }
@@ -351,5 +328,6 @@ export const selectIsTokenExpired = (state: { auth: AuthState }) => {
 };
 export const selectAuthLoading = (state: { auth: AuthState }) => state.auth.isLoading;
 export const selectAuthError = (state: { auth: AuthState }) => state.auth.error;
+export const selectCurrentUserRole = (state: { auth: AuthState }) => state.auth.user?.role;
 
 export default authSlice.reducer;

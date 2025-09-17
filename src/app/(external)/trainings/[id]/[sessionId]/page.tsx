@@ -186,7 +186,7 @@ export default function Page() {
     try {
       // console.log("Paiement CPF initié");
 
-      const fullName = `${currentUser?.fs_name} ${currentUser?.ls_name}`.trim();
+      const fullName = `${currentUser?.firstName} ${currentUser?.lastName}`.trim();
       if (!fullName) {
         toast.error("Nom d'utilisateur manquant");
         return;
@@ -282,7 +282,7 @@ export default function Page() {
         card: {
           full_name:
             paymentMethod?.billing_details?.name ||
-            currentUser?.fs_name + " " + currentUser?.ls_name ||
+            `${currentUser?.firstName} ${currentUser?.lastName}`.trim() ||
             "Nom non fourni",
           card_number: `****-****-****-${paymentMethod?.card?.last4 || "0000"}`,
           cvv: 0, // Le CVV n'est pas retourné par Stripe pour des raisons de sécurité

@@ -1,30 +1,10 @@
+import { IUser } from "@/types/user";
 import { baseQuery, createApi, enhancedBaseQuery } from "./base-api";
 
 // Types for better type safety
 export interface AuthCredentials {
   user_name: string;
   password: string;
-}
-
-export interface SignupData {
-  fs_name: string;
-  ls_name: string;
-  password: string;
-  nick_name: string;
-  email: string;
-  roles?: {
-    id: number;
-    role: string;
-    description: string;
-    HasRoles: {
-      id: number;
-      UserId: number;
-      RoleId: number;
-      status: number;
-      createdAt: string;
-      updatedAt: string;
-    };
-  }[];
 }
 
 export interface TokenResponse {
@@ -37,7 +17,7 @@ export interface TokenResponse {
     refresh_token: string;
     auth_token: string;
     message: string;
-    user: SignupData;
+    // user: SignupData;
   };
 }
 
@@ -125,14 +105,7 @@ export const authApi = createApi({
         data: {
           auth_token: string;
           refresh_token: string;
-          user: {
-            id: string;
-            email: string;
-            firstName: string;
-            lastName: string;
-            avatar: string;
-            role: string;
-          };
+          user: IUser;
         };
       },
       {
@@ -157,13 +130,13 @@ export const authApi = createApi({
       // Invalidate auth cache on successful login
       invalidatesTags: ["Auth"],
     }),
-    signup: builder.mutation<TokenResponse, SignupData>({
-      query: (data) => ({
-        url: "users/user/signup",
-        method: "POST",
-        body: data,
-      }),
-    }),
+    // signup: builder.mutation<TokenResponse, SignupData>({
+    //   query: (data) => ({
+    //     url: "users/user/signup",
+    //     method: "POST",
+    //     body: data,
+    //   }),
+    // }),
     verify: builder.mutation<TokenResponse, VerifyRequest>({
       query: (data) => ({
         url: "users/user/verify",
@@ -228,7 +201,7 @@ export const authApi = createApi({
 
 export const {
   useSigninMutation,
-  useSignupMutation,
+  // useSignupMutation,
   useVerifyMutation,
   useRefreshTokenMutation,
   useLogoutMutation,
