@@ -68,11 +68,11 @@ const navigationMenus: NavigationMenus = {
       url: "student/planning",
       icon: CalendarDays,
     },
-    {
-      title: "Notifications",
-      url: "student/notifications",
-      icon: Bell,
-    },
+    // {
+    //   title: "Notifications",
+    //   url: "student/notifications",
+    //   icon: Bell,
+    // },
   ],
   admin: [
     {
@@ -139,11 +139,11 @@ const navigationMenus: NavigationMenus = {
       url: "instructor/planning",
       icon: CalendarDays,
     },
-    {
-      title: "Notifications",
-      url: "student/notifications",
-      icon: Bell,
-    },
+    // {
+    //   title: "Notifications",
+    //   url: "student/notifications",
+    //   icon: Bell,
+    // },
   ],
   secretary: [
     {
