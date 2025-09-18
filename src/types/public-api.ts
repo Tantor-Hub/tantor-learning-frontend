@@ -5,6 +5,16 @@ export interface ISubscribeNewsLetterRequest {
 export interface ISubscribeNewsLetterResponse {
   status: number;
   message: string;
+  data?: string;
+}
+
+export interface IUnsubscribeNewsLetterRequest {
+  user_email: string;
+}
+
+export interface IUnsubscribeNewsLetterResponse {
+  status: number;
+  message: string;
 }
 
 export interface IGetAllTrainingsResponse {

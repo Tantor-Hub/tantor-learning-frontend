@@ -3,6 +3,7 @@ import { CookieMessage } from "@/components/shared/cookie-message";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Loading } from "@/components/shared/loading";
+import { NewsLetter } from "@/components/sections/news-letter";
 
 export default function ExternalLayout({
   children,
@@ -21,6 +22,9 @@ export default function ExternalLayout({
       >
         {children}
       </Suspense>
+      <div className="bg-ring">
+        <NewsLetter />
+      </div>
       <Footer />
       <CookieMessage />
     </>

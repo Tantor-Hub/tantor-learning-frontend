@@ -26,7 +26,7 @@ export default async function RootLayout({
       <body className={`${poppins.className} text-base leading-relaxed`}>
         <ReduxProvider>
           {children}
-          <Toaster position="bottom-right" />
+          <Toaster position="top-right" />
         </ReduxProvider>
       </body>
     </html>

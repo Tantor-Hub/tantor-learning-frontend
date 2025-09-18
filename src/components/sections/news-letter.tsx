@@ -12,9 +12,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useSubscribeNewsLetterMutation } from "@/lib/apis/public/public-api";
+import {
+  useSubscribeNewsLetterMutation,
+  useUnsubscribeNewsLetterMutation,
+} from "@/lib/apis/public/public-api";
 import { toast } from "react-hot-toast";
 import { subscribeNewsLetterSchema, SubscribeNewsLetterSchemaFormValues } from "@/lib/validators";
+import { useState } from "react";
 
 const contactInfo = {
   title: "Besoin de plus d'informations ?",
@@ -40,7 +44,12 @@ const contactInfo = {
 };
 
 export function NewsLetter() {
-  const [handleSubscribeNewsLetter, { isLoading }] = useSubscribeNewsLetterMutation();
+  const [handleSubscribeNewsLetter, { isLoading: isSubscribing }] =
+    useSubscribeNewsLetterMutation();
+  const [handleUnsubscribeNewsLetter, { isLoading: isUnsubscribing }] =
+    useUnsubscribeNewsLetterMutation();
+  const [showUnsubscribe, setShowUnsubscribe] = useState(false);
+
   const form = useForm<SubscribeNewsLetterSchemaFormValues>({
     resolver: zodResolver(subscribeNewsLetterSchema),
     defaultValues: {
@@ -53,23 +62,44 @@ export function NewsLetter() {
       const response = await handleSubscribeNewsLetter({
         user_email: values.email,
       }).unwrap();
-      toast.success("Ajouté à la liste de diffusion");
-      form.reset();
-      if (response.status !== 201) {
+      if (response.status === 201) {
+        toast.success("Ajouté à la liste de diffusion");
+        form.reset();
+        setShowUnsubscribe(false);
+      } else {
         toast.error("Une erreur s'est produite. Veuillez réessayer.");
       }
+    } catch (error: any) {
+      if (error.status === 409) {
+        toast.error("Vous êtes déjà inscrit à la newsletter.");
+        setShowUnsubscribe(true);
+      } else {
+        toast.error(
+          "Impossible de vous abonner pour le moment. Vérifiez votre connexion ou réessayez plus tard."
+        );
+      }
+    }
+  };
+
+  const onUnsubscribe = async () => {
+    try {
+      const email = form.getValues("email");
+      const response = await handleUnsubscribeNewsLetter({
+        user_email: email,
+      }).unwrap();
+
+      toast.success("Vous êtes désabonné de la newsletter.");
+      setShowUnsubscribe(false);
+      form.reset();
     } catch (error) {
-      toast.error(
-        "Impossible de vous abonner pour le moment. Vérifiez votre connexion ou réessayez plus tard."
-      );
-      // console.error("Subscription error:", error);
+      toast.error("Impossible de vous désabonner pour le moment. Réessayez plus tard.");
     }
   };
 
   const isFormValid = form.formState.isValid;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full m-auto md:px-10 py-16 flex flex-col md:flex-row justify-between gap-5">
+    <div className="max-w-7xl mx-auto px-4 bg-ring sm:px-6 lg:px-8 w-full m-auto md:px-10 py-16 flex flex-col md:flex-row justify-between gap-5">
       <div className="max-w-[430px] text-white space-w-4 flex-[2/3]">
         <h2 className="text-xl font-work-sans font-semibold mb-2">{contactInfo.title}</h2>
         <p className="font-light text-base">{contactInfo.description}</p>
@@ -113,10 +143,22 @@ export function NewsLetter() {
               type="submit"
               size="lg"
               className="w-full"
-              disabled={!isFormValid || isLoading} // Désactivé si le formulaire n'est pas valide
+              disabled={!isFormValid || isSubscribing || isUnsubscribing} // Disabled if form invalid or loading
             >
-              {isLoading ? <Loader2 className="animate-spin" /> : "S'inscrire"}
+              {isSubscribing ? <Loader2 className="animate-spin" /> : "S'inscrire"}
             </Button>
+            {showUnsubscribe && (
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                className="w-full mt-2"
+                onClick={onUnsubscribe}
+                disabled={isUnsubscribing}
+              >
+                {isUnsubscribing ? <Loader2 className="animate-spin" /> : "Se désabonner"}
+              </Button>
+            )}
           </form>
         </Form>
       </div>

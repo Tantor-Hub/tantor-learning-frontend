@@ -23,9 +23,6 @@ export default function Page() {
           <TrainingList />
         </Suspense>
       </div>
-      <div className="bg-ring">
-        <NewsLetter />
-      </div>
     </section>
   );
 }

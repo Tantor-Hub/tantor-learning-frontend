@@ -9,6 +9,8 @@ import {
   IListSessionsByFormationIdResponse,
   ISubscribeNewsLetterRequest,
   ISubscribeNewsLetterResponse,
+  IUnsubscribeNewsLetterRequest,
+  IUnsubscribeNewsLetterResponse,
 } from "@/types/public-api";
 
 export const publicApi = createApi({
@@ -24,6 +26,16 @@ export const publicApi = createApi({
         url: "cms/newsletter",
         method: "POST",
         body: body,
+      }),
+    }),
+    unsubscribeNewsLetter: builder.mutation<
+      IUnsubscribeNewsLetterResponse,
+      IUnsubscribeNewsLetterRequest
+    >({
+      query: (request) => ({
+        url: "cms/newsletter/unsubscribe",
+        method: "POST",
+        body: request,
       }),
     }),
     getAllTrainings: builder.query<IGetAllTrainingsResponse, void>({
@@ -62,6 +74,7 @@ export const publicApi = createApi({
 
 export const {
   useSubscribeNewsLetterMutation,
+  useUnsubscribeNewsLetterMutation,
   useGetAllTrainingsQuery,
   useGetAllBooksInLibraryQuery,
   useContactFormAPIMutation,
