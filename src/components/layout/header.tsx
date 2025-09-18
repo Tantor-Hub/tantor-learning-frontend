@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { useRouter, usePathname } from "next/navigation";
@@ -24,7 +24,12 @@ const publicLinks = [
   { href: "/about-us", label: "À propos" },
 ];
 
-const privateLinks = [{ href: "/dashboard", label: "Tableau de bord" }, ...publicLinks];
+const getPrivateLinks = (role?: string) => {
+  if (!role) return [...publicLinks];
+  // Customize private links based on role if needed
+  // For now, just return dashboard link with role path and publicLinks
+  return [{ href: `/${role}`, label: "Tableau de bord" }, ...publicLinks];
+};
 
 interface NavLinksProps {
   className?: string;
@@ -33,6 +38,7 @@ interface NavLinksProps {
   isMobile?: boolean;
   closeMobileMenu?: () => void;
   currentPath: string;
+  mounted?: boolean;
 }
 
 const NavLinks = ({
@@ -42,30 +48,35 @@ const NavLinks = ({
   isMobile = false,
   closeMobileMenu,
   currentPath,
-}: NavLinksProps) => (
-  <nav
-    className={`${isMobile ? "flex" : "hidden md:flex"} items-center ${
-      isMobile ? "flex-col space-y-4 mt-4" : "space-x-8"
-    } ${className}`}
-  >
-    {(isAuthenticated ? privateLinks : publicLinks).map(({ href, label }) => {
-      const isActive = currentPath === href;
+  mounted = false,
+}: NavLinksProps) => {
+  const links = mounted && isAuthenticated ? getPrivateLinks(role) : publicLinks;
 
-      return (
-        <Link
-          href={href === "/dashboard" ? `/${role}` : href}
-          key={label}
-          onClick={closeMobileMenu}
-          className={`font-normal flex items-center whitespace-nowrap transition-colors ${
-            isActive ? "text-primary" : "text-foreground hover:text-primary"
-          }`}
-        >
-          {label}
-        </Link>
-      );
-    })}
-  </nav>
-);
+  return (
+    <nav
+      className={`${isMobile ? "flex" : "hidden md:flex"} items-center ${
+        isMobile ? "flex-col space-y-4 mt-4" : "space-x-8"
+      } ${className}`}
+    >
+      {links.map(({ href, label }) => {
+        const isActive = currentPath === href;
+
+        return (
+          <Link
+            href={href}
+            key={label}
+            onClick={closeMobileMenu}
+            className={`font-normal flex items-center whitespace-nowrap transition-colors ${
+              isActive ? "text-primary" : "text-foreground hover:text-primary"
+            }`}
+          >
+            {label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+};
 
 interface AuthButtonsProps {
   direction?: "row" | "col";
@@ -161,9 +172,14 @@ export function Header() {
   const currentUser = useSelector(selectCurrentUser);
   const role = currentUser?.role ?? "";
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const isAuthenticated = useSelector(selectIsAuthenticated);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
@@ -194,6 +210,7 @@ export function Header() {
               role={role}
               className="flex-1 justify-center"
               currentPath={pathname}
+              mounted={mounted}
             />
           </div>
 
@@ -253,6 +270,7 @@ export function Header() {
               isMobile
               closeMobileMenu={closeMobileMenu}
               currentPath={pathname}
+              mounted={mounted}
             />
 
             {!isAuthenticated && (

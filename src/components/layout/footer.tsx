@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Facebook, Instagram, Linkedin, Youtube, Twitter } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Youtube, PhoneCall } from "lucide-react";
 import { Separator } from "../ui/separator";
 
 const footerLinks = [
@@ -26,11 +26,31 @@ const footerLinks = [
 ];
 
 const socialsIcons = [
-  { id: "facebook", icon: <Facebook className="w-4 h-4 text-white" size={16} /> },
-  { id: "instagram", icon: <Instagram className="w-4 h-4 text-white" /> },
-  { id: "linkedin", icon: <Linkedin className="w-4 h-4 text-white" /> },
-  { id: "x", icon: <Twitter className="w-4 h-4 text-white" /> },
-  { id: "youtube", icon: <Youtube className="w-4 h-4 text-white" /> },
+  {
+    id: "facebook",
+    icon: <Facebook className="w-4 h-4 text-white" size={16} />,
+    url: "https://www.facebook.com/people/Tantor-Learning/61579342811776/",
+  },
+  {
+    id: "instagram",
+    icon: <Instagram className="w-4 h-4 text-white" />,
+    url: "https://www.instagram.com/tantor.learning/",
+  },
+  {
+    id: "linkedin",
+    icon: <Linkedin className="w-4 h-4 text-white" />,
+    url: "https://www.linkedin.com/company/tantor-learning/?viewAsMember=true",
+  },
+  {
+    id: "phone-call",
+    icon: <PhoneCall className="w-4 h-4 text-white" />,
+    url: "tel:+336 66 68 37 60",
+  },
+  {
+    id: "youtube",
+    icon: <Youtube className="w-4 h-4 text-white" />,
+    url: "https://www.youtube.com/@TantorLearning",
+  },
 ];
 
 export function Footer() {
@@ -57,7 +77,7 @@ export function Footer() {
               <div className="flex gap-2.5">
                 {socialsIcons.map((social) => (
                   <a
-                    href="#"
+                    href={social.url}
                     className="bg-white/20 rounded-full p-2"
                     aria-label={social.id}
                     key={social.id}

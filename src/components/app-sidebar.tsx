@@ -14,6 +14,7 @@ import {
 import Image from "next/image";
 import navigationMenus, { Role, otherNav } from "../data/sidebar-links";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const path = usePathname();
@@ -23,20 +24,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex items-center gap-4 py-4">
-              <div className="flex aspect-square size-8 items-center justify-center">
-                <Image
-                  src="/tantor-logo.svg"
-                  alt="Tantor Logo"
-                  width={48}
-                  height={48}
-                  className="size-12"
-                />
+            <Link href="/" className="hover:cursor-pointer">
+              <div className="flex items-center gap-4 py-4">
+                <div className="flex aspect-square size-8 items-center justify-center">
+                  <Image
+                    src="/tantor-logo.svg"
+                    alt="Tantor Logo"
+                    width={48}
+                    height={48}
+                    className="size-12"
+                  />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold text-xl">Tantor Learning</span>
+                </div>
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold text-xl">Tantor Learning</span>
-              </div>
-            </div>
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
