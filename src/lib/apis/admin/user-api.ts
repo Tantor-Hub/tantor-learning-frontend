@@ -1,45 +1,12 @@
 import { baseQuery, createApi } from "../base-api";
-
-interface UserRole {
-  id: number;
-  role: string;
-  HasRoles: {
-    id: number;
-    UserId: number;
-    RoleId: number;
-    status: number;
-    createdAt: string;
-    updatedAt: string;
-  };
-}
-
-export interface User {
-  id: number;
-  uuid: string;
-  fs_name: string;
-  ls_name: string;
-  nick_name: string;
-  email: string;
-  phone: string | null;
-  last_login: string | null;
-  num_record: string;
-  avatar: string | null;
-  adresse_physique: string | null;
-  pays_residance: string | null;
-  ville_residance: string | null;
-  num_piece_identite: string | null;
-  can_update_password: number;
-  createdAt: string;
-  updatedAt: string;
-  roles: UserRole[];
-}
+import { UserRole, IUser } from "@/types/user";
 
 export interface UsersListResponse {
   status: number;
   message: string;
   data: {
     length: number;
-    rows: User[];
+    rows: IUser[];
   };
 }
 
@@ -48,7 +15,7 @@ export interface IUsersListByGroupResponse {
   message: string;
   data: {
     length: number;
-    list: User[];
+    list: IUser[];
   };
 }
 
@@ -65,6 +32,22 @@ export interface AddUserRequest {
 export interface AddUserResponse {
   status: number;
   message: string;
+}
+
+export interface Subscriber {
+  id: number;
+  user_email: string;
+  status: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubscribersResponse {
+  status: number;
+  data: {
+    length: number;
+    list: Subscriber[];
+  };
 }
 
 export const AdminApi = createApi({
@@ -86,12 +69,23 @@ export const AdminApi = createApi({
     }),
     listUserByGroup: builder.query<
       IUsersListByGroupResponse,
-      { group: "teacher" | "admin" | "student" | "secretary" | "all" }
+      {
+        group: UserRole | "all";
+      }
     >({
       query: (request) => `users/list/bygroup/${request.group}`,
+      providesTags: ["Admin"],
+    }),
+    listSubscribers: builder.query<SubscribersResponse, void>({
+      query: () => "cms/admin/newsletter/subscribers",
       providesTags: ["Admin"],
     }),
   }),
 });
 
-export const { useListUsersQuery, useAddMutation, useListUserByGroupQuery } = AdminApi;
+export const {
+  useListUsersQuery,
+  useAddMutation,
+  useListUserByGroupQuery,
+  useListSubscribersQuery,
+} = AdminApi;

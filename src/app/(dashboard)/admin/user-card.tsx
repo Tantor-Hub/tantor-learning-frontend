@@ -37,11 +37,11 @@ export function UserCard({
       <Badge
         variant="outline"
         className={`text-xs ${
-          role === "Formateurs"
+          role === "instructor"
             ? "bg-blue-100 text-blue-600"
-            : role === "Admin"
+            : role === "admin"
               ? "bg-red-100 text-red-600"
-              : role === "Secrétariat & Administratif"
+              : role === "secretary"
                 ? "bg-green-100 text-green-600"
                 : "bg-cyan-100 text-cyan-600"
         }`}

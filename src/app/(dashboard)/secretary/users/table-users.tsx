@@ -35,13 +35,11 @@ export default function TableUser({ userData }: { userData: UserData }) {
 
   // Filtrer les utilisateurs par rôle
   const filterUsersByRole = (role: string) => {
-    return apiData?.data.rows.filter((user) =>
-      user.roles.some((userRole) => userRole.role.toLowerCase().includes(role.toLowerCase()))
-    );
+    return apiData?.data.rows.filter((user) => user.role === role);
   };
-  const students = filterUsersByRole("étudiant") || [];
-  const instructors = filterUsersByRole("formateur") || [];
-  const secretaries = filterUsersByRole("secrétariat") || [];
+  const students = filterUsersByRole("student") || [];
+  const instructors = filterUsersByRole("instructor") || [];
+  const secretaries = filterUsersByRole("secretary") || [];
 
   return (
     <Tabs defaultValue="students">
@@ -85,9 +83,9 @@ export default function TableUser({ userData }: { userData: UserData }) {
                 <TableBody className="border">
                   {students.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.nick_name}</TableCell>
+                      <TableCell className="font-medium">{user.firstName || "Inconnu"}</TableCell>
                       <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.roles[0].role}</TableCell>
+                      <TableCell>{user.role}</TableCell>
                       <TableCell>...</TableCell>
                     </TableRow>
                   ))}
@@ -126,9 +124,9 @@ export default function TableUser({ userData }: { userData: UserData }) {
                 <TableBody className="border">
                   {instructors.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.nick_name}</TableCell>
+                      <TableCell className="font-medium">{user.firstName || "Inconnu"}</TableCell>
                       <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.roles[0].role}</TableCell>
+                      <TableCell>{user.role}</TableCell>
                       <TableCell>...</TableCell>
                     </TableRow>
                   ))}
@@ -167,9 +165,9 @@ export default function TableUser({ userData }: { userData: UserData }) {
                 <TableBody className="border">
                   {secretaries.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.nick_name}</TableCell>
+                      <TableCell className="font-medium">{user.firstName || "Inconnu"}</TableCell>
                       <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.roles[0].role}</TableCell>
+                      <TableCell>{user.role}</TableCell>
                       <TableCell>...</TableCell>
                     </TableRow>
                   ))}

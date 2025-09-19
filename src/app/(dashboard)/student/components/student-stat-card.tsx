@@ -8,16 +8,18 @@ const StatCard = ({
   value,
   description,
   change,
+  url,
 }: {
   title: string;
   icon: ReactNode;
   value: string | number;
   description: string;
   change: string;
+  url: string;
 }) => {
   return (
     <Card className="gap-0 py-4 border hover:cursor-pointer hover:shadow-lg">
-      <Link href="/admin/users">
+      <Link href={url}>
         <CardHeader className="px-4">
           <CardTitle className="flex justify-between items-center">
             <h1 className="text-sm md:text-base">{title}</h1>

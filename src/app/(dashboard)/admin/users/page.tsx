@@ -17,7 +17,7 @@ export default function Page() {
           </Button>
           <NewUser />
         </div>
-        <p className="truncate font-semibold text-xl">Gestion des utilisateurs</p>
+        <p className="truncate font-semibold text-xl">Gestion des utilisateurs - Admin</p>
       </div>
       <TableUser userData={userData} />
     </>

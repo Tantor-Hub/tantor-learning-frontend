@@ -24,6 +24,7 @@ import { useGetAllTrainingsQuery } from "@/lib/apis/public/public-api";
 import { Loader2 } from "lucide-react";
 import { useAddNewCourseInSessionByIdMutation } from "@/lib/apis/secretary/training-secretary-api";
 import { toast } from "react-hot-toast";
+import { UserRole } from "@/types/user";
 
 export interface ISessionData {
   id_session: number;
@@ -35,7 +36,7 @@ export interface ISessionData {
 
 export function AddCourseSession({ courseId }: { courseId: number }) {
   const { data: instructors, isLoading: isLoadingInstructors } = useListUserByGroupQuery({
-    group: "teacher",
+    group: UserRole.INSTRUCTOR,
   });
 
   const { data: sessionsData, isLoading: isLoadingSessions } = useGetAllTrainingsQuery();
@@ -145,7 +146,7 @@ export function AddCourseSession({ courseId }: { courseId: number }) {
                 <SelectContent>
                   {instructors?.data.list.map((instructor) => (
                     <SelectItem key={instructor.id} value={String(instructor.id)}>
-                      {instructor.nick_name}
+                      {instructor.firstName}
                     </SelectItem>
                   ))}
                 </SelectContent>

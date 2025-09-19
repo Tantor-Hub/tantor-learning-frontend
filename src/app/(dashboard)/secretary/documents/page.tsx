@@ -16,10 +16,11 @@ import { Loading } from "@/components/shared/loading";
 import { BeforeTab } from "./before";
 import { useListUserByGroupQuery } from "@/lib/apis/admin/user-api";
 import { DuringTab } from "./during";
+import { UserRole } from "@/types/user";
 
 export default function Page() {
   const listSessions = useGetAllTrainingsQuery();
-  const students = useListUserByGroupQuery({ group: "student" });
+  const students = useListUserByGroupQuery({ group: UserRole.STUDENT });
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   if (listSessions.isLoading || students.isLoading) return <Loading />;
@@ -46,7 +47,7 @@ export default function Page() {
             <SelectContent>
               {students.data?.data.list.map((student) => (
                 <SelectItem key={student.id} value={String(student.id)}>
-                  {`${student.fs_name} ${student.ls_name}` || "Inconnue"}
+                  {`${student.firstName} ${student.lastName}` || "Inconnue"}
                 </SelectItem>
               ))}
             </SelectContent>
