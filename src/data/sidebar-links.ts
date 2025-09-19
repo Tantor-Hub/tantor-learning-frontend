@@ -82,7 +82,7 @@ const navigationMenus: NavigationMenus = {
       isActive: true,
     },
     {
-      title: "Cours & Roles",
+      title: "Cours",
       url: "admin/courses",
       icon: FileText,
     },
