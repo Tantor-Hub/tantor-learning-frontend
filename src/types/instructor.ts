@@ -1,9 +1,9 @@
 export interface IAddMatiere {
-  id_cours: number;
-  content: {
-    chapitre: string;
-    paragraphes: string[];
-  }[];
+  title: string;
+  description: string;
+  id_session: number;
+  id_formateurs?: number[];
+  is_published?: boolean;
 }
 
 export interface IListAllCoursesResponse {
@@ -82,5 +82,25 @@ export interface IGetCourseByIdResponse {
       title: string;
       description: string;
     };
+  };
+}
+
+export interface ICourse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    rows: Array<{
+      id: number;
+      title: string;
+      description: string;
+      is_published: boolean;
+      id_formateurs: Array<{
+        id: number;
+        fs_name: string;
+        ls_name: string;
+        email: string;
+      }>;
+    }>;
   };
 }

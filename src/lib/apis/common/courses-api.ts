@@ -3,8 +3,31 @@ import {
   ICourseContentRequest,
   ICourseContentResponse,
   ICoursesAPIResponse,
+  IUpdateCourseRequest,
+  IUpdateCourseResponse,
 } from "@/types/common/courses-api";
 import { createApi, enhancedBaseQuery } from "../base-api";
+import { IAddMatiere } from "@/types/instructor";
+
+interface ICourse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    rows: Array<{
+      id: number;
+      title: string;
+      description: string;
+      is_published: boolean;
+      id_formateurs: Array<{
+        id: number;
+        fs_name: string;
+        ls_name: string;
+        email: string;
+      }>;
+    }>;
+  };
+}
 
 // Courses API
 export const manageCoursesApi = createApi({
@@ -18,13 +41,10 @@ export const manageCoursesApi = createApi({
         status: number; // should be 201 for created successuly request
         message: string;
       },
-      {
-        title: string;
-        description: string;
-      }
+      IAddMatiere
     >({
       query: (body) => ({
-        url: "courses/presets/add",
+        url: "courses/create",
         method: "POST",
         body: body,
       }),
@@ -73,6 +93,24 @@ export const manageCoursesApi = createApi({
       query: ({ id_cours }) => `api/courses/course/${id_cours}`,
       providesTags: ["ManageCourses"],
     }),
+
+    // FIRMIN
+
+    // GET ALL COURSES
+    course: builder.query<ICourse, void>({
+      query: () => `courses/getall`,
+      providesTags: ["ManageCourses"],
+    }),
+
+    // UPDATE COURSE
+    updateCourse: builder.mutation<IUpdateCourseResponse, IUpdateCourseRequest>({
+      query: (body) => ({
+        url: "/api/courses/update",
+        method: "PUT",
+        body: body,
+      }),
+      invalidatesTags: ["ManageCourses"],
+    }),
   }),
 });
 
@@ -81,4 +119,6 @@ export const {
   useListCoursesQuery,
   useAddCourseContentMutation,
   useAddDocumentsForACourseMutation,
+  useCourseQuery,
+  useUpdateCourseMutation,
 } = manageCoursesApi;

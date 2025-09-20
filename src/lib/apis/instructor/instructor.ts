@@ -47,7 +47,7 @@ export const instructorApi = createApi({
 
     addMatiere: builder.mutation<void, IAddMatiere>({
       query: (request) => ({
-        url: "courses/course/addcontent",
+        url: "cours/create",
         method: "POST",
         body: request,
       }),

@@ -14,31 +14,22 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { XCircleIcon } from "lucide-react";
 import { AddCourseSession } from "./add-course-session";
+import { useCourseQuery } from "@/lib/apis/common/courses-api";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Edit, UserCheck } from "lucide-react";
+import { AssignInstructorsModal } from "./assign-instructors-modal";
+import { EditCourseModal } from "./edit-course-modal";
 
 export function CourseTable() {
+  const courses = useCourseQuery();
   const { data, isLoading, isError } = useListCoursesQuery();
-  if (isLoading) {
+  if (isLoading || courses.isLoading) {
     return <Loading />;
   }
+  console.log(JSON.stringify(courses.data));
 
-  if (isError) {
-    return (
-      <Alert variant="destructive" className="border-red-500 bg-red-50">
-        <XCircleIcon className="h-4 w-4 text-red-500" />
-        <AlertTitle>Connexion échouée</AlertTitle>
-        <AlertDescription>
-          Impossible de se connecter au serveur. Veuillez :
-          <ul className="list-disc pl-5 mt-1 space-y-1">
-            <li>Vérifier votre connexion internet</li>
-            <li>Réessayer dans quelques instants</li>
-            <li>Contacter le support si le problème persiste</li>
-          </ul>
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (!data?.data.rows.length) {
+  if (!courses.data?.data.rows) {
     return (
       <EmptyState
         icon="BookIcon"
@@ -55,20 +46,35 @@ export function CourseTable() {
         <TableRow>
           <TableHead>Titre</TableHead>
           <TableHead>Description</TableHead>
-          <TableHead>Créateur</TableHead>
+          <TableHead>Statut</TableHead>
+          <TableHead>Assignés</TableHead>
           <TableHead className="text-center">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody className="border">
-        {data.data.rows.map((item) => (
-          <TableRow key={item.id}>
-            <TableCell className="font-medium">{item.title}</TableCell>
-            <TableCell>{item.description}</TableCell>
+        {courses.data.data.rows.map((course) => (
+          <TableRow key={course.id}>
+            <TableCell className="font-medium">{course.title}</TableCell>
+            <TableCell>{course.description}</TableCell>
             <TableCell>
-              {item.CreatedBy.fs_name} {item.CreatedBy.ls_name}
+              <Badge variant={course.is_published ? "default" : "secondary"}>
+                {course.is_published ? "Publié" : "Brouillon"}
+              </Badge>
             </TableCell>
             <TableCell>
-              <AddCourseSession courseId={Number(item.id)} />
+              <div className="flex flex-wrap gap-1">
+                {course.id_formateurs.map((instructor) => (
+                  <Badge key={instructor.id} variant="outline" className="text-xs">
+                    {instructor.fs_name} {instructor.ls_name}
+                  </Badge>
+                ))}
+              </div>
+            </TableCell>
+            <TableCell>
+              <div className="flex items-center gap-2 justify-center">
+                <EditCourseModal course={course} />
+                <AssignInstructorsModal course={course} />
+              </div>
             </TableCell>
           </TableRow>
         ))}

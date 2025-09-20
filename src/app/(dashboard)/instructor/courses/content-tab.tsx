@@ -89,7 +89,7 @@ export function ContentTabs({ courseId, initialChapters, refetchCourse }: Conten
         })),
       };
 
-      await addCourseContent(payload).unwrap();
+      // await addCourseContent(payload).unwrap();
       await refetchCourse();
       toast.success("Contenu ajouté avec succès");
     } catch (error) {

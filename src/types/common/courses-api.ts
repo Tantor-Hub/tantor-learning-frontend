@@ -75,3 +75,29 @@ export interface ICourseContentResponse {
     };
   };
 }
+
+// Update course request interface
+export interface IUpdateCourseRequest {
+  id_cours: number;
+  title: string;
+  description: string;
+  id_formateurs: number[];
+}
+
+// Update course response interface
+export interface IUpdateCourseResponse {
+  status: number;
+  message: string;
+  data: {
+    id: number;
+    title: string;
+    description: string;
+    is_published: boolean;
+    id_formateurs: Array<{
+      id: number;
+      fs_name: string;
+      ls_name: string;
+      email: string;
+    }>;
+  };
+}

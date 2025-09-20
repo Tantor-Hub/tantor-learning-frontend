@@ -18,6 +18,8 @@ export interface IUser {
   dateBirth?: Date | null;
   role: UserRole;
   isVerified: boolean;
+  fs_name?: string;
+  ls_name?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

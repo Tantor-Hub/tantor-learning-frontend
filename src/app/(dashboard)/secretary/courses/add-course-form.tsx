@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,6 +16,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAddCourseMutation } from "@/lib/apis/common/courses-api";
 import { toast } from "react-hot-toast"; // ou autre lib de notifications
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useGetAllTrainingsQuery } from "@/lib/apis/public/public-api";
 
 const formSchema = z.object({
   title: z.string().min(1, "Veuillez entrer un titre pour le cours"),
@@ -30,6 +39,8 @@ interface CreateCourseFormProps {
 
 export function AddCourseForm({ onCancel, onSubmitSuccess }: CreateCourseFormProps) {
   const [addCourse, { isLoading }] = useAddCourseMutation();
+  const { data: sessionsData, isLoading: isLoadingSessions } = useGetAllTrainingsQuery();
+  const [selectedSessionId, setSelectedSessionId] = useState<string>("");
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { title: "", description: "" },
@@ -41,7 +52,10 @@ export function AddCourseForm({ onCancel, onSubmitSuccess }: CreateCourseFormPro
       const response = await addCourse({
         title: data.title,
         description: data.description,
+        id_session: parseInt(selectedSessionId),
+        id_formateurs: [],
       }).unwrap();
+      console.log(response);
 
       toast.success("Cours créé avec succès");
 
@@ -59,6 +73,8 @@ export function AddCourseForm({ onCancel, onSubmitSuccess }: CreateCourseFormPro
       console.error("Submission error:", error);
     }
   };
+
+  const sessionsList = sessionsData?.data?.list || [];
 
   return (
     <Form {...form}>
@@ -103,6 +119,19 @@ export function AddCourseForm({ onCancel, onSubmitSuccess }: CreateCourseFormPro
             </FormItem>
           )}
         />
+
+        <Select value={selectedSessionId} onValueChange={(value) => setSelectedSessionId(value)}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Sélectionner une session" />
+          </SelectTrigger>
+          <SelectContent>
+            {sessionsList.map((session: any) => (
+              <SelectItem key={session.id} value={session.id.toString()}>
+                {session.Formation.titre} - {session.designation}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <div className="flex gap-5 md:gap-10 justify-end md:mt-5">
           <Button
