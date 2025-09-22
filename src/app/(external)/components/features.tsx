@@ -19,7 +19,7 @@ const learningFeatures = [
 ];
 const Features = () => {
   return (
-    <section>
+    <section className="my-10 md:my-15">
       <div className="max-w-[1440px] m-auto px-5 md:px-10">
         <div className="overflow-x-clip bg-[#e4e4e49a] py-6">
           <div className="animate-move-left w-[200%] [animation-duration:90s] hover:[animation-play-state:paused] gap-2.5 md:gap-10 lg:gap-14">

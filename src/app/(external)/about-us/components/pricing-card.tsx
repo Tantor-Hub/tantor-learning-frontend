@@ -22,9 +22,9 @@ export function PricingCard({ cardData, index, isLast, className }: PricingCardI
 
   const getHeaderClasses = () => {
     if (index === 0) {
-      return "text-center m-0 h-52 flex items-center justify-center bg-gradient-to-br from-primary to-primary/70";
+      return "text-center m-0 h-52 flex items-center justify-center bg-gradient-to-br from-primary to-primary/70 text-white";
     } else if (isLast) {
-      return "text-center m-0 h-52 flex items-center justify-center bg-gradient-to-br from-destructive to-destructive/70";
+      return "text-center m-0 h-52 flex items-center justify-center bg-gradient-to-br from-destructive to-destructive/70 text-white";
     } else {
       return "text-center m-0 h-52 flex items-center justify-center"; // White background for middle card
     }
@@ -39,6 +39,9 @@ export function PricingCard({ cardData, index, isLast, className }: PricingCardI
   };
 
   const getDescriptionClasses = () => {
+    if (index === 0) {
+      return "mb-6 text-white";
+    } else if (isLast) return "mb-6 text-white";
     return "mb-6 text-foreground";
   };
 
@@ -47,12 +50,16 @@ export function PricingCard({ cardData, index, isLast, className }: PricingCardI
   };
 
   return (
-    <Card className={`flex-1 pt-0 overflow-hidden ${className}`}>
+    <Card
+      className={`flex-1 pt-0 overflow-hidden border ${!isLast && index != 0 ? "scale-105" : ""} ${className}`}
+    >
       <CardHeader className={getHeaderClasses()}>
         <div>
           <CardTitle className={getTitleClasses()}>{title}</CardTitle>
           <CardDescription className={getDescriptionClasses()}>{description}</CardDescription>
-          <CardTitle className="text-4xl">{price}</CardTitle>
+          <CardTitle className={`text-4xl ${isLast || index == 0 ? "text-white" : "text-primary"}`}>
+            {price}
+          </CardTitle>
         </div>
       </CardHeader>
       <CardContent>

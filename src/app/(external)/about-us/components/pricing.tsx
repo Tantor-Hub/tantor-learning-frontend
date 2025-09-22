@@ -3,16 +3,18 @@ import { pricingData } from "../data";
 
 export function Pricing() {
   return (
-    <div>
-      <h2 className="text-primary font-bold text-4xl mb-4">Choisissez votre formation idéale</h2>
-      <p className="text-foreground leading-11 mb-4">
+    <div className="bg-white py-12">
+      <h2 className="text-3xl font-work-sans font-semibold mb-6 text-primary">
+        Choisissez votre formation idéale
+      </h2>
+      <p className="text-muted-foreground mb-12 w-full max-w-lg mx-auto">
         Trouvez la formule qui correspond le mieux à vos besoins, votre rythme et votre budget
       </p>
 
-      <div className="flex flex-col md:flex-row items-center gap-6">
+      <div className="flex flex-col md:flex-row items-center gap-12">
         {pricingData.map((cardData, idx) => (
           <PricingCard
-            className="flex-1 w-full"
+            className={`flex-1 w-full ${idx == 1 && "shadow-red"}`}
             key={idx}
             cardData={cardData}
             index={idx}

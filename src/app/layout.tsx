@@ -1,34 +1,32 @@
-import { ReactNode } from "react";
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { ReactNode } from "react";
+import { poppins, workSans } from "../../public/fonts";
 import { ReduxProvider } from "@/components/provider";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
-const poppins = Poppins({
-  weight: ["400", "500", "600", "700"],
-  style: ["normal"],
-  subsets: ["latin"],
-  display: "swap",
-});
-
 export const metadata: Metadata = {
-  title: "TanTor Learning | Formations en ligne certifiantes partout en France",
-  description:
-    "Accédez à des formations professionnelles de qualité avec TanTor Learning. Formations en ligne ou en présentiel, bibliothèque numérique, suivi personnalisé et certification officielle. Une plateforme complète pour apprendre, progresser et réussir.",
+  title: {
+    default: "Tantor Learning",
+    template: "%s - Tantor Learning",
+  },
+  description: "Formations certifiantes en ligne et en présentiel, partout en France.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${poppins.className} antialiased`}>
+    <html lang="fr" className={`${poppins.className} ${workSans.className}`}>
+      <head>
+        <link rel="shortcut icon" href="/tantor-logo.svg" type="image/svg+xml" />
+      </head>
+      <body className={`${poppins.className} text-base leading-relaxed`}>
         <ReduxProvider>
           {children}
-          <Toaster />
+          <Toaster position="top-right" />
         </ReduxProvider>
       </body>
     </html>

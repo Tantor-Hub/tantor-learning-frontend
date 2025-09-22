@@ -1,10 +1,8 @@
 "use client";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Input } from "@/components/ui/input";
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Phone, Mail, MapPin, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,9 +15,11 @@ import {
 } from "@/components/ui/form";
 import { contactUsFormSchema } from "@/lib/validators/form-schema";
 import type { ContactUsFormValues } from "@/lib/validators/form-schema";
+import { useContactFormAPIMutation } from "@/lib/apis/public/public-api";
+import { toast } from "react-hot-toast";
 
-export default function ContactUs() {
-  // Initialize the form with useForm hook
+export default function Page() {
+  const [contactForm, { isLoading }] = useContactFormAPIMutation();
   const form = useForm<ContactUsFormValues>({
     resolver: zodResolver(contactUsFormSchema),
     defaultValues: {
@@ -31,17 +31,40 @@ export default function ContactUs() {
   });
 
   // Form submission handler
-  function onSubmit(values: ContactUsFormValues) {
-    console.log(values);
-    // Add your form submission logic here
-  }
+  const onSubmit = async (values: ContactUsFormValues) => {
+    const toastId = toast.loading("Envoi en cours...");
+    try {
+      const response = await contactForm({
+        from_name: values.fullName || "",
+        from_mail: values.email || "",
+        subject: values.subject,
+        content: values.message,
+      }).unwrap();
+      // console.log(response);
+      if (response.status === 201) {
+        toast.success("Message envoyé", {
+          id: toastId,
+        });
+        form.reset();
+      } else {
+        throw new Error("Réponse inattendue du serveur");
+      }
+    } catch {
+      toast.error("Échec de l'envoi", {
+        id: toastId,
+      });
+      return values;
+    }
+  };
 
   return (
-    <main className="max-w-[1440px] m-auto px-5 md:px-10">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
       <div className="my-16 grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left Column - Contact Information */}
         <div>
-          <h1 className="text-4xl text-primary font-bold mb-6">Besoin de plus d'informations ?</h1>
+          <h1 className="text-xl text-primary font-semibold mb-6">
+            Besoin de plus d'informations ?
+          </h1>
           <p className="leading-8">
             Notre équipe est à votre disposition pour répondre à toutes vos questions concernant nos
             formations, le processus d'admission ou l'alternance. N'hésitez pas à nous contacter !
@@ -61,7 +84,7 @@ export default function ContactUs() {
             </div>
             <div>
               <h3 className="font-bold">Email</h3>
-              <p>contact@tantor.fr</p>
+              <p>infos@tantor.com</p>
             </div>
           </div>
           <div className="flex gap-4 items-center mt-6">
@@ -70,7 +93,7 @@ export default function ContactUs() {
             </div>
             <div>
               <h3 className="font-bold">Adresse</h3>
-              <p>48 rue du bret, 38090 Villefontaine</p>
+              <p>France, Paris</p>
             </div>
           </div>
         </div>
@@ -153,7 +176,14 @@ export default function ContactUs() {
                 className="mt-4"
                 disabled={!form.formState.isDirty || Object.keys(form.formState.errors).length > 0}
               >
-                Envoyer
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Envoi en cours...
+                  </>
+                ) : (
+                  "Envoyer"
+                )}
               </Button>
             </form>
           </Form>

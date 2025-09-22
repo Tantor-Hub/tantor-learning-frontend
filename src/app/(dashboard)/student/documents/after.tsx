@@ -1,0 +1,302 @@
+import React, { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Download, Trash2, Ellipsis, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loading } from "@/components/shared/loading";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
+import { selectCurrentUser, selectToken } from "@/features/auth/auth-slice";
+import { useListDocumentsByStudentSessionIdQuery } from "@/lib/apis/common/document-api";
+
+type ActionType = "download" | "view" | "edit" | "share" | "delete";
+
+type DocumentType =
+  | "QUESTIONNAIRE_SATISFACTION"
+  | "PAIEMENT"
+  | "DOCUMENTS_FINANCEUR"
+  | "FICHE_CONTROLE_FINALE";
+
+export function AfterTab({ sessionId }: { sessionId: string }) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedType, setSelectedType] = useState<DocumentType>("QUESTIONNAIRE_SATISFACTION");
+  const [isUploading, setIsUploading] = useState(false);
+  const currentUser = useSelector(selectCurrentUser);
+  const token = useSelector(selectToken);
+  const {
+    data: documents,
+    isLoading,
+    refetch,
+  } = useListDocumentsByStudentSessionIdQuery(
+    {
+      id_session: sessionId?.toString() || "",
+      group: "after",
+      id_student: currentUser?.id.toString() || "",
+    },
+    {
+      skip: !sessionId || !currentUser?.id,
+    }
+  );
+
+  if (isLoading) return <Loading />;
+
+  const documentList = documents?.data?.list || [];
+
+  const handleAction = (action: ActionType, documentId: number, documentName: string): void => {
+    console.log(`Action: ${action} on document: ${documentName}`);
+
+    switch (action) {
+      case "download":
+        const documentToDownload = documentList.find((doc) => doc.id === documentId);
+        if (documentToDownload) {
+          window.open(documentToDownload.piece_jointe, "_blank");
+        }
+        break;
+      case "delete":
+        if (confirm(`Êtes-vous sûr de vouloir supprimer ${documentName} ?`)) {
+          console.log(`Deleting document with ID: ${documentId}`);
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleAddDocument = () => {
+    setSelectedFile(null);
+    setSelectedType("QUESTIONNAIRE_SATISFACTION");
+    setIsDialogOpen(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleTypeChange = (value: DocumentType) => {
+    setSelectedType(value);
+  };
+
+  const handleSubmit = async () => {
+    toast.loading("Envoie en cours...");
+    if (!selectedFile) {
+      toast.error("Veuillez sélectionner un fichier");
+      return;
+    }
+    setIsUploading(true);
+
+    const formData = new FormData();
+    formData.append("piece_jointe", selectedFile);
+    formData.append("id_session", String(sessionId));
+    formData.append("key_document", selectedType);
+    formData.append("description", selectedFile.name);
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/sessions/session/document/after`,
+        {
+          method: "PUT",
+          body: formData,
+          headers: {
+            "x-connexion-tantor": `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast.error("Échec de l'upload du document");
+        // throw new Error(errorData.message || "Upload failed");
+      }
+      toast.dismiss();
+      toast.success(`Document ${selectedFile.name} uploadé avec succès!`);
+      await refetch();
+      setIsDialogOpen(false);
+      setSelectedFile(null);
+      setSelectedType("QUESTIONNAIRE_SATISFACTION");
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error uploading document:", error);
+      if (error instanceof Error) {
+        toast.error(`Erreur: ${error.message}`);
+      } else {
+        toast.error(`Échec de l'upload du document`);
+      }
+    } finally {
+      toast.dismiss();
+      setIsUploading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsDialogOpen(false);
+    setSelectedFile(null);
+    setSelectedType("QUESTIONNAIRE_SATISFACTION");
+  };
+
+  const getFileExtension = (url: string) => {
+    return url.split(".").pop()?.toLowerCase() || "file";
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("fr-FR");
+  };
+
+  const translateDocumentKey = (key: string) => {
+    const translations: Record<string, string> = {
+      QUESTIONNAIRE_SATISFACTION: "Questionnaire de satisfaction",
+      PAIEMENT: "Paiement",
+      DOCUMENTS_FINANCEUR: "Documents financeur",
+      FICHE_CONTROLE_FINAL: "Fiche contrôle final",
+    };
+    return translations[key] || key;
+  };
+
+  return (
+    <div className="mx-auto">
+      <Button className="my-4" onClick={handleAddDocument}>
+        <Plus className="mr-2 h-4 w-4" />
+        Ajouter un document
+      </Button>
+
+      <Table className="border">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nom</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Date d'ajout</TableHead>
+            <TableHead>Type de document</TableHead>
+            <TableHead className="text-center">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {documentList.length > 0 ? (
+            documentList.map((document) => (
+              <TableRow key={document.id}>
+                <TableCell className="font-medium">{document.document}</TableCell>
+                <TableCell>
+                  <Badge variant={"outline"}>{getFileExtension(document.piece_jointe)}</Badge>
+                </TableCell>
+                <TableCell>{formatDate(document.createdAt)}</TableCell>
+                <TableCell>{translateDocumentKey(document.key_document)}</TableCell>
+                <TableCell className="text-center">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Badge variant="secondary" className="hover:cursor-pointer">
+                        <Ellipsis />
+                        <span className="sr-only">Ouvrir le menu</span>
+                      </Badge>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => handleAction("download", document.id, document.document)}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Télécharger
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleAction("delete", document.id, document.document)}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Supprimer
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                Aucun document disponible pour le moment
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Ajouter un document</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="file-input">Sélectionner un fichier</Label>
+              <Input
+                id="file-input"
+                type="file"
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
+              {selectedFile && (
+                <p className="text-sm text-muted-foreground">
+                  Fichier sélectionné: {selectedFile.name}
+                </p>
+              )}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="document-type">Type de document</Label>
+              <Select value={selectedType} onValueChange={handleTypeChange} disabled={isUploading}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner le type de document" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="QUESTIONNAIRE_SATISFACTION">
+                    Questionnaire de satisfaction
+                  </SelectItem>
+                  <SelectItem value="PAIEMENT">Paiement</SelectItem>
+                  <SelectItem value="DOCUMENTS_FINANCEUR">Documents financeur</SelectItem>
+                  <SelectItem value="FICHE_CONTROLE_FINAL">Fiche contrôle final</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={handleCancel} disabled={isUploading}>
+              Annuler
+            </Button>
+            <Button type="button" onClick={handleSubmit} disabled={isUploading || !selectedFile}>
+              {isUploading ? "Envoi en cours..." : "Enregistrer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

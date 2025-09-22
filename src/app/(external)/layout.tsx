@@ -1,9 +1,11 @@
-import { ReactNode } from "react";
-import type { Metadata } from "next";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
+import { ReactNode, Suspense } from "react";
+import { CookieMessage } from "@/components/shared/cookie-message";
+import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
+import { Loading } from "@/components/shared/loading";
+import { NewsLetter } from "@/components/sections/news-letter";
 
-export default function RootLayout({
+export default function ExternalLayout({
   children,
 }: Readonly<{
   children: ReactNode;
@@ -11,8 +13,20 @@ export default function RootLayout({
   return (
     <>
       <Header />
-      {children}
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Loading />;
+          </div>
+        }
+      >
+        {children}
+      </Suspense>
+      <div className="bg-ring">
+        <NewsLetter />
+      </div>
       <Footer />
+      <CookieMessage />
     </>
   );
 }

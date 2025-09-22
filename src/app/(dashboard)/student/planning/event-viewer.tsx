@@ -1,0 +1,173 @@
+import Image from "next/image";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+export interface EventProps {
+  title: string;
+  type: "Evènement" | "Réunion" | "Examen" | "Cours";
+  startTime: Date;
+  endTime: Date;
+  description?: string;
+  createdBy?: string;
+}
+
+export function EventViewer({ selected, events }: { selected: Date; events?: EventProps[] }) {
+  let finalDate = "";
+  if (selected) {
+    const formatedDate = selected.toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    finalDate = formatedDate.charAt(0).toUpperCase() + formatedDate.slice(1);
+  }
+
+  // Filter events to the selected date
+  const todaysEvents = events?.filter(
+    (event) =>
+      event.startTime.getFullYear() === selected.getFullYear() &&
+      event.startTime.getMonth() === selected.getMonth() &&
+      event.startTime.getDate() === selected.getDate()
+  );
+
+  const [tab, setActiveTab] = useState("all");
+
+  // Function to get color based on event type
+  const getEventColor = (type: string) => {
+    switch (type) {
+      case "Examen":
+        return "bg-red-500";
+      case "Réunion":
+        return "bg-blue-500";
+      case "Cours":
+        return "bg-green-500";
+      case "Evènement":
+        return "bg-purple-500";
+      default:
+        return "bg-[#8FAEF9]";
+    }
+  };
+
+  // Function to render event card
+  const renderEventCard = (event: EventProps, index: number) => (
+    <Card key={index} className={`text-foreground border flex flex-col gap-4 text-sm md:text-base`}>
+      <CardContent>
+        <div className="flex justify-between items-center">
+          <Badge variant="secondary" className={`${getEventColor(event.type)} text-white`}>
+            {event.type}
+          </Badge>
+          <span className="text-xs opacity-90">{event.startTime.toLocaleDateString("fr-FR")}</span>
+        </div>
+        <h4 className="font-semibold text-lg">{event.title}</h4>
+        <p className="text-sm">
+          {event.startTime.getHours().toString().padStart(2, "0")}:
+          {event.startTime.getMinutes().toString().padStart(2, "0")} -{" "}
+          {event.endTime.getHours().toString().padStart(2, "0")}:
+          {event.endTime.getMinutes().toString().padStart(2, "0")}
+        </p>
+        {event.description && <p className="text-sm opacity-90">{event.description}</p>}
+        {event.createdBy && <p className="text-xs opacity-75">Créé par: {event.createdBy}</p>}
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="flex-[1] border shadow-md p-5 flex flex-col gap-5 rounded-[8px] max-h-[80vh] overflow-y-auto">
+      <div>
+        <h3 className="text-[#0466C8] font-medium text-lg flex items-center gap-2">
+          <span>📅</span>
+          Évènements du {finalDate}
+        </h3>
+      </div>
+
+      {!events || events.length === 0 ? (
+        <div className="flex flex-col gap-5 items-center">
+          <Image src="/icons/calendar-03.svg" height={120} width={120} alt="calendar icon" />
+          <p className="text-sm">Aucun évènement</p>
+          <p className="text-sm text-[#ACACAC] text-center max-w-[240px]">
+            Aucun évènement programmé
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {/* Selected Date Events Section */}
+          <div>
+            {todaysEvents?.length === 0 ? (
+              <div className="flex flex-col gap-3 items-center py-8">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                  <span className="text-2xl">📅</span>
+                </div>
+                <p className="text-sm text-gray-500">Aucun évènement pour cette date</p>
+                <p className="text-xs text-[#ACACAC] text-center max-w-[240px]">
+                  Sélectionnez une autre date ou créez un nouvel évènement
+                </p>
+              </div>
+            ) : (
+              <div>
+                <Tabs
+                  defaultValue="day"
+                  className="w-full"
+                  onValueChange={(val) => setActiveTab(val)}
+                >
+                  <div className="bg-[#ECECEC] rounded-md mb-5 p-1.5">
+                    <TabsList className="w-full flex">
+                      <TabsTrigger value="day" className="flex-[1] p-4">
+                        Jour
+                      </TabsTrigger>
+                      <TabsTrigger value="week" className="flex-[1] p-4">
+                        Semaine
+                      </TabsTrigger>
+                      <TabsTrigger value="month" className="flex-[1] p-4">
+                        Mois
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
+
+                  <TabsContent value="day" className="flex flex-col gap-2.5">
+                    {/* Time slots with events */}
+                    <div className="space-y-3">
+                      {/* Events for selected date */}
+                      {todaysEvents?.map((event, i) => renderEventCard(event, i))}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="week">
+                    <div className="p-5 pt-10 text-center text-gray-500">
+                      Vue semaine en développement
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="month">
+                    <div className="p-5 pt-10 text-center text-gray-500">
+                      Vue mois en développement
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
+          </div>
+
+          {/* Separator Line */}
+          <div className="flex items-center gap-4">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+            <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border">
+              Tous les évènements ({events?.length})
+            </span>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+          </div>
+
+          {/* All Events Section */}
+          <div>
+            <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-2">
+              {events.map((event, i) => renderEventCard(event, i))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
