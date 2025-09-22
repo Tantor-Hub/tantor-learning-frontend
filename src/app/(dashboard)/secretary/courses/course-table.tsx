@@ -8,26 +8,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableCaption } from "@/components/ui/table";
-import { useListCoursesQuery } from "@/lib/apis/common/courses-api";
 import { Loading } from "@/components/shared/loading";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { XCircleIcon } from "lucide-react";
-import { AddCourseSession } from "./add-course-session";
 import { useCourseQuery } from "@/lib/apis/common/courses-api";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Edit, UserCheck } from "lucide-react";
 import { AssignInstructorsModal } from "./assign-instructors-modal";
 import { EditCourseModal } from "./edit-course-modal";
 
 export function CourseTable() {
   const courses = useCourseQuery();
-  const { data, isLoading, isError } = useListCoursesQuery();
-  if (isLoading || courses.isLoading) {
+  if (courses.isLoading) {
     return <Loading />;
   }
-  console.log(JSON.stringify(courses.data));
+  // console.log(JSON.stringify(courses.data));
 
   if (!courses.data?.data.rows) {
     return (

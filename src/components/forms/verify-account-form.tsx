@@ -6,11 +6,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  useResendCodeMutation,
-  useVerifyMutation,
-  useVerifyPasswordLessMutation,
-} from "@/lib/apis/auth-api";
+import { useResendCodeMutation, useVerifyPasswordLessMutation } from "@/lib/apis/auth-api";
 import { toast } from "react-hot-toast";
 import { verifyAccountCodeSchema, verifyAccountCodeValues } from "@/lib/validators/auth-schema";
 import { useSearchParams } from "next/navigation";
@@ -19,6 +15,8 @@ import { setCredentials } from "@/features/auth/auth-slice";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import { syncAuthToCookies } from "@/lib/auth-sync";
+import { Loader2 } from "lucide-react";
 
 const RESEND_COOLDOWN = 60; // 60 secondes
 
@@ -111,7 +109,7 @@ export function VerifyAccountForm() {
           user: response.data.user,
         })
       );
-
+      syncAuthToCookies();
       toast.dismiss(toastRef.current);
       toastRef.current = null;
 
@@ -210,11 +208,9 @@ export function VerifyAccountForm() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-2 text-center">
-        <h2 className="text-xl font-bold">Vérification de compte</h2>
-        <p className="text-sm text-muted-foreground">
-          Un code de vérification a été envoyé à <span className="text-primary">{email}</span>.
-          Veuillez l&apos;entrer ci-dessous pour activer votre compte.
-        </p>
+        <h2 className="text-xl font-semibold">Vérifiez votre e-mail</h2>
+        <p className="text-sm text-muted-foreground">pour continuer vers Tantor Learning</p>
+        <p className="text-sm text-primary">{email}</p>
       </div>
 
       <Form {...form}>
@@ -256,9 +252,16 @@ export function VerifyAccountForm() {
             disabled={!isFormValid || isLoading}
             className="w-full bg-blue-500 hover:bg-blue-600"
           >
-            {isLoading ? "Vérification..." : "Vérifier et activer le compte"}
+            {isLoading ? <Loader2 className="animate-spin text-white" /> : "Continuer"}
           </Button>
         </form>
+        <Button
+          variant="outline"
+          className="border-primary text-primary"
+          onClick={() => router.push("/signin")}
+        >
+          Utiliser une autre méthode
+        </Button>
       </Form>
 
       <div className="text-center text-sm">
