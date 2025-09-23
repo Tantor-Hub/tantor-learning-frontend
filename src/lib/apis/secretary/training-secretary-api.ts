@@ -53,19 +53,29 @@ export const trainingSecretaryApi = createApi({
     // Category de Formation
     //===================================================================================
     listCategoryTraining: builder.query<IListCategoryTrainingResponse, void>({
-      query: () => "categories/list",
+      query: () => "trainingcategy/getall",
       providesTags: ["TrainingSecretary"],
     }),
 
-    addCategoryTraining: builder.mutation<
-      void,
+    createCategory: builder.mutation<
       {
-        category: string;
+        status: number;
+        message: string;
+        data: {
+          id: string;
+          description: string;
+          createdAt: string;
+          updatedAt: string;
+        };
+      },
+      {
+        id?: string;
+        title: string;
         description: string;
       }
     >({
       query: (request) => ({
-        url: "categories/category/add",
+        url: "trainingcategy/create",
         method: "POST",
         body: request,
       }),
@@ -74,22 +84,23 @@ export const trainingSecretaryApi = createApi({
     updateCategoryTraining: builder.mutation<
       void,
       {
-        category?: string;
+        title: string;
         description?: string;
-        id_thematique?: number;
+        id: string;
       }
     >({
       query: (request) => ({
-        url: `categories/category/${request.id_thematique}`,
-        method: "PUT",
+        url: `trainingcategy/update`,
+        method: "PATCH",
         body: request,
       }),
     }),
 
-    removeCategoryTrainingById: builder.mutation<void, { id_category: string }>({
+    removeCategoryTrainingById: builder.mutation<void, { id: string }>({
       query: (request) => ({
-        url: `categories/categorie/${request.id_category}`,
+        url: `trainingcategy/delete`,
         method: "DELETE",
+        body: request,
       }),
     }),
     // =====================================================================
@@ -133,7 +144,7 @@ export const {
   useListCategoryTrainingQuery,
   useUpdateCategoryTrainingMutation,
   useRemoveCategoryTrainingByIdMutation,
-  useAddCategoryTrainingMutation,
+  useCreateCategoryMutation,
 
   // list course by session id
   useAddNewCourseInSessionByIdMutation,

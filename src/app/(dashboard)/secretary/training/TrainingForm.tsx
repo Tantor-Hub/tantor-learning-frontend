@@ -54,7 +54,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
   });
 
   // Extract categories from API response
-  const categories = categoriesResponse?.data?.list || [];
+  const categories = categoriesResponse?.data || [];
 
   // Extract training types from API response
   const trainingTypes = trainingTypesResponse?.data || [];
@@ -206,7 +206,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
                   <SelectContent>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id.toString()}>
-                        {cat.category}
+                        {cat.title}
                       </SelectItem>
                     ))}
                   </SelectContent>

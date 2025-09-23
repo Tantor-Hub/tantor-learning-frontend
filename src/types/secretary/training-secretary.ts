@@ -164,17 +164,16 @@ export interface ITrainingTypesResponse {
   }[];
 }
 
+export interface ITrainingCategory {
+  id: string;
+  title: string;
+  description: string;
+}
+
 export interface IListCategoryTrainingResponse {
   status: number;
   message: string;
-  data: {
-    length: number;
-    list: Array<{
-      id: number;
-      category: string;
-      description: string;
-    }>;
-  };
+  data: ITrainingCategory[];
 }
 
 export interface IListCourseBySessionIdResponse {

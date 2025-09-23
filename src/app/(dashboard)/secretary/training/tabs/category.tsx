@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  useAddCategoryTrainingMutation,
+  useCreateCategoryMutation,
   useListCategoryTrainingQuery,
   useUpdateCategoryTrainingMutation,
   useRemoveCategoryTrainingByIdMutation,
@@ -40,59 +40,58 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Loading } from "@/components/shared/loading";
+import { ITrainingCategory } from "@/types/secretary/training-secretary";
 
-interface CategoryData {
-  id: number;
-  category: string;
-  description: string;
-}
-
-interface CreateCategoryData {
-  category: string;
-  description: string;
-}
-
-interface UpdateCategoryData {
-  category?: string;
+export interface IUpdateTrainingCategory {
+  id: string;
+  title: string;
   description?: string;
-  id_thematique?: number;
+}
+
+interface ITrainingCategoryData {
+  title: string;
+  description: string;
 }
 
 export function CategoryFormation() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<ITrainingCategory | null>(null);
 
   // Form states
-  const [createForm, setCreateForm] = useState<CreateCategoryData>({
-    category: "",
+  const [createForm, setCreateForm] = useState<ITrainingCategoryData>({
+    title: "",
     description: "",
   });
 
-  const [editForm, setEditForm] = useState<UpdateCategoryData>({
-    category: "",
+  const [editForm, setEditForm] = useState<IUpdateTrainingCategory>({
+    id: "",
+    title: "",
     description: "",
   });
 
   // API hooks
   const { data: categoriesData, isLoading, refetch } = useListCategoryTrainingQuery();
-  const [addCategory, { isLoading: isAdding }] = useAddCategoryTrainingMutation();
+  const [createCategory, { isLoading: isCreatingCategory }] = useCreateCategoryMutation();
   const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryTrainingMutation();
   const [removeCategory, { isLoading: isDeleting }] = useRemoveCategoryTrainingByIdMutation();
 
-  const categories = categoriesData?.data?.list || [];
+  const categories = categoriesData?.data || [];
 
   // Handle create category
   const handleCreateCategory = async () => {
-    if (!createForm.category.trim() || !createForm.description.trim()) {
+    if (!createForm.title.trim() || !createForm.description.trim()) {
       toast.error("Veuillez remplir tous les champs");
       return;
     }
 
     try {
-      await addCategory(createForm).unwrap();
-      toast.success("Catégorie créée avec succès");
-      setCreateForm({ category: "", description: "" });
+      const response = await createCategory({
+        title: createForm.title,
+        description: createForm.description,
+      }).unwrap();
+      toast.success(response.message || "Catégorie créée avec succès");
+      setCreateForm({ title: "", description: "" });
       setCreateDialogOpen(false);
       refetch();
     } catch (error) {
@@ -101,12 +100,12 @@ export function CategoryFormation() {
   };
 
   // Handle edit category
-  const handleEditCategory = (category: CategoryData) => {
+  const handleEditCategory = (category: ITrainingCategory) => {
     setSelectedCategory(category);
     setEditForm({
-      category: category.category,
+      title: category.title,
       description: category.description,
-      id_thematique: Number(category.id),
+      id: category.id,
     });
     setEditDialogOpen(true);
   };
@@ -117,7 +116,7 @@ export function CategoryFormation() {
     try {
       await updateCategory({
         ...editForm,
-        id_thematique: Number(selectedCategory.id),
+        id: selectedCategory!.id,
       }).unwrap();
       toast.success("Catégorie mise à jour avec succès");
       setEditDialogOpen(false);
@@ -131,7 +130,7 @@ export function CategoryFormation() {
   // Handle delete category
   const handleDeleteCategory = async (id: string) => {
     try {
-      await removeCategory({ id_category: id }).unwrap();
+      await removeCategory({ id: id }).unwrap();
       toast.success("Catégorie supprimée avec succès");
       refetch();
     } catch (error) {
@@ -166,8 +165,8 @@ export function CategoryFormation() {
                 <Label htmlFor="category">Catégorie</Label>
                 <Input
                   id="category"
-                  value={createForm.category}
-                  onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })}
+                  value={createForm.title}
+                  onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
                   placeholder="Nom de la catégorie"
                 />
               </div>
@@ -185,8 +184,8 @@ export function CategoryFormation() {
               <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
                 Annuler
               </Button>
-              <Button type="submit" onClick={handleCreateCategory} disabled={isAdding}>
-                {isAdding && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <Button type="submit" onClick={handleCreateCategory} disabled={isCreatingCategory}>
+                {isCreatingCategory && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Créer
               </Button>
             </DialogFooter>
@@ -201,7 +200,7 @@ export function CategoryFormation() {
           <Table className="w-full">
             <TableHeader className="border">
               <TableRow>
-                <TableHead className="w-[25%] min-w-[120px]">Catégorie</TableHead>
+                <TableHead className="w-[25%] min-w-[120px]">Titre</TableHead>
                 <TableHead className="w-[55%] min-w-[200px]">Description</TableHead>
                 <TableHead className="w-[20%] min-w-[100px] text-right">Actions</TableHead>
               </TableRow>
@@ -214,10 +213,10 @@ export function CategoryFormation() {
                   </TableCell>
                 </TableRow>
               ) : (
-                categories.map((category: CategoryData) => (
+                categories.map((category: ITrainingCategory) => (
                   <TableRow key={category.id}>
                     <TableCell className="font-medium align-top">
-                      <div className="break-words">{category.category}</div>
+                      <div className="break-words">{category.title}</div>
                     </TableCell>
                     <TableCell className="align-top">
                       <div className="break-words whitespace-normal leading-relaxed">
@@ -247,13 +246,13 @@ export function CategoryFormation() {
                               <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
                               <AlertDialogDescription>
                                 Cette action ne peut pas être annulée. Cela supprimera
-                                définitivement la catégorie "{category.category}".
+                                définitivement la catégorie "{category.title}".
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Annuler</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDeleteCategory(category.id.toString())}
+                                onClick={() => handleDeleteCategory(category?.id.toString())}
                                 disabled={isDeleting}
                               >
                                 {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
@@ -284,8 +283,8 @@ export function CategoryFormation() {
               <Label htmlFor="edit-category">Catégorie</Label>
               <Input
                 id="edit-category"
-                value={editForm.category || ""}
-                onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                value={editForm.title || ""}
+                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                 placeholder="Nom de la catégorie"
               />
             </div>
