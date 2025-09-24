@@ -4,9 +4,9 @@ import {
   IUpdateTrainingRequest,
   IListCategoryTrainingResponse,
   IListCourseBySessionIdResponse,
-  ITrainingByIdResponse,
   ITrainingListResponse,
   ITrainingTypesResponse,
+  IListTrainingByIdResponse,
 } from "@/types/secretary/training-secretary";
 
 // Training Secretary API
@@ -15,6 +15,9 @@ export const trainingSecretaryApi = createApi({
   baseQuery: enhancedBaseQuery,
   tagTypes: ["TrainingSecretary"],
   endpoints: (builder) => ({
+    // ########################################################
+    // ************ SECRETARY TRAININGS ENDPOINTS *************
+    // ########################################################
     // get All
     listTraining: builder.query<ITrainingListResponse, void>({
       query: () => "trainings/getlist",
@@ -39,8 +42,8 @@ export const trainingSecretaryApi = createApi({
       invalidatesTags: ["TrainingSecretary"],
     }),
     // get By id
-    listTrainingById: builder.query<ITrainingByIdResponse, { id: string }>({
-      query: ({ id }) => `formations/formation/${id}`,
+    listTrainingById: builder.query<IListTrainingByIdResponse, { id: string }>({
+      query: (request) => `trainings/${request.id}`,
       providesTags: ["TrainingSecretary"],
     }),
     listTrainingByCategory: builder.query<ITrainingListResponse, { id: string }>({
@@ -48,10 +51,12 @@ export const trainingSecretaryApi = createApi({
       providesTags: ["TrainingSecretary"],
     }),
 
+    // remove a training
     deleteTrainingById: builder.mutation<void, { id: string }>({
-      query: ({ id }) => ({
-        url: `formations/formation/${id}`,
+      query: (request) => ({
+        url: "trainings",
         method: "DELETE",
+        body: request,
       }),
       invalidatesTags: ["TrainingSecretary"],
     }),
@@ -147,6 +152,9 @@ export const trainingSecretaryApi = createApi({
 });
 
 export const {
+  // ########################################################
+  // *********** TRAININGS ENDPOINTS EXPORT *************
+  // ########################################################
   useListTrainingQuery,
   useCreateTrainingMutation,
   useUpdateTrainingMutation,

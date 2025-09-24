@@ -126,7 +126,6 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
           rnc: form.rnc,
           pedagogygoals: form.pedagogygoals,
         }).unwrap();
-        console.log(form);
         toast.success("Formation créée avec succès");
       }
       onSuccess();

@@ -59,56 +59,10 @@ export interface IUpdateTrainingRequest {
 
 // List all Training By ID Api Response -> get its sessions
 
-export interface ITrainingByIdResponse {
+export interface IListTrainingByIdResponse {
   status: number;
   message: string;
-  data: {
-    id: number;
-    titre: string;
-    sous_titre: string;
-    id_category: number;
-    id_thematic: number | null;
-    type_formation: string;
-    rnc: string;
-    description: string;
-    prerequis: string;
-    alternance: string;
-    status: number;
-    prix: number;
-    createdAt: string;
-    updatedAt: string;
-    Category: {
-      id: number;
-      category: string;
-    };
-    Sessions: {
-      id: number;
-      uuid: string;
-      designation: string;
-      id_controleur: number | null;
-      createdBy: number | null;
-      id_superviseur: number[] | null;
-      date_mise_a_jour: string | null;
-      duree: string;
-      text_reglement: string;
-      payment_method: string;
-      nb_places: number;
-      nb_places_disponible: number;
-      progression: number;
-      id_formation: number;
-      piece_jointe: string | null;
-      type_formation: string;
-      id_category: number;
-      date_session_debut: string;
-      date_session_fin: string;
-      description: string | null;
-      prix: number | null;
-      initial_price: number | null;
-      status: number;
-      createdAt: string;
-      updatedAt: string;
-    }[];
-  };
+  data: ITraining;
 }
 
 interface FormationData {
