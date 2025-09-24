@@ -1,51 +1,60 @@
+export enum ITrainingType {
+  EN_LIGNE = "En ligne",
+  VISION_CONFERENCE = "Vision Conférence",
+  PRESENTIEL = "En présentiel",
+  HYBRIDE = "Hybride",
+}
+
 export interface ICategory {
   id: number;
   category: string;
 }
 
 export interface ITraining {
-  id: number;
-  titre: string;
-  sous_titre: string;
-  id_category: number;
-  id_thematic: number | null;
-  rnc: string | null;
+  id: string;
+  title: string;
+  subtitle: string;
+  id_trainingcategory: string;
+  trainingtype: ITrainingType;
+  rnc: string;
   description: string;
-  prerequis: string | null;
-  alternance: boolean | null;
-  status: number;
+  requirement: string;
+  pedagogygoals: string;
+  prix: number;
   createdAt: string;
   updatedAt: string;
-  Category: ICategory;
-  prix?: string;
-  objectif?: string;
-  id_formation?: number;
-  FormationData: any;
-  // FormationData?: { id_formation?: string; titre?: string };
-  // seances?: any;
 }
 
 // List all Training Api Response
 export interface ITrainingListResponse {
   status: number;
   message: string;
-  data: {
-    length: number;
-    list: ITraining[];
-  };
+  data: ITraining[];
 }
 
-export interface IAddTrainingRequest {
-  titre: string;
-  sous_titre: string;
-  type_formation: string;
-  id_category: string;
-  prix: string;
-  rnc: string; // RNCP35526 -> number
+export interface ICreateTrainingRequest {
+  title: string;
+  subtitle: string;
+  id_trainingcategory: string;
+  trainingtype: ITrainingType;
+  rnc: string;
   description: string;
-  // objectif: string;
-  prerequis: string;
-  alternance: string; // durree -> 3ans
+  requirement: string;
+  pedagogygoals: string;
+  prix: number;
+}
+
+export interface IUpdateTrainingRequest {
+  id: string;
+  title: string;
+  subtitle: string;
+  id_trainingcategory: string;
+  trainingtype: ITrainingType;
+  rnc: string;
+  description: string;
+  requirement: string;
+  pedagogygoals: string;
+  prix: number;
 }
 
 // List all Training By ID Api Response -> get its sessions

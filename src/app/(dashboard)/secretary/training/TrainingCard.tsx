@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Loader2, Trash2 } from "lucide-react";
+import { Eye, Loader2, Trash2, Edit } from "lucide-react";
 import { useDeleteTrainingByIdMutation } from "@/lib/apis/secretary/training-secretary-api";
 import { ITraining } from "@/types/secretary/training-secretary";
 import { toast } from "react-hot-toast";
@@ -10,12 +10,14 @@ import { toast } from "react-hot-toast";
 interface TrainingCardProps {
   formation: ITraining;
   onViewDetails: (formation: ITraining) => void;
+  onEdit: (formation: ITraining) => void;
   refetchFormations: () => void;
 }
 
 const TrainingCard: React.FC<TrainingCardProps> = ({
   formation,
   onViewDetails,
+  onEdit,
   refetchFormations,
 }) => {
   const [deleteTrainingMutation, { isLoading }] = useDeleteTrainingByIdMutation();
@@ -38,14 +40,14 @@ const TrainingCard: React.FC<TrainingCardProps> = ({
       <CardHeader>
         <div className="flex justify-between items-start">
           <Badge variant="secondary" className="mb-2">
-            {formation.Category?.category}
+            {formation.trainingtype}
           </Badge>
-          <Badge variant={formation.status === 1 ? "default" : "secondary"}>
+          {/* <Badge variant={formation.status === 1 ? "default" : "secondary"}>
             {formation.status === 1 ? "Actif" : "Inactif"}
-          </Badge>
+          </Badge> */}
         </div>
-        <CardTitle className="text-xl">{formation.titre}</CardTitle>
-        <CardDescription>{formation.sous_titre}</CardDescription>
+        <CardTitle className="text-xl">{formation.title}</CardTitle>
+        <CardDescription>{formation.subtitle}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
@@ -55,18 +57,15 @@ const TrainingCard: React.FC<TrainingCardProps> = ({
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Type:</span>
-            <Badge variant="outline">
-              {formation.Category.category === "onLine"
-                ? "En ligne"
-                : formation.Category.category === "presentiel"
-                  ? "Présentiel"
-                  : "Hybride"}
-            </Badge>
+            <Badge variant="outline">{formation.trainingtype}</Badge>
           </div>
           <div className="flex gap-2 mt-4">
             <Button onClick={() => onViewDetails(formation)} className="flex-1" variant="outline">
               <Eye className="w-4 h-4 mr-2" />
               Détails
+            </Button>
+            <Button onClick={() => onEdit(formation)} variant="outline" size="icon">
+              <Edit className="size-4" />
             </Button>
             <Button
               onClick={() => handleDelete(String(formation.id))}

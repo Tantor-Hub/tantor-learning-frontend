@@ -1,5 +1,5 @@
 "use client";
-import { useTrainingListQuery } from "@/lib/apis/secretary/training-secretary-api";
+import { useListTrainingQuery } from "@/lib/apis/secretary/training-secretary-api";
 import TrainingList from "./training-list";
 import { ITraining } from "@/types/secretary/training-secretary";
 import { useRouter } from "next/navigation";
@@ -11,11 +11,15 @@ export default function Page() {
     data: formationsData,
     refetch: refetchFormations,
     isLoading: isLoadingFormationData,
-  } = useTrainingListQuery();
+  } = useListTrainingQuery();
   const router = useRouter();
 
   const handleViewDetails = (formation: ITraining) => {
     router.push(`/secretary/training/${formation.id}`);
+  };
+
+  const handleEdit = (formation: ITraining) => {
+    // This will be handled by TrainingList
   };
 
   return (
@@ -32,8 +36,9 @@ export default function Page() {
         <TabsContent value="all">
           <div className="max-w-7xl mx-auto">
             <TrainingList
-              formations={formationsData?.data?.list || []}
+              formations={formationsData?.data || []}
               onViewDetails={handleViewDetails}
+              onEdit={handleEdit}
               refetchFormations={refetchFormations}
               isLoadingFormationData={isLoadingFormationData}
             />

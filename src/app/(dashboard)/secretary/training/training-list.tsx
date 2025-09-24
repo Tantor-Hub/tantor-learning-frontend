@@ -9,6 +9,7 @@ import { Loading } from "@/components/shared/loading";
 interface TrainingListProps {
   formations: ITraining[];
   onViewDetails: (formation: ITraining) => void;
+  onEdit: (formation: ITraining) => void;
   refetchFormations: () => void;
   isLoadingFormationData: boolean;
 }
@@ -16,10 +17,12 @@ interface TrainingListProps {
 const TrainingList: React.FC<TrainingListProps> = ({
   formations,
   onViewDetails,
+  onEdit,
   refetchFormations,
   isLoadingFormationData,
 }) => {
   const [showFormationModal, setShowFormationModal] = React.useState(false);
+  const [editingTraining, setEditingTraining] = React.useState<ITraining | null>(null);
 
   return (
     <div className="space-y-6">
@@ -30,11 +33,16 @@ const TrainingList: React.FC<TrainingListProps> = ({
         </div>
         <TrainingForm
           open={showFormationModal}
-          onOpenChange={setShowFormationModal}
+          onOpenChange={(open) => {
+            setShowFormationModal(open);
+            if (!open) setEditingTraining(null);
+          }}
           onSuccess={() => {
             setShowFormationModal(false);
+            setEditingTraining(null);
             refetchFormations();
           }}
+          training={editingTraining}
         >
           <Button className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" />
@@ -50,6 +58,10 @@ const TrainingList: React.FC<TrainingListProps> = ({
             key={formation.id}
             formation={formation}
             onViewDetails={onViewDetails}
+            onEdit={(formation) => {
+              setEditingTraining(formation);
+              setShowFormationModal(true);
+            }}
             refetchFormations={refetchFormations}
           />
         ))}

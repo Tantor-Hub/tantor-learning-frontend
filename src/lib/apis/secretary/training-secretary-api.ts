@@ -1,6 +1,7 @@
 import { createApi, enhancedBaseQuery } from "../base-api";
 import {
-  IAddTrainingRequest,
+  ICreateTrainingRequest,
+  IUpdateTrainingRequest,
   IListCategoryTrainingResponse,
   IListCourseBySessionIdResponse,
   ITrainingByIdResponse,
@@ -14,26 +15,39 @@ export const trainingSecretaryApi = createApi({
   baseQuery: enhancedBaseQuery,
   tagTypes: ["TrainingSecretary"],
   endpoints: (builder) => ({
-    trainingList: builder.query<ITrainingListResponse, void>({
-      query: () => "formations/list",
+    // get All
+    listTraining: builder.query<ITrainingListResponse, void>({
+      query: () => "trainings/getlist",
       providesTags: ["TrainingSecretary"],
     }),
-    addTraining: builder.mutation<void, IAddTrainingRequest>({
+    // create a training
+    createTraining: builder.mutation<void, ICreateTrainingRequest>({
       query: (request) => ({
-        url: "formations/formation/add",
+        url: "trainings/create",
         method: "POST",
         body: request,
       }),
       invalidatesTags: ["TrainingSecretary"],
     }),
-    listTrainingByCategory: builder.query<ITrainingListResponse, { id: string }>({
-      query: ({ id }) => `formations/list/bycategory/${id}`,
-      providesTags: ["TrainingSecretary"],
+    // update a training
+    updateTraining: builder.mutation<void, IUpdateTrainingRequest>({
+      query: (request) => ({
+        url: `training/update/${request.id}`,
+        method: "PATCH",
+        body: request,
+      }),
+      invalidatesTags: ["TrainingSecretary"],
     }),
+    // get By id
     listTrainingById: builder.query<ITrainingByIdResponse, { id: string }>({
       query: ({ id }) => `formations/formation/${id}`,
       providesTags: ["TrainingSecretary"],
     }),
+    listTrainingByCategory: builder.query<ITrainingListResponse, { id: string }>({
+      query: ({ id }) => `formations/list/bycategory/${id}`,
+      providesTags: ["TrainingSecretary"],
+    }),
+
     deleteTrainingById: builder.mutation<void, { id: string }>({
       query: ({ id }) => ({
         url: `formations/formation/${id}`,
@@ -53,7 +67,7 @@ export const trainingSecretaryApi = createApi({
     // Category de Formation
     //===================================================================================
     listCategoryTraining: builder.query<IListCategoryTrainingResponse, void>({
-      query: () => "trainingcategy/getall",
+      query: () => "trainingcategory/getall",
       providesTags: ["TrainingSecretary"],
     }),
 
@@ -75,7 +89,7 @@ export const trainingSecretaryApi = createApi({
       }
     >({
       query: (request) => ({
-        url: "trainingcategy/create",
+        url: "trainingcategory/create",
         method: "POST",
         body: request,
       }),
@@ -90,7 +104,7 @@ export const trainingSecretaryApi = createApi({
       }
     >({
       query: (request) => ({
-        url: `trainingcategy/update`,
+        url: `trainingcategory/update`,
         method: "PATCH",
         body: request,
       }),
@@ -98,7 +112,7 @@ export const trainingSecretaryApi = createApi({
 
     removeCategoryTrainingById: builder.mutation<void, { id: string }>({
       query: (request) => ({
-        url: `trainingcategy/delete`,
+        url: "trainingcategory/delete",
         method: "DELETE",
         body: request,
       }),
@@ -133,8 +147,9 @@ export const trainingSecretaryApi = createApi({
 });
 
 export const {
-  useTrainingListQuery,
-  useAddTrainingMutation,
+  useListTrainingQuery,
+  useCreateTrainingMutation,
+  useUpdateTrainingMutation,
   useDeleteTrainingByIdMutation,
   useListTrainingByIdQuery,
   useListTrainingTypeQuery,

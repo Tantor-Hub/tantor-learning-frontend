@@ -1,5 +1,8 @@
 import React from "react";
-import { useAddTrainingMutation } from "@/lib/apis/secretary/training-secretary-api";
+import {
+  useCreateTrainingMutation,
+  useUpdateTrainingMutation,
+} from "@/lib/apis/secretary/training-secretary-api";
 import {
   Dialog,
   DialogContent,
@@ -21,82 +24,131 @@ import {
 } from "@/components/ui/select";
 import { toast } from "react-hot-toast";
 import { Loader2 } from "lucide-react";
-import {
-  useListTrainingTypeQuery,
-  useListCategoryTrainingQuery,
-} from "@/lib/apis/secretary/training-secretary-api";
+import { useListCategoryTrainingQuery } from "@/lib/apis/secretary/training-secretary-api";
+import { ITrainingType } from "@/types/secretary/training-secretary";
 
 interface TrainingFormProps {
   children: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  training?: any; // Optional training object for editing
 }
 
-const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChange, onSuccess }) => {
-  const { data: categoriesResponse, isLoading: isCategoriesListTrainingLoading } =
-    useListCategoryTrainingQuery();
-  const { data: trainingTypesResponse, isLoading: isTrainingTypeLoading } =
-    useListTrainingTypeQuery();
-  const [addTrainingMutation, { isLoading }] = useAddTrainingMutation();
+const TrainingForm: React.FC<TrainingFormProps> = ({
+  children,
+  open,
+  onOpenChange,
+  onSuccess,
+  training,
+}) => {
+  const { data: categoriesData, isLoading: categoriesLoading } = useListCategoryTrainingQuery();
+  const [createTraining, { isLoading: createLoading }] = useCreateTrainingMutation();
+  const [updateTraining, { isLoading: updateLoading }] = useUpdateTrainingMutation();
+  const isLoading = createLoading || updateLoading;
 
   const [form, setForm] = React.useState({
-    titre: "",
-    sous_titre: "",
-    type_formation: "",
-    id_category: "",
+    title: "",
+    subtitle: "",
+    trainingtype: "",
+    id_trainingcategory: "",
     prix: "",
     description: "",
-    prerequis: "",
+    requirement: "",
     rnc: "",
-    objectif: "",
-    alternance: "",
+    pedagogygoals: "",
   });
 
   // Extract categories from API response
-  const categories = categoriesResponse?.data || [];
+  const categories = categoriesData?.data || [];
+  console.log(categories);
 
-  // Extract training types from API response
-  const trainingTypes = trainingTypesResponse?.data || [];
+  // Populate form when editing
+  React.useEffect(() => {
+    if (training) {
+      setForm({
+        title: training.titre || "",
+        subtitle: training.sous_titre || "",
+        trainingtype: training.type_formation || "",
+        id_trainingcategory: training.id_category?.toString() || "",
+        prix: training.prix?.toString() || "",
+        description: training.description || "",
+        requirement: training.prerequis || "",
+        rnc: training.rnc || "",
+        pedagogygoals: training.alternance || "",
+      });
+    } else {
+      resetForm();
+    }
+  }, [training]);
+
+  // Training types mapping
+  const trainingTypes = [
+    { key: ITrainingType.EN_LIGNE, type: "En ligne" },
+    { key: ITrainingType.VISION_CONFERENCE, type: "Vision Conférence" },
+    { key: ITrainingType.PRESENTIEL, type: "En présentiel" },
+    { key: ITrainingType.HYBRIDE, type: "Hybride" },
+  ];
 
   const handleSubmit = async () => {
+    // Basic validation
+    if (!form.title || !form.prix || !form.trainingtype || !form.id_trainingcategory) {
+      toast.error("Veuillez remplir les champs obligatoires");
+      return;
+    }
+
     try {
-      await addTrainingMutation({
-        titre: form.titre,
-        sous_titre: form.sous_titre,
-        type_formation: form.type_formation as
-          | "onLine"
-          | "visioConference"
-          | "presentiel"
-          | "hybride",
-        prix: form.prix,
-        id_category: form.id_category || String(categories[0]?.id || ""),
-        description: form.description,
-        prerequis: form.prerequis,
-        rnc: form.rnc,
-        // objectif: form.objectif,
-        alternance: form.alternance,
-      }).unwrap();
-      toast.success("Création réussie");
+      if (training) {
+        // Update existing training
+        await updateTraining({
+          id: training.id.toString(),
+          title: form.title,
+          subtitle: form.subtitle,
+          trainingtype: form.trainingtype as ITrainingType,
+          id_trainingcategory: form.id_trainingcategory,
+          prix: Number(form.prix),
+          description: form.description,
+          requirement: form.requirement,
+          rnc: form.rnc,
+          pedagogygoals: form.pedagogygoals,
+        }).unwrap();
+        toast.success("Formation mise à jour avec succès");
+      } else {
+        // Create new training
+        await createTraining({
+          title: form.title,
+          subtitle: form.subtitle,
+          trainingtype: form.trainingtype as ITrainingType,
+          id_trainingcategory: form.id_trainingcategory,
+          prix: Number(form.prix),
+          description: form.description,
+          requirement: form.requirement,
+          rnc: form.rnc,
+          pedagogygoals: form.pedagogygoals,
+        }).unwrap();
+        console.log(form);
+        toast.success("Formation créée avec succès");
+      }
       onSuccess();
       onOpenChange(false);
+      resetForm();
     } catch (error) {
-      toast.error("Erreur lors de la création");
+      console.error("Error:", error);
+      toast.error(training ? "Erreur lors de la mise à jour" : "Erreur lors de la création");
     }
   };
 
   const resetForm = () => {
     setForm({
-      titre: "",
-      sous_titre: "",
-      type_formation: "",
-      id_category: "",
+      title: "",
+      subtitle: "",
+      trainingtype: "",
+      id_trainingcategory: "",
       prix: "",
       description: "",
-      prerequis: "",
+      requirement: "",
       rnc: "",
-      objectif: "",
-      alternance: "",
+      pedagogygoals: "",
     });
   };
 
@@ -110,9 +162,13 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-4">
-          <DialogTitle className="text-2xl font-semibold">Nouvelle Formation</DialogTitle>
+          <DialogTitle className="text-2xl font-semibold">
+            {training ? "Modifier la Formation" : "Nouvelle Formation"}
+          </DialogTitle>
           <DialogDescription className="text-base">
-            Créez une nouvelle formation en remplissant les informations ci-dessous.
+            {training
+              ? "Modifiez les informations de la formation ci-dessous."
+              : "Créez une nouvelle formation en remplissant les informations ci-dessous."}
           </DialogDescription>
         </DialogHeader>
 
@@ -124,13 +180,13 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
             </h3>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2">
-                <Label htmlFor="titre" className="text-sm font-medium">
+                <Label htmlFor="title" className="text-sm font-medium">
                   Titre de la formation <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="titre"
-                  value={form.titre}
-                  onChange={(e) => setForm({ ...form, titre: e.target.value })}
+                  id="title"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Ex: Diplôme de Comptabilité et Gestion"
                   className="mt-1 w-full"
                 />
@@ -151,13 +207,13 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
             </div>
 
             <div>
-              <Label htmlFor="sous_titre" className="text-sm font-medium">
+              <Label htmlFor="subtitle" className="text-sm font-medium">
                 Sous-titre
               </Label>
               <Input
-                id="sous_titre"
-                value={form.sous_titre}
-                onChange={(e) => setForm({ ...form, sous_titre: e.target.value })}
+                id="subtitle"
+                value={form.subtitle}
+                onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
                 placeholder="Ex: Comptabilité et Finance • Bac+3"
                 className="mt-1"
               />
@@ -169,23 +225,20 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
             <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Configuration</h3>
             <div className="grid grid-cols-1 gap-4">
               <div className="w-full">
-                <Label htmlFor="type_formation" className="text-sm font-medium">
+                <Label htmlFor="trainingtype" className="text-sm font-medium">
                   Type de Formation <span className="text-destructive">*</span>
                 </Label>
                 <Select
-                  value={form.type_formation}
-                  onValueChange={(value) => setForm({ ...form, type_formation: value })}
+                  value={form.trainingtype}
+                  onValueChange={(value) => setForm({ ...form, trainingtype: value })}
                 >
                   <SelectTrigger className="mt-1 w-full">
-                    <SelectValue placeholder="Sélectionner le type" className="w-full" />
+                    <SelectValue placeholder="Sélectionner le type" />
                   </SelectTrigger>
                   <SelectContent>
                     {trainingTypes.map((type) => (
-                      <SelectItem key={type.key} value={type.key} className="w-full">
-                        <div>
-                          <div className="font-medium">{type.type}</div>
-                          {/* <div className="text-xs text-gray-500">{type.description}</div> */}
-                        </div>
+                      <SelectItem key={type.key} value={type.key}>
+                        {type.type}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -197,11 +250,16 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
                   Catégorie <span className="text-destructive">*</span>
                 </Label>
                 <Select
-                  value={form.id_category}
-                  onValueChange={(value) => setForm({ ...form, id_category: value })}
+                  value={form.id_trainingcategory}
+                  onValueChange={(value) => setForm({ ...form, id_trainingcategory: value })}
+                  disabled={categoriesLoading}
                 >
                   <SelectTrigger className="mt-1 w-full">
-                    <SelectValue placeholder="Sélectionner la catégorie" />
+                    <SelectValue
+                      placeholder={
+                        categoriesLoading ? "Chargement..." : "Sélectionner la catégorie"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
@@ -225,19 +283,6 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
                   className="mt-1"
                 />
               </div>
-
-              <div>
-                <Label htmlFor="alternance" className="text-sm font-medium">
-                  Durée d'alternance
-                </Label>
-                <Input
-                  id="alternance"
-                  value={form.alternance}
-                  onChange={(e) => setForm({ ...form, alternance: e.target.value })}
-                  placeholder="Ex: 24 mois"
-                  className="mt-1"
-                />
-              </div>
             </div>
           </div>
 
@@ -247,13 +292,13 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
             <div className="grid grid-cols-1 gap-6">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="objectif" className="text-sm font-medium">
+                  <Label htmlFor="pedagogygoals" className="text-sm font-medium">
                     Objectifs pédagogiques
                   </Label>
                   <Textarea
-                    id="objectif"
-                    value={form.objectif}
-                    onChange={(e) => setForm({ ...form, objectif: e.target.value })}
+                    id="pedagogygoals"
+                    value={form.pedagogygoals}
+                    onChange={(e) => setForm({ ...form, pedagogygoals: e.target.value })}
                     placeholder="Décrivez les objectifs et compétences à acquérir..."
                     rows={4}
                     className="mt-1 resize-none"
@@ -261,13 +306,13 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
                 </div>
 
                 <div>
-                  <Label htmlFor="prerequis" className="text-sm font-medium">
+                  <Label htmlFor="requirement" className="text-sm font-medium">
                     Prérequis
                   </Label>
                   <Textarea
-                    id="prerequis"
-                    value={form.prerequis}
-                    onChange={(e) => setForm({ ...form, prerequis: e.target.value })}
+                    id="requirement"
+                    value={form.requirement}
+                    onChange={(e) => setForm({ ...form, requirement: e.target.value })}
                     placeholder="Niveau requis, diplômes, expérience..."
                     rows={4}
                     className="mt-1 resize-none"
@@ -299,14 +344,16 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ children, open, onOpenChang
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={isLoading || categoriesLoading}
             className="bg-blue-600 hover:bg-blue-700 px-6"
           >
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Création en cours...
+                {training ? "Mise à jour en cours..." : "Création en cours..."}
               </>
+            ) : training ? (
+              "Mettre à jour"
             ) : (
               "Créer la Formation"
             )}
