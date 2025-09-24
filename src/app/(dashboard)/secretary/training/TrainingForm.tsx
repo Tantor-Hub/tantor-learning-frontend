@@ -59,14 +59,46 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
     pedagogygoals: "",
   });
 
+  const [originalForm, setOriginalForm] = React.useState({
+    title: "",
+    subtitle: "",
+    trainingtype: "",
+    id_trainingcategory: "",
+    prix: "",
+    description: "",
+    requirement: "",
+    rnc: "",
+    pedagogygoals: "",
+  });
+
   // Extract categories from API response
   const categories = categoriesData?.data || [];
   console.log(categories);
 
   // Populate form when editing
   React.useEffect(() => {
-    if (training) {
-      setForm({
+    if (training && categories.length > 0) {
+      // Find the correct category UUID from the categories list
+      const category = categories.find((cat) => cat.id === training.id_category?.toString());
+      const categoryId = category ? category.id : training.id_category?.toString() || "";
+
+      const formData = {
+        title: training.titre || "",
+        subtitle: training.sous_titre || "",
+        trainingtype: training.type_formation || "",
+        id_trainingcategory: categoryId,
+        prix: training.prix?.toString() || "",
+        description: training.description || "",
+        requirement: training.prerequis || "",
+        rnc: training.rnc || "",
+        pedagogygoals: training.alternance ? "true" : "",
+      };
+
+      setForm(formData);
+      setOriginalForm(formData);
+    } else if (training) {
+      // Fallback if categories not loaded yet
+      const formData = {
         title: training.titre || "",
         subtitle: training.sous_titre || "",
         trainingtype: training.type_formation || "",
@@ -75,12 +107,15 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
         description: training.description || "",
         requirement: training.prerequis || "",
         rnc: training.rnc || "",
-        pedagogygoals: training.alternance || "",
-      });
+        pedagogygoals: training.alternance ? "true" : "",
+      };
+
+      setForm(formData);
+      setOriginalForm(formData);
     } else {
       resetForm();
     }
-  }, [training]);
+  }, [training, categories]);
 
   // Training types mapping
   const trainingTypes = [
@@ -91,26 +126,35 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
   ];
 
   const handleSubmit = async () => {
-    // Basic validation
-    if (!form.title || !form.prix || !form.trainingtype || !form.id_trainingcategory) {
+    // Basic validation - only for creation
+    if (
+      !training &&
+      (!form.title || !form.prix || !form.trainingtype || !form.id_trainingcategory)
+    ) {
       toast.error("Veuillez remplir les champs obligatoires");
+      return;
+    }
+
+    // Check if there are changes when updating
+    if (training && !hasChanges()) {
+      toast.error("Aucune modification détectée");
       return;
     }
 
     try {
       if (training) {
-        // Update existing training
+        // Update existing training - send all current values
         await updateTraining({
           id: training.id.toString(),
           title: form.title,
           subtitle: form.subtitle,
-          trainingtype: form.trainingtype as ITrainingType,
+          trainingtype: form.trainingtype as any, // Send as display value to match API validation
           id_trainingcategory: form.id_trainingcategory,
           prix: Number(form.prix),
           description: form.description,
           requirement: form.requirement,
           rnc: form.rnc,
-          pedagogygoals: form.pedagogygoals,
+          pedagogygoals: form.pedagogygoals, // Keep as string to match API types
         }).unwrap();
         toast.success("Formation mise à jour avec succès");
       } else {
@@ -118,13 +162,13 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
         await createTraining({
           title: form.title,
           subtitle: form.subtitle,
-          trainingtype: form.trainingtype as ITrainingType,
+          trainingtype: form.trainingtype as any, // Send as display value to match API validation
           id_trainingcategory: form.id_trainingcategory,
           prix: Number(form.prix),
           description: form.description,
           requirement: form.requirement,
           rnc: form.rnc,
-          pedagogygoals: form.pedagogygoals,
+          pedagogygoals: form.pedagogygoals, // Keep as string to match API types
         }).unwrap();
         toast.success("Formation créée avec succès");
       }
@@ -149,6 +193,39 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
       rnc: "",
       pedagogygoals: "",
     });
+    setOriginalForm({
+      title: "",
+      subtitle: "",
+      trainingtype: "",
+      id_trainingcategory: "",
+      prix: "",
+      description: "",
+      requirement: "",
+      rnc: "",
+      pedagogygoals: "",
+    });
+  };
+
+  // Check if form has changes
+  const hasChanges = () => {
+    return (
+      form.title !== originalForm.title ||
+      form.subtitle !== originalForm.subtitle ||
+      form.trainingtype !== originalForm.trainingtype ||
+      form.id_trainingcategory !== originalForm.id_trainingcategory ||
+      form.prix !== originalForm.prix ||
+      form.description !== originalForm.description ||
+      form.requirement !== originalForm.requirement ||
+      form.rnc !== originalForm.rnc ||
+      form.pedagogygoals !== originalForm.pedagogygoals
+    );
+  };
+
+  // Check if individual field has changed
+  const hasFieldChanged = (fieldName: string) => {
+    return (
+      form[fieldName as keyof typeof form] !== originalForm[fieldName as keyof typeof originalForm]
+    );
   };
 
   const handleCancel = () => {
@@ -169,6 +246,12 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
               ? "Modifiez les informations de la formation ci-dessous."
               : "Créez une nouvelle formation en remplissant les informations ci-dessous."}
           </DialogDescription>
+          {training && hasChanges() && (
+            <div className="flex items-center gap-2 mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span className="text-sm text-blue-700">Modifications détectées</span>
+            </div>
+          )}
         </DialogHeader>
 
         <div className="grid gap-6 py-4">
@@ -187,7 +270,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Ex: Diplôme de Comptabilité et Gestion"
-                  className="mt-1 w-full"
+                  className={`mt-1 w-full ${training && hasFieldChanged("title") ? "border-blue-500 bg-blue-50" : ""}`}
                 />
               </div>
               <div>
@@ -200,7 +283,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
                   value={form.prix}
                   onChange={(e) => setForm({ ...form, prix: e.target.value })}
                   placeholder="9000"
-                  className="mt-1"
+                  className={`mt-1 ${training && hasFieldChanged("prix") ? "border-blue-500 bg-blue-50" : ""}`}
                 />
               </div>
             </div>
@@ -214,7 +297,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
                 value={form.subtitle}
                 onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
                 placeholder="Ex: Comptabilité et Finance • Bac+3"
-                className="mt-1"
+                className={`mt-1 ${training && hasFieldChanged("subtitle") ? "border-blue-500 bg-blue-50" : ""}`}
               />
             </div>
           </div>
@@ -329,7 +412,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="Description complète du programme, méthodes pédagogiques, modalités d'évaluation..."
                   rows={8}
-                  className="mt-1 resize-none"
+                  className={`mt-1 resize-none ${training && hasFieldChanged("description") ? "border-blue-500 bg-blue-50" : ""}`}
                 />
               </div>
             </div>
@@ -343,7 +426,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isLoading || categoriesLoading}
+            disabled={isLoading || categoriesLoading || (training && !hasChanges())}
             className="bg-blue-600 hover:bg-blue-700 px-6"
           >
             {isLoading ? (
@@ -352,7 +435,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
                 {training ? "Mise à jour en cours..." : "Création en cours..."}
               </>
             ) : training ? (
-              "Mettre à jour"
+              "Mis à jour"
             ) : (
               "Créer la Formation"
             )}

@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Loader2, Trash2, Edit } from "lucide-react";
+import { Loader2, Trash2, Edit, Ellipsis } from "lucide-react";
 import { useDeleteTrainingByIdMutation } from "@/lib/apis/secretary/training-secretary-api";
 import { ITraining } from "@/types/secretary/training-secretary";
 import { toast } from "react-hot-toast";
@@ -40,11 +40,8 @@ const TrainingCard: React.FC<TrainingCardProps> = ({
       <CardHeader>
         <div className="flex justify-between items-start">
           <Badge variant="secondary" className="mb-2">
-            {formation.trainingtype}
+            {formation.trainingCategory?.title || ""}
           </Badge>
-          {/* <Badge variant={formation.status === 1 ? "default" : "secondary"}>
-            {formation.status === 1 ? "Actif" : "Inactif"}
-          </Badge> */}
         </div>
         <CardTitle className="text-xl">{formation.title}</CardTitle>
         <CardDescription>{formation.subtitle}</CardDescription>
@@ -60,23 +57,21 @@ const TrainingCard: React.FC<TrainingCardProps> = ({
             <Badge variant="outline">{formation.trainingtype}</Badge>
           </div>
           <div className="flex gap-2 mt-4">
-            <Button onClick={() => onViewDetails(formation)} className="flex-1" variant="outline">
-              <Eye className="w-4 h-4 mr-2" />
-              Détails
+            <Button onClick={() => onViewDetails(formation)} variant="outline">
+              <Ellipsis className="size-6" />
             </Button>
-            <Button onClick={() => onEdit(formation)} variant="outline" size="icon">
-              <Edit className="size-4" />
+            <Button onClick={() => onEdit(formation)} variant="outline">
+              <Edit className="size-6" />
             </Button>
             <Button
               onClick={() => handleDelete(String(formation.id))}
               variant="outline"
-              size="icon"
-              className="text-red-600"
+              className="text-destructive"
             >
               {isLoading ? (
-                <Loader2 className="animate-spin  size-4" />
+                <Loader2 className="animate-spin size-6" />
               ) : (
-                <Trash2 className="size-4" />
+                <Trash2 className="size-6" />
               )}
             </Button>
           </div>

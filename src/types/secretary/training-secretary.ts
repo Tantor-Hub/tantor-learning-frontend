@@ -23,6 +23,9 @@ export interface ITraining {
   prix: number;
   createdAt: string;
   updatedAt: string;
+  trainingCategory?: {
+    title: string;
+  };
 }
 
 // List all Training Api Response
@@ -46,15 +49,15 @@ export interface ICreateTrainingRequest {
 
 export interface IUpdateTrainingRequest {
   id: string;
-  title: string;
-  subtitle: string;
-  id_trainingcategory: string;
-  trainingtype: ITrainingType;
-  rnc: string;
-  description: string;
-  requirement: string;
-  pedagogygoals: string;
-  prix: number;
+  title?: string;
+  subtitle?: string;
+  id_trainingcategory?: string;
+  trainingtype?: ITrainingType;
+  rnc?: string;
+  description?: string;
+  requirement?: string;
+  pedagogygoals?: string;
+  prix?: number;
 }
 
 // List all Training By ID Api Response -> get its sessions

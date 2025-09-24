@@ -35,7 +35,7 @@ export const trainingSecretaryApi = createApi({
     // update a training
     updateTraining: builder.mutation<void, IUpdateTrainingRequest>({
       query: (request) => ({
-        url: `training/update/${request.id}`,
+        url: "trainings/update",
         method: "PATCH",
         body: request,
       }),
