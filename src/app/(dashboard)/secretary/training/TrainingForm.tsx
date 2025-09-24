@@ -72,7 +72,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
   });
 
   // Extract categories from API response
-  const categories = categoriesData?.data || [];
+  const categories = React.useMemo(() => categoriesData?.data || [], [categoriesData?.data]);
   console.log(categories);
 
   // Populate form when editing

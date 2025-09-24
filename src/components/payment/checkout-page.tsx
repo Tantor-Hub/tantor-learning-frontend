@@ -82,7 +82,7 @@ export function CheckoutPage({
         console.error("Erreur lors de la création du payment intent:", error);
         setErrorMessage("Erreur lors de l'initialisation du paiement");
       });
-  }, [amount]);
+  }, [amount, sessionId, currentUser?.id]);
 
   // Gérer la sélection CPF
   const handleCPFSelection = () => {

@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, SquarePen, User, CheckCircle, Camera, Upload } from "lucide-react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -250,7 +251,7 @@ export function UpdateProfile({
     });
 
     setHasChanges(hasFormChanges);
-  }, [watchedFields, address, country, identityNumber, phone, city]);
+  }, [watchedFields, address, country, identityNumber, phone, city, form]);
 
   const userData: UserProfileData = {
     fs_name,
@@ -418,9 +419,11 @@ export function UpdateProfile({
               {avatarURL && !photoPreview && (
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Photo actuelle:</p>
-                  <img
+                  <Image
                     src={avatarURL}
                     alt="Photo de profil actuelle"
+                    width={80}
+                    height={80}
                     className="w-20 h-20 rounded-full object-cover border-2 border-green-500"
                   />
                 </div>
@@ -428,9 +431,11 @@ export function UpdateProfile({
               {photoPreview && (
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Nouvelle photo:</p>
-                  <img
+                  <Image
                     src={photoPreview}
                     alt="Nouvelle photo de profil"
+                    width={80}
+                    height={80}
                     className="w-20 h-20 rounded-full object-cover border-2 border-blue-500"
                   />
                 </div>
