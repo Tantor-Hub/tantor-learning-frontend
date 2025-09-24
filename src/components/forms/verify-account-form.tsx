@@ -40,28 +40,6 @@ export function VerifyAccountForm() {
     },
   });
 
-  // Nettoyage et initialisation du timer au chargement
-  useEffect(() => {
-    // Nettoyer les toasts existants
-    toast.dismiss();
-
-    // Réinitialiser le formulaire
-    form.reset({ pin: "" });
-
-    // Démarrer le timer de cooldown
-    startCountdown();
-
-    // Nettoyage à la destruction du composant
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-      if (toastRef.current) {
-        toast.dismiss(toastRef.current);
-      }
-    };
-  }, [form]);
-
   const startCountdown = useCallback(() => {
     setCanResend(false);
     setCountdown(RESEND_COOLDOWN);
@@ -83,6 +61,28 @@ export function VerifyAccountForm() {
       });
     }, 1000);
   }, []);
+
+  // Nettoyage et initialisation du timer au chargement
+  useEffect(() => {
+    // Nettoyer les toasts existants
+    toast.dismiss();
+
+    // Réinitialiser le formulaire
+    form.reset({ pin: "" });
+
+    // Démarrer le timer de cooldown
+    startCountdown();
+
+    // Nettoyage à la destruction du composant
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      if (toastRef.current) {
+        toast.dismiss(toastRef.current);
+      }
+    };
+  }, [form, startCountdown]);
 
   const isFormValid = form.formState.isValid;
 

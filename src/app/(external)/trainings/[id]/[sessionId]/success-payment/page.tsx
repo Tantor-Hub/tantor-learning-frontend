@@ -31,7 +31,7 @@ export default function PageSuccess() {
     }, 2000);
 
     return () => clearInterval(timer);
-  }, [router]);
+  }, [router, hasDocument, sessionId, trainingId]);
 
   return (
     <>

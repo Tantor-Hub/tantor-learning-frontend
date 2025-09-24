@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, WheelEvent } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, WheelEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MentionsLegales } from "./tabs/mentions-legales";
 import { CSG } from "./tabs/cgs";
@@ -16,18 +16,21 @@ type Tab = {
 export default function Page() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const tabs: Tab[] = [
-    { id: "codeEthique", label: "CODE ETHIQUE" },
-    { id: "cgu", label: "CONDITIONS GENERALES D'UTILISATION" },
-    { id: "cgs", label: "CONDITIONS GENERALES DE SERVICE" },
-    { id: "mentions", label: "MENTIONS LEGALES" },
-    { id: "reglement", label: "REGLEMENT INTERIEUR" },
-    { id: "reclamations", label: "POLITIQUE GLOBALE DE RECLAMATIONS" },
-    { id: "donnees", label: "POLITIQUE DE PROTECTION DES DONNEES PERSONNELLES" },
-  ];
+  const tabs: Tab[] = useMemo(
+    () => [
+      { id: "codeEthique", label: "CODE ETHIQUE" },
+      { id: "cgu", label: "CONDITIONS GENERALES D'UTILISATION" },
+      { id: "cgs", label: "CONDITIONS GENERALES DE SERVICE" },
+      { id: "mentions", label: "MENTIONS LEGALES" },
+      { id: "reglement", label: "REGLEMENT INTERIEUR" },
+      { id: "reclamations", label: "POLITIQUE GLOBALE DE RECLAMATIONS" },
+      { id: "donnees", label: "POLITIQUE DE PROTECTION DES DONNEES PERSONNELLES" },
+    ],
+    []
+  );
 
   // Fonction pour obtenir le paramètre tab depuis l'URL
-  const getTabFromURL = (): string => {
+  const getTabFromURL = useCallback((): string => {
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get("tab");
@@ -39,7 +42,7 @@ export default function Page() {
     }
     // Retourner le premier élément par défaut
     return tabs[0].id;
-  };
+  }, [tabs]);
 
   const [activeTab, setActiveTab] = useState(getTabFromURL());
 
@@ -55,7 +58,7 @@ export default function Page() {
     return () => {
       window.removeEventListener("popstate", handleURLChange);
     };
-  }, []);
+  }, [getTabFromURL]);
 
   // Fonction pour changer d'onglet et mettre à jour l'URL
   const handleTabChange = (tabId: string) => {
