@@ -91,31 +91,24 @@ interface Category {
 }
 
 export interface ISession {
-  id: number;
-  uuid: string;
-  designation: string;
-  id_controleur: number | null;
-  createdBy: number | null;
-  id_superviseur: number[] | null;
-  date_mise_a_jour: string | null;
-  duree: string;
-  text_reglement: string;
-  payment_method: string;
+  id: string;
+  id_trainings?: string;
+  title: string;
   nb_places: number;
-  nb_places_disponible: number;
-  progression: number;
-  id_formation: number;
-  piece_jointe: string | null;
-  type_formation: string;
-  id_category: number;
-  date_session_debut: string;
-  date_session_fin: string;
-  description: string | null;
-  prix: number | null;
-  initial_price: number | null;
-  status: number;
-  createdAt: string;
-  updatedAt: string;
+  available_places: number;
+  required_document?: string[];
+  payment_method?: string[];
+  survey?: string[];
+  regulation_text: string;
+  begining_date: Date;
+  ending_date: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+  trainings?: {
+    title: string;
+    subtitle: string;
+    description: string;
+  };
 }
 
 // Training Types
@@ -175,4 +168,23 @@ export interface IListCourseBySessionIdResponse {
       };
     }>;
   };
+}
+
+export interface IListSessionByTrainingIdResponse {
+  status: number;
+  message: string;
+  data: ISession[];
+}
+
+export interface ICreateSessionRequest {
+  id_trainings: string; // Required (UUID of the training)
+  title: string; // Required
+  nb_places: number; // Required (minimum: 1)
+  available_places: number; // Required (minimum: 0)
+  required_document?: string[]; // Optional
+  payment_method?: string[]; // Optional
+  survey?: string[]; // Optional
+  regulation_text: string; // Required
+  begining_date: string; // Required (ISO date string)
+  ending_date: string; // Required (ISO date string)
 }

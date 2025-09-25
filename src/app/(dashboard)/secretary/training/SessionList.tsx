@@ -19,8 +19,8 @@ const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
           <CardContent className="pt-6">
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h4 className="font-semibold text-lg">{session.designation}</h4>
-                <p className="text-gray-600 mt-1">{session.description}</p>
+                <h4 className="font-semibold text-lg">{session.title}</h4>
+                <p className="text-gray-600 mt-1">{session.title}</p>
                 <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
                   {/* <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
@@ -28,11 +28,11 @@ const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                   </div> */}
                   <div className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
-                    {session.date_session_debut} - {session.date_session_fin}
+                    {session.title} - {session.title}
                   </div>
                   <div className="flex items-center gap-1">
                     <Users className="w-4 h-4" />
-                    {session.duree} min
+                    {session.title} min
                   </div>
                 </div>
               </div>

@@ -7,6 +7,8 @@ import {
   ITrainingListResponse,
   ITrainingTypesResponse,
   IListTrainingByIdResponse,
+  ICreateSessionRequest,
+  IListSessionByTrainingIdResponse,
 } from "@/types/secretary/training-secretary";
 
 // Training Secretary API
@@ -122,6 +124,28 @@ export const trainingSecretaryApi = createApi({
         body: request,
       }),
     }),
+    // ########################################################
+    // *********** SESSIONS ENDPOINTS EXPORT *************
+    // ########################################################
+    listSession: builder.query({
+      query: () => "trainingssession/all",
+      providesTags: ["TrainingSecretary"],
+    }),
+    listSessionByTrainingId: builder.query<
+      IListSessionByTrainingIdResponse,
+      { trainingId: string }
+    >({
+      query: (request) => `trainingssession/training/${request.trainingId}`,
+      providesTags: ["TrainingSecretary"],
+    }),
+    createSession: builder.mutation<void, ICreateSessionRequest>({
+      query: (request) => ({
+        url: "trainingssession/create",
+        method: "POST",
+        body: request,
+      }),
+    }),
+
     // =====================================================================
     // ajouter un cours dans une formation & assigne un instructeur
     // ======================================================================
@@ -172,4 +196,10 @@ export const {
   // list course by session id
   useAddNewCourseInSessionByIdMutation,
   useListCourseBySessionIdQuery,
+
+  // ########################################################
+  // *********** SESSIONS ENDPOINTS EXPORT *************
+  // ########################################################
+  useListSessionByTrainingIdQuery,
+  useCreateSessionMutation,
 } = trainingSecretaryApi;
