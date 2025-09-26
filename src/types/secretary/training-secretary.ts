@@ -205,3 +205,19 @@ export interface ICourseBySessionIdResponse {
     }>;
   };
 }
+
+export interface ICourseItem {
+  id: string;
+  title: string;
+  description: string;
+  is_published: boolean;
+  id_formateur: string[] | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ICourseUpdateResponse {
+  status: number;
+  message: string;
+  data: ICourseItem;
+}

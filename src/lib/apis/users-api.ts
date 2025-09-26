@@ -1,4 +1,4 @@
-import { IUser } from "@/types/user";
+import { IUser, UserRole } from "@/types/user";
 import { createApi, enhancedBaseQuery } from "./base-api";
 
 // User related types
@@ -89,12 +89,21 @@ interface IPublicUsers {
   };
 }
 
+interface IListUserByRoleResponse {
+  status: number;
+  message: string;
+  data: IUser[];
+}
+
 // Users API
 export const usersApi = createApi({
   reducerPath: "usersApi",
   baseQuery: enhancedBaseQuery,
   tagTypes: ["User"],
   endpoints: (builder) => ({
+    listUserByRole: builder.query<IListUserByRoleResponse, { role: UserRole | "all" }>({
+      query: (request) => `users/byrole?role=${request.role}`,
+    }),
     publicListUsers: builder.query<IPublicUsers, void>({
       query: () => "users/list",
       providesTags: ["User"],
@@ -128,4 +137,5 @@ export const {
   useGetAllUsersQuery,
   useGetUserByIdQuery,
   usePublicListUsersQuery,
+  useListUserByRoleQuery,
 } = usersApi;

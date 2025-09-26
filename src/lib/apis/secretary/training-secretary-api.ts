@@ -5,6 +5,7 @@ import {
   IListCategoryTrainingResponse,
   IListCourseBySessionIdResponse,
   ICourseBySessionIdResponse,
+  ICourseUpdateResponse,
   ITrainingListResponse,
   ITrainingTypesResponse,
   IListTrainingByIdResponse,
@@ -201,9 +202,10 @@ export const trainingSecretaryApi = createApi({
       }
     >({
       query: (request) => ({
-        url: `sessioncours/${request.id}`,
+        url: `sessioncours/update`,
         method: "PATCH",
         body: {
+          id: request.id,
           title: request.title,
           description: request.description,
           is_published: request.is_published,

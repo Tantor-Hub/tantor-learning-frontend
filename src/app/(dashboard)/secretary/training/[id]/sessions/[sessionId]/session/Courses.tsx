@@ -1,5 +1,4 @@
 "use client";
-
 import React from "react";
 import {
   Table,
@@ -33,17 +32,32 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useListUserByRoleQuery } from "@/lib/apis/users-api";
 import { AddCourseModal } from "../components/add-course-modal";
 import {
   useCourseByIdSessionQuery,
   useDeleteCourseByIdMutation,
   useUpdateCourseByIdMutation,
 } from "@/lib/apis/secretary/training-secretary-api";
+import { UserRole } from "@/types/user";
+import { toast } from "react-hot-toast";
 
 export default function Courses({ sessionId }: { sessionId: string }) {
   const { data, isLoading, error } = useCourseByIdSessionQuery({ sessionId });
+  const { data: usersData } = useListUserByRoleQuery({ role: UserRole.INSTRUCTOR });
   const [deleteCourse] = useDeleteCourseByIdMutation();
-  const [updateCourse] = useUpdateCourseByIdMutation();
+  const [updateCourse, { isLoading: isLoadingUpdateCourse }] = useUpdateCourseByIdMutation();
 
   const [openDeleteDialog, setOpenDeleteDialog] = React.useState(false);
   const [selectedCourseId, setSelectedCourseId] = React.useState<string | null>(null);
@@ -53,8 +67,9 @@ export default function Courses({ sessionId }: { sessionId: string }) {
     title: "",
     description: "",
     is_published: false,
-    id_formateur: "",
   });
+  const [selectedFormateurs, setSelectedFormateurs] = React.useState<string[]>([]);
+  const [open, setOpen] = React.useState(false);
 
   const handleDelete = async (id: string) => {
     try {
@@ -67,20 +82,19 @@ export default function Courses({ sessionId }: { sessionId: string }) {
 
   const handleUpdate = async (id: string) => {
     try {
-      const formateurs = editForm.id_formateur
-        .split(",")
-        .map((f) => f.trim())
-        .filter((f) => f);
       await updateCourse({
         id,
         title: editForm.title,
         description: editForm.description,
         is_published: editForm.is_published,
-        id_formateur: formateurs,
+        id_formateur: selectedFormateurs,
       }).unwrap();
+      toast.success("Cours modifier avec succès!");
       setOpenUpdateDialog(false);
-      setEditForm({ title: "", description: "", is_published: false, id_formateur: "" });
+      setEditForm({ title: "", description: "", is_published: false });
+      setSelectedFormateurs([]);
     } catch (err) {
+      toast.error("Échec de la modification du cours.");
       console.error("Failed to update course", err);
     }
   };
@@ -92,9 +106,9 @@ export default function Courses({ sessionId }: { sessionId: string }) {
   if (error) {
     return <div>Error loading courses</div>;
   }
-
   const courses = data?.data.rows || [];
-
+  const users = usersData?.data || [];
+  console.log(users);
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -139,8 +153,8 @@ export default function Courses({ sessionId }: { sessionId: string }) {
                           title: course.title,
                           description: course.description,
                           is_published: course.is_published,
-                          id_formateur: course.id_formateur ? course.id_formateur.join(", ") : "",
                         });
+                        setSelectedFormateurs(course.id_formateur || []);
                         setSelectedCourseId(course.id);
                         setOpenUpdateDialog(true);
                       }}
@@ -220,13 +234,57 @@ export default function Courses({ sessionId }: { sessionId: string }) {
               />
               <Label htmlFor="is_published">Publié</Label>
             </div>
-            <div>
-              <Label htmlFor="id_formateur">Formateurs (IDs séparés par virgule)</Label>
-              <Input
-                id="id_formateur"
-                value={editForm.id_formateur}
-                onChange={(e) => setEditForm({ ...editForm, id_formateur: e.target.value })}
-              />
+            <div className="flex flex-col space-y-1">
+              <Label htmlFor="formateurs">Formateurs</Label>
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-full justify-between"
+                  >
+                    {selectedFormateurs.length > 0
+                      ? `${selectedFormateurs.length} formateur(s) sélectionné(s)`
+                      : "Sélectionner des formateurs..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Rechercher des formateurs..." />
+                    <CommandEmpty>Aucun formateur trouvé.</CommandEmpty>
+                    <CommandGroup className="max-h-48 overflow-y-auto">
+                      {users?.map((user) => {
+                        const isSelected = selectedFormateurs.includes(user.id.toString());
+                        return (
+                          <CommandItem
+                            key={user.id}
+                            value={user.id.toString()}
+                            onSelect={() => {
+                              if (isSelected) {
+                                setSelectedFormateurs((prev) =>
+                                  prev.filter((id) => id !== user.id.toString())
+                                );
+                              } else {
+                                setSelectedFormateurs((prev) => [...prev, user.id.toString()]);
+                              }
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                isSelected ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {user.fs_name} {user.ls_name}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
           <DialogFooter>
@@ -237,7 +295,7 @@ export default function Courses({ sessionId }: { sessionId: string }) {
               type="button"
               onClick={() => selectedCourseId && handleUpdate(selectedCourseId)}
             >
-              Modifier
+              {isLoadingUpdateCourse ? "Enregistrement..." : "Modifier"}
             </Button>
           </DialogFooter>
         </DialogContent>

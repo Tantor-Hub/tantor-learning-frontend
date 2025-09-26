@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense, useState } from "react";
+import { useParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GeneralInfoSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/GeneralInfoSkeleton";
 import { CoursesSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/CoursesSkeleton";
@@ -13,6 +14,8 @@ const Events = React.lazy(() => import("./Events"));
 const Documents = React.lazy(() => import("./Documents"));
 
 export default function SessionTab() {
+  const params = useParams();
+  const sessionId = params.sessionId as string;
   const [tabValue, setTabValue] = useState("general");
 
   return (
@@ -32,7 +35,7 @@ export default function SessionTab() {
 
       <TabsContent value="courses" className="space-y-4">
         <Suspense fallback={<CoursesSkeleton />}>
-          <Courses sessionId={"899diidiidikdk"} />
+          <Courses sessionId={sessionId} />
         </Suspense>
       </TabsContent>
 
