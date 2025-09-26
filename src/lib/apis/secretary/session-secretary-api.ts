@@ -3,6 +3,7 @@ import {
   IAddSessionRequest,
   IListSessionResponse,
   IUpdateSessionRequest,
+  ISessionByIdResponse,
 } from "@/types/secretary/session-secretary";
 
 // Session Secretary API
@@ -25,14 +26,22 @@ export const sessionSecretaryApi = createApi({
     }),
     updateSession: builder.mutation<void, IUpdateSessionRequest>({
       query: (body) => ({
-        url: `sessions/session/update/${body.id_formation}`,
-        method: "POST",
+        url: `trainingssession/update`,
+        method: "PATCH",
         body: body,
       }),
       invalidatesTags: ["SessionSecretary"],
     }),
+    getSessionById: builder.query<ISessionByIdResponse, { id: string }>({
+      query: ({ id }) => `trainingssession/${id}`,
+      providesTags: ["SessionSecretary"],
+    }),
   }),
 });
 
-export const { useAddSessionMutation, useUpdateSessionMutation, useListSessionQuery } =
-  sessionSecretaryApi;
+export const {
+  useAddSessionMutation,
+  useUpdateSessionMutation,
+  useListSessionQuery,
+  useGetSessionByIdQuery,
+} = sessionSecretaryApi;

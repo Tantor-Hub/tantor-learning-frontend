@@ -25,6 +25,7 @@ export default function SessionTab() {
         <TabsTrigger value="courses">Cours</TabsTrigger>
         <TabsTrigger value="events">Événements</TabsTrigger>
         <TabsTrigger value="documents">Documents</TabsTrigger>
+        <TabsTrigger value="payment">Paiement</TabsTrigger>
       </TabsList>
 
       <TabsContent value="general" className="space-y-4">

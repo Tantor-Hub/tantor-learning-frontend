@@ -32,12 +32,19 @@ export interface IAddSessionRequest {
 }
 
 export interface IUpdateSessionRequest {
-  id_formation: number; // required
-  descripiton: string;
-  date_session_debut: string; //2025-04-23T08:00:00
-  date_session_fin: string; // 2025-05-23T17:30:00
-  prix: number;
-  type_formation: string;
+  id: string; // required
+  id_trainings?: string;
+  title?: string;
+  nb_places?: number;
+  available_places?: number;
+  required_document_before?: string[];
+  required_document_during?: string[];
+  required_document_after?: string[];
+  payment_method?: string[];
+  survey?: string[];
+  regulation_text?: string;
+  begining_date?: string;
+  ending_date?: string;
 }
 
 export interface ISession {
@@ -71,5 +78,35 @@ export interface IListSessionResponse {
   data: {
     length: number;
     rows: ISession[];
+  };
+}
+
+export interface ISessionByIdResponse {
+  status: number;
+  message: string;
+  data: {
+    id: string;
+    id_trainings: string;
+    title: string;
+    nb_places: number;
+    available_places: number;
+    required_document_before: string[];
+    required_document_during: string[];
+    required_document_after: string[];
+    payment_method: string[];
+    survey: string[];
+    regulation_text: string;
+    begining_date: string;
+    ending_date: string;
+    createdAt: string;
+    updatedAt: string;
+    trainings: {
+      id: string;
+      title: string;
+      subtitle: string;
+      description: string;
+      trainingtype: string;
+      prix: string;
+    };
   };
 }
