@@ -188,3 +188,20 @@ export interface ICreateSessionRequest {
   begining_date: string; // Required (ISO date string)
   ending_date: string; // Required (ISO date string)
 }
+
+export interface ICourseBySessionIdResponse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    rows: Array<{
+      id: string;
+      title: string;
+      description: string;
+      is_published: boolean;
+      id_formateur: string[] | null;
+      createdAt: string;
+      updatedAt: string;
+    }>;
+  };
+}

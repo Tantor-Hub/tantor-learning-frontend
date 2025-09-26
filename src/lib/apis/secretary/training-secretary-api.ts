@@ -4,6 +4,7 @@ import {
   IUpdateTrainingRequest,
   IListCategoryTrainingResponse,
   IListCourseBySessionIdResponse,
+  ICourseBySessionIdResponse,
   ITrainingListResponse,
   ITrainingTypesResponse,
   IListTrainingByIdResponse,
@@ -172,6 +173,45 @@ export const trainingSecretaryApi = createApi({
       query: (request) => `courses/listall/${request.id_session}`,
       providesTags: ["TrainingSecretary"],
     }),
+
+    // =====================================================================
+    // COURSES BY SESSION ID - NEW QUERY
+    // ====================================================================
+    courseByIdSession: builder.query<ICourseBySessionIdResponse, { sessionId: string }>({
+      query: (request) => `sessioncours/session/${request.sessionId}`,
+      providesTags: ["TrainingSecretary"],
+    }),
+
+    deleteCourseById: builder.mutation<void, { id: string }>({
+      query: (request) => ({
+        url: `sessioncours/${request.id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["TrainingSecretary"],
+    }),
+
+    updateCourseById: builder.mutation<
+      void,
+      {
+        id: string;
+        title: string;
+        description: string;
+        is_published: boolean;
+        id_formateur: string[];
+      }
+    >({
+      query: (request) => ({
+        url: `sessioncours/${request.id}`,
+        method: "PATCH",
+        body: {
+          title: request.title,
+          description: request.description,
+          is_published: request.is_published,
+          id_formateur: request.id_formateur,
+        },
+      }),
+      invalidatesTags: ["TrainingSecretary"],
+    }),
   }),
 });
 
@@ -196,6 +236,9 @@ export const {
   // list course by session id
   useAddNewCourseInSessionByIdMutation,
   useListCourseBySessionIdQuery,
+  useCourseByIdSessionQuery,
+  useDeleteCourseByIdMutation,
+  useUpdateCourseByIdMutation,
 
   // ########################################################
   // *********** SESSIONS ENDPOINTS EXPORT *************
