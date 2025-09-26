@@ -32,7 +32,7 @@ export default function SessionTab() {
 
       <TabsContent value="courses" className="space-y-4">
         <Suspense fallback={<CoursesSkeleton />}>
-          <Courses />
+          <Courses sessionId={"899diidiidikdk"} />
         </Suspense>
       </TabsContent>
 

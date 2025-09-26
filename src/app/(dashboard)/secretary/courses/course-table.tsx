@@ -17,10 +17,11 @@ import { EditCourseModal } from "./edit-course-modal";
 
 export function CourseTable() {
   const courses = useCourseQuery();
+
   if (courses.isLoading) {
     return <Loading />;
   }
-  // console.log(JSON.stringify(courses.data));
+  console.log(JSON.stringify(courses.data));
 
   if (!courses.data?.data.rows) {
     return (
@@ -56,17 +57,17 @@ export function CourseTable() {
             </TableCell>
             <TableCell>
               <div className="flex flex-wrap gap-1">
-                {course.id_formateurs.map((instructor) => (
+                {/* {course.id_formateurs.map((instructor) => (
                   <Badge key={instructor.id} variant="outline" className="text-xs">
                     {instructor.fs_name} {instructor.ls_name}
                   </Badge>
-                ))}
+                ))} */}
               </div>
             </TableCell>
             <TableCell>
               <div className="flex items-center gap-2 justify-center">
                 <EditCourseModal course={course} />
-                <AssignInstructorsModal course={course} />
+                {/* <AssignInstructorsModal course={course} /> */}
               </div>
             </TableCell>
           </TableRow>

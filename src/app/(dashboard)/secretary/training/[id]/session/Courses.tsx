@@ -3,6 +3,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AddCourseModal } from "./add-course-modal";
 
 export default function Courses() {
   // Placeholder content - in a real app, this would fetch courses data
@@ -14,7 +15,8 @@ export default function Courses() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Cours de la session</h3>
+      {/* <h3 className="text-lg font-semibold">Cours de la session</h3> */}
+      <AddCourseModal />
       {courses.map((course) => (
         <Card key={course.id}>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -36,6 +38,7 @@ export default function Courses() {
           </CardContent>
         </Card>
       ))}
+      <AddCourseModal />
     </div>
   );
 }

@@ -1,9 +1,7 @@
 export interface IAddMatiere {
   title: string;
   description: string;
-  id_session: number;
-  id_formateurs?: number[];
-  is_published?: boolean;
+  id_session: string;
 }
 
 export interface IListAllCoursesResponse {

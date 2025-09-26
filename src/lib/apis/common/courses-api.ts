@@ -44,14 +44,14 @@ export const manageCoursesApi = createApi({
       IAddMatiere
     >({
       query: (body) => ({
-        url: "courses/create",
+        url: "sessioncours/create",
         method: "POST",
         body: body,
       }),
       invalidatesTags: ["ManageCourses"],
     }),
     listCourses: builder.query<ICoursesAPIResponse, void>({
-      query: () => "courses/presets/list",
+      query: () => "sessioncours/getall",
       providesTags: ["ManageCourses"],
     }),
 
@@ -98,7 +98,7 @@ export const manageCoursesApi = createApi({
 
     // GET ALL COURSES
     course: builder.query<ICourse, void>({
-      query: () => `courses/getall`,
+      query: () => `sessioncours/getall`,
       providesTags: ["ManageCourses"],
     }),
 
@@ -111,11 +111,17 @@ export const manageCoursesApi = createApi({
       }),
       invalidatesTags: ["ManageCourses"],
     }),
+
+    listCourseBySessionId: builder.query<ICoursesAPIResponse, { trainingSessionId: string }>({
+      query: (request) => `courses/trainingsession/${request.trainingSessionId}`,
+      providesTags: ["ManageCourses"],
+    }),
   }),
 });
 
 export const {
   useAddCourseMutation,
+  useListCourseBySessionIdQuery,
   useListCoursesQuery,
   useAddCourseContentMutation,
   useAddDocumentsForACourseMutation,

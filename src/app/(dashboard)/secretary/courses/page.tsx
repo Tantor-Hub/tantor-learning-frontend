@@ -1,7 +1,6 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CourseTable } from "./course-table";
-import { AddCourseModal } from "./add-course-modal";
 import { CourseSessionId } from "./course-session-id-table";
 import { BookOpen, School } from "lucide-react";
 import { useGetAllTrainingsQuery } from "@/lib/apis/public/public-api";
@@ -42,7 +41,6 @@ export default function Page() {
                 Gestion centralisée des cours : ajout, modification et suivi.
               </p>
             </div>
-            <AddCourseModal />
           </div>
           <div>
             <div className="min-w-[1000px]">

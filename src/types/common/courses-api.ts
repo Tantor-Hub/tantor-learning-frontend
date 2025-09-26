@@ -101,3 +101,10 @@ export interface IUpdateCourseResponse {
     }>;
   };
 }
+
+export interface ICourse {
+  title: string;
+  description: string;
+  id_formateurs: number[];
+  id: string;
+}

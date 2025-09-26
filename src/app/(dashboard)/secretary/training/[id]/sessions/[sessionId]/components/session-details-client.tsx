@@ -20,6 +20,7 @@ export default function SessionDetailsClient() {
   const params = useParams();
   const trainingId = params.id as string;
   const sessionId = params.sessionId as string;
+  console.log(sessionId);
 
   const handleGoBack = () => {
     router.push(`/secretary/training/${trainingId}/sessions`);
@@ -74,7 +75,7 @@ export default function SessionDetailsClient() {
 
             <TabsContent value="courses" className="space-y-4 mt-6">
               <React.Suspense fallback={<CoursesSkeleton />}>
-                <Courses />
+                <Courses sessionId={sessionId} />
               </React.Suspense>
             </TabsContent>
 

@@ -52,8 +52,7 @@ export function AddCourseForm({ onCancel, onSubmitSuccess }: CreateCourseFormPro
       const response = await addCourse({
         title: data.title,
         description: data.description,
-        id_session: parseInt(selectedSessionId),
-        id_formateurs: [],
+        id_session: selectedSessionId,
       }).unwrap();
       console.log(response);
 
