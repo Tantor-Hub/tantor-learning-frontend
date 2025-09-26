@@ -39,3 +39,37 @@ export interface IUpdateSessionRequest {
   prix: number;
   type_formation: string;
 }
+
+export interface ISession {
+  id: string;
+  title: string;
+  description: string;
+  is_published: true;
+  id_session: string;
+  id_formateur: string[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  CreatedBy: {
+    id: number;
+    fs_name: string;
+    ls_name: string;
+    email: string;
+  };
+  trainingSession: {
+    id: string;
+    title: string;
+    nb_places: number;
+    available_places: number;
+    begining_date: Date;
+    ending_date: Date;
+  };
+}
+export interface IListSessionResponse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    rows: ISession[];
+  };
+}

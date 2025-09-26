@@ -1,5 +1,9 @@
 import { createApi, enhancedBaseQuery } from "../base-api";
-import { IAddSessionRequest, IUpdateSessionRequest } from "@/types/secretary/session-secretary";
+import {
+  IAddSessionRequest,
+  IListSessionResponse,
+  IUpdateSessionRequest,
+} from "@/types/secretary/session-secretary";
 
 // Session Secretary API
 export const sessionSecretaryApi = createApi({
@@ -7,6 +11,10 @@ export const sessionSecretaryApi = createApi({
   baseQuery: enhancedBaseQuery,
   tagTypes: ["SessionSecretary"],
   endpoints: (builder) => ({
+    listSession: builder.query<IListSessionResponse, void>({
+      query: () => "trainingssession/getall",
+      providesTags: ["SessionSecretary"],
+    }),
     addSession: builder.mutation<void, IAddSessionRequest>({
       query: (body) => ({
         url: "sessions/session/create",
@@ -26,4 +34,5 @@ export const sessionSecretaryApi = createApi({
   }),
 });
 
-export const { useAddSessionMutation, useUpdateSessionMutation } = sessionSecretaryApi;
+export const { useAddSessionMutation, useUpdateSessionMutation, useListSessionQuery } =
+  sessionSecretaryApi;
