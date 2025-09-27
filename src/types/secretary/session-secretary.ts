@@ -110,3 +110,51 @@ export interface ISessionByIdResponse {
     };
   };
 }
+
+// Survey Question Types - Updated to match backend structure
+export interface QuestionOption {
+  id: string;
+  text: string;
+}
+
+export interface SurveyQuestionData {
+  id: string;
+  type: "multiple_choice" | "text";
+  question: string;
+  options?: QuestionOption[]; // Only for multiple choice questions
+  required: boolean;
+  order: number;
+  maxSelections?: number; // For multiple choice: how many options can be selected
+}
+
+export interface ICreateSurveyRequest {
+  title: string;
+  id_session: string;
+  categories: "before" | "during" | "after";
+  questions: SurveyQuestionData[];
+}
+
+export interface ISurveyResponse {
+  id: string;
+  title: string;
+  id_session: string;
+  categories: "before" | "during" | "after";
+  questions: SurveyQuestionData[];
+  createdBy: string;
+  creator?: {
+    uuid: string;
+    fs_name: string;
+    ls_name: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IListSurveysResponse {
+  status: number;
+  message: string;
+  data: {
+    surveys: ISurveyResponse[];
+  };
+}

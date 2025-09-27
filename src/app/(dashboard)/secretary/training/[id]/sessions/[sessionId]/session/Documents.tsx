@@ -15,11 +15,16 @@ import {
 import {
   useGetSessionByIdQuery,
   useUpdateSessionMutation,
+  useCreateSurveyQuestionMutation,
+  useGetSurveysBySessionQuery,
+  useDeleteSurveyQuestionMutation,
 } from "@/lib/apis/secretary/session-secretary-api";
 
 import { toast } from "react-hot-toast";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Plus, FileText, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SurveyQuestionBuilder } from "./components/survey-question-builder";
+import { Badge } from "@/components/ui/badge";
 
 interface SelectedDocuments {
   before: string[];
@@ -62,6 +67,11 @@ export default function Documents() {
   console.log(sessionId);
   const { data: session, isLoading: sessionLoading } = useGetSessionByIdQuery({ id: sessionId });
   const [updateSession, { isLoading: updating }] = useUpdateSessionMutation();
+  const [createSurvey, { isLoading: creatingSurvey }] = useCreateSurveyQuestionMutation();
+  const [deleteSurvey] = useDeleteSurveyQuestionMutation();
+  const { data: surveysData, isLoading: surveysLoading } = useGetSurveysBySessionQuery({
+    sessionId,
+  });
 
   const [selectedDocuments, setSelectedDocuments] = useState<SelectedDocuments>({
     before: session?.data?.required_document_before || [],
@@ -78,6 +88,11 @@ export default function Documents() {
       });
     }
   }, [session]);
+
+  const [surveyBuilderOpen, setSurveyBuilderOpen] = React.useState(false);
+  const [selectedCategory, setSelectedCategory] = React.useState<"before" | "during" | "after">(
+    "before"
+  );
 
   const handleDocumentToggle = (category: "before" | "during" | "after", documentValue: string) => {
     setSelectedDocuments((prev) => ({
@@ -102,6 +117,39 @@ export default function Documents() {
       console.error(error);
     }
   };
+
+  const handleCreateSurvey = async (title: string, questions: any[]) => {
+    try {
+      await createSurvey({
+        title,
+        id_session: sessionId,
+        categories: selectedCategory,
+        questions,
+      }).unwrap();
+      toast.success("Questionnaire créé avec succès");
+      setSurveyBuilderOpen(false);
+    } catch (error) {
+      toast.error("Erreur lors de la création du questionnaire");
+      console.error(error);
+    }
+  };
+
+  const handleDeleteSurvey = async (surveyId: string) => {
+    try {
+      await deleteSurvey({ id: surveyId }).unwrap();
+      toast.success("Questionnaire supprimé avec succès");
+    } catch (error) {
+      toast.error("Erreur lors de la suppression du questionnaire");
+      console.error(error);
+    }
+  };
+
+  const openSurveyBuilder = (category: "before" | "during" | "after") => {
+    setSelectedCategory(category);
+    setSurveyBuilderOpen(true);
+  };
+
+  const surveys = surveysData?.data?.surveys || [];
 
   if (sessionLoading) {
     return (
@@ -195,25 +243,80 @@ export default function Documents() {
           <AccordionItem value="before">
             <AccordionTrigger>Avant la formation</AccordionTrigger>
             <AccordionContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {DOCUMENT_CATEGORIES.before.map((document) => (
-                  <div
-                    key={document.value}
-                    className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
-                  >
-                    <Checkbox
-                      id={document.value}
-                      checked={selectedDocuments.before.includes(document.value)}
-                      onCheckedChange={() => handleDocumentToggle("before", document.value)}
-                    />
-                    <Label
-                      htmlFor={document.value}
-                      className="text-sm font-medium cursor-pointer flex-1"
-                    >
-                      {document.label}
-                    </Label>
+              <div className="space-y-4">
+                {/* Documents Section */}
+                <div>
+                  <h4 className="text-sm font-medium mb-3">Documents requis</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {DOCUMENT_CATEGORIES.before.map((document) => (
+                      <div
+                        key={document.value}
+                        className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
+                      >
+                        <Checkbox
+                          id={document.value}
+                          checked={selectedDocuments.before.includes(document.value)}
+                          onCheckedChange={() => handleDocumentToggle("before", document.value)}
+                        />
+                        <Label
+                          htmlFor={document.value}
+                          className="text-sm font-medium cursor-pointer flex-1"
+                        >
+                          {document.label}
+                        </Label>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                {/* Surveys Section */}
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-sm font-medium">Questionnaires</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openSurveyBuilder("before")}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Ajouter un questionnaire
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {surveys
+                      .filter((survey) => survey.categories === "before")
+                      .map((survey) => (
+                        <div
+                          key={survey.id}
+                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <FileText className="w-4 h-4 text-blue-600" />
+                            <div>
+                              <p className="text-sm font-medium">{survey.title}</p>
+                              <p className="text-xs text-gray-500">
+                                {survey.questions?.length || 0} question(s)
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteSurvey(survey.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    {surveys.filter((survey) => survey.categories === "before").length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-4">
+                        Aucun questionnaire créé pour cette catégorie
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -221,25 +324,80 @@ export default function Documents() {
           <AccordionItem value="during">
             <AccordionTrigger>Pendant la formation</AccordionTrigger>
             <AccordionContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {DOCUMENT_CATEGORIES.during.map((document) => (
-                  <div
-                    key={document.value}
-                    className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
-                  >
-                    <Checkbox
-                      id={document.value}
-                      checked={selectedDocuments.during.includes(document.value)}
-                      onCheckedChange={() => handleDocumentToggle("during", document.value)}
-                    />
-                    <Label
-                      htmlFor={document.value}
-                      className="text-sm font-medium cursor-pointer flex-1"
-                    >
-                      {document.label}
-                    </Label>
+              <div className="space-y-4">
+                {/* Documents Section */}
+                <div>
+                  <h4 className="text-sm font-medium mb-3">Documents requis</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {DOCUMENT_CATEGORIES.during.map((document) => (
+                      <div
+                        key={document.value}
+                        className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
+                      >
+                        <Checkbox
+                          id={document.value}
+                          checked={selectedDocuments.during.includes(document.value)}
+                          onCheckedChange={() => handleDocumentToggle("during", document.value)}
+                        />
+                        <Label
+                          htmlFor={document.value}
+                          className="text-sm font-medium cursor-pointer flex-1"
+                        >
+                          {document.label}
+                        </Label>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                {/* Surveys Section */}
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-sm font-medium">Questionnaires</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openSurveyBuilder("during")}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Ajouter un questionnaire
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {surveys
+                      .filter((survey) => survey.categories === "during")
+                      .map((survey) => (
+                        <div
+                          key={survey.id}
+                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <FileText className="w-4 h-4 text-blue-600" />
+                            <div>
+                              <p className="text-sm font-medium">{survey.title}</p>
+                              <p className="text-xs text-gray-500">
+                                {survey.questions?.length || 0} question(s)
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteSurvey(survey.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    {surveys.filter((survey) => survey.categories === "during").length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-4">
+                        Aucun questionnaire créé pour cette catégorie
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -247,25 +405,80 @@ export default function Documents() {
           <AccordionItem value="after">
             <AccordionTrigger>Après la formation</AccordionTrigger>
             <AccordionContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {DOCUMENT_CATEGORIES.after.map((document) => (
-                  <div
-                    key={document.value}
-                    className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
-                  >
-                    <Checkbox
-                      id={document.value}
-                      checked={selectedDocuments.after.includes(document.value)}
-                      onCheckedChange={() => handleDocumentToggle("after", document.value)}
-                    />
-                    <Label
-                      htmlFor={document.value}
-                      className="text-sm font-medium cursor-pointer flex-1"
-                    >
-                      {document.label}
-                    </Label>
+              <div className="space-y-4">
+                {/* Documents Section */}
+                <div>
+                  <h4 className="text-sm font-medium mb-3">Documents requis</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {DOCUMENT_CATEGORIES.after.map((document) => (
+                      <div
+                        key={document.value}
+                        className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
+                      >
+                        <Checkbox
+                          id={document.value}
+                          checked={selectedDocuments.after.includes(document.value)}
+                          onCheckedChange={() => handleDocumentToggle("after", document.value)}
+                        />
+                        <Label
+                          htmlFor={document.value}
+                          className="text-sm font-medium cursor-pointer flex-1"
+                        >
+                          {document.label}
+                        </Label>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                {/* Surveys Section */}
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-sm font-medium">Questionnaires</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openSurveyBuilder("after")}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Ajouter un questionnaire
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {surveys
+                      .filter((survey) => survey.categories === "after")
+                      .map((survey) => (
+                        <div
+                          key={survey.id}
+                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <FileText className="w-4 h-4 text-blue-600" />
+                            <div>
+                              <p className="text-sm font-medium">{survey.title}</p>
+                              <p className="text-xs text-gray-500">
+                                {survey.questions?.length || 0} question(s)
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteSurvey(survey.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    {surveys.filter((survey) => survey.categories === "after").length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-4">
+                        Aucun questionnaire créé pour cette catégorie
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -293,6 +506,15 @@ export default function Documents() {
           </Button>
         </div>
       </div>
+
+      {/* Survey Question Builder */}
+      <SurveyQuestionBuilder
+        open={surveyBuilderOpen}
+        onOpenChange={setSurveyBuilderOpen}
+        sessionId={sessionId}
+        category={selectedCategory}
+        onSuccess={handleCreateSurvey}
+      />
     </div>
   );
 }
