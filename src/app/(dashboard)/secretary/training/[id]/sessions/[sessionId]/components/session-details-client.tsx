@@ -9,12 +9,14 @@ import { GeneralInfoSkeleton } from "@/app/(dashboard)/secretary/training/skelet
 import { CoursesSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/CoursesSkeleton";
 import { EventsSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/EventsSkeleton";
 import { DocumentsSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/DocumentsSkeleton";
+import { PaymentSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/PaymentSkeleton";
 import { EditSessionModal } from "./edit-session-modal";
 
 const GeneralInfo = React.lazy(() => import("../session/GeneralInfo"));
 const Courses = React.lazy(() => import("../session/Courses"));
 const Events = React.lazy(() => import("../session/Events"));
 const Documents = React.lazy(() => import("../session/Documents"));
+const Payment = React.lazy(() => import("../session/payment"));
 
 export default function SessionDetailsClient() {
   const router = useRouter();
@@ -60,11 +62,12 @@ export default function SessionDetailsClient() {
 
           {/* Tabs section */}
           <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="general">Informations générales</TabsTrigger>
               <TabsTrigger value="courses">Cours</TabsTrigger>
               <TabsTrigger value="events">Événements</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
+              <TabsTrigger value="payment">Paiement</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general" className="space-y-4 mt-6">
@@ -88,6 +91,12 @@ export default function SessionDetailsClient() {
             <TabsContent value="documents" className="space-y-4 mt-6">
               <React.Suspense fallback={<DocumentsSkeleton />}>
                 <Documents />
+              </React.Suspense>
+            </TabsContent>
+
+            <TabsContent value="payment" className="space-y-4 mt-6">
+              <React.Suspense fallback={<PaymentSkeleton />}>
+                <Payment />
               </React.Suspense>
             </TabsContent>
           </Tabs>
