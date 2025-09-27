@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit } from "lucide-react";
@@ -9,6 +9,7 @@ import { GeneralInfoSkeleton } from "@/app/(dashboard)/secretary/training/skelet
 import { CoursesSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/CoursesSkeleton";
 import { EventsSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/EventsSkeleton";
 import { DocumentsSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/DocumentsSkeleton";
+import { EditSessionModal } from "./edit-session-modal";
 
 const GeneralInfo = React.lazy(() => import("../session/GeneralInfo"));
 const Courses = React.lazy(() => import("../session/Courses"));
@@ -20,15 +21,14 @@ export default function SessionDetailsClient() {
   const params = useParams();
   const trainingId = params.id as string;
   const sessionId = params.sessionId as string;
-  console.log(sessionId);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const handleGoBack = () => {
     router.push(`/secretary/training/${trainingId}/sessions`);
   };
 
   const handleEdit = () => {
-    // TODO: Implement edit functionality
-    console.log("Edit session", sessionId);
+    setEditModalOpen(true);
   };
 
   return (
@@ -93,6 +93,13 @@ export default function SessionDetailsClient() {
           </Tabs>
         </div>
       </div>
+
+      {/* Edit Session Modal */}
+      <EditSessionModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        sessionId={sessionId}
+      />
     </div>
   );
 }
