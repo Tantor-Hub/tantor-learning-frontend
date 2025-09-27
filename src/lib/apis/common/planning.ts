@@ -18,7 +18,7 @@ export interface DeleteEventRequest {
   id: string;
 }
 export const EventApi = createApi({
-  reducerPath: "eventApi",
+  reducerPath: "planningEventApi",
   baseQuery,
   tagTypes: ["Event"],
   endpoints: (builder) => ({

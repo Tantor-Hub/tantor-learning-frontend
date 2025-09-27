@@ -18,6 +18,7 @@ import { documentStudentApi } from "./student/document-api";
 import { instructorApi } from "./instructor/instructor";
 import { roleApi } from "./admin/role-api";
 import { documentsApi } from "./common/document-api";
+import { eventApi } from "./event-api";
 // Export all API slices for easy access
 export {
   authApi,
@@ -40,6 +41,7 @@ export {
   documentStudentApi,
   instructorApi,
   roleApi,
+  eventApi,
 };
 
 // Combine all reducers for easy store setup
@@ -64,6 +66,7 @@ export const apiReducers = {
   [instructorApi.reducerPath]: instructorApi.reducer,
   [roleApi.reducerPath]: roleApi.reducer,
   [documentsApi.reducerPath]: documentsApi.reducer,
+  [eventApi.reducerPath]: eventApi.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -88,4 +91,5 @@ export const apiMiddlewares = [
   instructorApi.middleware,
   roleApi.middleware,
   documentsApi.middleware,
+  eventApi.middleware,
 ];
