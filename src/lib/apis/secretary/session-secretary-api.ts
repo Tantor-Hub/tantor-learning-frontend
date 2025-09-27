@@ -94,6 +94,14 @@ export const sessionSecretaryApi = createApi({
       }),
       invalidatesTags: ["SessionSecretary"],
     }),
+
+    deleteSession: builder.mutation<void, { id: string }>({
+      query: ({ id }) => ({
+        url: `trainingssession/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["SessionSecretary"],
+    }),
   }),
 });
 
@@ -110,4 +118,5 @@ export const {
   useGetSurveysByCreatorQuery,
   useUpdateSurveyQuestionMutation,
   useDeleteSurveyQuestionMutation,
+  useDeleteSessionMutation,
 } = sessionSecretaryApi;
