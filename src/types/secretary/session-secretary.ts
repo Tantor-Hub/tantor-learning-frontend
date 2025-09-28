@@ -47,6 +47,12 @@ export interface IUpdateSessionRequest {
   ending_date?: string;
 }
 
+export interface IUpdateSessionPaymentRequest {
+  id: string; // Required: Training session UUID
+  payment_method?: string[]; // Optional: Array of payment methods
+  cpf_link?: string; // Optional: CPF payment link
+}
+
 export interface ISession {
   id: string;
   title: string;
@@ -57,6 +63,7 @@ export interface ISession {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  cpf_link?: string;
   CreatedBy: {
     id: number;
     fs_name: string;
@@ -98,6 +105,7 @@ export interface ISessionByIdResponse {
     regulation_text: string;
     begining_date: string;
     ending_date: string;
+    cpf_link?: string;
     createdAt: string;
     updatedAt: string;
     trainings: {

@@ -3,6 +3,7 @@ import {
   IAddSessionRequest,
   IListSessionResponse,
   IUpdateSessionRequest,
+  IUpdateSessionPaymentRequest,
   ISessionByIdResponse,
   ICreateSurveyRequest,
   ISurveyResponse,
@@ -30,6 +31,14 @@ export const sessionSecretaryApi = createApi({
     updateSession: builder.mutation<void, IUpdateSessionRequest>({
       query: (body) => ({
         url: `trainingssession/update`,
+        method: "PATCH",
+        body: body,
+      }),
+      invalidatesTags: ["SessionSecretary"],
+    }),
+    updateSessionPayment: builder.mutation<void, IUpdateSessionPaymentRequest>({
+      query: (body) => ({
+        url: `trainingssession/update-payment`,
         method: "PATCH",
         body: body,
       }),
@@ -108,6 +117,7 @@ export const sessionSecretaryApi = createApi({
 export const {
   useAddSessionMutation,
   useUpdateSessionMutation,
+  useUpdateSessionPaymentMutation,
   useListSessionQuery,
   useGetSessionByIdQuery,
   useCreateSurveyQuestionMutation,
