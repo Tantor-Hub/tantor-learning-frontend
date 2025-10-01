@@ -67,8 +67,8 @@ export interface IGetMessageByIdResponse {
     updatedAt: string;
     Sender: {
       id: number;
-      fs_name: string;
-      ls_name: string;
+      firstName: string;
+      lastName: string;
       nick_name: string;
       email: string;
       phone: string;
@@ -78,8 +78,8 @@ export interface IGetMessageByIdResponse {
     };
     Receiver: {
       id: number;
-      fs_name: string;
-      ls_name: string;
+      firstName: string;
+      lastName: string;
       nick_name: string;
       email: string;
       phone: string;
@@ -106,8 +106,8 @@ export interface IGetMessageByIdResponse {
       updatedAt: string;
       Sender: {
         id: number;
-        fs_name: string;
-        ls_name: string;
+        firstName: string;
+        lastName: string;
         nick_name: string;
         email: string;
         phone: string;
@@ -117,8 +117,8 @@ export interface IGetMessageByIdResponse {
       };
       Receiver: {
         id: number;
-        fs_name: string;
-        ls_name: string;
+        firstName: string;
+        lastName: string;
         nick_name: string;
         email: string;
         phone: string;
@@ -154,8 +154,8 @@ export interface IMessage {
   is_archievedto: any[];
   Sender: {
     id: number;
-    fs_name: string;
-    ls_name: string;
+    firstName: string;
+    lastName: string;
     nick_name: string;
     email: string;
     phone: string | null;
@@ -163,8 +163,8 @@ export interface IMessage {
   };
   Receiver: {
     id: number;
-    fs_name: string;
-    ls_name: string;
+    firstName: string;
+    lastName: string;
     nick_name: string;
     email: string;
     phone: string | null;
@@ -198,8 +198,8 @@ export interface IListChatTreadResponse {
       updatedAt: string;
       Sender: {
         id: number;
-        fs_name: string;
-        ls_name: string;
+        firstName: string;
+        lastName: string;
         nick_name: string;
         email: string;
         phone: string;
@@ -209,8 +209,8 @@ export interface IListChatTreadResponse {
       };
       Receiver: {
         id: number;
-        fs_name: string;
-        ls_name: string;
+        firstName: string;
+        lastName: string;
         nick_name: string;
         email: string;
         phone: string;

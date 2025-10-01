@@ -29,12 +29,12 @@ export function ProfilePage() {
           <Avatar className="w-40 h-40">
             <AvatarImage src={userData.avatar || ""} alt="Profile Image" className="object-cover" />
             <AvatarFallback className="text-2xl font-bold">
-              {userData.fs_name[0]}
-              {userData.ls_name[0]}
+              {userData.firstName[0]}
+              {userData.lastName[0]}
             </AvatarFallback>
           </Avatar>
           <h2 className="mt-4 text-sm font-semibold">
-            {userData.fs_name || "Prénom"} {userData.ls_name || "Nom"}
+            {userData.firstName || "Prénom"} {userData.lastName || "Nom"}
           </h2>
           <div className="flex flex-col gap-4">
             <p className="text-sm text-gray-500">{userData.email || "Email non disponible"}</p>
@@ -45,8 +45,8 @@ export function ProfilePage() {
               phone={userData?.phone}
               city={userData?.ville_residance?.toString()}
               avatarURL={userData.avatar || ""}
-              fs_name={userData.fs_name}
-              ls_name={userData.ls_name}
+              firstName={userData.firstName}
+              lastName={userData.lastName}
               email={userData.email}
             />
           </div>

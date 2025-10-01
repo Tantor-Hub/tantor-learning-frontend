@@ -136,7 +136,7 @@ function MessageActions() {
         <div className="mb-4">
           <p className="text-primary text-xl font-bold">{message.data.subject}</p>
           <p className="text-[#979DAC]">
-            De : {message.data.Sender.fs_name}
+            De : {message.data.Sender.firstName}
             {" - "}
             {message.data.Sender.roles.length > 0
               ? message.data.Sender.roles.map((r) => r.role).join(", ")
@@ -161,7 +161,7 @@ function MessageActions() {
             <div key={msg.id} className="border border-border rounded-lg p-4">
               <div className="mb-2">
                 <p className="text-[#979DAC]">
-                  De : {msg.Sender.fs_name}
+                  De : {msg.Sender.firstName}
                   {" - "}
                   {msg.Sender.roles.length > 0
                     ? msg.Sender.roles.map((r) => r.role).join(", ")

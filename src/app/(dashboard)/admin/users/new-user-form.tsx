@@ -77,8 +77,8 @@ export default function NewUserForm({ onCancel }: NewEventFormProps) {
       const selectedRole = AVAILABLE_ROLES.find((role) => role.value === data.userType);
 
       const userData = {
-        fs_name: names[0] || "",
-        ls_name: names[1] || names[0] || "",
+        firstName: names[0] || "",
+        lastName: names[1] || names[0] || "",
         password: data.password,
         nick_name: names[1] || names[0] || "",
         email: data.email,

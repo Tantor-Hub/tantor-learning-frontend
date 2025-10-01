@@ -25,8 +25,8 @@ interface ICourse {
   is_published: boolean;
   id_formateurs: Array<{
     id: number;
-    fs_name: string;
-    ls_name: string;
+    firstName: string;
+    lastName: string;
     email: string;
   }>;
 }

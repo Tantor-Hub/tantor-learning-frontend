@@ -50,7 +50,7 @@ export function CourseSessionId({ id_session }: { id_session: string }) {
             <TableCell className="font-medium">{item.Title?.title || "N/A"}</TableCell>
             <TableCell>{item.Title?.description || "Aucune description"}</TableCell>
             <TableCell>
-              {item.CreatedBy?.fs_name} {item.CreatedBy?.ls_name}
+              {item.CreatedBy?.firstName} {item.CreatedBy?.lastName}
             </TableCell>
             <TableCell>
               <Badge variant={item.is_published ? "default" : "secondary"}>

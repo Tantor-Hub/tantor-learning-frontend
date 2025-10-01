@@ -66,8 +66,8 @@ export interface ISession {
   cpf_link?: string;
   CreatedBy: {
     id: number;
-    fs_name: string;
-    ls_name: string;
+    firstName: string;
+    lastName: string;
     email: string;
   };
   trainingSession: {
@@ -151,8 +151,8 @@ export interface ISurveyResponse {
   createdBy: string;
   creator?: {
     uuid: string;
-    fs_name: string;
-    ls_name: string;
+    firstName: string;
+    lastName: string;
     email: string;
   };
   createdAt: string;

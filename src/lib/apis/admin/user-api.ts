@@ -20,8 +20,8 @@ export interface IUsersListByGroupResponse {
 }
 
 export interface AddUserRequest {
-  fs_name: string;
-  ls_name: string;
+  firstName: string;
+  lastName: string;
   password: string;
   nick_name: string; // ie. username CFR. to the mockup on figma
   email: string;

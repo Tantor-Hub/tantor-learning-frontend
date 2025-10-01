@@ -33,7 +33,7 @@ export const MessageList = ({ messages, isLoading, isSuccess }: MessageListProps
       {messages?.map((msg) => (
         <Link key={msg.id} href={`/${role}/messages/${msg.id}?threadId=${msg.thread}`}>
           <MessageCard
-            name={`${msg?.Sender?.fs_name} ${msg.Sender.ls_name}`}
+            name={`${msg?.Sender?.firstName} ${msg.Sender.lastName}`}
             role={msg.Sender.roles.length > 0 ? msg.Sender.roles.map((r) => r.role).join(", ") : ""}
             title={msg.subject}
             message={msg.content}

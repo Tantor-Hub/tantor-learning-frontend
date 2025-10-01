@@ -171,7 +171,7 @@ export default function Page() {
                   <div>
                     <p className="text-sm text-gray-500">Formateur</p>
                     <p className="font-medium text-gray-800">
-                      {courseData.CreatedBy.fs_name} {courseData.CreatedBy.ls_name}
+                      {courseData.CreatedBy.firstName} {courseData.CreatedBy.lastName}
                     </p>
                     <p className="text-sm text-gray-500">{courseData.CreatedBy.email}</p>
                   </div>

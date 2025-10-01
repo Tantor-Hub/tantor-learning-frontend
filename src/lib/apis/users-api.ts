@@ -4,8 +4,8 @@ import { createApi, enhancedBaseQuery } from "./base-api";
 // User related types
 export interface UserProfile {
   id: number;
-  fs_name: string;
-  ls_name: string;
+  firstName: string;
+  lastName: string;
   nick_name: string;
   email: string;
   phone?: string;
@@ -32,8 +32,8 @@ export interface UserProfile {
 
 export interface ProfileUpdateResponse {
   // username: string;
-  fs_name: string;
-  ls_name: string;
+  firstName: string;
+  lastName: string;
   nick_name: string;
   id: string;
   email: string;
@@ -82,8 +82,8 @@ interface IPublicUsers {
     length: number;
     rows: Array<{
       id: number;
-      fs_name: string;
-      ls_name: string;
+      firstName: string;
+      lastName: string;
       avatar: string | null;
     }>;
   };

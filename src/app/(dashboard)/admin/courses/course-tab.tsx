@@ -64,7 +64,7 @@ export function CourseTab() {
             <TableCell className="font-medium">{item.title}</TableCell>
             <TableCell>{item.description}</TableCell>
             <TableCell>
-              {item.CreatedBy.fs_name} {item.CreatedBy.ls_name}
+              {item.CreatedBy.firstName} {item.CreatedBy.lastName}
             </TableCell>
           </TableRow>
         ))}

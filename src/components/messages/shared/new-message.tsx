@@ -55,8 +55,8 @@ const messageFormSchema = z.object({
 
 interface User {
   id: number;
-  fs_name: string;
-  ls_name: string;
+  firstName: string;
+  lastName: string;
   avatar: string | null;
 }
 
@@ -81,7 +81,7 @@ export function NewMessageAlert() {
   useEffect(() => {
     if (usersData?.data?.rows) {
       const filtered = usersData.data.rows.filter((user: User) =>
-        `${user.fs_name} ${user.ls_name}`.toLowerCase().includes(searchTerm.toLowerCase())
+        `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredUsers(filtered);
     }
@@ -143,11 +143,11 @@ export function NewMessageAlert() {
                           {field.value && usersData?.data?.rows
                             ? usersData.data.rows.find(
                                 (user: User) => user.id.toString() === field.value
-                              )?.fs_name +
+                              )?.firstName +
                               " " +
                               usersData.data.rows.find(
                                 (user: User) => user.id.toString() === field.value
-                              )?.ls_name
+                              )?.lastName
                             : "Sélectionner un destinataire"}
                           <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
@@ -178,7 +178,7 @@ export function NewMessageAlert() {
                               />
                               <div className="flex flex-col">
                                 <span>
-                                  {user.fs_name} {user.ls_name}
+                                  {user.firstName} {user.lastName}
                                 </span>
                               </div>
                             </CommandItem>

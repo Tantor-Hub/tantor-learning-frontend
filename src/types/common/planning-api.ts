@@ -16,8 +16,8 @@ export interface IListPlanning {
       updatedAt: string;
       Createdby: {
         id: number;
-        fs_name: string;
-        ls_name: string;
+        firstName: string;
+        lastName: string;
       };
     }[];
   };

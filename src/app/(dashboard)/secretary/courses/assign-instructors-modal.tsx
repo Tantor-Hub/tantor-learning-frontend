@@ -26,16 +26,16 @@ interface ICourse {
   is_published: boolean;
   id_formateurs: Array<{
     id: number;
-    fs_name: string;
-    ls_name: string;
+    firstName: string;
+    lastName: string;
     email: string;
   }>;
 }
 
 interface IUserWithNames {
   id: number;
-  fs_name?: string;
-  ls_name?: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   role: string;
 }
@@ -106,7 +106,7 @@ export function AssignInstructorsModal({ course }: { course: ICourse }) {
                       htmlFor={`instructor-${instructor.id}`}
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                      {instructor.fs_name} {instructor.ls_name}
+                      {instructor.firstName} {instructor.lastName}
                     </Label>
                   </div>
                 ))}

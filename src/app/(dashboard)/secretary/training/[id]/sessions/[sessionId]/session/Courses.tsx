@@ -320,7 +320,7 @@ export default function Courses({ sessionId }: { sessionId: string }) {
                                 isSelected ? "opacity-100" : "opacity-0"
                               )}
                             />
-                            {user.fs_name} {user.ls_name}
+                            {user.firstName} {user.lastName}
                           </CommandItem>
                         );
                       })}

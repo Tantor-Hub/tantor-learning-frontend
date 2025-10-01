@@ -4,7 +4,7 @@ import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useGetLessonByIdQuery } from "@/lib/apis/instructor/instructor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, FileText, ClipboardList } from "lucide-react";
+import { BookOpen, ClipboardList } from "lucide-react";
 import { ChevronLeft } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 
@@ -82,7 +82,7 @@ export function LessonDetail() {
 
       {/* Tabs */}
       <Tabs defaultValue="content">
-        <TabsList className="bg-white border font-semibold px-2.5 py-6 grid-cols-3 gap-4">
+        <TabsList className="bg-white border font-semibold px-2.5 py-6 grid-cols-2 gap-4">
           <TabsTrigger value="content" className="p-5 px-2 md:px-5">
             <BookOpen className="w-4 h-4 mr-2" />
             Contenu
@@ -90,10 +90,6 @@ export function LessonDetail() {
           <TabsTrigger value="evaluations" className="p-5 px-2 md:px-5">
             <ClipboardList className="w-4 h-4 mr-2" />
             Quiz (Évaluations)
-          </TabsTrigger>
-          <TabsTrigger value="homework" className="p-5 px-2 md:px-5">
-            <FileText className="w-4 h-4 mr-2" />
-            Tâches remises
           </TabsTrigger>
         </TabsList>
 
@@ -135,28 +131,6 @@ export function LessonDetail() {
                 </button>
                 <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
                   Ajouter un exercice
-                </button>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="homework">
-          <div className="bg-white border rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Tâches remises</h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-gray-600">
-                  Consultez et évaluez les tâches remises par les étudiants pour cette leçon. Vous
-                  pouvez télécharger les fichiers, noter les travaux et donner des commentaires.
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                  Voir les soumissions
-                </button>
-                <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
-                  Télécharger tout
                 </button>
               </div>
             </div>

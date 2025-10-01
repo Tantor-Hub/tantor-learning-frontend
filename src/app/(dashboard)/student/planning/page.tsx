@@ -15,7 +15,9 @@ const adaptApiResponseToEvents = (apiResponse: any) => {
     startTime: new Date(parseInt(item.timeline[0]) * 1000),
     endTime: new Date(parseInt(item.timeline[1]) * 1000),
     description: item.description,
-    createdBy: item.Createdby ? `${item.Createdby.fs_name} ${item.Createdby.ls_name}` : "Inconnu",
+    createdBy: item.Createdby
+      ? `${item.Createdby.firstName} ${item.Createdby.lastName}`
+      : "Inconnu",
   }));
 };
 

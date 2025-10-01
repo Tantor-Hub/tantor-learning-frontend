@@ -21,8 +21,8 @@ export interface IListAllCoursesResponse {
       updatedAt: string;
       CreatedBy: {
         id: number;
-        fs_name: string;
-        ls_name: string;
+        firstName: string;
+        lastName: string;
         email: string;
       };
       trainingSession: {
@@ -69,8 +69,8 @@ export interface IGetCourseByIdResponse {
     };
     CreatedBy: {
       id: number;
-      fs_name: string;
-      ls_name: string;
+      firstName: string;
+      lastName: string;
       email: string;
     };
     Title: {
@@ -93,8 +93,8 @@ export interface ICourse {
       is_published: boolean;
       id_formateurs: Array<{
         id: number;
-        fs_name: string;
-        ls_name: string;
+        firstName: string;
+        lastName: string;
         email: string;
       }>;
     }>;

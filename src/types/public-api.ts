@@ -88,8 +88,8 @@ export interface ILibraryResponse {
       };
       CreatedBy: {
         id: number;
-        fs_name: string;
-        ls_name: string;
+        firstName: string;
+        lastName: string;
         email: string;
       };
       Title: {
@@ -171,8 +171,8 @@ export interface IListSessionsByFormationIdResponse {
       };
       Creator: {
         id: number;
-        fs_name: string;
-        ls_name: string;
+        firstName: string;
+        lastName: string;
         email: string;
       } | null;
       Cours: Array<{

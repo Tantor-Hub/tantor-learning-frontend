@@ -157,8 +157,8 @@ export interface IListCourseBySessionIdResponse {
       };
       CreatedBy: {
         id: number;
-        fs_name: string;
-        ls_name: string;
+        firstName: string;
+        lastName: string;
         email: string;
       };
       Title: {

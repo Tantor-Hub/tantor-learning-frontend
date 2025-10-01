@@ -5,8 +5,8 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: number;
-      fs_name: string;
-      ls_name?: string;
+      firstName: string;
+      lastName?: string;
       nick_name?: string;
       phone?: string;
       avatar?: string;
@@ -23,8 +23,8 @@ declare module "next-auth" {
 
   interface User extends DefaultUser {
     id: number;
-    fs_name: string;
-    ls_name?: string;
+    firstName: string;
+    lastName?: string;
     nick_name?: string;
     phone?: string;
     avatar?: string;
@@ -42,8 +42,8 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id: number;
-    fs_name: string;
-    ls_name?: string;
+    firstName: string;
+    lastName?: string;
     nick_name?: string;
     phone?: string;
     avatar?: string;

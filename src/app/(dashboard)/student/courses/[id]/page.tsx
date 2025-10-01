@@ -131,7 +131,7 @@ export default function Page() {
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 bg-gray-200 rounded-md" />
                     <div className="text-sm text-gray-800 flex flex-col">
-                      <span className="text-[#0466C8]">{session.CreatedBy.fs_name}</span>
+                      <span className="text-[#0466C8]">{session.CreatedBy.firstName}</span>
                       <span className="text-[10px] text-gray-500">Professeur</span>
                     </div>
                   </div>

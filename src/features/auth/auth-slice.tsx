@@ -280,8 +280,8 @@ export const authSlice = createSlice({
         if (payload && state.user) {
           state.user = {
             ...state.user,
-            firstName: payload.fs_name || state.user.firstName,
-            lastName: payload.ls_name || state.user.lastName,
+            firstName: payload.firstName || state.user.firstName,
+            lastName: payload.lastName || state.user.lastName,
             email: payload.email || state.user.email,
             avatar: state.user.avatar,
             address: payload.adresse_physique || state.user.address,

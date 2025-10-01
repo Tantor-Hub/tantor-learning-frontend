@@ -86,7 +86,7 @@ export function CourseTable() {
               <div className="flex flex-wrap gap-1">
                 {/* {course.id_formateurs.map((instructor) => (
                   <Badge key={instructor.id} variant="outline" className="text-xs">
-                    {instructor.fs_name} {instructor.ls_name}
+                    {instructor.firstName} {instructor.lastName}
                   </Badge>
                 ))} */}
               </div>

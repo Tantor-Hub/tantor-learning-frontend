@@ -168,8 +168,8 @@ export interface IListCourses {
       };
       CreatedBy: {
         id: number;
-        fs_name: string;
-        ls_name: string;
+        firstName: string;
+        lastName: string;
         email: string;
       };
       Title: {
@@ -264,8 +264,8 @@ export interface ICoursDetailsResponse {
     };
     CreatedBy: {
       id: number;
-      fs_name: string;
-      ls_name: string;
+      firstName: string;
+      lastName: string;
       email: string;
     };
     Title: {

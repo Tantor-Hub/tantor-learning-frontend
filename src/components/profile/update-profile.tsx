@@ -64,8 +64,8 @@ const profileFormSchema = z.object({
 });
 
 type UserProfileData = {
-  fs_name: string;
-  ls_name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone?: string;
   address?: string;
@@ -97,8 +97,8 @@ function ProfileCompletionBar({
   // Calculate completion based on current form values
   const calculateCompletion = () => {
     const allFields = [
-      { label: "Prénom", value: userData.fs_name, required: true },
-      { label: "Nom", value: userData.ls_name, required: true },
+      { label: "Prénom", value: userData.firstName, required: true },
+      { label: "Nom", value: userData.lastName, required: true },
       { label: "Email", value: userData.email, required: true },
       { label: "Téléphone", value: formValues.phone || userData.phone },
       { label: "Adresse", value: formValues.address || userData.address },
@@ -195,8 +195,8 @@ export function UpdateProfile({
   phone,
   city,
   avatarURL,
-  fs_name = "",
-  ls_name = "",
+  firstName = "",
+  lastName = "",
   email = "",
 }: {
   address?: string;
@@ -205,8 +205,8 @@ export function UpdateProfile({
   phone?: string;
   city?: string;
   avatarURL?: string;
-  fs_name?: string;
-  ls_name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
 }) {
   const [updateProfile, { isLoading }] = useUpdateUserProfileMutation();
@@ -254,8 +254,8 @@ export function UpdateProfile({
   }, [watchedFields, address, country, identityNumber, phone, city, form]);
 
   const userData: UserProfileData = {
-    fs_name,
-    ls_name,
+    firstName,
+    lastName,
     email,
     phone,
     address,
