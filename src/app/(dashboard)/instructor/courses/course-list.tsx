@@ -1,29 +1,16 @@
 "use client";
 
 import { useListAllCoursesByIdInstructorQuery } from "@/lib/apis/instructor/instructor";
-import { useSelector } from "react-redux";
-import { selectCurrentUser } from "@/features/auth/auth-slice";
 import Link from "next/link";
 import { EmptyState } from "@/components/shared/empty-state";
 import Image from "next/image";
+import { CourseListSkeleton } from "@/components/skeletons/course-list-skeleton";
 
 export function CourseList() {
-  const currentUser = useSelector(selectCurrentUser);
-  const {
-    data: courses,
-    isLoading,
-    error,
-  } = useListAllCoursesByIdInstructorQuery(
-    { formateurId: currentUser?.id || "" },
-    { skip: !currentUser?.id }
-  );
-
-  // Show loading state if user is not loaded yet
-  if (!currentUser?.id) {
-    return null; // Suspense will handle the loading state
-  }
+  const { data: courses, isLoading, error } = useListAllCoursesByIdInstructorQuery();
 
   if (isLoading) {
+    return <CourseListSkeleton />;
     return null; // Suspense will handle the loading state
   }
 

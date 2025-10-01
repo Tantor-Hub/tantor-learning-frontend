@@ -91,8 +91,8 @@ export const instructorApi = createApi({
     // COURS POUR FORMATEURS
     // ========================================================================
     // Affichez le cours du formateur connecte
-    listAllCoursesByIdInstructor: builder.query<IListAllCoursesResponse, { formateurId: string }>({
-      query: ({ formateurId }) => `sessioncours/instructor/mycourses`,
+    listAllCoursesByIdInstructor: builder.query<IListAllCoursesResponse, void>({
+      query: () => `sessioncours/instructor/mycourses`,
       providesTags: ["Instructor"],
     }),
 
