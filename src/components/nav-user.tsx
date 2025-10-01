@@ -62,16 +62,16 @@ export function NavUser() {
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage
                     src={currentUser?.avatar || undefined}
-                    alt={currentUser?.firstName || undefined}
+                    alt={currentUser?.lastName || undefined}
                     className="object-cover object-center"
                   />
                   <AvatarFallback className="rounded-lg">
-                    {currentUser?.firstName?.[0]}
                     {currentUser?.lastName?.[0]}
+                    {currentUser?.firstName?.[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{currentUser?.firstName}</span>
+                  <span className="truncate font-semibold">{currentUser?.lastName}</span>
                   <span className="truncate text-xs">{currentUser?.email}</span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4" />
@@ -91,12 +91,14 @@ export function NavUser() {
                       alt={currentUser?.firstName || undefined}
                     />
                     <AvatarFallback className="rounded-lg">
-                      {currentUser?.firstName?.[0]}
                       {currentUser?.lastName?.[0]}
+                      {currentUser?.firstName?.[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{currentUser?.firstName}</span>
+                    <span className="truncate font-semibold">
+                      {currentUser?.lastName} {currentUser?.firstName}
+                    </span>
                     <span className="truncate text-xs">{currentUser?.email}</span>
                   </div>
                 </div>

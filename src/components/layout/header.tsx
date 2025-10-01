@@ -124,14 +124,14 @@ const AuthButtons = ({
 
 const UserAvatar = ({
   avatar,
-  firstName,
+  lastName,
   email,
   handleLogout,
   avatarName,
   currentRole,
 }: {
   avatar?: string | null;
-  firstName?: string | null;
+  lastName?: string | null;
   avatarName?: string;
   email?: string;
   handleLogout: () => void;
@@ -156,7 +156,7 @@ const UserAvatar = ({
             className="text-sm font-medium text-primary hover:underline"
             href={`/${currentRole}/profile`}
           >
-            {firstName || "Anonymous"}
+            {lastName || "Anonymous"}
           </Link>
           <p className="text-xs font-light">{email || "mail"}</p>
         </DropdownMenuLabel>
@@ -219,9 +219,9 @@ export function Header() {
             {isAuthenticated ? (
               <UserAvatar
                 avatar={currentUser?.avatar || undefined}
-                firstName={currentUser?.firstName || null}
+                lastName={currentUser?.lastName || null}
                 email={currentUser?.email}
-                avatarName={currentUser?.firstName?.[0] || "A"}
+                avatarName={currentUser?.lastName?.[0] || "A"}
                 handleLogout={logout}
                 currentRole={role}
               />
@@ -238,9 +238,9 @@ export function Header() {
             {isAuthenticated && (
               <UserAvatar
                 avatar={currentUser?.avatar || undefined}
-                firstName={currentUser?.firstName || null}
+                lastName={currentUser?.lastName || null}
                 email={currentUser?.email}
-                avatarName={currentUser?.firstName?.[0] || "A"}
+                avatarName={currentUser?.lastName?.[0] || "A"}
                 handleLogout={logout}
                 currentRole={role}
               />
