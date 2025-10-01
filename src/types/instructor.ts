@@ -111,6 +111,11 @@ export interface ILesson {
   is_published: boolean;
   createdAt: string;
   updatedAt: string;
+  // Optional statistics
+  quizCount?: number;
+  averageScore?: number;
+  homeworkCount?: number;
+  submissionRate?: number;
 }
 
 export interface ILessonsResponse {

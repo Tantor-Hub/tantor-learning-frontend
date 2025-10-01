@@ -4,9 +4,10 @@ import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useGetLessonByIdQuery } from "@/lib/apis/instructor/instructor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, ClipboardList } from "lucide-react";
+import { BookOpen, ClipboardList, FileText } from "lucide-react";
 import { ChevronLeft } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function LessonDetail() {
   const params = useParams();
@@ -80,63 +81,77 @@ export function LessonDetail() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="content">
-        <TabsList className="bg-white border font-semibold px-2.5 py-6 grid-cols-2 gap-4">
-          <TabsTrigger value="content" className="p-5 px-2 md:px-5">
-            <BookOpen className="w-4 h-4 mr-2" />
-            Contenu
-          </TabsTrigger>
-          <TabsTrigger value="evaluations" className="p-5 px-2 md:px-5">
-            <ClipboardList className="w-4 h-4 mr-2" />
-            Quiz (Évaluations)
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="content">
-          <div className="bg-white border rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Contenu de la leçon</h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-gray-600">
-                  Le contenu de cette leçon sera disponible ici. Vous pourrez ajouter des vidéos,
-                  des documents, des exercices et d'autres ressources pédagogiques.
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                  Ajouter du contenu
-                </button>
-                <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
-                  Importer des fichiers
-                </button>
-              </div>
+      {/* Content Sections */}
+      <div className="space-y-6">
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <BookOpen className="w-5 h-5" />
+            <h3 className="text-lg font-semibold">Contenu de la leçon</h3>
+          </div>
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-gray-600">
+                Le contenu de cette leçon sera disponible ici. Vous pourrez ajouter des vidéos, des
+                documents, des exercices et d'autres ressources pédagogiques.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                Ajouter du contenu
+              </button>
+              <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                Importer des fichiers
+              </button>
             </div>
           </div>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="evaluations">
-          <div className="bg-white border rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Quiz (Évaluations)</h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-gray-600">
-                  Gérez les évaluations pour cette leçon. Créez des quiz, des exercices et des tests
-                  pour évaluer la compréhension des étudiants.
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                  Créer un quiz
-                </button>
-                <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
-                  Ajouter un exercice
-                </button>
-              </div>
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <ClipboardList className="w-5 h-5" />
+            <h3 className="text-lg font-semibold">Quiz (Évaluations)</h3>
+          </div>
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-gray-600">
+                Gérez les évaluations pour cette leçon. Créez des quiz, des exercices et des tests
+                pour évaluer la compréhension des étudiants.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                Créer un quiz
+              </button>
+              <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                Ajouter un exercice
+              </button>
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <FileText className="w-5 h-5" />
+            <h3 className="text-lg font-semibold">Devoirs</h3>
+          </div>
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-gray-600">
+                Gérez les devoirs pour cette leçon. Créez des assignments, des projets et des tâches
+                pour renforcer l'apprentissage des étudiants.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+                Créer un devoir
+              </button>
+              <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                Ajouter une tâche
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

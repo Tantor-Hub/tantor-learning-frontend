@@ -29,32 +29,67 @@ export function LessonDetailSkeleton() {
         </div>
       </div>
 
-      {/* Tabs Skeleton */}
+      {/* Content Sections Skeleton */}
       <div className="space-y-6">
-        {/* Tabs list skeleton */}
+        {/* Contenu Section */}
         <div className="bg-white border rounded-lg p-6">
-          <div className="flex gap-4">
-            <Skeleton height="3rem" width="8rem" className="rounded-md" />
-            <Skeleton height="3rem" width="10rem" className="rounded-md" />
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton width="20px" height="20px" className="rounded" />
+            <Skeleton height="1.5rem" width="12rem" />
+          </div>
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="space-y-2">
+                <Skeleton height="1rem" width="100%" />
+                <Skeleton height="1rem" width="95%" />
+                <Skeleton height="1rem" width="90%" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Skeleton height="2.5rem" width="10rem" className="rounded-md" />
+              <Skeleton height="2.5rem" width="12rem" className="rounded-md" />
+            </div>
           </div>
         </div>
 
-        {/* Tab content skeleton */}
+        {/* Évaluations Section */}
         <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton width="20px" height="20px" className="rounded" />
+            <Skeleton height="1.5rem" width="10rem" />
+          </div>
           <div className="space-y-4">
-            {/* Content area skeleton */}
-            <Skeleton height="2rem" width="15rem" />
-            <div className="space-y-3">
-              <Skeleton height="1.5rem" width="100%" />
-              <Skeleton height="1.5rem" width="95%" />
-              <Skeleton height="1.5rem" width="90%" />
-              <Skeleton height="1.5rem" width="85%" />
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="space-y-2">
+                <Skeleton height="1rem" width="100%" />
+                <Skeleton height="1rem" width="95%" />
+                <Skeleton height="1rem" width="90%" />
+              </div>
             </div>
-
-            {/* Action buttons skeleton */}
-            <div className="flex gap-3 mt-6">
-              <Skeleton height="2.5rem" width="10rem" className="rounded-md" />
+            <div className="flex gap-3">
               <Skeleton height="2.5rem" width="8rem" className="rounded-md" />
+              <Skeleton height="2.5rem" width="12rem" className="rounded-md" />
+            </div>
+          </div>
+        </div>
+
+        {/* Devoirs Section */}
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton width="20px" height="20px" className="rounded" />
+            <Skeleton height="1.5rem" width="6rem" />
+          </div>
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="space-y-2">
+                <Skeleton height="1rem" width="100%" />
+                <Skeleton height="1rem" width="95%" />
+                <Skeleton height="1rem" width="90%" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Skeleton height="2.5rem" width="10rem" className="rounded-md" />
+              <Skeleton height="2.5rem" width="10rem" className="rounded-md" />
             </div>
           </div>
         </div>
