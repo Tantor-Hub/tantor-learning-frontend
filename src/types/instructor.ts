@@ -10,30 +10,28 @@ export interface IListAllCoursesResponse {
   data: {
     length: number;
     rows: Array<{
-      id: number;
-      id_preset_cours: number;
-      duree: number | null;
-      ponderation: number | null;
+      id: string;
+      title: string;
+      description: string;
       is_published: boolean;
-      createdBy: number;
-      id_session: number;
-      id_category: number;
-      id_formateur: number | null;
-      Session: {
-        designation: string;
-        duree: string;
-        type_formation: string;
-      };
+      id_formateur: string[];
+      id_session: string;
+      createdBy: string;
+      createdAt: string;
+      updatedAt: string;
       CreatedBy: {
         id: number;
         fs_name: string;
         ls_name: string;
         email: string;
       };
-      Title: {
-        id: number;
+      trainingSession: {
+        id: string;
         title: string;
-        description: string;
+        nb_places: number;
+        available_places: number;
+        begining_date: string;
+        ending_date: string;
       };
     }>;
   };
@@ -101,4 +99,45 @@ export interface ICourse {
       }>;
     }>;
   };
+}
+
+// Lesson types
+export interface ILesson {
+  id: string;
+  title: string;
+  description: string;
+  duration: number;
+  order: number;
+  is_published: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ILessonsResponse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    rows: ILesson[];
+  };
+}
+
+export interface ILessonDetail {
+  id: string;
+  title: string;
+  description: string;
+  id_cours: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ILessonDetailResponse {
+  status: number;
+  data: ILessonDetail;
+}
+
+export interface ICreateLessonRequest {
+  title: string;
+  description: string;
+  id_cours: string;
 }

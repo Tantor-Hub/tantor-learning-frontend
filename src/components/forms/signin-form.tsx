@@ -87,8 +87,17 @@ export function SignInForm() {
       router.push(`/verify?email=${encodeURIComponent(values.email)}`);
     } catch (error: any) {
       console.log(error);
-      const errorMessage = error.message || "Échec de la connexion. Email est introuvable.";
-      toast.error(errorMessage);
+
+      // Check if it's a 404 error (email not found)
+      if (error.status === 404 || error.statusCode === 404) {
+        form.setError("email", {
+          type: "manual",
+          message: "Email introuvable. Veuillez vérifier votre adresse email ou vous inscrire.",
+        });
+      } else {
+        const errorMessage = error.message || "Échec de la connexion. Veuillez réessayer.";
+        toast.error(errorMessage);
+      }
     }
   };
 

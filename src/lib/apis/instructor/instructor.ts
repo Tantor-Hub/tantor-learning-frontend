@@ -1,4 +1,11 @@
-import { IAddMatiere, IGetCourseByIdResponse, IListAllCoursesResponse } from "@/types/instructor";
+import {
+  IAddMatiere,
+  IGetCourseByIdResponse,
+  IListAllCoursesResponse,
+  ILessonsResponse,
+  ILessonDetailResponse,
+  ICreateLessonRequest,
+} from "@/types/instructor";
 import { createApi, enhancedBaseQuery } from "../base-api";
 
 // Instructor API
@@ -84,14 +91,44 @@ export const instructorApi = createApi({
     // COURS POUR FORMATEURS
     // ========================================================================
     // Affichez le cours du formateur connecte
-    listAllCoursesByIdInstructor: builder.query<IListAllCoursesResponse, void>({
-      query: () => "courses/list",
+    listAllCoursesByIdInstructor: builder.query<IListAllCoursesResponse, { formateurId: string }>({
+      query: ({ formateurId }) => `sessioncours/instructor/mycourses`,
+      providesTags: ["Instructor"],
+    }),
+
+    listCoursesBySessionId: builder.query<void, { sessionId: string }>({
+      query: ({ sessionId }) => `sessioncours/session/${sessionId}`,
       providesTags: ["Instructor"],
     }),
     // get cours by id
     getCourseById: builder.query<IGetCourseByIdResponse, { id_cours: string }>({
       query: (request) => `courses/course/${request.id_cours}`,
       providesTags: ["Instructor"],
+    }),
+
+    // ========================================================================
+    // LESSON API ENDPOINTS
+    // ========================================================================
+    // Get lessons by course ID
+    getLessonsByCourseId: builder.query<ILessonsResponse, { courseId: string }>({
+      query: ({ courseId }) => `lesson/cours/${courseId}/lessons`,
+      providesTags: ["Instructor"],
+    }),
+
+    // Get lesson by ID
+    getLessonById: builder.query<ILessonDetailResponse, { lessonId: string }>({
+      query: ({ lessonId }) => `lesson/${lessonId}`,
+      providesTags: ["Instructor"],
+    }),
+
+    // Create lesson
+    createLesson: builder.mutation<void, ICreateLessonRequest>({
+      query: (request) => ({
+        url: "lesson/create",
+        method: "POST",
+        body: request,
+      }),
+      invalidatesTags: ["Instructor"],
     }),
   }),
 });
@@ -101,4 +138,7 @@ export const {
   useGetCourseByIdQuery,
   useAddMatiereMutation,
   useAddDocumentToCourseMutation,
+  useGetLessonsByCourseIdQuery,
+  useGetLessonByIdQuery,
+  useCreateLessonMutation,
 } = instructorApi;

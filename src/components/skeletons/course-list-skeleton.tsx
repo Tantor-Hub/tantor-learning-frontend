@@ -14,10 +14,10 @@ const CourseCardSkeleton = () => (
 
       {/* Status and participants row */}
       <div className="flex justify-between mt-2.5">
-        <Skeleton height="1.5rem" width="4rem" className="rounded-xl" />
+        <Skeleton height="1.5rem" width="5rem" className="rounded-xl" />
         <div className="flex items-center gap-1">
           <Skeleton width="14px" height="14px" className="rounded" />
-          <Skeleton height="0.75rem" width="3rem" />
+          <Skeleton height="0.75rem" width="4rem" />
         </div>
       </div>
     </div>
@@ -26,6 +26,12 @@ const CourseCardSkeleton = () => (
     <div className="px-4 py-3 space-y-2">
       {/* Course title */}
       <Skeleton height="1rem" width="90%" />
+
+      {/* Training session info */}
+      <div className="space-y-1">
+        <Skeleton height="0.75rem" width="80%" />
+        <Skeleton height="0.75rem" width="60%" />
+      </div>
 
       {/* Instructor info */}
       <div className="flex items-center gap-2">
