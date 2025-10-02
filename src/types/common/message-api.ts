@@ -9,6 +9,18 @@ export interface ICreateMessageRequest {
   thread?: string; // another unknown value
 }
 
+// UPDATE MESSAGE REQUEST
+
+export interface IUpdateMessageRequest {
+  id: string;
+  subject: string;
+  content: string;
+  reader: string[];
+  status: string;
+  dontshowme: string[];
+  piece_joint: string[];
+}
+
 //  CREATE MESSAGE RESPONSE
 
 export interface ICreateMessageResponse {

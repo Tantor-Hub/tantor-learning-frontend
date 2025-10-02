@@ -5,6 +5,7 @@ import {
   IGetAllMessagesResponse,
   IGetMessageByIdResponse,
   IListChatTreadResponse,
+  IUpdateMessageRequest,
 } from "@/types/common/message-api";
 
 // Chat API
@@ -37,7 +38,7 @@ export const chatApi = createApi({
 
     deleteChat: builder.mutation<void, { id: string }>({
       query: ({ id }) => ({
-        url: `cms/messages/message/delete/${id}`,
+        url: `chat`,
         method: "DELETE",
       }),
       invalidatesTags: ["Chat"],
@@ -74,6 +75,23 @@ export const chatApi = createApi({
       }),
       providesTags: ["Chat"],
     }),
+
+    updateChat: builder.mutation<void, IUpdateMessageRequest>({
+      query: (request) => ({
+        url: "chat",
+        method: "PATCH",
+        body: request,
+      }),
+      invalidatesTags: ["Chat"],
+    }),
+
+    markAsRead: builder.mutation<void, { id: string }>({
+      query: ({ id }) => ({
+        url: `chat/${id}/read`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Chat"],
+    }),
   }),
 });
 
@@ -86,4 +104,6 @@ export const {
   useGetMessageByIdQuery,
   useListChatTreadQuery,
   useListMessageByUserIdQuery,
+  useUpdateChatMutation,
+  useMarkAsReadMutation,
 } = chatApi;

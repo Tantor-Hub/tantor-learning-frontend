@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Archive, Reply, Forward, Loader2, Send } from "lucide-react";
+import { ChevronLeft, Archive, Reply, Forward, Loader2, Send, Edit, Save, X } from "lucide-react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { Suspense, useState, useEffect } from "react";
 import { Loading } from "@/components/shared/loading";
@@ -9,6 +9,8 @@ import {
   useArchivedChatMutation,
   useCreateMessageMutation,
   useListChatTreadQuery,
+  useUpdateChatMutation,
+  useMarkAsReadMutation,
 } from "@/lib/apis/common/chat-api";
 import { DeleteMessageDialog } from "@/components/messages/dialog/delete-message-dialog";
 import { toast } from "react-hot-toast";
@@ -21,6 +23,9 @@ function MessageActions() {
   const currentUser = useSelector(selectCurrentUser);
   const [replyContent, setReplyContent] = useState("");
   const [isReplying, setIsReplying] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editSubject, setEditSubject] = useState("");
+  const [editContent, setEditContent] = useState("");
   const params = useParams();
   const searchParams = useSearchParams();
   const messageId = params.id as string;
@@ -31,6 +36,7 @@ function MessageActions() {
     data: message,
     isLoading,
     isError,
+    refetch: refetchMessage,
   } = useGetMessageByIdQuery({ id: messageId }, { skip: !messageId });
 
   // Fetch thread data
@@ -42,6 +48,8 @@ function MessageActions() {
 
   const [archivedMessage, { isLoading: isLoadingArchived }] = useArchivedChatMutation();
   const [sendReplyMessage, { isLoading: isLoadingSendReply }] = useCreateMessageMutation();
+  const [updateChat, { isLoading: isLoadingUpdate }] = useUpdateChatMutation();
+  const [markAsRead] = useMarkAsReadMutation();
 
   useEffect(() => {
     // If we have a message but no explicit threadId, refetch with the message's thread
@@ -50,9 +58,27 @@ function MessageActions() {
     }
   }, [message, threadId, refetchThread]);
 
+  useEffect(() => {
+    // Mark as read if message is not read
+    if (message && currentUser && message.data.is_readed === 0) {
+      markAsRead({ id: messageId });
+    }
+  }, [message, currentUser, messageId, markAsRead]);
+
+  useEffect(() => {
+    if (message) {
+      setEditSubject(message.data.subject);
+      setEditContent(message.data.content);
+    }
+  }, [message]);
+
   if (isLoading) return <Loading />;
   if (isError) return <div>Erreur lors du chargement du message</div>;
   if (!message) return <div>Message non trouvé</div>;
+
+  const canEdit =
+    currentUser?.id.toString() === message.data.Sender.id.toString() &&
+    message.data.id_user_receiver.toString() !== currentUser?.id.toString();
 
   const handleArchivedMessage = async () => {
     try {
@@ -87,6 +113,35 @@ function MessageActions() {
       refetchThread(); // Refresh the thread after sending a reply
     } catch (error) {
       toast.error("Erreur lors de l'envoi de la réponse");
+    }
+  };
+
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+  };
+
+  const handleSaveEdit = async () => {
+    if (editSubject.trim() === "" || editContent.trim() === "") {
+      toast.error("Le sujet et le contenu ne peuvent pas être vides");
+      return;
+    }
+
+    try {
+      await updateChat({
+        id: messageId,
+        subject: editSubject,
+        content: editContent,
+        reader: [], // Will be updated by backend
+        status: "alive",
+        dontshowme: [],
+        piece_joint: message.data.piece_jointe || [],
+      }).unwrap();
+
+      toast.success("Message mis à jour");
+      setIsEditing(false);
+      refetchMessage();
+    } catch {
+      toast.error("Erreur lors de la mise à jour du message");
     }
   };
 
@@ -125,6 +180,29 @@ function MessageActions() {
           <Button variant={"outline"}>
             <Forward /> Transférer
           </Button>
+          {canEdit && (
+            <>
+              {!isEditing ? (
+                <Button variant="outline" onClick={handleEditToggle}>
+                  <Edit /> Modifier
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={handleSaveEdit} disabled={isLoadingUpdate}>
+                    {isLoadingUpdate ? (
+                      <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                    ) : (
+                      <Save className="mr-2 h-4 w-4" />
+                    )}
+                    Enregistrer
+                  </Button>
+                  <Button variant="outline" onClick={handleEditToggle}>
+                    <X /> Annuler
+                  </Button>
+                </>
+              )}
+            </>
+          )}
           {currentUser?.id.toString() === message.data.Sender.id.toString() ? (
             <DeleteMessageDialog id={messageId} />
           ) : null}
@@ -134,23 +212,41 @@ function MessageActions() {
       {/* Main message */}
       <div className="border border-border rounded-lg p-4 mt-4">
         <div className="mb-4">
-          <p className="text-primary text-xl font-bold">{message.data.subject}</p>
-          <p className="text-[#979DAC]">
-            De : {message.data.Sender.firstName}
-            {" - "}
-            {message.data.Sender.roles.length > 0
-              ? message.data.Sender.roles.map((r) => r.role).join(", ")
-              : ""}
-            .{" "}
-            {new Date(message.data.createdAt).toLocaleDateString("fr-FR", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
+          {!isEditing ? (
+            <>
+              <p className="text-primary text-xl font-bold">{message.data.subject}</p>
+              <p className="text-[#979DAC]">
+                De : {message.data.Sender.firstName}
+                {" - "}
+                {message.data.Sender.roles.length > 0
+                  ? message.data.Sender.roles.map((r) => r.role).join(", ")
+                  : ""}
+                .{" "}
+                {new Date(message.data.createdAt).toLocaleDateString("fr-FR", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+              <p>{message.data.content}</p>
+            </>
+          ) : (
+            <>
+              <input
+                type="text"
+                className="w-full border border-gray-300 rounded p-2 mb-2"
+                value={editSubject}
+                onChange={(e) => setEditSubject(e.target.value)}
+              />
+              <Textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                rows={6}
+              />
+            </>
+          )}
         </div>
-        <p>{message.data.content}</p>
       </div>
 
       {/* Thread messages */}
