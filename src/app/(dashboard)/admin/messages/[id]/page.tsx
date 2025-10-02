@@ -15,12 +15,15 @@ import { toast } from "react-hot-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
+import { useWebSocketContext } from "@/contexts/WebSocketContext";
 
 function MessageActions() {
   const router = useRouter();
   const currentUser = useSelector(selectCurrentUser);
+  const { isConnected, sendReply, joinChat, markAsRead } = useWebSocketContext();
   const [replyContent, setReplyContent] = useState("");
   const [isReplying, setIsReplying] = useState(false);
+  const [useRealtime, setUseRealtime] = useState(false);
   const params = useParams();
   const searchParams = useSearchParams();
   const messageId = params.id as string;
@@ -50,6 +53,20 @@ function MessageActions() {
     }
   }, [message, threadId, refetchThread]);
 
+  // Auto-join chat room when message is loaded and WebSocket is connected
+  useEffect(() => {
+    if (message?.data.id && isConnected) {
+      joinChat(String(message.data.id));
+    }
+  }, [message?.data.id, isConnected, joinChat]);
+
+  // Auto-mark as read when message is viewed
+  useEffect(() => {
+    if (message?.data.id && isConnected) {
+      markAsRead(String(message.data.id));
+    }
+  }, [message?.data.id, isConnected, markAsRead]);
+
   if (isLoading) return <Loading />;
   if (isError) return <div>Erreur lors du chargement du message</div>;
   if (!message) return <div>Message non trouvé</div>;
@@ -74,14 +91,25 @@ function MessageActions() {
     }
 
     try {
-      await sendReplyMessage({
-        id_user_receiver: String(message?.data.Receiver.id),
-        is_replied_to: messageId,
-        content: replyContent,
-        thread: message?.data.thread,
-      }).unwrap();
+      if (useRealtime && isConnected) {
+        // Send via WebSocket
+        await sendReply({
+          id_chat: messageId,
+          content: replyContent,
+          is_public: true,
+        });
+        toast.success("Réponse envoyée en temps réel");
+      } else {
+        // Send via REST API
+        await sendReplyMessage({
+          id_user_receiver: String(message?.data.Receiver.id),
+          is_replied_to: messageId,
+          content: replyContent,
+          thread: message?.data.thread,
+        }).unwrap();
+        toast.success("Réponse envoyée");
+      }
 
-      toast.success("Réponse envoyée");
       setReplyContent("");
       setIsReplying(false);
       refetchThread(); // Refresh the thread after sending a reply
@@ -185,25 +213,50 @@ function MessageActions() {
 
       {/* Reply area */}
       {isReplying && (
-        <div className="mt-6 space-y-2">
+        <div className="mt-6 space-y-4">
+          {/* Real-time toggle */}
+          {isConnected && (
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-md">
+              <input
+                type="checkbox"
+                id="realtime-toggle"
+                checked={useRealtime}
+                onChange={(e) => setUseRealtime(e.target.checked)}
+                className="rounded"
+              />
+              <label htmlFor="realtime-toggle" className="text-sm text-green-800">
+                🚀 Envoyer en temps réel (WebSocket)
+              </label>
+            </div>
+          )}
+
           <Textarea
             placeholder="Écrivez votre réponse ici..."
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
             rows={4}
           />
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsReplying(false)}>
-              Annuler
-            </Button>
-            <Button onClick={handleSendReply} disabled={isLoadingSendReply}>
-              {isLoadingSendReply ? (
-                <Loader2 className="animate-spin mr-2 h-4 w-4" />
+          <div className="flex justify-between items-center">
+            <div className="text-xs text-gray-500">
+              {useRealtime && isConnected ? (
+                <span className="text-green-600">✓ Mode temps réel activé</span>
               ) : (
-                <Send className="mr-2 h-4 w-4" />
+                <span>Mode API REST classique</span>
               )}
-              Envoyer
-            </Button>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setIsReplying(false)}>
+                Annuler
+              </Button>
+              <Button onClick={handleSendReply} disabled={isLoadingSendReply}>
+                {isLoadingSendReply ? (
+                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                ) : (
+                  <Send className="mr-2 h-4 w-4" />
+                )}
+                Envoyer
+              </Button>
+            </div>
           </div>
         </div>
       )}

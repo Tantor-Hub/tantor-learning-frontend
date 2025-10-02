@@ -9,6 +9,9 @@ import { Button } from "../ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { NewMessageAlert } from "./shared/new-message";
+import { RealtimeNotifications } from "./shared/realtime-notifications";
+import { RealtimeComposer } from "./shared/realtime-composer";
+import { WebSocketGuide } from "./shared/websocket-guide";
 
 export function MessageTabView() {
   const router = useRouter();
@@ -18,7 +21,10 @@ export function MessageTabView() {
         <Button variant="outline" onClick={() => router.back()}>
           <ChevronLeft /> Retour
         </Button>
-        <NewMessageAlert />
+        <div className="flex items-center gap-4">
+          <RealtimeNotifications />
+          <NewMessageAlert />
+        </div>
       </div>
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="py-4 px-2.5 bg-white border font-semibold">
@@ -43,7 +49,11 @@ export function MessageTabView() {
         </TabsList>
 
         <TabsContent value="all">
-          <AllMessagesTab />
+          <div className="space-y-6">
+            <WebSocketGuide />
+            <RealtimeComposer />
+            <AllMessagesTab />
+          </div>
         </TabsContent>
 
         <TabsContent value="archives">
