@@ -138,4 +138,5 @@ export const {
   useGetUserByIdQuery,
   usePublicListUsersQuery,
   useListUserByRoleQuery,
+  useLazyListUserByRoleQuery,
 } = usersApi;

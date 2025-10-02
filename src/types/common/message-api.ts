@@ -3,8 +3,8 @@
 export interface ICreateMessageRequest {
   subject?: string;
   content: string;
-  piece_jointe?: File;
-  id_user_receiver: string; /// pour quoi c'est id alors que tout le monde doit voir c'est msg
+  piece_jointe?: string[];
+  id_user_receiver: string[]; /// pour quoi c'est id alors que tout le monde doit voir c'est msg
   is_replied_to?: string; // soit id of a replied msg
   thread?: string; // another unknown value
 }
@@ -138,37 +138,22 @@ export interface IMessageRequest {
 }
 
 export interface IMessage {
-  id: number;
-  id_user_sender: number;
-  id_user_receiver: number;
+  id: string;
+  id_user_sender: string;
+  id_user_receiver: string[];
   subject: string;
   content: string;
-  date_d_envoie: string;
-  date_de_lecture: string | null;
-  piece_jointe: null;
-  is_readed: number;
-  is_replied_to: number;
-  thread: string;
-  status: number;
-  is_deletedto: any[];
-  is_archievedto: any[];
-  Sender: {
-    id: number;
+  reader: string[];
+  status: string;
+  dontshowme: string[];
+  piece_joint: string[];
+  createdAt: string;
+  updatedAt: string;
+  sender: {
+    id: string;
     firstName: string;
     lastName: string;
-    nick_name: string;
     email: string;
-    phone: string | null;
-    roles: Array<{ role: string }>;
-  };
-  Receiver: {
-    id: number;
-    firstName: string;
-    lastName: string;
-    nick_name: string;
-    email: string;
-    phone: string | null;
-    roles: Array<{ role: string }>;
   };
 }
 

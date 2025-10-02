@@ -75,7 +75,7 @@ function MessageActions() {
 
     try {
       await sendReplyMessage({
-        id_user_receiver: String(message?.data.Receiver.id),
+        id_user_receiver: [String(message?.data.Receiver.id)],
         is_replied_to: messageId,
         content: replyContent,
         thread: message?.data.thread,

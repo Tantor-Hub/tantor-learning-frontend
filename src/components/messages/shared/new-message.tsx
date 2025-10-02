@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Loader2, Paperclip, Plus, Search, X } from "lucide-react";
+import { Loader2, Plus, Search } from "lucide-react";
 import { useCreateMessageMutation } from "@/lib/apis/common/chat-api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,8 +37,9 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
-import { usePublicListUsersQuery } from "@/lib/apis/users-api";
-import { Loading } from "@/components/shared/loading";
+import { useLazyListUserByRoleQuery } from "@/lib/apis/users-api";
+import { IUser } from "@/types/user";
+import { UserListSkeleton } from "@/components/skeletons/user-list-skeleton";
 
 const messageFormSchema = z.object({
   subject: z
@@ -49,61 +50,100 @@ const messageFormSchema = z.object({
     .string()
     .min(1, "Le message est requis")
     .max(1000, "Le message ne doit pas dépasser 1000 caractères"),
-  recipientId: z.string().min(1, "Le destinataire est requis"),
-  attachment: z.any().optional(),
+  recipientId: z.array(z.string()).min(1, "Au moins un destinataire est requis"),
+  piece_joint: z.array(z.any()).optional(),
 });
 
 interface User {
-  id: number;
-  firstName: string;
-  lastName: string;
-  avatar: string | null;
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  avatar?: string | null;
 }
 
-export function NewMessageAlert() {
-  const { data: usersData, isLoading: isLoadingUsers } = usePublicListUsersQuery();
-  const [createMessage, { isLoading }] = useCreateMessageMutation();
-  const [searchTerm, setSearchTerm] = useState("");
+export function MessageAlert() {
   const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
+  const [createMessage, { isLoading }] = useCreateMessageMutation();
 
   const form = useForm<z.infer<typeof messageFormSchema>>({
     resolver: zodResolver(messageFormSchema),
     defaultValues: {
       subject: "",
       content: "",
-      recipientId: "",
+      recipientId: [],
+      piece_joint: [],
     },
     mode: "onChange",
   });
 
+  // Fetch users only when popover is opened
+  const [trigger, { data, isFetching }] = useLazyListUserByRoleQuery();
+
+  useEffect(() => {
+    if (open && users.length === 0) {
+      setIsLoadingUsers(true);
+      trigger({ role: "all" })
+        .unwrap()
+        .then((result: any) => {
+          if (result.data) {
+            setUsers(result.data);
+          }
+          setIsLoadingUsers(false);
+        })
+        .catch(() => {
+          setUsers([]);
+          setIsLoadingUsers(false);
+        });
+    }
+  }, [open, users.length, trigger]);
+
   // Filter users based on search term
   useEffect(() => {
-    if (usersData?.data?.rows) {
-      const filtered = usersData.data.rows.filter((user: User) =>
-        `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+    if (users.length > 0) {
+      const filtered = users.filter((user: User) =>
+        `${user.firstName || ""} ${user.lastName || ""}`
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
       );
       setFilteredUsers(filtered);
     }
-  }, [searchTerm, usersData]);
+  }, [searchTerm, users]);
 
   const onSubmit = async (values: z.infer<typeof messageFormSchema>) => {
     try {
-      await createMessage({
+      const payload: any = {
         subject: values.subject,
         content: values.content,
         id_user_receiver: values.recipientId,
-      }).unwrap();
+      };
+
+      if (values.piece_joint && values.piece_joint.length > 0) {
+        const piece_jointe = await Promise.all(
+          values.piece_joint.map(async (file: File) => {
+            // Implement file upload logic here, e.g., upload to server or cloud storage
+            // For now, just return the file name or path placeholder
+            return file.name;
+          })
+        );
+        payload.piece_jointe = piece_jointe;
+      }
+
+      await createMessage(payload).unwrap();
       toast.success("Message envoyé");
       form.reset();
+      setSearchTerm("");
+      setOpen(false);
     } catch {
-      toast.error(`Un erreur est survenu`);
+      toast.error(`Une erreur est survenue`);
     }
   };
 
   const isFormValid = form.formState.isValid;
-
-  if (isLoadingUsers) return null;
 
   return (
     <AlertDialog>
@@ -140,51 +180,67 @@ export function NewMessageAlert() {
                             !field.value && "text-muted-foreground"
                           )}
                         >
-                          {field.value && usersData?.data?.rows
-                            ? usersData.data.rows.find(
-                                (user: User) => user.id.toString() === field.value
-                              )?.firstName +
-                              " " +
-                              usersData.data.rows.find(
-                                (user: User) => user.id.toString() === field.value
-                              )?.lastName
+                          {field.value && users.length > 0
+                            ? field.value.length > 0
+                              ? field.value
+                                  .map((id: string) => {
+                                    const user = users.find(
+                                      (user: User) => user.id.toString() === id
+                                    );
+                                    return `${user?.lastName || ""} ${user?.firstName || ""}`.trim();
+                                  })
+                                  .join(", ")
+                              : "Sélectionner un destinataire"
                             : "Sélectionner un destinataire"}
                           <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0">
-                      <Command>
-                        <CommandInput
-                          placeholder="Rechercher un destinataire..."
-                          onValueChange={(search) => setSearchTerm(search)}
-                        />
-                        <CommandEmpty>Aucun destinataire trouvé.</CommandEmpty>
-                        <CommandGroup className="max-h-60 overflow-y-auto">
-                          {filteredUsers.map((user: User) => (
-                            <CommandItem
-                              value={user.id.toString()}
-                              key={user.id}
-                              onSelect={() => {
-                                form.setValue("recipientId", user.id.toString());
-                                setOpen(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  user.id.toString() === field.value ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              <div className="flex flex-col">
-                                <span>
-                                  {user.firstName} {user.lastName}
-                                </span>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
+                      {isLoadingUsers ? (
+                        <UserListSkeleton />
+                      ) : (
+                        <Command>
+                          <CommandInput
+                            placeholder="Rechercher un destinataire..."
+                            onValueChange={(search) => setSearchTerm(search)}
+                          />
+                          <CommandEmpty>Aucun destinataire trouvé.</CommandEmpty>
+                          <CommandGroup className="max-h-60 overflow-y-auto">
+                            {filteredUsers.map((user: User) => (
+                              <CommandItem
+                                value={user.id.toString()}
+                                key={user.id}
+                                onSelect={(value) => {
+                                  const currentRecipients = form.getValues("recipientId") || [];
+                                  if (currentRecipients.includes(value)) {
+                                    form.setValue(
+                                      "recipientId",
+                                      currentRecipients.filter((id) => id !== value)
+                                    );
+                                  } else {
+                                    form.setValue("recipientId", [...currentRecipients, value]);
+                                  }
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    form.getValues("recipientId").includes(user.id.toString())
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span>
+                                    {user.firstName || ""} {user.lastName || ""}
+                                  </span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      )}
                     </PopoverContent>
                   </Popover>
                   <FormMessage />
@@ -214,6 +270,29 @@ export function NewMessageAlert() {
                   <FormLabel>Message</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Écrivez votre message ici..." {...field} rows={5} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="piece_joint"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Pièces jointes (optionnel)</FormLabel>
+                  <FormControl>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (files) {
+                          form.setValue("piece_joint", Array.from(files));
+                        }
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

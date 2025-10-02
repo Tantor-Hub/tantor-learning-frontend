@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { NewMessageAlert } from "./new-message";
+import { MessageAlert } from "./new-message";
 
 export const EmptyState = () => (
   <div className="flex flex-col items-center justify-center py-12 space-y-4">
@@ -10,6 +10,6 @@ export const EmptyState = () => (
     <p className="text-gray-500 text-center max-w-md">
       Vous n'avez aucun message dans cette section pour le moment.
     </p>
-    <NewMessageAlert />
+    <MessageAlert />
   </div>
 );

@@ -1,23 +1,16 @@
-import { useListChatQuery } from "@/lib/apis/common/chat-api";
+import { useListMessageByUserIdQuery } from "@/lib/apis/common/chat-api";
 import { MessageList } from "../shared/message-list";
+import { Suspense } from "react";
+import { MessageListSkeleton } from "@/components/skeletons/message-list-skeleton";
 
 export const AllMessagesTab = () => {
-  const {
-    data: allMessages,
-    isLoading: isLoadingAll,
-    isSuccess: isSuccessAll,
-  } = useListChatQuery();
-  // console.log(allMessages?.data.list);
-  // const unreadCount = allMessages?.filter((msg) => !msg.isRead).length || 0;
-  const unreadCount = 0;
-
+  const { data, isLoading, isSuccess } = useListMessageByUserIdQuery({});
+  if (isLoading) {
+    return <MessageListSkeleton />;
+  }
   return (
-    <>
-      <MessageList
-        messages={allMessages?.data.list}
-        isLoading={isLoadingAll}
-        isSuccess={isSuccessAll}
-      />
-    </>
+    <Suspense fallback={<MessageListSkeleton />}>
+      <MessageList messages={data?.data?.rows} isLoading={isLoading} isSuccess={isSuccess} />
+    </Suspense>
   );
 };

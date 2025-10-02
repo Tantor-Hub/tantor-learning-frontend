@@ -28,7 +28,7 @@ export const chatApi = createApi({
 
     createMessage: builder.mutation<ICreateMessageResponse, ICreateMessageRequest>({
       query: (request) => ({
-        url: "cms/messages/message/send",
+        url: "chat/create",
         method: "POST",
         body: request,
       }),
@@ -65,6 +65,15 @@ export const chatApi = createApi({
       }),
       providesTags: ["Chat"],
     }),
+
+    // authenticated user messages
+    listMessageByUserId: builder.query({
+      query: () => ({
+        url: "chat/user",
+        method: "GET",
+      }),
+      providesTags: ["Chat"],
+    }),
   }),
 });
 
@@ -76,4 +85,5 @@ export const {
   useCreateMessageMutation,
   useGetMessageByIdQuery,
   useListChatTreadQuery,
+  useListMessageByUserIdQuery,
 } = chatApi;

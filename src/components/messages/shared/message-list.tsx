@@ -3,7 +3,10 @@ import { IGetAllMessagesResponse, IMessage } from "@/types/common/message-api";
 import { EmptyState } from "./empty-state";
 import { MessageCard } from "./message-card";
 import { usePathname } from "next/navigation";
-import { Loading } from "@/components/shared/loading";
+import { MessageListSkeleton } from "@/components/skeletons/message-list-skeleton";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
+import { useSelector } from "react-redux";
+import { useListMessageByUserIdQuery } from "@/lib/apis/common/chat-api";
 interface MessageListProps {
   messages: IMessage[] | undefined;
   isLoading: boolean;
@@ -11,11 +14,10 @@ interface MessageListProps {
 }
 
 export const MessageList = ({ messages, isLoading, isSuccess }: MessageListProps) => {
-  const pathname = usePathname();
-  // Extract the role: 'student' or 'admin' ...
-  const role = pathname.split("/")[1]; // '/student/messages' -> ['','dashboard','student','messages'
+  const currentUser = useSelector(selectCurrentUser);
+
   if (isLoading) {
-    return <Loading />;
+    return <MessageListSkeleton />;
   }
 
   // Show empty state if request succeeded but no messages
@@ -30,18 +32,21 @@ export const MessageList = ({ messages, isLoading, isSuccess }: MessageListProps
 
   return (
     <div className="my-4 grid grid-cols-1 gap-4">
-      {messages?.map((msg) => (
-        <Link key={msg.id} href={`/${role}/messages/${msg.id}?threadId=${msg.thread}`}>
-          <MessageCard
-            name={`${msg?.Sender?.firstName} ${msg.Sender.lastName}`}
-            role={msg.Sender.roles.length > 0 ? msg.Sender.roles.map((r) => r.role).join(", ") : ""}
-            title={msg.subject}
-            message={msg.content}
-            isRead={Boolean(0)}
-            date={new Date(msg.date_d_envoie)}
-          />
-        </Link>
-      ))}
+      {messages?.map((msg) => {
+        const isRead = msg.reader.includes(currentUser?.id || "");
+        return (
+          <Link key={msg.id} href={`/${currentUser?.role}/messages/${msg.id}?threadId=${msg.id}`}>
+            <MessageCard
+              name={`${msg.sender.firstName} ${msg.sender.lastName}`}
+              role=""
+              title={msg.subject}
+              message={msg.content}
+              isRead={isRead}
+              date={new Date(msg.createdAt)}
+            />
+          </Link>
+        );
+      })}
     </div>
   );
 };

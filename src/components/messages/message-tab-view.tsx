@@ -8,10 +8,12 @@ import { ReceivedMessagesTab } from "./tab/received-messages-tab";
 import { Button } from "../ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { NewMessageAlert } from "./shared/new-message";
+import { MessageAlert } from "./shared/new-message";
 import { RealtimeNotifications } from "./shared/realtime-notifications";
 import { RealtimeComposer } from "./shared/realtime-composer";
 import { WebSocketGuide } from "./shared/websocket-guide";
+import { Suspense } from "react";
+import { NewMessageSkeleton } from "@/components/skeletons/new-message-skeleton";
 
 export function MessageTabView() {
   const router = useRouter();
@@ -23,7 +25,9 @@ export function MessageTabView() {
         </Button>
         <div className="flex items-center gap-4">
           <RealtimeNotifications />
-          <NewMessageAlert />
+          <Suspense fallback={<NewMessageSkeleton />}>
+            <MessageAlert />
+          </Suspense>
         </div>
       </div>
       <Tabs defaultValue="all" className="w-full">
@@ -50,8 +54,8 @@ export function MessageTabView() {
 
         <TabsContent value="all">
           <div className="space-y-6">
-            <WebSocketGuide />
-            <RealtimeComposer />
+            {/* <WebSocketGuide /> */}
+            {/* <RealtimeComposer /> */}
             <AllMessagesTab />
           </div>
         </TabsContent>
