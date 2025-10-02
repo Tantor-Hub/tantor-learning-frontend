@@ -5,6 +5,8 @@ import {
   ILessonsResponse,
   ILessonDetailResponse,
   ICreateLessonRequest,
+  ILessonDocumentsResponse,
+  ICreateLessonDocumentRequest,
 } from "@/types/instructor";
 import { createApi, enhancedBaseQuery } from "../base-api";
 
@@ -130,6 +132,39 @@ export const instructorApi = createApi({
       }),
       invalidatesTags: ["Instructor"],
     }),
+
+    // Get lesson documents by lesson ID
+    getLessonDocuments: builder.query<ILessonDocumentsResponse, { lessonId: string }>({
+      query: ({ lessonId }) => `lessondocument/lesson/${lessonId}`,
+      providesTags: ["Instructor"],
+    }),
+
+    // Create lesson document with file upload
+    createLessonDocument: builder.mutation<void, ICreateLessonDocumentRequest>({
+      query: (request) => {
+        const formData = new FormData();
+        formData.append("document", request.document);
+        formData.append("id_lesson", request.id_lesson);
+        if (request.type) {
+          formData.append("type", request.type);
+        }
+        return {
+          url: "lessondocument/create",
+          method: "POST",
+          body: formData,
+        };
+      },
+      invalidatesTags: ["Instructor"],
+    }),
+
+    // Delete lesson document
+    deleteLessonDocument: builder.mutation<void, { documentId: string }>({
+      query: ({ documentId }) => ({
+        url: `lessondocument/${documentId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Instructor"],
+    }),
   }),
 });
 
@@ -141,4 +176,7 @@ export const {
   useGetLessonsByCourseIdQuery,
   useGetLessonByIdQuery,
   useCreateLessonMutation,
+  useGetLessonDocumentsQuery,
+  useCreateLessonDocumentMutation,
+  useDeleteLessonDocumentMutation,
 } = instructorApi;

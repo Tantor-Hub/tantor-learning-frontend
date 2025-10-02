@@ -93,7 +93,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
         } else {
           // Refresh failed, logout user
           tokenStorage.clear();
-          window.location.href = "/signin";
+          // window.location.href = "/signin";
         }
       } catch (error) {
         // Refresh failed, logout user

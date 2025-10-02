@@ -18,7 +18,7 @@ export function AddCourseModal({ sessionId }: { sessionId: string }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="size-4" /> Ajouter un cours
+          <Plus className="size-4" /> Ajouter un Matière
         </Button>
       </DialogTrigger>
       <DialogContent className="!w-full !max-w-3xl pt-12 pb-5 flex flex-col gap-5">

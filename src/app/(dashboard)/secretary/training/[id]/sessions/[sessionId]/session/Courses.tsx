@@ -90,12 +90,12 @@ export default function Courses({ sessionId }: { sessionId: string }) {
         is_published: editForm.is_published,
         id_formateur: selectedFormateurs,
       }).unwrap();
-      toast.success("Cours modifier avec succès!");
+      toast.success("Matière modifier avec succès!");
       setOpenUpdateDialog(false);
       setEditForm({ title: "", description: "", is_published: false });
       setSelectedFormateurs([]);
     } catch (err) {
-      toast.error("Échec de la modification du cours.");
+      toast.error("Échec de la modification du Matière.");
       console.error("Failed to update course", err);
     }
   };
@@ -104,7 +104,7 @@ export default function Courses({ sessionId }: { sessionId: string }) {
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Cours de la session</h3>
+          <h3 className="text-lg font-semibold">Matière de la session</h3>
           <Skeleton className="h-10 w-32" />
         </div>
         <Table>
@@ -155,7 +155,7 @@ export default function Courses({ sessionId }: { sessionId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Cours de la session</h3>
+        <h3 className="text-lg font-semibold">Matière de la session</h3>
         <AddCourseModal sessionId={sessionId} />
       </div>
       {courses.length === 0 ? (
@@ -228,7 +228,7 @@ export default function Courses({ sessionId }: { sessionId: string }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer ce cours ? Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer ce Matière ? Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -249,8 +249,8 @@ export default function Courses({ sessionId }: { sessionId: string }) {
       <Dialog open={openUpdateDialog} onOpenChange={setOpenUpdateDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier le cours</DialogTitle>
-            <DialogDescription>Modifiez les informations du cours.</DialogDescription>
+            <DialogTitle>Modifier le Matière</DialogTitle>
+            <DialogDescription>Modifiez les informations du Matière.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>

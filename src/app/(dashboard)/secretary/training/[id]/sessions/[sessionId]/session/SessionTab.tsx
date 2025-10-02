@@ -22,7 +22,7 @@ export default function SessionTab() {
     <Tabs value={tabValue} onValueChange={setTabValue} className="w-full">
       <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="general">Informations</TabsTrigger>
-        <TabsTrigger value="courses">Cours</TabsTrigger>
+        <TabsTrigger value="courses">Matières</TabsTrigger>
         <TabsTrigger value="events">Événements</TabsTrigger>
         <TabsTrigger value="documents">Documents</TabsTrigger>
         <TabsTrigger value="payment">Paiement</TabsTrigger>
