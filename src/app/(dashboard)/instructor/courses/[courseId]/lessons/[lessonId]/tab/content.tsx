@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { selectToken } from "@/features/auth/auth-slice";
 import {
@@ -21,6 +21,7 @@ export function ContentTab() {
   const params = useParams();
   const lessonId = params.lessonId as string;
   const token = useSelector(selectToken);
+  const router = useRouter();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -34,7 +35,7 @@ export function ContentTab() {
 
   const [deleteLessonDocument] = useDeleteLessonDocumentMutation();
 
-  const handleFileUpload = async () => {
+  const handleFileUpload = () => {
     if (!selectedFile) {
       toast.error("Veuillez sélectionner un fichier");
       return;
@@ -46,54 +47,53 @@ export function ContentTab() {
     }
 
     setIsUploading(true);
-    let toastId: string | null = null;
+    const toastId = toast.loading("Téléchargement du document... 0%");
 
-    try {
-      toastId = toast.loading("Téléchargement du document...");
+    const formData = new FormData();
+    formData.append("document", selectedFile);
+    formData.append("id_lesson", lessonId);
 
-      const formData = new FormData();
-      formData.append("document", selectedFile);
-      formData.append("id_lesson", lessonId);
+    const xhr = new XMLHttpRequest();
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/lessondocument/create`, {
-        method: "POST",
-        headers: {
-          "x-connexion-tantor": `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        toast.loading(`Téléchargement du document... ${percent}%`, { id: toastId });
       }
+    };
 
-      const result = await response.json();
-
-      if (toastId) {
-        toast.dismiss(toastId);
+    xhr.onload = () => {
+      try {
+        const result = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          toast.success("Document ajouté avec succès", { id: toastId });
+          setSelectedFile(null);
+          const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+          if (fileInput) {
+            fileInput.value = "";
+          }
+          refetchDocuments();
+        } else {
+          throw new Error(result.message || `HTTP error! status: ${xhr.status}`);
+        }
+      } catch (error: any) {
+        const errorMessage = error.message || "Erreur lors de l'ajout du document";
+        toast.error(errorMessage, { id: toastId });
+        console.error("Upload error:", error);
+      } finally {
+        setIsUploading(false);
       }
-      toast.success("Document ajouté avec succès");
-      setSelectedFile(null);
+    };
 
-      // Reset file input
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      if (fileInput) {
-        fileInput.value = "";
-      }
-
-      // Refetch documents to update the list
-      refetchDocuments();
-    } catch (error: any) {
-      if (toastId) {
-        toast.dismiss(toastId);
-      }
-      const errorMessage = error.message || "Erreur lors de l'ajout du document";
-      toast.error(errorMessage);
-      console.error("Upload error:", error);
-    } finally {
+    xhr.onerror = () => {
+      toast.error("Erreur lors de l'ajout du document", { id: toastId });
+      console.error("Upload error: Network error");
       setIsUploading(false);
-    }
+    };
+
+    xhr.open("POST", `${process.env.NEXT_PUBLIC_BASE_URL}/lessondocument/create`);
+    xhr.setRequestHeader("x-connexion-tantor", `Bearer ${token}`);
+    xhr.send(formData);
   };
 
   const handleDeleteDocument = async (documentId: string, fileName: string) => {
@@ -126,6 +126,9 @@ export function ContentTab() {
     <div className="bg-white border rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => router.back()} className="mr-4">
+            Retour
+          </Button>
           <BookOpen className="w-5 h-5" />
           <h3 className="text-lg font-semibold">Contenu de la leçon</h3>
         </div>
