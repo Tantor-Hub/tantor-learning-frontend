@@ -15,7 +15,7 @@ type MessageCardProps = {
 export function MessageCard({ name, role, title, message, isRead, date }: MessageCardProps) {
   // bg-[#E8F0FF]
   return (
-    <Card className={cn("transition-all overflow-hidden", !isRead && "")}>
+    <Card className={cn("transition-all overflow-hidden", !isRead && "bg-blue-50 border-blue-200")}>
       <CardHeader className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Avatar className="h-12 w-12">

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect } from "react";
-import { useWebSocket } from "@/hooks/useWebSocket";
+import { useWebSocket } from "@/hooks/use-web-socket";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 

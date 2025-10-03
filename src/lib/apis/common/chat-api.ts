@@ -14,19 +14,6 @@ export const chatApi = createApi({
   baseQuery,
   tagTypes: ["Chat"],
   endpoints: (builder) => ({
-    // TREAD
-    // Liste des messages par thread
-    listChatTread: builder.query<IListChatTreadResponse, { id: string }>({
-      query: ({ id }) => `cms/messages/thread/${id}`,
-      providesTags: ["Chat"],
-    }),
-
-    listChat: builder.query<IGetAllMessagesResponse, void>({
-      query: () => "cms/messages/list",
-      providesTags: ["Chat"],
-    }),
-    // create Message By Thread -> a reply message -> pour tread ajouter messageID & tread
-
     createMessage: builder.mutation<ICreateMessageResponse, ICreateMessageRequest>({
       query: (request) => ({
         url: "chat/create",
@@ -59,9 +46,18 @@ export const chatApi = createApi({
       }),
       providesTags: ["Chat"],
     }),
-    getMessageById: builder.query<IGetMessageByIdResponse, { id: string }>({
+
+    getChatById: builder.query<IGetMessageByIdResponse, { id: string }>({
       query: ({ id }) => ({
-        url: `cms/messages/message/${id}`,
+        url: `chat/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["Chat"],
+    }),
+
+    getRepliesByChatId: builder.query<IListChatTreadResponse, { chatId: string }>({
+      query: ({ chatId }) => ({
+        url: `replieschat/chat/${chatId}`,
         method: "GET",
       }),
       providesTags: ["Chat"],
@@ -99,11 +95,10 @@ export const {
   useDeleteChatMutation,
   useArchivedChatMutation,
   useListChatByCategoryQuery,
-  useListChatQuery,
   useCreateMessageMutation,
-  useGetMessageByIdQuery,
-  useListChatTreadQuery,
   useListMessageByUserIdQuery,
   useUpdateChatMutation,
   useMarkAsReadMutation,
+  useGetChatByIdQuery,
+  useGetRepliesByChatIdQuery,
 } = chatApi;

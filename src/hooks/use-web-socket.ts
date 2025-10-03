@@ -10,7 +10,7 @@ import {
   WebSocketUser,
   WebSocketState,
 } from "@/types/websocket/chat";
-import { toast } from "react-hot-toast";
+// import { toast } from "react-hot-toast";
 
 interface UseWebSocketReturn extends WebSocketState {
   connect: () => void;
@@ -86,7 +86,7 @@ export const useWebSocket = (): UseWebSocketReturn => {
       // Auto-reconnect on unexpected disconnection
       if (reason === "io server disconnect") {
         // Server disconnected, don't reconnect automatically
-        toast.error("Connexion au chat fermée par le serveur");
+        // toast.error("Connexion au chat fermée par le serveur");
       } else {
         // Client disconnected, try to reconnect
         setTimeout(() => {
@@ -100,18 +100,18 @@ export const useWebSocket = (): UseWebSocketReturn => {
     newSocket.on("connect_error", (error) => {
       console.error("WebSocket connection error:", error);
       setState((prev) => ({ ...prev, isConnected: false }));
-      toast.error("Erreur de connexion au chat");
+      // toast.error("Erreur de connexion au chat");
     });
 
     // Authentication events
     newSocket.on("connected", (data: { user: WebSocketUser }) => {
       console.log("Authenticated as:", data.user.email);
-      toast.success("Connecté au chat en temps réel");
+      // toast.success("Connecté au chat en temps réel");
     });
 
     newSocket.on("error", (data: { message: string }) => {
       console.error("WebSocket error:", data.message);
-      toast.error(`Erreur chat: ${data.message}`);
+      // toast.error(`Erreur chat: ${data.message}`);
     });
 
     // Message events
@@ -123,7 +123,7 @@ export const useWebSocket = (): UseWebSocketReturn => {
 
       // Show notification if message is not from current user
       if (data.sender.id !== currentUser?.id?.toString()) {
-        toast.success(`Nouveau message de ${data.sender.fs_name}`);
+        // toast.success(`Nouveau message de ${data.sender.fs_name}`);
       }
     });
 
@@ -143,7 +143,7 @@ export const useWebSocket = (): UseWebSocketReturn => {
 
       // Show notification if reply is not from current user
       if (data.sender.id !== currentUser?.id?.toString()) {
-        toast.success(`Nouvelle réponse de ${data.sender.fs_name}`);
+        // toast.success(`Nouvelle réponse de ${data.sender.fs_name}`);
       }
     });
 
@@ -220,7 +220,7 @@ export const useWebSocket = (): UseWebSocketReturn => {
       if (socketRef.current?.connected) {
         socketRef.current.emit("send_message", data);
       } else {
-        toast.error("Non connecté au chat");
+        // toast.error("Non connecté au chat");
       }
     },
     []
@@ -231,7 +231,7 @@ export const useWebSocket = (): UseWebSocketReturn => {
       if (socketRef.current?.connected) {
         socketRef.current.emit("send_reply", data);
       } else {
-        toast.error("Non connecté au chat");
+        // toast.error("Non connecté au chat");
       }
     },
     []

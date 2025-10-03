@@ -4,7 +4,7 @@ import { ChevronLeft, Archive, Reply, Forward, Trash } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { Suspense } from "react";
 import { Loading } from "@/components/shared/loading";
-import { useGetMessageByIdQuery } from "@/lib/apis/common/chat-api";
+import { useGetChatByIdQuery } from "@/lib/apis/common/chat-api";
 
 export function MessageByIdUI() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export function MessageByIdUI() {
     data: message,
     isLoading,
     isError,
-  } = useGetMessageByIdQuery(
+  } = useGetChatByIdQuery(
     { id: messageId },
     { skip: !messageId } // Skip if no messageId
   );
