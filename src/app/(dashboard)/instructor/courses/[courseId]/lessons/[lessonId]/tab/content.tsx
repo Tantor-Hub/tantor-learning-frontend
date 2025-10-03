@@ -7,6 +7,7 @@ import { selectToken } from "@/features/auth/auth-slice";
 import {
   useGetLessonDocumentsQuery,
   useDeleteLessonDocumentMutation,
+  useUpdateLessonDocumentMutation,
 } from "@/lib/apis/instructor/instructor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { FileText, Upload, Download, Trash2, BookOpen } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -24,7 +33,13 @@ export function ContentTab() {
   const router = useRouter();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [mode, setMode] = useState<"create" | "update">("create");
+  const [editingDocument, setEditingDocument] = useState<any>(null);
 
   const {
     data: lessonDocuments,
@@ -36,8 +51,13 @@ export function ContentTab() {
   const [deleteLessonDocument] = useDeleteLessonDocumentMutation();
 
   const handleFileUpload = () => {
-    if (!selectedFile) {
-      toast.error("Veuillez sélectionner un fichier");
+    if (!title.trim()) {
+      toast.error("Veuillez saisir un titre");
+      return;
+    }
+
+    if (!description.trim()) {
+      toast.error("Veuillez saisir une description");
       return;
     }
 
@@ -47,18 +67,29 @@ export function ContentTab() {
     }
 
     setIsUploading(true);
-    const toastId = toast.loading("Téléchargement du document... 0%");
+    setUploadProgress(0);
+    const toastId = toast.loading(
+      mode === "create" ? "Téléchargement du document... 0%" : "Mise à jour du document... 0%"
+    );
 
     const formData = new FormData();
-    formData.append("document", selectedFile);
+    if (selectedFile) {
+      formData.append("document", selectedFile);
+    }
     formData.append("id_lesson", lessonId);
+    formData.append("title", title);
+    formData.append("description", description);
 
     const xhr = new XMLHttpRequest();
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
         const percent = Math.round((event.loaded / event.total) * 100);
-        toast.loading(`Téléchargement du document... ${percent}%`, { id: toastId });
+        setUploadProgress(percent);
+        toast.loading(
+          `${mode === "create" ? "Téléchargement" : "Mise à jour"} du document... ${percent}%`,
+          { id: toastId }
+        );
       }
     };
 
@@ -66,18 +97,32 @@ export function ContentTab() {
       try {
         const result = JSON.parse(xhr.responseText);
         if (xhr.status >= 200 && xhr.status < 300) {
-          toast.success("Document ajouté avec succès", { id: toastId });
+          setUploadProgress(100);
+          toast.success(
+            mode === "create" ? "Document ajouté avec succès" : "Document mis à jour avec succès",
+            { id: toastId }
+          );
           setSelectedFile(null);
+          setTitle("");
+          setDescription("");
+          setUploadProgress(0);
           const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
           if (fileInput) {
             fileInput.value = "";
           }
+          setIsDialogOpen(false);
           refetchDocuments();
         } else {
+          setUploadProgress(0);
           throw new Error(result.message || `HTTP error! status: ${xhr.status}`);
         }
       } catch (error: any) {
-        const errorMessage = error.message || "Erreur lors de l'ajout du document";
+        setUploadProgress(0);
+        const errorMessage =
+          error.message ||
+          (mode === "create"
+            ? "Erreur lors de l'ajout du document"
+            : "Erreur lors de la mise à jour du document");
         toast.error(errorMessage, { id: toastId });
         console.error("Upload error:", error);
       } finally {
@@ -86,12 +131,24 @@ export function ContentTab() {
     };
 
     xhr.onerror = () => {
-      toast.error("Erreur lors de l'ajout du document", { id: toastId });
+      toast.error(
+        mode === "create"
+          ? "Erreur lors de l'ajout du document"
+          : "Erreur lors de la mise à jour du document",
+        { id: toastId }
+      );
       console.error("Upload error: Network error");
       setIsUploading(false);
     };
 
-    xhr.open("POST", `${process.env.NEXT_PUBLIC_BASE_URL}/lessondocument/create`);
+    if (mode === "create") {
+      xhr.open("POST", `${process.env.NEXT_PUBLIC_BASE_URL}/lessondocument/create`);
+    } else if (mode === "update" && editingDocument) {
+      xhr.open(
+        "PATCH",
+        `${process.env.NEXT_PUBLIC_BASE_URL}/lessondocument/update/${editingDocument.id}`
+      );
+    }
     xhr.setRequestHeader("x-connexion-tantor", `Bearer ${token}`);
     xhr.send(formData);
   };
@@ -122,6 +179,24 @@ export function ContentTab() {
     }
   };
 
+  const handleEditDocument = (doc: any) => {
+    setMode("update");
+    setEditingDocument(doc);
+    setTitle(doc.title || "");
+    setDescription(doc.description || "");
+    setSelectedFile(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenCreateDialog = () => {
+    setMode("create");
+    setEditingDocument(null);
+    setTitle("");
+    setDescription("");
+    setSelectedFile(null);
+    setIsDialogOpen(true);
+  };
+
   return (
     <div className="bg-white border rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
@@ -132,22 +207,67 @@ export function ContentTab() {
           <BookOpen className="w-5 h-5" />
           <h3 className="text-lg font-semibold">Contenu de la leçon</h3>
         </div>
-        <div className="flex gap-2">
-          <Input
-            type="file"
-            onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-            className="max-w-xs"
-            accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.ppt,.pptx,.xls,.xlsx"
-          />
-          <Button
-            onClick={handleFileUpload}
-            disabled={!selectedFile || isUploading}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {isUploading ? "Téléchargement..." : "+ Contenu"}
-            <Upload className="w-4 h-4 ml-2" />
-          </Button>
-        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={handleOpenCreateDialog} className="bg-blue-600 hover:bg-blue-700">
+              + Contenu
+              <Upload className="w-4 h-4 ml-2" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {mode === "create" ? "Ajouter un document" : "Modifier le document"}
+              </DialogTitle>
+            </DialogHeader>
+            {isUploading && (
+              <div className="mb-4">
+                <Progress value={uploadProgress} />
+                <p className="text-sm text-gray-600 mt-2">Téléchargement... {uploadProgress}%</p>
+              </div>
+            )}
+            <div className="space-y-4">
+              <Input
+                type="text"
+                placeholder="Titre du document"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                disabled={isUploading}
+              />
+              <Input
+                type="text"
+                placeholder="Description du document"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={isUploading}
+              />
+              <Input
+                type="file"
+                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.ppt,.pptx,.xls,.xlsx"
+                disabled={isUploading}
+              />
+              <Button
+                onClick={handleFileUpload}
+                disabled={
+                  (mode === "create" && !selectedFile) ||
+                  !title.trim() ||
+                  !description.trim() ||
+                  isUploading
+                }
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                {isUploading
+                  ? mode === "create"
+                    ? "Téléchargement..."
+                    : "Mise à jour..."
+                  : mode === "create"
+                    ? "Ajouter le document"
+                    : "Modifier le document"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {isLoadingDocuments ? (
@@ -188,6 +308,14 @@ export function ContentTab() {
                         <Download className="w-4 h-4 mr-2" />
                         Télécharger
                       </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditDocument(doc)}
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                      Modifier
                     </Button>
                     <Button
                       variant="outline"

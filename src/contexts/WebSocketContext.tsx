@@ -51,14 +51,14 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     if (currentUser && !webSocket.isConnected) {
       webSocket.connect();
     }
-  }, [currentUser, webSocket.isConnected, webSocket.connect]);
+  }, [currentUser, webSocket]);
 
   // Auto-disconnect when user logs out
   useEffect(() => {
     if (!currentUser && webSocket.isConnected) {
       webSocket.disconnect();
     }
-  }, [currentUser, webSocket.isConnected, webSocket.disconnect]);
+  }, [currentUser, webSocket]);
 
   return <WebSocketContext.Provider value={webSocket}>{children}</WebSocketContext.Provider>;
 };

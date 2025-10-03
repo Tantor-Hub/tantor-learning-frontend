@@ -165,6 +165,39 @@ export const instructorApi = createApi({
       }),
       invalidatesTags: ["Instructor"],
     }),
+
+    // Update lesson document
+    updateLessonDocument: builder.mutation<
+      void,
+      {
+        documentId: string;
+        document?: File;
+        id_lesson: string;
+        title: string;
+        description: string;
+        type?: string;
+      }
+    >({
+      query: (request) => {
+        const { documentId, ...data } = request;
+        const formData = new FormData();
+        if (data.document) {
+          formData.append("document", data.document);
+        }
+        formData.append("id_lesson", data.id_lesson);
+        formData.append("title", data.title);
+        formData.append("description", data.description);
+        if (data.type) {
+          formData.append("type", data.type);
+        }
+        return {
+          url: `lessondocument/update/${documentId}`,
+          method: "PATCH",
+          body: formData,
+        };
+      },
+      invalidatesTags: ["Instructor"],
+    }),
   }),
 });
 
@@ -179,4 +212,5 @@ export const {
   useGetLessonDocumentsQuery,
   useCreateLessonDocumentMutation,
   useDeleteLessonDocumentMutation,
+  useUpdateLessonDocumentMutation,
 } = instructorApi;
