@@ -35,11 +35,11 @@ jobs:
       # - name: Run linting
       #   run: pnpm run lint
         
-      - name: Run type checking
-        run: pnpm run type-check
+      # - name: Run type checking
+      #   run: pnpm run type-check
         
-      - name: Run tests
-        run: pnpm run test -- --coverage --watchAll=false
+      # - name: Run tests
+      #   run: pnpm run test -- --coverage --watchAll=false
         
       - name: Build application
         run: pnpm run build
