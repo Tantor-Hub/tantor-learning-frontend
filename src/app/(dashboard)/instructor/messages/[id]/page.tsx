@@ -23,7 +23,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     <React.Suspense fallback={<MessageDetailSkeleton />}>
       <MessageActions
         messageId={id}
-        senderId={message.Sender.id.toString()}
+        senderId={message.sender.id.toString()}
         subject={message.subject}
       />
     </React.Suspense>

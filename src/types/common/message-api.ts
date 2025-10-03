@@ -77,16 +77,11 @@ export interface IGetMessageByIdResponse {
     is_archievedto: any[];
     createdAt: string;
     updatedAt: string;
-    Sender: {
-      id: number;
+    sender: {
+      id: string;
       firstName: string;
       lastName: string;
-      nick_name: string;
       email: string;
-      phone: string;
-      roles: Array<{
-        role: string;
-      }>;
     };
     Receiver: {
       id: number;

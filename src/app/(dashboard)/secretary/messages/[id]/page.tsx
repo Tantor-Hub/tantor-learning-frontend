@@ -78,7 +78,7 @@ function MessageActions() {
           <ChevronLeft /> Retour
         </Button>
         <div className="flex items-center gap-4">
-          {currentUser?.id.toString() === message.data.Sender.id.toString() ? (
+          {currentUser?.id.toString() === message.data.sender.id.toString() ? (
             <Button variant={"outline"} onClick={handleArchivedMessage}>
               {!isLoadingArchived ? (
                 <>
@@ -95,7 +95,7 @@ function MessageActions() {
           <Button variant={"outline"}>
             <Forward /> Transférer
           </Button>
-          {currentUser?.id.toString() === message.data.Sender.id.toString() ? (
+          {currentUser?.id.toString() === message.data.sender.id.toString() ? (
             <DeleteMessageDialog id={messageId} />
           ) : null}
         </div>
@@ -106,12 +106,7 @@ function MessageActions() {
         <div className="mb-4">
           <p className="text-primary text-xl font-bold">{message.data.subject}</p>
           <p className="text-[#979DAC]">
-            De : {message.data.Sender.firstName}
-            {" - "}
-            {message.data.Sender.roles.length > 0
-              ? message.data.Sender.roles.map((r) => r.role).join(", ")
-              : ""}
-            .{" "}
+            De : {message.data.sender.firstName} {message.data.sender.lastName}.{" "}
             {new Date(message.data.createdAt).toLocaleDateString("fr-FR", {
               weekday: "long",
               year: "numeric",
