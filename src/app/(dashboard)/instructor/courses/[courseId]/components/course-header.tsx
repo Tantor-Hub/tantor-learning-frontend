@@ -55,8 +55,8 @@ export function CourseHeader() {
             </div>
           ) : (
             <div>
-              <p className="text-2xl font-bold">Aucune donnée du cours</p>
-              <p className="text-muted-foreground">Les détails du cours sont indisponibles.</p>
+              <p className="text-2xl font-bold">Aucune donnée de la matière</p>
+              <p className="text-muted-foreground">Les détails de la matière sont indisponibles.</p>
             </div>
           )}
         </div>

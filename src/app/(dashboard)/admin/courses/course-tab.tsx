@@ -42,15 +42,15 @@ export function CourseTab() {
     return (
       <EmptyState
         icon="BookIcon"
-        title="Aucun cours disponible"
-        description="Il n'y a actuellement aucun cours à afficher."
+        title="Aucune matière disponible"
+        description="Il n'y a actuellement aucune matière à afficher."
       />
     );
   }
 
   return (
     <Table>
-      <TableCaption>Liste de tous les cours disponibles</TableCaption>
+      <TableCaption>Liste de toute les Matières disponibles</TableCaption>
       <TableHeader className="border">
         <TableRow>
           <TableHead>Titre</TableHead>

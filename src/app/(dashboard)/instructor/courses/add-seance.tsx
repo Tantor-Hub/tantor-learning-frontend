@@ -149,11 +149,11 @@ export function AddSeance() {
 
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="course" className="text-right">
-              Course
+              Matière
             </Label>
             <Select onValueChange={handleCourseChange}>
               <SelectTrigger className="col-span-3 w-full">
-                <SelectValue placeholder="Select a course" />
+                <SelectValue placeholder="Select a matière" />
               </SelectTrigger>
               <SelectContent>
                 {isSuccessCourses &&

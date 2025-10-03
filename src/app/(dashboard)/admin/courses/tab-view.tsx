@@ -1,10 +1,8 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CourseTab } from "./course-tab";
-import { RoleTab } from "./role-tab";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -107,7 +105,7 @@ export function TabsView() {
       <div className="flex items-center justify-between">
         <TabsList className="bg-transparent border-none font-semibold">
           <TabsTrigger value="courses" className="p-3.5 bg-none">
-            Cours
+            Matières
           </TabsTrigger>
           <TabsTrigger value="roles" className="p-3.5 bg-none">
             Module Formation
@@ -121,23 +119,6 @@ export function TabsView() {
           <div>
             <div className="min-w-[1000px]">
               <CourseTab />
-            </div>
-          </div>
-        </div>
-      </TabsContent>
-      <TabsContent value="roles">
-        <div className="overflow-x-auto p-8 shadow-md my-4 border border-border rounded-md bg-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-primary text-xl font-semibold mb-3">Gestion des rôles</h2>
-              <p className="mb-8 font-light">
-                Visualisez et gérez tous les rôles d'utilisateurs disponibles dans l'application.
-              </p>
-            </div>
-          </div>
-          <div>
-            <div className="min-w-[1000px]">
-              <RoleTab />
             </div>
           </div>
         </div>

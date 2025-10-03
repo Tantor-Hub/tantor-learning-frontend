@@ -20,7 +20,7 @@ export function CourseList() {
         <EmptyState
           icon="ExclamationTriangleIcon"
           title="Erreur de chargement"
-          description="Une erreur s'est produite lors du chargement des cours."
+          description="Une erreur s'est produite lors du chargement des matière."
         />
       </div>
     );
@@ -31,8 +31,8 @@ export function CourseList() {
       <div className="py-10">
         <EmptyState
           icon="BookIcon"
-          title="Aucun cours disponible"
-          description="Il n'y a actuellement aucun cours à afficher."
+          title="Aucun matière disponible"
+          description="Il n'y a actuellement aucun matière à afficher."
         />
       </div>
     );
@@ -48,7 +48,7 @@ export function CourseList() {
                 src="/icons/video-placeholder.svg"
                 width={200}
                 height={110}
-                alt="Aperçu du cours"
+                alt="Aperçu du matière"
                 className="object-cover w-full h-auto rounded-md"
               />
               <div className="flex justify-between mt-2.5">

@@ -22,7 +22,7 @@ import { toast } from "react-hot-toast";
 export interface EventProps {
   id: string;
   title: string;
-  type: "Evènement" | "Réunion" | "Examen" | "Cours";
+  type: "Evènement" | "Réunion" | "Examen" | "Matière";
   startTime: Date;
   endTime: Date;
   description?: string;

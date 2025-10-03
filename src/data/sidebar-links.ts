@@ -49,7 +49,7 @@ const navigationMenus: NavigationMenus = {
       isActive: true,
     },
     {
-      title: "Cours & Sessions",
+      title: "Matières",
       url: "student/courses",
       icon: FileText,
     },
@@ -64,7 +64,7 @@ const navigationMenus: NavigationMenus = {
       icon: ChartColumn,
     },
     {
-      title: "Planning",
+      title: "Emploi du temps",
       url: "student/planning",
       icon: CalendarDays,
     },
@@ -82,12 +82,12 @@ const navigationMenus: NavigationMenus = {
       isActive: true,
     },
     {
-      title: "Cours",
+      title: "Matières",
       url: "admin/courses",
       icon: FileText,
     },
     {
-      title: "Gestion Utilisateurs",
+      title: "Utilisateurs",
       url: "admin/users",
       icon: Users,
     },
@@ -102,7 +102,7 @@ const navigationMenus: NavigationMenus = {
       icon: MessageCircleMore,
     },
     {
-      title: "Planning",
+      title: "Emploi du temps",
       url: "admin/planning",
       icon: CalendarDays,
     },
@@ -115,7 +115,7 @@ const navigationMenus: NavigationMenus = {
       isActive: true,
     },
     {
-      title: "Cours et évaluations",
+      title: "Matières et évaluations",
       url: "instructor/courses",
       icon: FileText,
     },
@@ -135,7 +135,7 @@ const navigationMenus: NavigationMenus = {
       icon: BarChart2,
     },
     {
-      title: "Planning",
+      title: "Emploi du temps",
       url: "instructor/planning",
       icon: CalendarDays,
     },
@@ -164,7 +164,7 @@ const navigationMenus: NavigationMenus = {
       isActive: true,
     },
     {
-      title: "Cours",
+      title: "Matières",
       url: "secretary/courses",
       icon: FileText,
     },
@@ -179,7 +179,7 @@ const navigationMenus: NavigationMenus = {
       icon: MessageCircleMore,
     },
     {
-      title: "Planning",
+      title: "Emploi du temps",
       url: "secretary/planning",
       icon: CalendarDays,
     },

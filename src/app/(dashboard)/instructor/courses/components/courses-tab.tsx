@@ -7,7 +7,7 @@ const CourseTab = ({ spec }: { spec: string }) => {
     <Tabs defaultValue="actifs">
       <div className="overflow-x-auto bg-white p-8 shadow-md shadow-gray-300">
         <div className="flex flex-col mb-5">
-          <h2 className="text-[#0466C8] text-[18px] font-semibold mb-2.5">Mes Cours</h2>
+          <h2 className="text-[#0466C8] text-[18px] font-semibold mb-2.5">Mes Matières</h2>
           <p>{spec}</p>
         </div>
 
@@ -26,7 +26,7 @@ const CourseTab = ({ spec }: { spec: string }) => {
           <TabsContent key={key} value={key}>
             <div className="space-y-6 min-w-[1000px]">
               {coursesData[key].length == 0 ? (
-                <p className="text-center text-gray-500 mt-4">Aucun Cours</p>
+                <p className="text-center text-gray-500 mt-4">Aucune Matière</p>
               ) : (
                 coursesData[key].map((course, index) => (
                   <div key={index} className="flex flex-col gap-2.5 py-2.5">

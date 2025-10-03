@@ -82,7 +82,7 @@ export function DocumentTabs({ courseId, initialDocuments, refetchCourse }: Docu
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900">Documents du cours</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Documents du matière</h2>
         {newFiles.length > 0 && (
           <button
             onClick={uploadDocuments}
