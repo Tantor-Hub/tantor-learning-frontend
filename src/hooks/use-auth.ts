@@ -10,7 +10,6 @@ function useAuth() {
       try {
         // Get token inside useEffect to ensure it's fresh
         const token = localStorage.getItem("authState.token");
-        console.log(token);
 
         if (!token) {
           setIsAuthenticated(false);
@@ -26,7 +25,7 @@ function useAuth() {
         });
 
         const data = await response.json();
-        console.log(JSON.stringify(data));
+
         // Return true only if status is 200 and token is valid
         // Return false for 401 (expired token) or any other error
         setIsAuthenticated(data.status === 200 && data.data?.isTokenValid === true);

@@ -9,6 +9,8 @@ export interface Event {
   description: string;
   id_cible_session: string[];
   begining_date: string;
+  beginning_hour: string;
+  ending_hour: string;
   ending_date?: string;
   trainingSessions?: TrainingSession[];
   createdAt?: string;
@@ -20,7 +22,9 @@ export interface CreateEventRequest {
   description: string;
   id_cible_session: string[];
   begining_date: string;
-  ending_date: string;
+  beginning_hour: string;
+  ending_hour: string;
+  ending_date?: string;
 }
 
 export interface UpdateEventRequest {
@@ -28,6 +32,8 @@ export interface UpdateEventRequest {
   title?: string;
   description?: string;
   begining_date?: string;
+  beginning_hour?: string;
+  ending_hour?: string;
   ending_date?: string;
 }
 

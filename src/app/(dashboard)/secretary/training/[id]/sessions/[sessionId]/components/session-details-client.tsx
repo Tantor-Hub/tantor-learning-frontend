@@ -64,8 +64,8 @@ export default function SessionDetailsClient() {
           <Tabs defaultValue="general" className="w-full">
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="general">Informations générales</TabsTrigger>
-              <TabsTrigger value="courses">Cours</TabsTrigger>
-              <TabsTrigger value="events">Événements</TabsTrigger>
+              <TabsTrigger value="courses">Matières</TabsTrigger>
+              <TabsTrigger value="events">Emploi du temps</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
               <TabsTrigger value="payment">Paiement</TabsTrigger>
             </TabsList>

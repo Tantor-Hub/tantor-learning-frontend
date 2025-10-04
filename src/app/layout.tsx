@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { ReactNode } from "react";
 import { poppins, workSans } from "../../public/fonts";
 import { ReduxProvider } from "@/components/provider";
-import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
@@ -26,10 +25,8 @@ export default async function RootLayout({
       </head>
       <body className={`${poppins.className} text-base leading-relaxed`}>
         <ReduxProvider>
-          <WebSocketProvider>
-            {children}
-            <Toaster position="top-right" />
-          </WebSocketProvider>
+          {children}
+          <Toaster position="top-right" />
         </ReduxProvider>
       </body>
     </html>

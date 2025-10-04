@@ -79,15 +79,12 @@ export function SignInForm() {
 
   const handleSubmit = async (values: SignInFormValues) => {
     try {
-      console.log(values.email);
       const response = await signin({
         email: values.email,
       }).unwrap();
       toast.success(response.message);
       router.push(`/verify?email=${encodeURIComponent(values.email)}`);
     } catch (error: any) {
-      console.log(error);
-
       // Check if it's a 404 error (email not found)
       if (error.status === 404 || error.statusCode === 404) {
         form.setError("email", {

@@ -95,7 +95,12 @@ export function EventItem({ event, onEdit, onDelete, isDeleting = false }: Event
           </CardTitle>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => onEdit(event)} title="Edit event">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEdit(event)}
+            title="Modifier l'événement"
+          >
             <Edit className="w-4 h-4" />
           </Button>
           <AlertDialog>
@@ -103,7 +108,7 @@ export function EventItem({ event, onEdit, onDelete, isDeleting = false }: Event
               <Button
                 variant="ghost"
                 size="sm"
-                title="Delete event"
+                title="Supprimer l'événement"
                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
               >
                 <Trash2 className="w-4 h-4" />
@@ -111,20 +116,20 @@ export function EventItem({ event, onEdit, onDelete, isDeleting = false }: Event
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete Event</AlertDialogTitle>
+                <AlertDialogTitle>Supprimer l'événement</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete the event "{event.title}"? This action cannot be
-                  undone.
+                  Êtes-vous sûr de vouloir supprimer l'événement "{event.title}" ? Cette action ne
+                  peut pas être annulée.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => onDelete(event.id)}
                   disabled={isDeleting}
                   className="bg-red-600 hover:bg-red-700"
                 >
-                  {isDeleting ? "Deleting..." : "Delete"}
+                  {isDeleting ? "Suppression..." : "Supprimer"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -137,34 +142,30 @@ export function EventItem({ event, onEdit, onDelete, isDeleting = false }: Event
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <Calendar className="w-4 h-4 text-gray-500" />
-            <span className="font-medium">Start:</span>
+            <span className="font-medium">Début :</span>
             <span>{formatDate(event.begining_date)}</span>
             <Clock className="w-4 h-4 text-gray-500 ml-2" />
-            <span>{formatTime(event.begining_date)}</span>
+            <span>{event.beginning_hour}</span>
           </div>
 
-          {event.ending_date && (
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar className="w-4 h-4 text-gray-500" />
-              <span className="font-medium">End:</span>
-              <span>{formatDate(event.ending_date)}</span>
-              <Clock className="w-4 h-4 text-gray-500 ml-2" />
-              <span>{formatTime(event.ending_date)}</span>
-              {duration && (
-                <>
-                  <span className="text-gray-400">•</span>
-                  <Badge variant="outline" className="text-xs">
-                    {duration}
-                  </Badge>
-                </>
-              )}
-            </div>
-          )}
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="w-4 h-4 text-gray-500" />
+            <span className="font-medium">Fin :</span>
+            <span>{event.ending_hour}</span>
+            {duration && (
+              <>
+                <span className="text-gray-400">•</span>
+                <Badge variant="outline" className="text-xs">
+                  {duration}
+                </Badge>
+              </>
+            )}
+          </div>
         </div>
 
         {event.trainingSessions && event.trainingSessions.length > 0 && (
           <div className="mt-4 pt-4 border-t">
-            <p className="text-sm font-medium text-gray-700 mb-2">Related Sessions:</p>
+            <p className="text-sm font-medium text-gray-700 mb-2">Sessions liées :</p>
             <div className="flex flex-wrap gap-2">
               {event.trainingSessions.map((session) => (
                 <Badge key={session.id} variant="secondary" className="text-xs">

@@ -146,11 +146,9 @@ export default function Page() {
     try {
       setIsProcessingPayment(true);
       const payload = prepareSessionPayload(paymentInfo);
-      // console.log("Payload envoyé:", payload);
 
       // Appel à votre API
       const result = await applySessionMutation(payload).unwrap();
-      console.log("Résultat API:", JSON.stringify(result));
       toast.dismiss();
       toast.success("Inscription complétée avec succès!");
 
@@ -184,8 +182,6 @@ export default function Page() {
 
   const handleCPFPayment = async () => {
     try {
-      // console.log("Paiement CPF initié");
-
       const fullName = `${currentUser?.firstName} ${currentUser?.lastName}`.trim();
       if (!fullName) {
         toast.error("Nom d'utilisateur manquant");
@@ -204,7 +200,6 @@ export default function Page() {
 
       // Submit to API
       const success = await handleApplyToSessionMutation(cpfPaymentData);
-      // console.log(success);
       if (success) {
         // Only redirect to external site after successful API call
         window.open("https://www.moncompteformation.gouv.fr", "_blank");
@@ -220,8 +215,6 @@ export default function Page() {
   // OPCO PAYMENT
   const handleOPCOPayment = async (formData: OpcoFormData) => {
     try {
-      // console.log("Paiement OPCO initié avec les données:", formData);
-
       const opcoPaymentData: SessionPayload["payment"] = {
         method: "OPCO",
         opco: {
@@ -256,8 +249,6 @@ export default function Page() {
 
   const handleCARDPayment = async (stripePaymentData: any) => {
     try {
-      console.log("Paiement par carte initié");
-
       const { stripe, elements, clientSecret, confirmParams } = stripePaymentData;
 
       // Set processing state early
@@ -297,7 +288,6 @@ export default function Page() {
 
       // Submit to API
       const success = await handleApplyToSessionMutation(cardPaymentData);
-      console.log(success);
       if (success) {
         toast.success("Paiement par carte réussi");
       } else {

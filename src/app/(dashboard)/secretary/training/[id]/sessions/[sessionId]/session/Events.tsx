@@ -34,10 +34,10 @@ export default function Events() {
   const [createEvent, { isLoading: creating }] = useCreateEventMutation();
   const [updateEvent, { isLoading: updating }] = useUpdateEventMutation();
   const [deleteEvent, { isLoading: deleting }] = useDeleteEventMutation();
-
   const events = eventsData?.data || [];
 
   const handleCreateEvent = () => {
+    console.log("handleCreateEvent called");
     setEditingEvent(null);
     setEventEditorOpen(true);
   };
@@ -47,16 +47,19 @@ export default function Events() {
     setEventEditorOpen(true);
   };
 
-  const handleSaveEvent = async (data: CreateEventRequest | UpdateEventRequest) => {
+  const handleSaveEvent = async (
+    data: CreateEventRequest | UpdateEventRequest | (CreateEventRequest & { courseId: string })
+  ) => {
     try {
       if (editingEvent) {
         // Update existing event
         await updateEvent(data as UpdateEventRequest).unwrap();
-        toast.success("Event updated successfully!");
+        toast.success("Emploi du temps mis à jour avec succès !");
       } else {
-        // Create new event
-        await createEvent(data as CreateEventRequest).unwrap();
-        toast.success("Event created successfully!");
+        // Create new event with courseId
+        const { courseId, ...eventData } = data as CreateEventRequest & { courseId: string };
+        await createEvent({ courseId, ...eventData }).unwrap();
+        toast.success("Emploi du temps créé avec succès !");
       }
       setEventEditorOpen(false);
       setEditingEvent(null);
@@ -65,19 +68,23 @@ export default function Events() {
 
       // Show detailed error information
       if (error?.data?.message) {
-        toast.error(`Error: ${error.data.message}`);
+        toast.error(`Erreur : ${error.data.message}`);
       } else if (error?.data?.error) {
-        toast.error(`Error: ${error.data.error}`);
+        toast.error(`Erreur : ${error.data.error}`);
       } else if (error?.status === 404) {
-        toast.error("API endpoint not found. Please check the server configuration.");
+        toast.error(
+          "Point de terminaison API introuvable. Veuillez vérifier la configuration du serveur."
+        );
       } else if (error?.status === 400) {
-        toast.error("Invalid data provided. Please check all required fields.");
+        toast.error("Données invalides fournies. Veuillez vérifier tous les champs requis.");
       } else if (error?.status === 401) {
-        toast.error("Authentication required. Please log in again.");
+        toast.error("Authentification requise. Veuillez vous reconnecter.");
       } else if (error?.status === 403) {
-        toast.error("Access denied. You do not have permission to manage events.");
+        toast.error("Accès refusé. Vous n'avez pas la permission de gérer les emplois du temps.");
       } else {
-        toast.error(`Failed to save event: ${error?.message || "Unknown error"}`);
+        toast.error(
+          `Échec de la sauvegarde de l'emploi du temps : ${error?.message || "Erreur inconnue"}`
+        );
       }
     }
   };
@@ -85,22 +92,26 @@ export default function Events() {
   const handleDeleteEvent = async (eventId: string) => {
     try {
       await deleteEvent({ id: eventId }).unwrap();
-      toast.success("Event deleted successfully!");
+      toast.success("Emploi du temps supprimé avec succès !");
     } catch (error: any) {
       console.error("Error deleting event:", error);
 
       if (error?.data?.message) {
-        toast.error(`Error: ${error.data.message}`);
+        toast.error(`Erreur : ${error.data.message}`);
       } else if (error?.data?.error) {
-        toast.error(`Error: ${error.data.error}`);
+        toast.error(`Erreur : ${error.data.error}`);
       } else if (error?.status === 404) {
-        toast.error("Event not found or already deleted.");
+        toast.error("Emploi du temps introuvable ou déjà supprimé.");
       } else if (error?.status === 401) {
-        toast.error("Authentication required. Please log in again.");
+        toast.error("Authentification requise. Veuillez vous reconnecter.");
       } else if (error?.status === 403) {
-        toast.error("Access denied. You do not have permission to delete events.");
+        toast.error(
+          "Accès refusé. Vous n'avez pas la permission de supprimer les emplois du temps."
+        );
       } else {
-        toast.error(`Failed to delete event: ${error?.message || "Unknown error"}`);
+        toast.error(
+          `Échec de la suppression de l'emploi du temps : ${error?.message || "Erreur inconnue"}`
+        );
       }
     }
   };
@@ -112,7 +123,7 @@ export default function Events() {
 
   const handleRefresh = () => {
     refetchEvents();
-    toast.success("Events refreshed!");
+    toast.success("Emplois du temps actualisés !");
   };
 
   if (eventsLoading) {
@@ -143,15 +154,15 @@ export default function Events() {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Session Events</h3>
+          <h3 className="text-lg font-semibold">Emplois du temps de la Session</h3>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handleRefresh}>
               <RefreshCw className="w-4 h-4 mr-2" />
-              Retry
+              Réessayer
             </Button>
             <Button onClick={handleCreateEvent} size="sm">
               <Plus className="w-4 h-4 mr-2" />
-              Add Event
+              Ajouter un Emploi du temps
             </Button>
           </div>
         </div>
@@ -161,8 +172,10 @@ export default function Events() {
             <div className="flex items-center space-x-2 text-red-600">
               <AlertCircle className="w-5 h-5" />
               <div>
-                <p className="font-medium">Failed to load events</p>
-                <p className="text-sm text-red-500">Failed to load events. Please try again.</p>
+                <p className="font-medium">Échec du chargement des emplois du temps</p>
+                <p className="text-sm text-red-500">
+                  Échec du chargement des emplois du temps. Veuillez réessayer.
+                </p>
               </div>
             </div>
           </CardContent>
@@ -174,15 +187,15 @@ export default function Events() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Session Events</h3>
+        <h3 className="text-lg font-semibold">Emploi du temps de la Session</h3>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={eventsLoading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${eventsLoading ? "animate-spin" : ""}`} />
-            Refresh
+            Actualiser
           </Button>
           <Button onClick={handleCreateEvent} size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Event
+            <Plus className="w-4 h-4" />
+            Emploi du temps
           </Button>
         </div>
       </div>
@@ -194,11 +207,15 @@ export default function Events() {
               <div className="text-gray-400 mb-4">
                 <Plus className="w-12 h-12 mx-auto" />
               </div>
-              <h4 className="text-lg font-medium text-gray-900 mb-2">No events scheduled</h4>
-              <p className="text-gray-500 mb-4">Create your first event to get started</p>
+              <h4 className="text-lg font-medium text-gray-900 mb-2">
+                Aucun emploi du temps programmé
+              </h4>
+              <p className="text-gray-500 mb-4">
+                Créez votre premier emploi du temps pour commencer
+              </p>
               <Button onClick={handleCreateEvent}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create First Event
+                <Plus className="w-4 h-4" />
+                Emploi du temps
               </Button>
             </div>
           </CardContent>

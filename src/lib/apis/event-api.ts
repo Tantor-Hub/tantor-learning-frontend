@@ -6,11 +6,12 @@ import {
   EventListResponse,
   EventResponse,
 } from "@/types/event";
+import { ICourseBySessionIdResponse } from "@/types/secretary/training-secretary";
 
 export const eventApi = createApi({
   reducerPath: "eventApi",
   baseQuery: enhancedBaseQuery,
-  tagTypes: ["Event"],
+  tagTypes: ["Event", "Course"],
   endpoints: (builder) => ({
     // Get events by session ID
     getEventsBySession: builder.query<EventListResponse, { sessionId: string }>({
@@ -19,9 +20,9 @@ export const eventApi = createApi({
     }),
 
     // Create new event
-    createEvent: builder.mutation<EventResponse, CreateEventRequest>({
-      query: (data) => ({
-        url: "event/create",
+    createEvent: builder.mutation<EventResponse, CreateEventRequest & { courseId: string }>({
+      query: ({ courseId, ...data }) => ({
+        url: `event/create-for-course/${courseId}`,
         method: "POST",
         body: data,
       }),
@@ -46,6 +47,12 @@ export const eventApi = createApi({
       }),
       invalidatesTags: (result, error, { id }) => [{ type: "Event", id }, "Event"],
     }),
+
+    // Get courses by session ID
+    getCoursesBySession: builder.query<ICourseBySessionIdResponse, { sessionId: string }>({
+      query: ({ sessionId }) => `sessioncours/session/${sessionId}`,
+      providesTags: (result, error, { sessionId }) => [{ type: "Course", id: sessionId }, "Course"],
+    }),
   }),
 });
 
@@ -54,4 +61,5 @@ export const {
   useCreateEventMutation,
   useUpdateEventMutation,
   useDeleteEventMutation,
+  useGetCoursesBySessionQuery,
 } = eventApi;

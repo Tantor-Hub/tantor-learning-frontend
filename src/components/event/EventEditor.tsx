@@ -15,36 +15,29 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Event, CreateEventRequest, UpdateEventRequest } from "@/types/event";
+import { useGetCoursesBySessionQuery } from "@/lib/apis/event-api";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const eventFormSchema = z
-  .object({
-    title: z.string().min(3, "Title must be at least 3 characters"),
-    description: z.string().min(10, "Description must be at least 10 characters"),
-    begining_date: z
-      .date({
-        required_error: "Start date is required",
-      })
-      .refine((date) => date instanceof Date && !isNaN(date.getTime()), {
-        message: "Please select a valid start date",
-      }),
-    ending_date: z
-      .date({
-        required_error: "End date is required",
-      })
-      .refine((date) => date instanceof Date && !isNaN(date.getTime()), {
-        message: "Please select a valid end date",
-      }),
-  })
-  .refine(
-    (data) => {
-      if (!data.begining_date || !data.ending_date) return true;
-      return data.ending_date >= data.begining_date;
-    },
-    {
-      message: "End date must be after start date",
-      path: ["ending_date"],
-    }
-  );
+const eventFormSchema = z.object({
+  title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
+  description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
+  begining_date: z
+    .date({
+      required_error: "La date de début est requise",
+    })
+    .refine((date) => date instanceof Date && !isNaN(date.getTime()), {
+      message: "Veuillez sélectionner une date de début valide",
+    }),
+  beginning_hour: z.string().min(1, "L'heure de début est requise"),
+  ending_hour: z.string().min(1, "L'heure de fin est requise"),
+});
 
 type EventFormData = z.infer<typeof eventFormSchema>;
 
@@ -53,7 +46,9 @@ interface EventEditorProps {
   onOpenChange: (open: boolean) => void;
   initialEvent?: Event;
   sessionId: string;
-  onSave: (data: CreateEventRequest | UpdateEventRequest) => void;
+  onSave: (
+    data: CreateEventRequest | UpdateEventRequest | (CreateEventRequest & { courseId: string })
+  ) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -68,6 +63,8 @@ export function EventEditor({
   isLoading = false,
 }: EventEditorProps) {
   const [isEditing] = useState(!!initialEvent);
+  const [courseSelectOpen, setCourseSelectOpen] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState<string | undefined>(undefined);
 
   const {
     register,
@@ -79,17 +76,28 @@ export function EventEditor({
     formState: { errors, isValid },
   } = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
-    mode: "onChange", // Enable real-time validation
+    mode: "onChange",
     defaultValues: {
       title: "",
       description: "",
       begining_date: undefined,
-      ending_date: undefined,
+      beginning_hour: "",
+      ending_hour: "",
     },
   });
 
   const beginingDate = watch("begining_date");
-  const endingDate = watch("ending_date");
+
+  const {
+    data: coursesData,
+    isLoading: coursesLoading,
+    refetch: refetchCourses,
+  } = useGetCoursesBySessionQuery(
+    { sessionId },
+    {
+      skip: !courseSelectOpen,
+    }
+  );
 
   useEffect(() => {
     if (initialEvent) {
@@ -97,27 +105,43 @@ export function EventEditor({
         title: initialEvent.title,
         description: initialEvent.description,
         begining_date: new Date(initialEvent.begining_date),
-        ending_date: initialEvent.ending_date ? new Date(initialEvent.ending_date) : undefined,
+        beginning_hour: initialEvent.beginning_hour,
+        ending_hour: initialEvent.ending_hour,
       });
+      if (initialEvent.trainingSessions && initialEvent.trainingSessions.length > 0) {
+        setSelectedCourseId(initialEvent.trainingSessions[0].id);
+      }
     } else {
       reset({
         title: "",
         description: "",
         begining_date: undefined,
-        ending_date: undefined,
+        beginning_hour: "",
+        ending_hour: "",
       });
+      setSelectedCourseId(undefined);
     }
   }, [initialEvent, reset]);
 
   const onSubmit = (data: EventFormData) => {
+    if (!isEditing && !selectedCourseId) {
+      alert("Veuillez sélectionner une matière");
+      return;
+    }
     const eventData = {
-      ...data,
+      title: data.title,
+      description: data.description,
       begining_date: data.begining_date.toISOString(),
-      ending_date: data.ending_date.toISOString(),
-      ...(isEditing ? { id: initialEvent!.id } : { id_cible_session: [sessionId] }),
+      beginning_hour: data.beginning_hour,
+      ending_hour: data.ending_hour,
+      ...(isEditing ? { id: initialEvent!.id } : {}),
     };
 
-    onSave(eventData as CreateEventRequest | UpdateEventRequest);
+    if (!isEditing) {
+      onSave({ ...eventData, courseId: selectedCourseId! } as any);
+    } else {
+      onSave(eventData as UpdateEventRequest);
+    }
   };
 
   const handleCancel = () => {
@@ -130,17 +154,19 @@ export function EventEditor({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Event" : "Create New Event"}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Modifier l'événement" : "Créer un nouvel événement"}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Title */}
           <div>
-            <Label htmlFor="title">Event Title *</Label>
+            <Label htmlFor="title">Titre de l'événement *</Label>
             <Input
               id="title"
               {...register("title")}
-              placeholder="Enter event title"
+              placeholder="Entrez le titre de l'événement"
               className="mt-1"
             />
             {errors.title && <p className="text-sm text-red-600 mt-1">{errors.title.message}</p>}
@@ -152,7 +178,7 @@ export function EventEditor({
             <Textarea
               id="description"
               {...register("description")}
-              placeholder="Enter event description"
+              placeholder="Entrez la description de l'événement"
               rows={4}
               className="mt-1"
             />
@@ -161,84 +187,96 @@ export function EventEditor({
             )}
           </div>
 
-          {/* Date Range */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Start Date */}
+          {/* Course Select */}
+          {!isEditing && (
             <div>
-              <Label>Start Date *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={`w-full justify-start text-left font-normal mt-1 ${
-                      !beginingDate && "text-muted-foreground"
-                    }`}
-                    type="button"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {beginingDate ? (
-                      format(beginingDate, "PPP", { locale: fr })
-                    ) : (
-                      <span>Select start date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={beginingDate}
-                    onSelect={(date) => {
-                      setValue("begining_date", date!, { shouldValidate: true });
-                    }}
-                    initialFocus
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  />
-                </PopoverContent>
-              </Popover>
-              {errors.begining_date && (
-                <p className="text-sm text-red-600 mt-1">{errors.begining_date.message}</p>
+              <Label htmlFor="course">Sélectionner une matière *</Label>
+              <Select
+                onOpenChange={setCourseSelectOpen}
+                onValueChange={(value) => setSelectedCourseId(value)}
+                value={selectedCourseId}
+                disabled={coursesLoading}
+              >
+                <SelectTrigger id="course" className="w-full mt-1">
+                  <SelectValue placeholder="Sélectionner une matière" />
+                </SelectTrigger>
+                <SelectContent>
+                  {coursesLoading ? (
+                    <div className="p-4">
+                      <Skeleton className="h-6 w-full mb-2" />
+                      <Skeleton className="h-6 w-full mb-2" />
+                      <Skeleton className="h-6 w-full" />
+                    </div>
+                  ) : coursesData && coursesData.data.rows.length > 0 ? (
+                    coursesData.data.rows.map((course) => (
+                      <SelectItem key={course.id} value={course.id}>
+                        {course.title}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-gray-500">Aucune matière disponible</div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Date */}
+          <div>
+            <Label>Date de début *</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={`w-full justify-start text-left font-normal mt-1 ${
+                    !beginingDate ? "text-muted-foreground" : ""
+                  }`}
+                  type="button"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {beginingDate ? (
+                    format(beginingDate, "PPP", { locale: fr })
+                  ) : (
+                    <span>Sélectionner la date de début</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={beginingDate}
+                  onSelect={(date) => {
+                    setValue("begining_date", date!, { shouldValidate: true });
+                  }}
+                  initialFocus
+                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                />
+              </PopoverContent>
+            </Popover>
+            {errors.begining_date && (
+              <p className="text-sm text-red-600 mt-1">{errors.begining_date.message}</p>
+            )}
+          </div>
+
+          {/* Hours */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="beginning_hour">Heure de début *</Label>
+              <Input
+                id="beginning_hour"
+                type="time"
+                {...register("beginning_hour")}
+                className="mt-1"
+              />
+              {errors.beginning_hour && (
+                <p className="text-sm text-red-600 mt-1">{errors.beginning_hour.message}</p>
               )}
             </div>
-
-            {/* End Date */}
             <div>
-              <Label>End Date *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={`w-full justify-start text-left font-normal mt-1 ${
-                      !endingDate && "text-muted-foreground"
-                    }`}
-                    type="button"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endingDate ? (
-                      format(endingDate, "PPP", { locale: fr })
-                    ) : (
-                      <span>Select end date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={endingDate}
-                    onSelect={(date) => {
-                      setValue("ending_date", date!, { shouldValidate: true });
-                    }}
-                    initialFocus
-                    disabled={(date) => {
-                      const today = new Date(new Date().setHours(0, 0, 0, 0));
-                      if (date < today) return true;
-                      if (beginingDate && date < beginingDate) return true;
-                      return false;
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-              {errors.ending_date && (
-                <p className="text-sm text-red-600 mt-1">{errors.ending_date.message}</p>
+              <Label htmlFor="ending_hour">Heure de fin *</Label>
+              <Input id="ending_hour" type="time" {...register("ending_hour")} className="mt-1" />
+              {errors.ending_hour && (
+                <p className="text-sm text-red-600 mt-1">{errors.ending_hour.message}</p>
               )}
             </div>
           </div>
@@ -246,18 +284,18 @@ export function EventEditor({
           {/* Form Actions */}
           <div className="flex justify-end space-x-3 pt-4 border-t">
             <Button type="button" variant="outline" onClick={handleCancel} disabled={isLoading}>
-              Cancel
+              Annuler
             </Button>
             <Button type="submit" disabled={!isValid || isLoading}>
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  {isEditing ? "Updating..." : "Creating..."}
+                  {isEditing ? "Mise à jour..." : "Création..."}
                 </>
               ) : isEditing ? (
-                "Update Event"
+                "Mettre à jour l'événement"
               ) : (
-                "Create Event"
+                "Créer un événement"
               )}
             </Button>
           </div>
