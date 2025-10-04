@@ -8,13 +8,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableCaption } from "@/components/ui/table";
-import { Loading } from "@/components/shared/loading";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useCourseQuery } from "@/lib/apis/common/courses-api";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AssignInstructorsModal } from "./assign-instructors-modal";
-import { EditCourseModal } from "./edit-course-modal";
 
 export function CourseTable() {
   const courses = useCourseQuery();
@@ -22,7 +19,7 @@ export function CourseTable() {
   if (courses.isLoading) {
     return (
       <Table>
-        <TableCaption>Liste de tous les cours disponibles</TableCaption>
+        <TableCaption>Liste de toutes les matières disponibles</TableCaption>
         <TableHeader className="border">
           <TableRow>
             <TableHead>Titre</TableHead>
@@ -62,7 +59,7 @@ export function CourseTable() {
 
   return (
     <Table>
-      <TableCaption>Liste de tous les cours disponibles</TableCaption>
+      <TableCaption>Liste de toutes les matières disponibles</TableCaption>
       <TableHeader className="border">
         <TableRow>
           <TableHead>Titre</TableHead>
@@ -83,19 +80,10 @@ export function CourseTable() {
               </Badge>
             </TableCell>
             <TableCell>
-              <div className="flex flex-wrap gap-1">
-                {/* {course.id_formateurs.map((instructor) => (
-                  <Badge key={instructor.id} variant="outline" className="text-xs">
-                    {instructor.firstName} {instructor.lastName}
-                  </Badge>
-                ))} */}
-              </div>
+              <div className="flex flex-wrap gap-1"></div>
             </TableCell>
             <TableCell>
-              <div className="flex items-center gap-2 justify-center">
-                {/* <EditCourseModal course={course} /> */}
-                {/* <AssignInstructorsModal course={course} /> */}
-              </div>
+              <div className="flex items-center gap-2 justify-center"></div>
             </TableCell>
           </TableRow>
         ))}
