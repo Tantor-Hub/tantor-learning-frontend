@@ -23,7 +23,7 @@ export const EventApi = createApi({
   tagTypes: ["Event"],
   endpoints: (builder) => ({
     listEvents: builder.query<IListPlanning, void>({
-      query: () => "cms/events/e/list",
+      query: () => "event/user",
       providesTags: ["Event"],
     }),
     addEvent: builder.mutation<AddEventResponse, AddEventRequest>({

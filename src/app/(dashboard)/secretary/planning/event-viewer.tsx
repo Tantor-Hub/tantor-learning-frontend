@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -50,8 +49,6 @@ export function EventViewer({ selected, events }: { selected: Date; events?: Eve
       event.startTime.getMonth() === selected.getMonth() &&
       event.startTime.getDate() === selected.getDate()
   );
-
-  const [tab, setActiveTab] = useState("all");
 
   // Function to handle event deletion
   const handleDeleteEvent = async (eventId: string) => {
@@ -168,43 +165,9 @@ export function EventViewer({ selected, events }: { selected: Date; events?: Eve
                 </p>
               </div>
             ) : (
-              <div>
-                <Tabs
-                  defaultValue="day"
-                  className="w-full"
-                  onValueChange={(val) => setActiveTab(val)}
-                >
-                  <div className="bg-[#ECECEC] rounded-md mb-5 p-1.5">
-                    <TabsList className="w-full flex">
-                      <TabsTrigger value="day" className="flex-[1] p-4">
-                        Jour
-                      </TabsTrigger>
-                      <TabsTrigger value="week" className="flex-[1] p-4">
-                        Semaine
-                      </TabsTrigger>
-                      <TabsTrigger value="month" className="flex-[1] p-4">
-                        Mois
-                      </TabsTrigger>
-                    </TabsList>
-                  </div>
-
-                  <TabsContent value="day" className="flex flex-col gap-2.5">
-                    {/* Events for selected date */}
-                    {todaysEvents?.map((event, i) => renderEventCard(event, i))}
-                  </TabsContent>
-
-                  <TabsContent value="week">
-                    <div className="p-5 pt-10 text-center text-gray-500">
-                      Vue semaine en développement
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="month">
-                    <div className="p-5 pt-10 text-center text-gray-500">
-                      Vue mois en développement
-                    </div>
-                  </TabsContent>
-                </Tabs>
+              <div className="flex flex-col gap-2.5">
+                {/* Events for selected date */}
+                {todaysEvents?.map((event, i) => renderEventCard(event, i))}
               </div>
             )}
           </div>

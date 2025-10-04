@@ -33,7 +33,24 @@ const WebSocketContext = createContext<WebSocketContextType | null>(null);
 export const useWebSocketContext = () => {
   const context = useContext(WebSocketContext);
   if (!context) {
-    throw new Error("useWebSocketContext must be used within a WebSocketProvider");
+    // Return default no-op implementation if not wrapped in provider
+    return {
+      isConnected: false,
+      socket: null,
+      onlineUsers: [],
+      currentChatId: null,
+      messages: [],
+      replies: [],
+      connect: () => {},
+      disconnect: () => {},
+      joinChat: () => {},
+      leaveChat: () => {},
+      sendMessage: () => {},
+      sendReply: () => {},
+      markAsRead: () => {},
+      getOnlineUsers: () => {},
+      clearMessages: () => {},
+    };
   }
   return context;
 };
