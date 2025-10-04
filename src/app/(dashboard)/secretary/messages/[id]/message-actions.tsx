@@ -9,6 +9,8 @@ import {
   useCreateMessageMutation,
   useGetRepliesByChatIdQuery,
   useCreateReplyMutation,
+  useDeleteChatMutation,
+  useMarkAsReadMutation,
 } from "@/lib/apis/common/chat-api";
 import { DeleteMessageDialog } from "@/components/messages/dialog/delete-message-dialog";
 import { toast } from "react-hot-toast";
@@ -34,6 +36,7 @@ export function MessageActions() {
 
   const [archivedMessage, { isLoading: isLoadingArchived }] = useArchivedChatMutation();
   const [sendReplyMessage, { isLoading: isLoadingSendReply }] = useCreateReplyMutation();
+  const [markAsRead] = useMarkAsReadMutation();
   const {
     data: repliesData,
     isLoading: repliesLoading,
@@ -97,7 +100,10 @@ export function MessageActions() {
           <ChevronLeft /> Retour
         </Button>
         <div className="flex items-center gap-4">
-          {currentUser?.id.toString() === msg.sender.id.toString() ? (
+          {currentUser?.id.toString() === msg.sender.id.toString()
+            ? null
+            : /* Remove the offline/archive button as per user request */
+              /*
             <Button variant={"outline"} onClick={handleArchivedMessage}>
               {!isLoadingArchived ? (
                 <>
@@ -107,7 +113,8 @@ export function MessageActions() {
                 <Loader2 className="animate-spin" />
               )}
             </Button>
-          ) : null}
+            */
+              null}
           <Button variant={"outline"} onClick={handleReply}>
             <Reply /> Répondre
           </Button>

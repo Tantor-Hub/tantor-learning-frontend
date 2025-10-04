@@ -39,9 +39,7 @@ export function DeleteMessageDialog({ id }: { id: string }) {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-          <AlertDialogDescription>
-            Êtes-vous sûr de vouloir supprimer ce message ?
-          </AlertDialogDescription>
+          <AlertDialogDescription>Voulez-vous supprimer ce message ?</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Annuler</AlertDialogCancel>

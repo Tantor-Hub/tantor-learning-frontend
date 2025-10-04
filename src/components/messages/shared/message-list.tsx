@@ -44,6 +44,7 @@ export const MessageList = ({ messages, isLoading, isSuccess }: MessageListProps
     <div className="my-4 grid grid-cols-1 gap-4">
       {messages?.map((msg) => {
         const isRead = msg.reader.includes(currentUser?.id || "");
+        const isSender = msg.sender.id === currentUser?.id;
         return (
           <div key={msg.id} onClick={() => handleClick(msg)} className="cursor-pointer">
             <MessageCard
@@ -53,6 +54,7 @@ export const MessageList = ({ messages, isLoading, isSuccess }: MessageListProps
               message={msg.content}
               isRead={isRead}
               date={new Date(msg.createdAt)}
+              isSender={isSender}
             />
           </div>
         );

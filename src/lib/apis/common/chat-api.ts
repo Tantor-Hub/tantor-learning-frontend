@@ -14,7 +14,7 @@ export const chatApi = createApi({
   baseQuery,
   tagTypes: ["Chat"],
   endpoints: (builder) => ({
-    createMessage: builder.mutation<ICreateMessageResponse, ICreateMessageRequest>({
+    createMessage: builder.mutation<ICreateMessageResponse, any>({
       query: (request) => ({
         url: "chat/create",
         method: "POST",
@@ -27,6 +27,7 @@ export const chatApi = createApi({
       query: ({ id }) => ({
         url: `chat`,
         method: "DELETE",
+        body: { id },
       }),
       invalidatesTags: ["Chat"],
     }),
@@ -97,6 +98,30 @@ export const chatApi = createApi({
       }),
       invalidatesTags: ["Chat"],
     }),
+
+    listDeletedMessages: builder.query<any, void>({
+      query: () => ({
+        url: "chat/user/deleted",
+        method: "GET",
+      }),
+      providesTags: ["Chat"],
+    }),
+
+    listReceivedMessages: builder.query<any, void>({
+      query: () => ({
+        url: "chat/user/received",
+        method: "GET",
+      }),
+      providesTags: ["Chat"],
+    }),
+
+    listSentMessages: builder.query<any, void>({
+      query: () => ({
+        url: "chat/user/sent",
+        method: "GET",
+      }),
+      providesTags: ["Chat"],
+    }),
   }),
 });
 
@@ -111,4 +136,7 @@ export const {
   useGetChatByIdQuery,
   useGetRepliesByChatIdQuery,
   useCreateReplyMutation,
+  useListDeletedMessagesQuery,
+  useListReceivedMessagesQuery,
+  useListSentMessagesQuery,
 } = chatApi;

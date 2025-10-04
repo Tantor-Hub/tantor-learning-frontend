@@ -40,7 +40,8 @@ import { Check } from "lucide-react";
 import { useLazyListUserByRoleQuery } from "@/lib/apis/users-api";
 import { IUser } from "@/types/user";
 import { UserListSkeleton } from "@/components/skeletons/user-list-skeleton";
-
+import { useSelector } from "react-redux";
+import { selectToken, selectCurrentUser } from "@/features/auth/auth-slice";
 const messageFormSchema = z.object({
   subject: z
     .string()
@@ -62,13 +63,14 @@ interface User {
 }
 
 export function MessageAlert() {
+  const token = useSelector(selectToken);
+  const currentUser = useSelector(selectCurrentUser);
+  const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-
-  const [createMessage, { isLoading }] = useCreateMessageMutation();
 
   const form = useForm<z.infer<typeof messageFormSchema>>({
     resolver: zodResolver(messageFormSchema),
@@ -91,7 +93,8 @@ export function MessageAlert() {
         .unwrap()
         .then((result: any) => {
           if (result.data) {
-            setUsers(result.data);
+            const filtered = result.data.filter((user: User) => user.id !== currentUser?.id);
+            setUsers(filtered);
           }
           setIsLoadingUsers(false);
         })
@@ -100,7 +103,7 @@ export function MessageAlert() {
           setIsLoadingUsers(false);
         });
     }
-  }, [open, users.length, trigger]);
+  }, [open, users.length, trigger, currentUser?.id]);
 
   // Filter users based on search term
   useEffect(() => {
@@ -115,31 +118,41 @@ export function MessageAlert() {
   }, [searchTerm, users]);
 
   const onSubmit = async (values: z.infer<typeof messageFormSchema>) => {
+    setIsLoading(true);
     try {
-      const payload: any = {
-        subject: values.subject,
-        content: values.content,
-        id_user_receiver: values.recipientId,
-      };
+      const formData = new FormData();
+      formData.append("subject", values.subject);
+      formData.append("content", values.content);
+      values.recipientId.forEach((id) => {
+        formData.append("id_user_receiver[]", id);
+      });
 
       if (values.piece_joint && values.piece_joint.length > 0) {
-        const piece_jointe = await Promise.all(
-          values.piece_joint.map(async (file: File) => {
-            // Implement file upload logic here, e.g., upload to server or cloud storage
-            // For now, just return the file name or path placeholder
-            return file.name;
-          })
-        );
-        payload.piece_jointe = piece_jointe;
+        values.piece_joint.forEach((file: File) => {
+          formData.append("files", file);
+        });
       }
 
-      await createMessage(payload).unwrap();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/chat/create`, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "x-connexion-tantor": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
+
       toast.success("Message envoyé");
       form.reset();
       setSearchTerm("");
       setOpen(false);
     } catch {
       toast.error(`Une erreur est survenue`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
