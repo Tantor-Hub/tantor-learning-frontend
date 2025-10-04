@@ -59,7 +59,7 @@ export function DashboardHeader() {
 function getPageTitle(activeMenuItem: string): string {
   switch (activeMenuItem) {
     case "courses":
-      return "Cours";
+      return "Matières";
     case "documents":
       return "Documents";
     case "training":
