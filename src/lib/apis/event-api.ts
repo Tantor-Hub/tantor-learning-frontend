@@ -32,7 +32,7 @@ export const eventApi = createApi({
     // Update event
     updateEvent: builder.mutation<EventResponse, UpdateEventRequest>({
       query: ({ id, ...data }) => ({
-        url: `event/${id}`,
+        url: `event/update/${id}`,
         method: "PATCH",
         body: data,
       }),

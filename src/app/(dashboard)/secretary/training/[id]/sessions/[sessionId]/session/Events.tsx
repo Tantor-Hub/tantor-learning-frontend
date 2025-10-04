@@ -52,8 +52,17 @@ export default function Events() {
   ) => {
     try {
       if (editingEvent) {
-        // Update existing event
-        await updateEvent(data as UpdateEventRequest).unwrap();
+        // Update existing event - ensure only allowed fields are sent
+        const updateData: UpdateEventRequest = {
+          id: (data as UpdateEventRequest).id,
+          title: (data as UpdateEventRequest).title,
+          description: (data as UpdateEventRequest).description,
+          begining_date: (data as UpdateEventRequest).begining_date,
+          beginning_hour: (data as UpdateEventRequest).beginning_hour,
+          ending_hour: (data as UpdateEventRequest).ending_hour,
+          ending_date: (data as UpdateEventRequest).ending_date,
+        };
+        await updateEvent(updateData).unwrap();
         toast.success("Emploi du temps mis à jour avec succès !");
       } else {
         // Create new event with courseId

@@ -187,6 +187,18 @@ export function EventEditor({
             )}
           </div>
 
+          {/* Associated Course (for editing) */}
+          {isEditing &&
+            initialEvent?.trainingSessions &&
+            initialEvent.trainingSessions.length > 0 && (
+              <div>
+                <Label>Matière associée</Label>
+                <p className="mt-1 text-sm text-gray-700">
+                  {initialEvent.trainingSessions[0].title}
+                </p>
+              </div>
+            )}
+
           {/* Course Select */}
           {!isEditing && (
             <div>
