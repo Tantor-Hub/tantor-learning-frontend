@@ -171,44 +171,19 @@ export interface IListChatTreadResponse {
   message: string;
   data: {
     length: number;
-    list: Array<{
-      id: number;
-      id_user_sender: number;
-      id_user_receiver: number;
-      subject: string;
+    rows: Array<{
+      id: string;
       content: string;
-      date_d_envoie: string;
-      date_de_lecture: string | null;
-      piece_jointe: any | null; // Replace 'any' with a more specific type if you know the structure of attachments
-      is_readed: number;
-      is_replied_to: number;
-      thread: string;
-      status: number;
-      is_deletedto: any[]; // Replace 'any' with a more specific type if needed
-      is_archievedto: any[]; // Replace 'any' with a more specific type if needed
+      id_sender: string;
+      id_chat: string;
+      status: string;
       createdAt: string;
       updatedAt: string;
-      Sender: {
-        id: number;
+      sender: {
+        id: string;
         firstName: string;
         lastName: string;
-        nick_name: string;
         email: string;
-        phone: string;
-        roles: Array<{
-          role: string;
-        }>;
-      };
-      Receiver: {
-        id: number;
-        firstName: string;
-        lastName: string;
-        nick_name: string;
-        email: string;
-        phone: string;
-        roles: Array<{
-          role: string;
-        }>;
       };
     }>;
   };

@@ -7,10 +7,13 @@ import {
   useGetChatByIdQuery,
   useArchivedChatMutation,
   useCreateMessageMutation,
+  useGetRepliesByChatIdQuery,
+  useCreateReplyMutation,
 } from "@/lib/apis/common/chat-api";
 import { DeleteMessageDialog } from "@/components/messages/dialog/delete-message-dialog";
 import { toast } from "react-hot-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { RepliesSkeleton } from "./replies-skeleton";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 
@@ -30,7 +33,16 @@ export function MessageActions() {
   } = useGetChatByIdQuery({ id: messageId }, { skip: !messageId });
 
   const [archivedMessage, { isLoading: isLoadingArchived }] = useArchivedChatMutation();
-  const [sendReplyMessage, { isLoading: isLoadingSendReply }] = useCreateMessageMutation();
+  const [sendReplyMessage, { isLoading: isLoadingSendReply }] = useCreateReplyMutation();
+  const {
+    data: repliesData,
+    isLoading: repliesLoading,
+    isError: repliesError,
+  } = useGetRepliesByChatIdQuery({ chatId: messageId });
+
+  if (repliesError) {
+    console.error("Error getting replies by chat id:", repliesError);
+  }
 
   if (isLoading)
     return (
@@ -39,7 +51,10 @@ export function MessageActions() {
       </div>
     );
   if (isError) return <div>Erreur lors du chargement du message</div>;
-  if (!message) return <div>Message non trouvé</div>;
+  if (!message || !message.data) return <div>Message non trouvé</div>;
+
+  const msg = message.data;
+  const replies = repliesData?.data.rows || [];
 
   const handleArchivedMessage = async () => {
     try {
@@ -62,9 +77,9 @@ export function MessageActions() {
 
     try {
       await sendReplyMessage({
-        id_user_receiver: [String(message?.data.Receiver.id)],
-        is_replied_to: messageId,
         content: replyContent,
+        id_chat: messageId,
+        is_public: true, // Assuming replies are public by default
       }).unwrap();
 
       toast.success("Réponse envoyée");
@@ -82,7 +97,7 @@ export function MessageActions() {
           <ChevronLeft /> Retour
         </Button>
         <div className="flex items-center gap-4">
-          {currentUser?.id.toString() === message.data.sender.id.toString() ? (
+          {currentUser?.id.toString() === msg.sender.id.toString() ? (
             <Button variant={"outline"} onClick={handleArchivedMessage}>
               {!isLoadingArchived ? (
                 <>
@@ -99,7 +114,7 @@ export function MessageActions() {
           <Button variant={"outline"}>
             <Forward /> Transférer
           </Button>
-          {currentUser?.id.toString() === message.data.sender.id.toString() ? (
+          {currentUser?.id.toString() === msg.sender.id.toString() ? (
             <DeleteMessageDialog id={messageId} />
           ) : null}
         </div>
@@ -108,10 +123,10 @@ export function MessageActions() {
       {/* Main message */}
       <div className="border border-border rounded-lg p-4 mt-4">
         <div className="mb-4">
-          <p className="text-primary text-xl font-bold">{message.data.subject}</p>
+          <p className="text-primary text-xl font-bold">{msg.subject || "Message"}</p>
           <p className="text-[#979DAC]">
-            De : {message.data.sender.firstName} {message.data.sender.lastName}.{" "}
-            {new Date(message.data.createdAt).toLocaleDateString("fr-FR", {
+            De : {msg.sender.firstName} {msg.sender.lastName}.{" "}
+            {new Date(msg.createdAt).toLocaleDateString("fr-FR", {
               weekday: "long",
               year: "numeric",
               month: "long",
@@ -119,7 +134,36 @@ export function MessageActions() {
             })}
           </p>
         </div>
-        <p>{message.data.content}</p>
+        <p>{msg.content}</p>
+      </div>
+
+      {/* Replies */}
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-4">Réponses</h3>
+        {repliesLoading ? (
+          <RepliesSkeleton />
+        ) : replies.length > 0 ? (
+          replies.map((reply: any) => (
+            <div key={reply.id} className="border border-border rounded-lg p-4 mb-4">
+              <div className="mb-2">
+                <p className="text-primary font-medium">
+                  {reply.sender.firstName} {reply.sender.lastName}
+                </p>
+                <p className="text-[#979DAC] text-sm">
+                  {new Date(reply.createdAt).toLocaleDateString("fr-FR", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+              <p>{reply.content}</p>
+            </div>
+          ))
+        ) : (
+          <p className="text-muted-foreground">Aucune réponse pour le moment.</p>
+        )}
       </div>
 
       {/* Reply area */}

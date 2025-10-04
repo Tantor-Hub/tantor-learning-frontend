@@ -23,6 +23,22 @@ export function MessageActionsSkeleton() {
         <Skeleton className="h-4 w-full mb-2" />
         <Skeleton className="h-4 w-3/4" />
       </div>
+
+      {/* Replies skeleton */}
+      <div className="mt-6">
+        <Skeleton className="h-6 w-32 mb-4" />
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="border border-border rounded-lg p-4 mb-4">
+            <div className="mb-2">
+              <Skeleton className="h-5 w-32 mb-1" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <Skeleton className="h-4 w-full mb-1" />
+            <Skeleton className="h-4 w-full mb-1" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

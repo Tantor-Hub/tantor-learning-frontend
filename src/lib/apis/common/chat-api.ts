@@ -63,6 +63,15 @@ export const chatApi = createApi({
       providesTags: ["Chat"],
     }),
 
+    createReply: builder.mutation<any, { content: string; id_chat: string; is_public: boolean }>({
+      query: (request) => ({
+        url: "replieschat/create",
+        method: "POST",
+        body: request,
+      }),
+      invalidatesTags: ["Chat"],
+    }),
+
     // authenticated user messages
     listMessageByUserId: builder.query({
       query: () => ({
@@ -101,4 +110,5 @@ export const {
   useMarkAsReadMutation,
   useGetChatByIdQuery,
   useGetRepliesByChatIdQuery,
+  useCreateReplyMutation,
 } = chatApi;
