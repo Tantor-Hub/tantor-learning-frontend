@@ -1,6 +1,15 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Archive, Reply, Forward, Loader2, Send, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  Archive,
+  Reply,
+  Forward,
+  Loader2,
+  Send,
+  Trash2,
+  RotateCcw,
+} from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useState } from "react";
 import {
@@ -10,6 +19,7 @@ import {
   useGetRepliesByChatIdQuery,
   useCreateReplyMutation,
   useDeleteChatMutation,
+  useRestoreChatMutation,
   useMarkAsReadMutation,
 } from "@/lib/apis/common/chat-api";
 import { DeleteMessageDialog } from "@/components/messages/dialog/delete-message-dialog";
@@ -30,6 +40,7 @@ export function MessageActions({ messageId }: MessageActionsProps) {
   const [isReplying, setIsReplying] = useState(false);
 
   const [deleteChat] = useDeleteChatMutation();
+  const [restoreChat] = useRestoreChatMutation();
 
   // Fetch message data
   const {
@@ -102,6 +113,16 @@ export function MessageActions({ messageId }: MessageActionsProps) {
       router.back();
     } catch (error) {
       toast.error("Une erreur est survenue lors de la suppression du message.");
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      await restoreChat({ id: messageId }).unwrap();
+      toast.success("Message restauré avec succès.");
+      router.back();
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de la restauration du message.");
     }
   };
 

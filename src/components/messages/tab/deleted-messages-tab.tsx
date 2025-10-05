@@ -54,7 +54,25 @@ export const DeletedMessagesTab = ({ refreshKey }: { refreshKey: number }) => {
 
   return (
     <Suspense fallback={<MessageListSkeleton />}>
-      <MessageList messages={data?.data?.rows} isLoading={isLoading} isSuccess={isSuccess} />
+      <MessageList
+        messages={data?.data?.rows}
+        isLoading={isLoading}
+        isSuccess={isSuccess}
+        renderActions={(msg) => (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRestore(msg);
+            }}
+            className="flex items-center gap-2"
+          >
+            <RotateCcw />
+            Restaurer
+          </Button>
+        )}
+      />
     </Suspense>
   );
 };

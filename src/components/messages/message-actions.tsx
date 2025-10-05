@@ -1,20 +1,27 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Forward, Trash2 } from "lucide-react";
+import { Forward, Trash2, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ReplyMessageDialog } from "./dialog/reply-message-dialog";
-import { useDeleteChatMutation } from "@/lib/apis/common/chat-api";
+import { useDeleteChatMutation, useRestoreChatMutation } from "@/lib/apis/common/chat-api";
 import toast from "react-hot-toast";
 
 interface MessageActionsProps {
   messageId: string;
   senderId: string;
   subject: string;
+  isDeleted?: boolean;
 }
 
-export function MessageActions({ messageId, senderId, subject }: MessageActionsProps) {
+export function MessageActions({
+  messageId,
+  senderId,
+  subject,
+  isDeleted = false,
+}: MessageActionsProps) {
   const router = useRouter();
   const [deleteChat] = useDeleteChatMutation();
+  const [restoreChat] = useRestoreChatMutation();
 
   const handleDelete = async () => {
     try {
@@ -23,6 +30,16 @@ export function MessageActions({ messageId, senderId, subject }: MessageActionsP
       router.back();
     } catch (error) {
       toast.error("Une erreur est survenue lors de la suppression du message.");
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      await restoreChat({ id: messageId }).unwrap();
+      toast.success("Message restauré avec succès.");
+      router.back();
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de la restauration du message.");
     }
   };
 
@@ -40,10 +57,17 @@ export function MessageActions({ messageId, senderId, subject }: MessageActionsP
         <Button variant={"outline"}>
           <Forward /> Transférer
         </Button>
-        <Button variant={"outline"} onClick={handleDelete} className="flex items-center gap-2">
-          <Trash2 />
-          Supprimer
-        </Button>
+        {isDeleted ? (
+          <Button variant={"outline"} onClick={handleRestore} className="flex items-center gap-2">
+            <RotateCcw />
+            Restaurer
+          </Button>
+        ) : (
+          <Button variant={"outline"} onClick={handleDelete} className="flex items-center gap-2">
+            <Trash2 />
+            Supprimer
+          </Button>
+        )}
         {/* Add more actions as needed */}
       </div>
     </div>

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { RepliesSkeleton } from "./replies-skeleton";
 import { MessageDetailSkeleton } from "@/components/skeletons/message-detail-skeleton";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
 
 interface MessageDetailProps {
   messageId: string;
@@ -14,6 +16,7 @@ interface MessageDetailProps {
 
 export function MessageDetail({ messageId }: MessageDetailProps) {
   const router = useRouter();
+  const currentUser = useSelector(selectCurrentUser);
   const { data, error, isLoading } = useGetChatByIdQuery({ id: messageId });
   const {
     data: repliesData,
@@ -53,6 +56,7 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
         messageId={messageId}
         senderId={message.sender.id.toString()}
         subject={message.subject}
+        isDeleted={message.is_deletedto.includes(Number(currentUser?.id))}
       />
 
       {/* Main message */}

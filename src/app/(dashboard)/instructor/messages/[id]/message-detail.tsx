@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { RepliesSkeleton } from "./replies-skeleton";
 import { MessageDetailSkeleton } from "@/components/skeletons/message-detail-skeleton";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
 
 interface MessageDetailProps {
   messageId: string;
@@ -14,6 +16,7 @@ interface MessageDetailProps {
 
 export function MessageDetail({ messageId }: MessageDetailProps) {
   const router = useRouter();
+  const currentUser = useSelector(selectCurrentUser);
   const { data, error, isLoading } = useGetChatByIdQuery({ id: messageId });
   const {
     data: repliesData,
@@ -21,9 +24,7 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
     isError: repliesError,
   } = useGetRepliesByChatIdQuery({ chatId: messageId });
 
-  if (repliesError) {
-    console.error("Error getting replies by chat id:", repliesError);
-  }
+  // Handle replies error in render
 
   if (isLoading) {
     return <MessageDetailSkeleton />;
@@ -38,7 +39,7 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
           </Button>
         </div>
         <div className="border border-border rounded-lg p-4">
-          <p>{error ? "Erreur lors du chargement du message" : "Message non trouvé"}</p>
+          <p>Il y a une erreur, réessayer.</p>
         </div>
       </div>
     );
@@ -47,12 +48,17 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
   const message = data.data;
   const replies = repliesData?.data.rows || [];
 
+  if (typeof window === "undefined") {
+    return null; // Prevent hydration mismatch by rendering nothing on server
+  }
+
   return (
     <div>
       <MessageActions
         messageId={messageId}
         senderId={message.sender.id.toString()}
         subject={message.subject}
+        isDeleted={message.is_deletedto.includes(Number(currentUser?.id))}
       />
 
       {/* Main message */}
