@@ -1,6 +1,43 @@
 import { IListPlanning } from "@/types/common/planning-api";
 import { baseQuery, createApi, enhancedBaseQuery } from "../base-api";
 
+export interface InstructorEventsResponse {
+  status: number;
+  data: {
+    length: number;
+    rows: {
+      id: string;
+      title: string;
+      description?: string;
+      begining_date: string;
+      beginning_hour: string;
+      ending_hour: string;
+      id_cible_cours: string;
+      id_cible_session: string;
+      createdBy: string;
+      createdAt: string;
+      updatedAt: string;
+      sessionCours: {
+        id: string;
+        title: string;
+        id_session: string;
+        id_formateur: string[];
+      };
+      trainingSession: {
+        id: string;
+        title: string;
+      };
+      creator: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+      };
+    }[];
+  };
+  message: string;
+}
+
 export interface AddEventRequest {
   titre: string;
   description: string;
@@ -26,6 +63,10 @@ export const EventApi = createApi({
       query: () => "event/user",
       providesTags: ["Event"],
     }),
+    listInstructorEvents: builder.query<InstructorEventsResponse, void>({
+      query: () => "event/instructor/mycourses",
+      providesTags: ["Event"],
+    }),
     addEvent: builder.mutation<AddEventResponse, AddEventRequest>({
       query: (body) => ({
         url: "cms/events/event/add",
@@ -44,4 +85,9 @@ export const EventApi = createApi({
   }),
 });
 
-export const { useListEventsQuery, useAddEventMutation, useDeleteEventMutation } = EventApi;
+export const {
+  useListEventsQuery,
+  useListInstructorEventsQuery,
+  useAddEventMutation,
+  useDeleteEventMutation,
+} = EventApi;
