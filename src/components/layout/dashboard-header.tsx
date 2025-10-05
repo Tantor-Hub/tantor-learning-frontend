@@ -66,6 +66,8 @@ function getPageTitle(activeMenuItem: string): string {
       return "Formation";
     case "users":
       return "Utilisateurs";
+    case "planning":
+      return "Emploi du Temps";
     default:
       return activeMenuItem
         ? activeMenuItem[0].toUpperCase() + activeMenuItem.slice(1)
