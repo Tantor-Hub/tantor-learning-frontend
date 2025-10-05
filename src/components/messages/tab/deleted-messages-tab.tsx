@@ -1,14 +1,17 @@
-import { useListDeletedMessagesQuery } from "@/lib/apis/common/chat-api";
+import { useListDeletedMessagesQuery, useRestoreChatMutation } from "@/lib/apis/common/chat-api";
 import { MessageList } from "../shared/message-list";
 import { Suspense } from "react";
 import { MessageListSkeleton } from "@/components/skeletons/message-list-skeleton";
-import { TrashIcon, AlertCircle, RefreshCw } from "lucide-react";
+import { TrashIcon, AlertCircle, RefreshCw, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IMessage } from "@/types/common/message-api";
+import toast from "react-hot-toast";
 
 import { useEffect } from "react";
 
 export const DeletedMessagesTab = ({ refreshKey }: { refreshKey: number }) => {
   const { data, isLoading, isSuccess, isError, refetch } = useListDeletedMessagesQuery();
+  const [restoreChat] = useRestoreChatMutation();
 
   useEffect(() => {
     if (refreshKey > 0) {
@@ -34,6 +37,16 @@ export const DeletedMessagesTab = ({ refreshKey }: { refreshKey: number }) => {
       </div>
     );
   }
+
+  const handleRestore = async (msg: IMessage) => {
+    try {
+      await restoreChat({ id: msg.id }).unwrap();
+      toast.success("Message restauré avec succès.");
+      refetch();
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de la restauration du message.");
+    }
+  };
 
   if (isLoading) {
     return <MessageListSkeleton />;

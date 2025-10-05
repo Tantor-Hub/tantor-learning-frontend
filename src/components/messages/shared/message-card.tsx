@@ -11,6 +11,7 @@ type MessageCardProps = {
   isRead: boolean;
   date: Date;
   isSender: boolean;
+  actions?: React.ReactNode;
 };
 
 export function MessageCard({
@@ -21,6 +22,7 @@ export function MessageCard({
   isRead,
   date,
   isSender,
+  actions,
 }: MessageCardProps) {
   return (
     <Card
@@ -61,6 +63,7 @@ export function MessageCard({
               )}
             </div>
           </div>
+          {actions && <div className="mt-2">{actions}</div>}
         </div>
       </div>
     </Card>

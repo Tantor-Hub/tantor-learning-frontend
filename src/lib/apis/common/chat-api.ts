@@ -25,7 +25,7 @@ export const chatApi = createApi({
 
     deleteChat: builder.mutation<void, { id: string }>({
       query: ({ id }) => ({
-        url: `chat`,
+        url: `api/chat`,
         method: "DELETE",
         body: { id },
       }),
@@ -122,6 +122,14 @@ export const chatApi = createApi({
       }),
       providesTags: ["Chat"],
     }),
+
+    restoreChat: builder.mutation<void, { id: string }>({
+      query: ({ id }) => ({
+        url: `chat/restore/${id}`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Chat"],
+    }),
   }),
 });
 
@@ -139,4 +147,5 @@ export const {
   useListDeletedMessagesQuery,
   useListReceivedMessagesQuery,
   useListSentMessagesQuery,
+  useRestoreChatMutation,
 } = chatApi;

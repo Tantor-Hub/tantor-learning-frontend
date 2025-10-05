@@ -12,9 +12,15 @@ interface MessageListProps {
   messages: IMessage[] | undefined;
   isLoading: boolean;
   isSuccess: boolean;
+  renderActions?: (msg: IMessage) => React.ReactNode;
 }
 
-export const MessageList = ({ messages, isLoading, isSuccess }: MessageListProps) => {
+export const MessageList = ({
+  messages,
+  isLoading,
+  isSuccess,
+  renderActions,
+}: MessageListProps) => {
   const currentUser = useSelector(selectCurrentUser);
   const router = useRouter();
   const [markAsRead] = useMarkAsReadMutation();
@@ -34,7 +40,8 @@ export const MessageList = ({ messages, isLoading, isSuccess }: MessageListProps
   }
 
   const handleClick = async (msg: IMessage) => {
-    if (!msg.reader.includes(currentUser?.id || "")) {
+    const isSender = msg.sender.id === currentUser?.id;
+    if (!isSender && !msg.reader.includes(currentUser?.id || "")) {
       await markAsRead({ id: msg.id });
     }
     router.push(`/${currentUser?.role}/messages/${msg.id}?threadId=${msg.id}`);
@@ -43,8 +50,8 @@ export const MessageList = ({ messages, isLoading, isSuccess }: MessageListProps
   return (
     <div className="my-4 grid grid-cols-1 gap-4">
       {messages?.map((msg) => {
-        const isRead = msg.reader.includes(currentUser?.id || "");
         const isSender = msg.sender.id === currentUser?.id;
+        const isRead = isSender || msg.reader.includes(currentUser?.id || "");
         return (
           <div key={msg.id} onClick={() => handleClick(msg)} className="cursor-pointer">
             <MessageCard
@@ -55,6 +62,7 @@ export const MessageList = ({ messages, isLoading, isSuccess }: MessageListProps
               isRead={isRead}
               date={new Date(msg.createdAt)}
               isSender={isSender}
+              actions={renderActions ? renderActions(msg) : undefined}
             />
           </div>
         );

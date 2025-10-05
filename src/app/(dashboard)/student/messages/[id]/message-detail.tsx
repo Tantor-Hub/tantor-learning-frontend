@@ -2,14 +2,18 @@
 import React from "react";
 import { MessageActions } from "@/components/messages/message-actions";
 import { useGetChatByIdQuery, useGetRepliesByChatIdQuery } from "@/lib/apis/common/chat-api";
-import { Loader2 } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import { RepliesSkeleton } from "./replies-skeleton";
+import { MessageDetailSkeleton } from "@/components/skeletons/message-detail-skeleton";
 
 interface MessageDetailProps {
   messageId: string;
 }
 
 export function MessageDetail({ messageId }: MessageDetailProps) {
+  const router = useRouter();
   const { data, error, isLoading } = useGetChatByIdQuery({ id: messageId });
   const {
     data: repliesData,
@@ -22,15 +26,22 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center p-8">
-        <Loader2 className="animate-spin h-8 w-8" />
-      </div>
-    );
+    return <MessageDetailSkeleton />;
   }
 
   if (error || !data) {
-    return <div>Error loading message</div>;
+    return (
+      <div>
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <Button variant={"outline"} onClick={() => router.back()}>
+            <ChevronLeft /> Retour
+          </Button>
+        </div>
+        <div className="border border-border rounded-lg p-4">
+          <p>{error ? "Erreur lors du chargement du message" : "Message non trouvé"}</p>
+        </div>
+      </div>
+    );
   }
 
   const message = data.data;

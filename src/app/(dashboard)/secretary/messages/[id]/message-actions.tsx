@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Archive, Reply, Forward, Loader2, Send } from "lucide-react";
+import { ChevronLeft, Archive, Reply, Forward, Loader2, Send, Trash2 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useState } from "react";
 import {
@@ -18,14 +18,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { RepliesSkeleton } from "./replies-skeleton";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
+import { MessageActionsSkeleton } from "./message-actions-skeleton";
+interface MessageActionsProps {
+  messageId: string;
+}
 
-export function MessageActions() {
+export function MessageActions({ messageId }: MessageActionsProps) {
   const router = useRouter();
   const currentUser = useSelector(selectCurrentUser);
   const [replyContent, setReplyContent] = useState("");
   const [isReplying, setIsReplying] = useState(false);
-  const params = useParams();
-  const messageId = params.id as string;
+
+  const [deleteChat] = useDeleteChatMutation();
 
   // Fetch message data
   const {
@@ -47,14 +51,37 @@ export function MessageActions() {
     console.error("Error getting replies by chat id:", repliesError);
   }
 
-  if (isLoading)
+  if (isLoading) return <MessageActionsSkeleton />;
+
+  if (isError) {
     return (
-      <div className="flex justify-center p-8">
-        <Loader2 className="animate-spin h-8 w-8" />
+      <div>
+        <div className="flex items-center justify-between gap-4">
+          <Button variant={"outline"} onClick={() => router.back()}>
+            <ChevronLeft /> Retour
+          </Button>
+        </div>
+        <div className="border border-border rounded-lg p-4 mt-4">
+          <p>Erreur lors du chargement du message</p>
+        </div>
       </div>
     );
-  if (isError) return <div>Erreur lors du chargement du message</div>;
-  if (!message || !message.data) return <div>Message non trouvé</div>;
+  }
+
+  if (!message || !message.data) {
+    return (
+      <div>
+        <div className="flex items-center justify-between gap-4">
+          <Button variant={"outline"} onClick={() => router.back()}>
+            <ChevronLeft /> Retour
+          </Button>
+        </div>
+        <div className="border border-border rounded-lg p-4 mt-4">
+          <p>Message non trouvé</p>
+        </div>
+      </div>
+    );
+  }
 
   const msg = message.data;
   const replies = repliesData?.data.rows || [];
@@ -65,6 +92,16 @@ export function MessageActions() {
       toast("Message Archivé");
     } catch {
       toast.error("Une erreur est survenue");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteChat({ id: messageId }).unwrap();
+      toast.success("Message supprimé avec succès.");
+      router.back();
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de la suppression du message.");
     }
   };
 
@@ -120,6 +157,10 @@ export function MessageActions() {
           </Button>
           <Button variant={"outline"}>
             <Forward /> Transférer
+          </Button>
+          <Button variant={"outline"} onClick={handleDelete} className="flex items-center gap-2">
+            <Trash2 />
+            Supprimer
           </Button>
           {currentUser?.id.toString() === msg.sender.id.toString() ? (
             <DeleteMessageDialog id={messageId} />

@@ -1,8 +1,10 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Forward } from "lucide-react";
+import { Forward, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ReplyMessageDialog } from "./dialog/reply-message-dialog";
+import { useDeleteChatMutation } from "@/lib/apis/common/chat-api";
+import toast from "react-hot-toast";
 
 interface MessageActionsProps {
   messageId: string;
@@ -12,6 +14,17 @@ interface MessageActionsProps {
 
 export function MessageActions({ messageId, senderId, subject }: MessageActionsProps) {
   const router = useRouter();
+  const [deleteChat] = useDeleteChatMutation();
+
+  const handleDelete = async () => {
+    try {
+      await deleteChat({ id: messageId }).unwrap();
+      toast.success("Message supprimé avec succès.");
+      router.back();
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de la suppression du message.");
+    }
+  };
 
   return (
     <div className="flex items-center justify-between gap-4">
@@ -26,6 +39,10 @@ export function MessageActions({ messageId, senderId, subject }: MessageActionsP
         />
         <Button variant={"outline"}>
           <Forward /> Transférer
+        </Button>
+        <Button variant={"outline"} onClick={handleDelete} className="flex items-center gap-2">
+          <Trash2 />
+          Supprimer
         </Button>
         {/* Add more actions as needed */}
       </div>
