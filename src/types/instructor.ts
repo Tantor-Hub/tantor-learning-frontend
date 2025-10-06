@@ -158,6 +158,7 @@ export interface ILessonDocument {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  download_url: string | { download_url: string; video_urls?: any; primary_format?: string };
   creator: {
     id: string;
     firstName: string;

@@ -198,6 +198,12 @@ export const instructorApi = createApi({
       },
       invalidatesTags: ["Instructor"],
     }),
+
+    // Get instructor's documents
+    getMyDocuments: builder.query<ILessonDocumentsResponse, void>({
+      query: () => `lessondocument/instructor/my-documents`,
+      providesTags: ["Instructor"],
+    }),
   }),
 });
 
@@ -213,4 +219,5 @@ export const {
   useCreateLessonDocumentMutation,
   useDeleteLessonDocumentMutation,
   useUpdateLessonDocumentMutation,
+  useGetMyDocumentsQuery,
 } = instructorApi;
