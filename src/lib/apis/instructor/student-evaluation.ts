@@ -1,12 +1,24 @@
 import { createApi, enhancedBaseQuery } from "../base-api";
 
+export enum StudentevaluationType {
+  EXERCISE = "exercise",
+  HOMEWORK = "homework",
+  TEST = "test",
+  QUIZ = "quiz",
+  EXAMEN = "examen",
+}
+
 export interface IStudentEvaluation {
   id?: string;
   title: string;
   description: string;
-  type: "exercise" | "homework" | "test" | "examen";
+  type: StudentevaluationType;
   points: number;
+  sessionCoursId: string;
+  lessonId: string[];
   submittiondate: string;
+  beginningTime?: string;
+  endingTime?: string;
   ispublish: boolean;
   isImmediateResult: boolean;
 }
