@@ -16,6 +16,7 @@ import { manageCoursesApi } from "./common/courses-api";
 import { seanceSecretaryApi } from "./secretary/seance-secretary-api";
 import { documentStudentApi } from "./student/document-api";
 import { instructorApi } from "./instructor/instructor";
+import { studentEvaluationApi } from "./instructor/student-evaluation";
 import { roleApi } from "./admin/role-api";
 import { documentsApi } from "./common/document-api";
 import { eventApi } from "./event-api";
@@ -40,6 +41,7 @@ export {
   seanceSecretaryApi,
   documentStudentApi,
   instructorApi,
+  studentEvaluationApi,
   roleApi,
   eventApi,
 };
@@ -64,6 +66,7 @@ export const apiReducers = {
   [seanceSecretaryApi.reducerPath]: seanceSecretaryApi.reducer,
   [documentStudentApi.reducerPath]: documentStudentApi.reducer,
   [instructorApi.reducerPath]: instructorApi.reducer,
+  [studentEvaluationApi.reducerPath]: studentEvaluationApi.reducer,
   [roleApi.reducerPath]: roleApi.reducer,
   [documentsApi.reducerPath]: documentsApi.reducer,
   [eventApi.reducerPath]: eventApi.reducer,
@@ -89,6 +92,7 @@ export const apiMiddlewares = [
   seanceSecretaryApi.middleware,
   documentStudentApi.middleware,
   instructorApi.middleware,
+  studentEvaluationApi.middleware,
   roleApi.middleware,
   documentsApi.middleware,
   eventApi.middleware,

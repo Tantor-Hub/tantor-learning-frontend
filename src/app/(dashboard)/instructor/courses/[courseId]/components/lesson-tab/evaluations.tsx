@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,23 +19,70 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AddLessonModal } from "./add-lesson";
 import { MoreHorizontal, Trash2 } from "lucide-react";
+import {
+  useGetStudentEvaluationsBySessionQuery,
+  useDeleteStudentEvaluationMutation,
+} from "@/lib/apis/instructor/student-evaluation";
 
 export function Evaluations() {
   const params = useParams();
   const courseId = params.courseId as string;
 
-  // For demo, assume we have a list, but since no query, use state or something
-  // Since no GET endpoint, perhaps just add and remove locally for now
-  const [evaluations, setEvaluations] = useState<any[]>([]);
+  const { data: evaluationsData, isLoading } = useGetStudentEvaluationsBySessionQuery(
+    { sessionCoursId: courseId },
+    { skip: !courseId }
+  );
+  const [deleteEvaluation] = useDeleteStudentEvaluationMutation();
+
+  const evaluations = evaluationsData?.data?.evaluations || [];
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Êtes-vous sûr de vouloir supprimer cette évaluation ?")) {
+      await deleteEvaluation({ id });
+    }
+  };
 
   return (
-    <div className="bg-white border rounded-lg p-4 sm:p-6">
+    <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
         <h3 className="text-lg font-semibold mb-2 sm:mb-0">Évaluations</h3>
         <AddLessonModal courseId={courseId} />
       </div>
 
-      {evaluations.length === 0 ? (
+      {isLoading ? (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Titre</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Points</TableHead>
+              <TableHead>Date de soumission</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 3 }).map((_, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <Skeleton className="h-4 w-32" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-16" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-12" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-24" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-8 w-20" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      ) : evaluations.length === 0 ? (
         <div className="min-h-[200px] flex items-center justify-center text-gray-600">
           Aucune évaluation. Créez-en une nouvelle.
         </div>
@@ -50,7 +98,7 @@ export function Evaluations() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {evaluations.map((evaluation) => (
+            {evaluations.map((evaluation: any) => (
               <TableRow key={evaluation.id}>
                 <TableCell>{evaluation.title}</TableCell>
                 <TableCell>{evaluation.type}</TableCell>
@@ -64,7 +112,10 @@ export function Evaluations() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      <DropdownMenuItem className="text-red-600">
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => handleDelete(evaluation.id)}
+                      >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Supprimer
                       </DropdownMenuItem>

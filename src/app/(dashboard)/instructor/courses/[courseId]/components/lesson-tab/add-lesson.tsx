@@ -208,14 +208,12 @@ export function AddLessonModal({ courseId }: AddLessonModalProps) {
         isImmediateResult,
       };
 
-      console.log("Sending evaluation data:", evaluationData);
-
       await createEvaluation(evaluationData).unwrap();
 
       toast.success("Évaluation créée avec succès", { id: toastId });
       setIsOpen(false);
     } catch (error: any) {
-      console.error("Creation error:", error);
+      // console.error("Creation error:", error);
 
       const errorMessage =
         error?.data?.message || error?.data?.error || "Erreur lors de la création de l'évaluation";
@@ -233,7 +231,7 @@ export function AddLessonModal({ courseId }: AddLessonModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button>
           <Plus className="w-4 h-4 mr-2" />
           Nouvelle évaluation
         </Button>

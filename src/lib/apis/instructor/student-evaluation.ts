@@ -28,6 +28,10 @@ export const studentEvaluationApi = createApi({
   baseQuery: enhancedBaseQuery,
   tagTypes: ["StudentEvaluation"],
   endpoints: (builder) => ({
+    getStudentEvaluationsBySession: builder.query<any, { sessionCoursId: string }>({
+      query: ({ sessionCoursId }) => `studentevaluation/sessioncours/${sessionCoursId}`,
+      providesTags: ["StudentEvaluation"],
+    }),
     createStudentEvaluation: builder.mutation<void, IStudentEvaluation>({
       query: (body) => ({
         url: "studentevaluation",
@@ -46,5 +50,8 @@ export const studentEvaluationApi = createApi({
   }),
 });
 
-export const { useCreateStudentEvaluationMutation, useDeleteStudentEvaluationMutation } =
-  studentEvaluationApi;
+export const {
+  useGetStudentEvaluationsBySessionQuery,
+  useCreateStudentEvaluationMutation,
+  useDeleteStudentEvaluationMutation,
+} = studentEvaluationApi;
