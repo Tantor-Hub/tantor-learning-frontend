@@ -31,6 +31,7 @@ import {
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { useRouter } from "next/navigation";
+import { Button } from "./ui/button";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
@@ -132,7 +133,9 @@ export function NavUser() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmLogout}>Se déconnecter</AlertDialogAction>
+            <AlertDialogAction onClick={confirmLogout} asChild>
+              <Button variant="destructive">Se déconnecter</Button>
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

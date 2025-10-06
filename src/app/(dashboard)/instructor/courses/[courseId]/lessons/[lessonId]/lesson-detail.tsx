@@ -155,7 +155,7 @@ export function LessonDetail() {
 
   if (!lesson?.data) {
     return (
-      <div className="min-h-screen p-6">
+      <div>
         <Tabs defaultValue="contenu" className="w-full">
           <TabsList className="bg-white border font-semibold px-2.5 py-6 grid-cols-1 gap-4">
             <TabsTrigger value="contenu" className="p-5 px-2 md:px-5">

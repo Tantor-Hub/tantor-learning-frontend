@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { FileText, Upload, Download, Trash2, BookOpen } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { Textarea } from "@/components/ui/textarea";
 
 export function ContentTab() {
   const params = useParams();
@@ -198,10 +199,10 @@ export function ContentTab() {
   };
 
   return (
-    <div className="bg-white border rounded-lg p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => router.back()} className="mr-4">
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+        <div className="flex items-center gap-2 mb-2 sm:mb-0">
+          <Button variant="outline" size="sm" onClick={() => router.back()}>
             Retour
           </Button>
           <BookOpen className="w-5 h-5" />
@@ -209,9 +210,9 @@ export function ContentTab() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={handleOpenCreateDialog} className="bg-blue-600 hover:bg-blue-700">
-              + Contenu
-              <Upload className="w-4 h-4 ml-2" />
+            <Button onClick={handleOpenCreateDialog}>
+              <Upload />
+              Contenu
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -223,7 +224,9 @@ export function ContentTab() {
             {isUploading && (
               <div className="mb-4">
                 <Progress value={uploadProgress} />
-                <p className="text-sm text-gray-600 mt-2">Téléchargement... {uploadProgress}%</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Téléchargement... {uploadProgress}%
+                </p>
               </div>
             )}
             <div className="space-y-4">
@@ -234,8 +237,7 @@ export function ContentTab() {
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={isUploading}
               />
-              <Input
-                type="text"
+              <Textarea
                 placeholder="Description du document"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -255,7 +257,7 @@ export function ContentTab() {
                   !description.trim() ||
                   isUploading
                 }
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full"
               >
                 {isUploading
                   ? mode === "create"
@@ -285,14 +287,16 @@ export function ContentTab() {
       ) : lessonDocuments?.data?.lessondocuments?.length ? (
         <div className="space-y-4">
           {lessonDocuments.data.lessondocuments.map((doc) => (
-            <Card key={doc.id}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-8 h-8 text-blue-600" />
-                    <div>
-                      <h4 className="font-semibold">{doc.file_name}</h4>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Card key={doc.id} className="border rounded p-4">
+              <CardContent>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FileText className="w-8 h-8 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold truncate">{doc.title}</h4>
+                      {/* <p className="text-sm text-gray-500 truncate">{doc.file_name}</p> */}
+                      <p className="text-sm text-gray-600 mt-1">{doc.description}</p>
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
                         <Badge variant="secondary">{doc.type}</Badge>
                         <span>
                           Par {doc.creator.firstName} {doc.creator.lastName}
@@ -302,7 +306,7 @@ export function ContentTab() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
                     <Button variant="outline" size="sm" asChild>
                       <a href={doc.piece_jointe} target="_blank" rel="noopener noreferrer">
                         <Download className="w-4 h-4 mr-2" />

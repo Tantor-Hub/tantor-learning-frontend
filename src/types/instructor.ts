@@ -152,6 +152,8 @@ export interface ILessonDocument {
   file_name: string;
   piece_jointe: string;
   type: string;
+  title: string;
+  description: string;
   id_lesson: string;
   createdBy: string;
   createdAt: string;
