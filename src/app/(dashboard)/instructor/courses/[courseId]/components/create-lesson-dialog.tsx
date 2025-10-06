@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 interface CreateLessonDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { title: string; description: string }) => void;
+  onSubmit: (data: { title: string; description: string; ispublish?: boolean }) => void;
   isLoading: boolean;
 }
 
@@ -23,18 +23,19 @@ export function CreateLessonDialog({
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    ispublish: false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.title.trim() && formData.description.trim()) {
       onSubmit(formData);
-      setFormData({ title: "", description: "" });
+      setFormData({ title: "", description: "", ispublish: false });
     }
   };
 
   const handleClose = () => {
-    setFormData({ title: "", description: "" });
+    setFormData({ title: "", description: "", ispublish: false });
     onClose();
   };
 
@@ -67,6 +68,19 @@ export function CreateLessonDialog({
               rows={4}
               required
             />
+          </div>
+
+          <div className="space-y-2 flex items-center gap-2">
+            <input
+              id="ispublish"
+              type="checkbox"
+              checked={formData.ispublish}
+              onChange={(e) => setFormData((prev) => ({ ...prev, ispublish: e.target.checked }))}
+              className="w-4 h-4"
+            />
+            <Label htmlFor="ispublish" className="mb-0">
+              Publier la leçon
+            </Label>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

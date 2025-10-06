@@ -28,9 +28,12 @@ export function LessonList() {
   if (isLoading) {
     return <LessonListSkeleton />;
   }
-  console.log(JSON.stringify(lessons, null, 2));
 
-  const handleCreateLesson = async (lessonData: { title: string; description: string }) => {
+  const handleCreateLesson = async (lessonData: {
+    title: string;
+    description: string;
+    ispublish?: boolean;
+  }) => {
     let toastId: string | null = null;
     try {
       if (toastId) {
@@ -44,6 +47,7 @@ export function LessonList() {
         title: lessonData.title,
         description: lessonData.description,
         id_cours: courseId,
+        ...(lessonData.ispublish !== undefined ? { ispublish: lessonData.ispublish } : {}),
       }).unwrap();
       console.log(response);
 

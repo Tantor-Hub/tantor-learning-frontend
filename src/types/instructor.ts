@@ -146,6 +146,7 @@ export interface ICreateLessonRequest {
   title: string;
   description: string;
   id_cours: string;
+  ispublish?: boolean;
 }
 
 export interface ILessonDocument {
