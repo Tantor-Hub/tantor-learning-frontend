@@ -198,8 +198,14 @@ export interface ICourseBySessionIdResponse {
       id: string;
       title: string;
       description: string;
+      ponderation: number;
       is_published: boolean;
       id_formateur: string[] | null;
+      formateurs: Array<{
+        id: string;
+        firstName: string;
+        lastName: string;
+      }>;
       createdAt: string;
       updatedAt: string;
     }>;

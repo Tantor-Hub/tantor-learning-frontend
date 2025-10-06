@@ -2,6 +2,7 @@ export interface IAddMatiere {
   title: string;
   description: string;
   id_session: string;
+  ponderation: number;
 }
 
 export interface IListAllCoursesResponse {

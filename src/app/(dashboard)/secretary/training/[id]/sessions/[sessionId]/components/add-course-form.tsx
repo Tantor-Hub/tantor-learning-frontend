@@ -20,6 +20,7 @@ import { toast } from "react-hot-toast"; // ou autre lib de notifications
 const formSchema = z.object({
   title: z.string().min(1, "Veuillez entrer un titre pour le cours"),
   description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
+  ponderation: z.number().min(1, "La pondération doit être au moins 1"),
 });
 
 type CourseFormValues = z.infer<typeof formSchema>;
@@ -34,7 +35,7 @@ export function AddCourseForm({ onCancel, onSubmitSuccess, sessionId }: CreateCo
   const [addCourse, { isLoading }] = useAddCourseMutation();
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { title: "", description: "" },
+    defaultValues: { title: "", description: "", ponderation: 1 },
     mode: "onChange",
   });
 
@@ -44,6 +45,7 @@ export function AddCourseForm({ onCancel, onSubmitSuccess, sessionId }: CreateCo
         title: data.title,
         description: data.description,
         id_session: sessionId,
+        ponderation: data.ponderation,
       }).unwrap();
 
       toast.success("Cours créé avec succès");
@@ -100,6 +102,27 @@ export function AddCourseForm({ onCancel, onSubmitSuccess, sessionId }: CreateCo
                   placeholder="Décrivez brièvement le contenu du cours"
                   className="min-h-20 max-h-28 text-sm font-extralight"
                   disabled={isLoading}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="ponderation"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-2.5">
+              <FormLabel>Pondération</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="number"
+                  placeholder="Entrez la pondération"
+                  className="text-sm font-extralight py-5"
+                  disabled={isLoading}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
                 />
               </FormControl>
               <FormMessage />

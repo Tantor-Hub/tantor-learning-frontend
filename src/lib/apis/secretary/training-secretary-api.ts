@@ -197,6 +197,7 @@ export const trainingSecretaryApi = createApi({
         id: string;
         title: string;
         description: string;
+        ponderation: number;
         is_published: boolean;
         id_formateur: string[];
       }
@@ -208,6 +209,7 @@ export const trainingSecretaryApi = createApi({
           id: request.id,
           title: request.title,
           description: request.description,
+          ponderation: request.ponderation,
           is_published: request.is_published,
           id_formateur: request.id_formateur,
         },

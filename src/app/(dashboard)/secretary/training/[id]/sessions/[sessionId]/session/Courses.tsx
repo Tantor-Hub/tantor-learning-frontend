@@ -38,14 +38,20 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Check, ChevronsUpDown, MoreHorizontal, Edit, Trash2, Ellipsis } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useListUserByRoleQuery } from "@/lib/apis/users-api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddCourseModal } from "../components/add-course-modal";
+import { EmptyState } from "@/components/shared/empty-state";
 import {
   useCourseByIdSessionQuery,
   useDeleteCourseByIdMutation,
@@ -55,8 +61,7 @@ import { UserRole } from "@/types/user";
 import { toast } from "react-hot-toast";
 
 export default function Courses({ sessionId }: { sessionId: string }) {
-  const { data, isLoading, error } = useCourseByIdSessionQuery({ sessionId });
-  const { data: usersData } = useListUserByRoleQuery({ role: UserRole.INSTRUCTOR });
+  const { data, isLoading, error, refetch } = useCourseByIdSessionQuery({ sessionId });
   const [deleteCourse] = useDeleteCourseByIdMutation();
   const [updateCourse, { isLoading: isLoadingUpdateCourse }] = useUpdateCourseByIdMutation();
 
@@ -67,15 +72,30 @@ export default function Courses({ sessionId }: { sessionId: string }) {
   const [editForm, setEditForm] = React.useState({
     title: "",
     description: "",
+    ponderation: 1,
     is_published: false,
   });
   const [selectedFormateurs, setSelectedFormateurs] = React.useState<string[]>([]);
   const [open, setOpen] = React.useState(false);
 
+  // Lazy load users only when popover is opened
+  const {
+    data: usersData,
+    isLoading: isLoadingUsers,
+    refetch: refetchUsers,
+  } = useListUserByRoleQuery({ role: UserRole.INSTRUCTOR }, { skip: true });
+
+  React.useEffect(() => {
+    if (open) {
+      refetchUsers();
+    }
+  }, [open, refetchUsers]);
+
   const handleDelete = async (id: string) => {
     try {
       await deleteCourse({ id }).unwrap();
       setOpenDeleteDialog(false);
+      refetch();
     } catch (err) {
       console.error("Failed to delete course", err);
     }
@@ -87,13 +107,15 @@ export default function Courses({ sessionId }: { sessionId: string }) {
         id,
         title: editForm.title,
         description: editForm.description,
+        ponderation: editForm.ponderation,
         is_published: editForm.is_published,
         id_formateur: selectedFormateurs,
       }).unwrap();
       toast.success("Matière modifier avec succès!");
       setOpenUpdateDialog(false);
-      setEditForm({ title: "", description: "", is_published: false });
+      setEditForm({ title: "", description: "", ponderation: 1, is_published: false });
       setSelectedFormateurs([]);
+      refetch();
     } catch (err) {
       toast.error("Échec de la modification du Matière.");
       console.error("Failed to update course", err);
@@ -112,6 +134,7 @@ export default function Courses({ sessionId }: { sessionId: string }) {
             <TableRow>
               <TableHead>Title</TableHead>
               <TableHead>Description</TableHead>
+              <TableHead>Pondération</TableHead>
               <TableHead>Published</TableHead>
               <TableHead>Formateurs</TableHead>
               <TableHead>Actions</TableHead>
@@ -125,6 +148,9 @@ export default function Courses({ sessionId }: { sessionId: string }) {
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-4 w-48" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-16" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-6 w-20 rounded-full" />
@@ -151,7 +177,7 @@ export default function Courses({ sessionId }: { sessionId: string }) {
   }
   const courses = data?.data.rows || [];
   const users = usersData?.data || [];
-  console.log(users);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -159,67 +185,80 @@ export default function Courses({ sessionId }: { sessionId: string }) {
         <AddCourseModal sessionId={sessionId} />
       </div>
       {courses.length === 0 ? (
-        <p>No courses found for this session.</p>
+        <EmptyState
+          icon="DocumentIcon"
+          title="Aucune matière trouvée"
+          description="Il n'y a pas encore des matières pour cette session. Commencez par en ajouter un."
+        />
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Published</TableHead>
-              <TableHead>Formateurs</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {courses.map((course) => (
-              <TableRow key={course.id}>
-                <TableCell>{course.title}</TableCell>
-                <TableCell>{course.description}</TableCell>
-                <TableCell>
-                  <Badge variant={course.is_published ? "default" : "outline"}>
-                    {course.is_published ? "Publié" : "Non publié"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {course.id_formateur && course.id_formateur.length > 0
-                    ? course.id_formateur.join(", ")
-                    : "N/A"}
-                </TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setEditForm({
-                          title: course.title,
-                          description: course.description,
-                          is_published: course.is_published,
-                        });
-                        setSelectedFormateurs(course.id_formateur || []);
-                        setSelectedCourseId(course.id);
-                        setOpenUpdateDialog(true);
-                      }}
-                    >
-                      Update
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedCourseId(course.id);
-                        setOpenDeleteDialog(true);
-                      }}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </TableCell>
+        <div className="max-h-96 overflow-y-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Titre</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Pondération</TableHead>
+                <TableHead>Publiée</TableHead>
+                <TableHead>Formateur</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {courses.map((course) => (
+                <TableRow key={course.id}>
+                  <TableCell>{course.title}</TableCell>
+                  <TableCell>{course.description}</TableCell>
+                  <TableCell>{course.ponderation || "N/A"}</TableCell>
+                  <TableCell>
+                    <Badge variant={course.is_published ? "default" : "outline"}>
+                      {course.is_published ? "Publié" : "Non publié"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {course.formateurs && course.formateurs.length > 0
+                      ? course.formateurs.map((f) => `${f.lastName} ${f.firstName}`).join(", ")
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Ellipsis className="hover:cursor-pointer" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setEditForm({
+                              title: course.title,
+                              description: course.description,
+                              ponderation: course.ponderation || 1,
+                              is_published: course.is_published,
+                            });
+                            setSelectedFormateurs(course.id_formateur || []);
+                            setSelectedCourseId(course.id);
+                            setOpenUpdateDialog(true);
+                          }}
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Modifier
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedCourseId(course.id);
+                            setOpenDeleteDialog(true);
+                          }}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Supprimer
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {/* Delete Confirmation Dialog */}
@@ -269,6 +308,15 @@ export default function Courses({ sessionId }: { sessionId: string }) {
                 onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
               />
             </div>
+            <div>
+              <Label htmlFor="ponderation">Pondération</Label>
+              <Input
+                id="ponderation"
+                type="number"
+                value={editForm.ponderation}
+                onChange={(e) => setEditForm({ ...editForm, ponderation: Number(e.target.value) })}
+              />
+            </div>
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="is_published"
@@ -298,32 +346,39 @@ export default function Courses({ sessionId }: { sessionId: string }) {
                     <CommandInput placeholder="Rechercher des formateurs..." />
                     <CommandEmpty>Aucun formateur trouvé.</CommandEmpty>
                     <CommandGroup className="max-h-48 overflow-y-auto">
-                      {users?.map((user) => {
-                        const isSelected = selectedFormateurs.includes(user.id.toString());
-                        return (
-                          <CommandItem
-                            key={user.id}
-                            value={user.id.toString()}
-                            onSelect={() => {
-                              if (isSelected) {
-                                setSelectedFormateurs((prev) =>
-                                  prev.filter((id) => id !== user.id.toString())
-                                );
-                              } else {
-                                setSelectedFormateurs((prev) => [...prev, user.id.toString()]);
-                              }
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                isSelected ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {user.firstName} {user.lastName}
-                          </CommandItem>
-                        );
-                      })}
+                      {isLoadingUsers
+                        ? Array.from({ length: 5 }).map((_, index) => (
+                            <div key={index} className="flex items-center space-x-2 p-2">
+                              <Skeleton className="h-4 w-4" />
+                              <Skeleton className="h-4 w-24" />
+                            </div>
+                          ))
+                        : users?.map((user) => {
+                            const isSelected = selectedFormateurs.includes(user.id.toString());
+                            return (
+                              <CommandItem
+                                key={user.id}
+                                value={user.id.toString()}
+                                onSelect={() => {
+                                  if (isSelected) {
+                                    setSelectedFormateurs((prev) =>
+                                      prev.filter((id) => id !== user.id.toString())
+                                    );
+                                  } else {
+                                    setSelectedFormateurs((prev) => [...prev, user.id.toString()]);
+                                  }
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    isSelected ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {user.firstName} {user.lastName}
+                              </CommandItem>
+                            );
+                          })}
                     </CommandGroup>
                   </Command>
                 </PopoverContent>
