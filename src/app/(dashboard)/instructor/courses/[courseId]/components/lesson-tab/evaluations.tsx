@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AddLessonModal } from "./add-lesson";
 import { UpdateEvaluationModal } from "./update-evaluation";
-import { MoreHorizontal, Trash2, Edit } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, FileText } from "lucide-react";
 import {
   useGetStudentEvaluationsBySessionQuery,
   useDeleteStudentEvaluationMutation,
@@ -27,6 +27,7 @@ import {
 
 export function Evaluations() {
   const params = useParams();
+  const router = useRouter();
   const courseId = params.courseId as string;
 
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
@@ -129,6 +130,16 @@ export function Evaluations() {
                       <DropdownMenuItem onClick={() => handleEdit(evaluation.id)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Modifier
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          router.push(
+                            `/instructor/courses/${courseId}/evaluations/${evaluation.id}/questions`
+                          )
+                        }
+                      >
+                        <FileText className="mr-2 h-4 w-4" />
+                        Gérer les questions
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-600"
