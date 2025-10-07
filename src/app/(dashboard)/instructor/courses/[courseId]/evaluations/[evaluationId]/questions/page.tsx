@@ -27,9 +27,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import {
+  useGetOptionsByQuestionIdQuery,
+  useCreateOptionMutation,
+  useUpdateOptionMutation,
+  useDeleteOptionMutation,
+} from "@/lib/apis/instructor/evaluation-question-option";
+import {
   useGetEvaluationQuestionsByEvaluationIdQuery,
   useCreateEvaluationQuestionMutation,
   useDeleteEvaluationQuestionMutation,
+  useUpdateEvaluationQuestionMutation,
   QuestionType,
 } from "@/lib/apis/instructor/evaluation-question";
 // evaluation type is driven via URL param isImmediateResult; no evaluation fetch here
@@ -57,6 +64,20 @@ export default function EvaluationQuestionsPage() {
     ],
   });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+  const [activeQuestionText, setActiveQuestionText] = useState<string>("");
+  const [newOption, setNewOption] = useState({ text: "", isCorrect: false });
+  const [editingOptionId, setEditingOptionId] = useState<string | null>(null);
+  const [editingOption, setEditingOption] = useState<{ text: string; isCorrect: boolean }>({
+    text: "",
+    isCorrect: false,
+  });
+  const [isEditQuestionOpen, setIsEditQuestionOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<{
+    id: string;
+    text: string;
+    points: number;
+  } | null>(null);
 
   const { data: questionsData, isLoading } = useGetEvaluationQuestionsByEvaluationIdQuery(
     { evaluationId },
@@ -65,8 +86,17 @@ export default function EvaluationQuestionsPage() {
 
   const [createQuestion] = useCreateEvaluationQuestionMutation();
   const [deleteQuestion] = useDeleteEvaluationQuestionMutation();
+  const [updateQuestion, { isLoading: isUpdatingQuestion }] = useUpdateEvaluationQuestionMutation();
 
   const questions = questionsData?.data || [];
+
+  const { data: optionsData, refetch: refetchOptions } = useGetOptionsByQuestionIdQuery(
+    { questionId: activeQuestionId || "" },
+    { skip: !activeQuestionId }
+  );
+  const [createOption, { isLoading: isCreatingOption }] = useCreateOptionMutation();
+  const [updateOption, { isLoading: isUpdatingOption }] = useUpdateOptionMutation();
+  const [deleteOption] = useDeleteOptionMutation();
 
   const handleAddOption = () => {
     setNewQuestion({
@@ -94,6 +124,27 @@ export default function EvaluationQuestionsPage() {
       });
     }
   };
+
+  function QuestionOptionsList({ questionId }: { questionId: string }) {
+    const { data } = useGetOptionsByQuestionIdQuery({ questionId }, { skip: !questionId });
+    const opts = data?.data || [];
+    if (opts.length === 0) return null;
+    return (
+      <div className="space-y-1">
+        {opts.map((option: any) => (
+          <div
+            key={option.id}
+            className="flex items-center space-x-2 text-sm text-muted-foreground"
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${option.isCorrect ? "bg-green-500" : "bg-gray-300"}`}
+            ></span>
+            <span>{option.text}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   const handleCreateQuestion = async () => {
     if (!newQuestion.text.trim()) return;
@@ -264,21 +315,23 @@ export default function EvaluationQuestionsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() =>
-                            router.push(
-                              `/instructor/courses/${courseId}/evaluations/${evaluationId}/questions/${question.id}/edit`
-                            )
-                          }
+                          onClick={() => {
+                            setEditingQuestion({
+                              id: question.id,
+                              text: question.text,
+                              points: question.points,
+                            });
+                            setIsEditQuestionOpen(true);
+                          }}
                         >
                           <Pencil className="h-4 w-4" /> Modifier
                         </DropdownMenuItem>
                         {question.isImmediateResult && (
                           <DropdownMenuItem
-                            onClick={() =>
-                              router.push(
-                                `/instructor/courses/${courseId}/evaluations/${evaluationId}/questions/${question.id}/options`
-                              )
-                            }
+                            onClick={() => {
+                              setActiveQuestionId(question.id);
+                              setActiveQuestionText(question.text);
+                            }}
                           >
                             <ListPlus className="h-4 w-4" /> Ajouter des options
                           </DropdownMenuItem>
@@ -294,23 +347,9 @@ export default function EvaluationQuestionsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {question.type === QuestionType.MULTIPLE_CHOICE &&
-                    question.options &&
-                    question.options.length > 0 && (
-                      <div className="space-y-1">
-                        {question.options.map((option: any, index: number) => (
-                          <div
-                            key={index}
-                            className="flex items-center space-x-2 text-sm text-muted-foreground"
-                          >
-                            <span
-                              className={`w-2 h-2 rounded-full ${option.isCorrect ? "bg-green-500" : "bg-gray-300"}`}
-                            ></span>
-                            <span>{option.text}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  {question.type === QuestionType.MULTIPLE_CHOICE && (
+                    <QuestionOptionsList questionId={question.id} />
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -389,6 +428,229 @@ export default function EvaluationQuestionsPage() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+
+      {activeQuestionId && (
+        <AlertDialog
+          open={!!activeQuestionId}
+          onOpenChange={(open) => {
+            if (!open) {
+              setActiveQuestionId(null);
+              setNewOption({ text: "", isCorrect: false });
+              setEditingOptionId(null);
+              setEditingOption({ text: "", isCorrect: false });
+            }
+          }}
+        >
+          <AlertDialogContent className="max-w-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Ajouter des options</AlertDialogTitle>
+              <AlertDialogDescription>{activeQuestionText}</AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Options existantes</Label>
+                <div className="space-y-1">
+                  {(optionsData?.data || []).map((opt: any) => (
+                    <div
+                      key={(opt?.id ?? `${opt?.text}`) as string}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <span
+                        className={`w-2 h-2 rounded-full ${opt.isCorrect ? "bg-green-500" : "bg-gray-300"}`}
+                      ></span>
+                      {editingOptionId === opt.id ? (
+                        <>
+                          <Input
+                            value={editingOption.text}
+                            onChange={(e) =>
+                              setEditingOption({ ...editingOption, text: e.target.value })
+                            }
+                          />
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={editingOption.isCorrect}
+                              onChange={(e) =>
+                                setEditingOption({ ...editingOption, isCorrect: e.target.checked })
+                              }
+                            />
+                            <Label>Correct</Label>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={!editingOption.text.trim() || isUpdatingOption}
+                            onClick={async () => {
+                              await updateOption({
+                                id: opt.id as string,
+                                body: {
+                                  text: editingOption.text,
+                                  isCorrect: editingOption.isCorrect,
+                                },
+                              }).unwrap();
+                              setEditingOptionId(null);
+                              setEditingOption({ text: "", isCorrect: false });
+                              await refetchOptions();
+                            }}
+                          >
+                            Enregistrer
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingOptionId(null);
+                              setEditingOption({ text: "", isCorrect: false });
+                            }}
+                          >
+                            Annuler
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="flex-1">{opt.text}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingOptionId((opt.id as string) ?? null);
+                              setEditingOption({ text: opt.text, isCorrect: opt.isCorrect });
+                            }}
+                          >
+                            Modifier
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600"
+                            onClick={async () => {
+                              if (!confirm("Supprimer cette option ?")) return;
+                              await deleteOption({ id: opt.id as string }).unwrap();
+                              await refetchOptions();
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                  {(!optionsData?.data || optionsData.data.length === 0) && (
+                    <div className="text-sm text-muted-foreground">
+                      Aucune option pour le moment.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Nouvelle option</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={newOption.text}
+                    onChange={(e) => setNewOption({ ...newOption, text: e.target.value })}
+                    placeholder="Texte de l'option"
+                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={newOption.isCorrect}
+                      onChange={(e) => setNewOption({ ...newOption, isCorrect: e.target.checked })}
+                    />
+                    <Label>Correct</Label>
+                  </div>
+                  <Button
+                    disabled={!newOption.text.trim() || isCreatingOption}
+                    onClick={async () => {
+                      if (!activeQuestionId) return;
+                      await createOption({
+                        questionId: activeQuestionId,
+                        text: newOption.text,
+                        isCorrect: newOption.isCorrect,
+                      }).unwrap();
+                      setNewOption({ text: "", isCorrect: false });
+                      await refetchOptions();
+                    }}
+                  >
+                    Ajouter
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel>Fermer</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+      {isEditQuestionOpen && editingQuestion && (
+        <AlertDialog
+          open={isEditQuestionOpen}
+          onOpenChange={(open) => {
+            setIsEditQuestionOpen(open);
+            if (!open) setEditingQuestion(null);
+          }}
+        >
+          <AlertDialogContent className="max-w-xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Modifier la question</AlertDialogTitle>
+              <AlertDialogDescription>
+                Type: {evalIsImmediate ? QuestionType.MULTIPLE_CHOICE : QuestionType.TEXT}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-question-text">Texte</Label>
+                <Textarea
+                  id="edit-question-text"
+                  value={editingQuestion.text}
+                  onChange={(e) =>
+                    setEditingQuestion({ ...(editingQuestion as any), text: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-question-points">Points</Label>
+                <Input
+                  id="edit-question-points"
+                  type="number"
+                  value={editingQuestion.points}
+                  onChange={(e) =>
+                    setEditingQuestion({
+                      ...(editingQuestion as any),
+                      points: parseInt(e.target.value) || 1,
+                    })
+                  }
+                  min="1"
+                />
+              </div>
+            </div>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setIsEditQuestionOpen(false)}>
+                Annuler
+              </AlertDialogCancel>
+              <Button
+                disabled={!editingQuestion.text.trim() || isUpdatingQuestion}
+                onClick={async () => {
+                  await updateQuestion({
+                    id: editingQuestion.id,
+                    body: { text: editingQuestion.text, points: editingQuestion.points },
+                  }).unwrap();
+                  setIsEditQuestionOpen(false);
+                  setEditingQuestion(null);
+                }}
+              >
+                Enregistrer
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }

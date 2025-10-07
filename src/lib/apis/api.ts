@@ -21,6 +21,7 @@ import { evaluationQuestionApi } from "./instructor/evaluation-question";
 import { roleApi } from "./admin/role-api";
 import { documentsApi } from "./common/document-api";
 import { eventApi } from "./event-api";
+import { evaluationQuestionOptionApi } from "./instructor/evaluation-question-option";
 // Export all API slices for easy access
 export {
   authApi,
@@ -44,6 +45,7 @@ export {
   instructorApi,
   studentEvaluationApi,
   evaluationQuestionApi,
+  evaluationQuestionOptionApi,
   roleApi,
   eventApi,
 };
@@ -70,6 +72,7 @@ export const apiReducers = {
   [instructorApi.reducerPath]: instructorApi.reducer,
   [studentEvaluationApi.reducerPath]: studentEvaluationApi.reducer,
   [evaluationQuestionApi.reducerPath]: evaluationQuestionApi.reducer,
+  [evaluationQuestionOptionApi.reducerPath]: evaluationQuestionOptionApi.reducer,
   [roleApi.reducerPath]: roleApi.reducer,
   [documentsApi.reducerPath]: documentsApi.reducer,
   [eventApi.reducerPath]: eventApi.reducer,
@@ -97,6 +100,7 @@ export const apiMiddlewares = [
   instructorApi.middleware,
   studentEvaluationApi.middleware,
   evaluationQuestionApi.middleware,
+  evaluationQuestionOptionApi.middleware,
   roleApi.middleware,
   documentsApi.middleware,
   eventApi.middleware,
