@@ -19,11 +19,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AddLessonModal } from "./add-lesson";
 import { UpdateEvaluationModal } from "./update-evaluation";
-import { MoreHorizontal, Trash2, Edit, FileText } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, FileText, Ellipsis } from "lucide-react";
 import {
   useGetStudentEvaluationsBySessionQuery,
   useDeleteStudentEvaluationMutation,
 } from "@/lib/apis/instructor/student-evaluation";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { toast } from "react-hot-toast";
 
 export function Evaluations() {
   const params = useParams();
@@ -32,6 +42,7 @@ export function Evaluations() {
 
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedEvaluationId, setSelectedEvaluationId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: evaluationsData, isLoading } = useGetStudentEvaluationsBySessionQuery(
     { sessionCoursId: courseId },
@@ -41,10 +52,14 @@ export function Evaluations() {
 
   const evaluations = evaluationsData?.data?.evaluations || [];
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Êtes-vous sûr de vouloir supprimer cette évaluation ?")) {
-      await deleteEvaluation({ id });
-    }
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    await toast.promise(deleteEvaluation({ id: deleteId }).unwrap(), {
+      loading: "Suppression…",
+      success: "Évaluation supprimée",
+      error: "Échec de la suppression",
+    });
+    setDeleteId(null);
   };
 
   const handleEdit = (id: string) => {
@@ -122,9 +137,7 @@ export function Evaluations() {
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal />
-                      </Button>
+                      <Ellipsis className="hover:cursor-pointer" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                       <DropdownMenuItem onClick={() => handleEdit(evaluation.id)}>
@@ -143,7 +156,7 @@ export function Evaluations() {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-600"
-                        onClick={() => handleDelete(evaluation.id)}
+                        onClick={() => setDeleteId(evaluation.id)}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Supprimer
@@ -164,6 +177,25 @@ export function Evaluations() {
           isOpen={updateModalOpen}
           onClose={handleCloseUpdateModal}
         />
+      )}
+
+      {deleteId && (
+        <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer cette évaluation ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action est irréversible. Les questions associées peuvent aussi être affectées.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Supprimer
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );
