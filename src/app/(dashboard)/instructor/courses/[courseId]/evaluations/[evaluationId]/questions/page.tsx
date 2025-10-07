@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, ArrowLeft, Trash2 } from "lucide-react";
 import { MoreVertical, Pencil, ListPlus } from "lucide-react";
 import {
@@ -33,6 +32,7 @@ import {
   useDeleteEvaluationQuestionMutation,
   QuestionType,
 } from "@/lib/apis/instructor/evaluation-question";
+// evaluation type is driven via URL param isImmediateResult; no evaluation fetch here
 
 interface QuestionOption {
   text: string;
@@ -42,8 +42,10 @@ interface QuestionOption {
 export default function EvaluationQuestionsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const courseId = params.courseId as string;
   const evaluationId = params.evaluationId as string;
+  // const paramIsImmediate = searchParams?.get("isImmediateResult");
 
   const [newQuestion, setNewQuestion] = useState({
     text: "",
@@ -60,6 +62,7 @@ export default function EvaluationQuestionsPage() {
     { evaluationId },
     { skip: !evaluationId }
   );
+
   const [createQuestion] = useCreateEvaluationQuestionMutation();
   const [deleteQuestion] = useDeleteEvaluationQuestionMutation();
 
@@ -94,13 +97,14 @@ export default function EvaluationQuestionsPage() {
 
   const handleCreateQuestion = async () => {
     if (!newQuestion.text.trim()) return;
-
-    const type = newQuestion.isImmediateResult ? QuestionType.MULTIPLE_CHOICE : QuestionType.TEXT;
+    const paramIsImmediate = searchParams?.get("isImmediateResult");
+    const evalIsImmediate = paramIsImmediate === "true";
+    const type = evalIsImmediate ? QuestionType.MULTIPLE_CHOICE : QuestionType.TEXT;
     const body: any = {
       evaluationId,
       type,
       text: newQuestion.text,
-      isImmediateResult: newQuestion.isImmediateResult,
+      isImmediateResult: evalIsImmediate,
       points: newQuestion.points,
     };
 
@@ -127,6 +131,8 @@ export default function EvaluationQuestionsPage() {
   if (isLoading) {
     return <div className="p-6">Chargement...</div>;
   }
+  const paramIsImmediate = searchParams?.get("isImmediateResult");
+  const evalIsImmediate = paramIsImmediate === "true";
 
   return (
     <div className="p-6">
@@ -141,7 +147,18 @@ export default function EvaluationQuestionsPage() {
         </Button>
         <div className="flex items-center gap-3 ml-auto">
           <h1 className="text-2xl font-bold mr-2">Questions de l'évaluation</h1>
-          <AlertDialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <AlertDialog
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (open) {
+                setNewQuestion((prev) => ({
+                  ...prev,
+                  isImmediateResult: evalIsImmediate,
+                }));
+              }
+            }}
+          >
             <AlertDialogTrigger asChild>
               <Button size="sm" onClick={() => setIsCreateOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" /> Ajouter une question
@@ -151,8 +168,9 @@ export default function EvaluationQuestionsPage() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Ajouter une nouvelle question</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Si "Résultat immédiat" est coché, le type sera {QuestionType.MULTIPLE_CHOICE},
-                  sinon {QuestionType.TEXT}.
+                  Cette évaluation est {evalIsImmediate ? "à résultat immédiat" : "à réponse libre"}
+                  . Le type de question sera{" "}
+                  {evalIsImmediate ? QuestionType.MULTIPLE_CHOICE : QuestionType.TEXT}.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="space-y-4">
@@ -177,19 +195,10 @@ export default function EvaluationQuestionsPage() {
                     min="1"
                   />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="immediate-result"
-                    checked={newQuestion.isImmediateResult}
-                    onCheckedChange={(checked) =>
-                      setNewQuestion({ ...newQuestion, isImmediateResult: !!checked })
-                    }
-                  />
-                  <Label htmlFor="immediate-result">Résultat immédiat</Label>
-                </div>
-                {newQuestion.isImmediateResult && (
+                {evalIsImmediate && (
                   <div className="text-sm text-muted-foreground">
-                    Les options seront ajoutées ultérieurement en éditant la question.
+                    Type: choix multiple. Les options seront ajoutées ultérieurement en éditant la
+                    question.
                   </div>
                 )}
               </div>
@@ -200,7 +209,7 @@ export default function EvaluationQuestionsPage() {
                     setNewQuestion({
                       text: "",
                       points: 1,
-                      isImmediateResult: false,
+                      isImmediateResult: evalIsImmediate,
                       options: [
                         { text: "", isCorrect: false },
                         { text: "", isCorrect: false },
@@ -320,8 +329,8 @@ export default function EvaluationQuestionsPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Ajouter une nouvelle question</AlertDialogTitle>
               <AlertDialogDescription>
-                Renseignez les informations de la question. Si "Résultat immédiat" est coché, le
-                type sera {QuestionType.MULTIPLE_CHOICE}, sinon {QuestionType.TEXT}.
+                Renseignez les informations de la question. Type:{" "}
+                {evalIsImmediate ? QuestionType.MULTIPLE_CHOICE : QuestionType.TEXT}.
               </AlertDialogDescription>
             </AlertDialogHeader>
 
@@ -348,21 +357,10 @@ export default function EvaluationQuestionsPage() {
                   min="1"
                 />
               </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="immediate-result"
-                  checked={newQuestion.isImmediateResult}
-                  onCheckedChange={(checked) =>
-                    setNewQuestion({ ...newQuestion, isImmediateResult: !!checked })
-                  }
-                />
-                <Label htmlFor="immediate-result">Résultat immédiat</Label>
-              </div>
-
-              {newQuestion.isImmediateResult && (
+              {evalIsImmediate && (
                 <div className="text-sm text-muted-foreground">
-                  Les options seront ajoutées ultérieurement en éditant la question.
+                  Type: choix multiple. Les options seront ajoutées ultérieurement en éditant la
+                  question.
                 </div>
               )}
             </div>
@@ -374,7 +372,7 @@ export default function EvaluationQuestionsPage() {
                   setNewQuestion({
                     text: "",
                     points: 1,
-                    isImmediateResult: false,
+                    isImmediateResult: evalIsImmediate,
                     options: [
                       { text: "", isCorrect: false },
                       { text: "", isCorrect: false },

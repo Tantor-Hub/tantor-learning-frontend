@@ -134,7 +134,7 @@ export function Evaluations() {
                       <DropdownMenuItem
                         onClick={() =>
                           router.push(
-                            `/instructor/courses/${courseId}/evaluations/${evaluation.id}/questions`
+                            `/instructor/courses/${courseId}/evaluations/${evaluation.id}/questions?isImmediateResult=${evaluation.isImmediateResult}`
                           )
                         }
                       >
