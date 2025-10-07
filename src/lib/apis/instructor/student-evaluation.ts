@@ -21,6 +21,16 @@ export interface IStudentEvaluation {
   endingTime?: string;
   ispublish: boolean;
   isImmediateResult: boolean;
+  createdBy?: string[];
+  lecturer?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  questions?: any[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export const studentEvaluationApi = createApi({
@@ -30,6 +40,10 @@ export const studentEvaluationApi = createApi({
   endpoints: (builder) => ({
     getStudentEvaluationsBySession: builder.query<any, { sessionCoursId: string }>({
       query: ({ sessionCoursId }) => `studentevaluation/sessioncours/${sessionCoursId}`,
+      providesTags: ["StudentEvaluation"],
+    }),
+    getStudentEvaluationById: builder.query<{ data: IStudentEvaluation }, { id: string }>({
+      query: ({ id }) => `studentevaluation/${id}`,
       providesTags: ["StudentEvaluation"],
     }),
     createStudentEvaluation: builder.mutation<void, IStudentEvaluation>({
@@ -47,11 +61,24 @@ export const studentEvaluationApi = createApi({
       }),
       invalidatesTags: ["StudentEvaluation"],
     }),
+    updateStudentEvaluation: builder.mutation<
+      void,
+      { id: string; body: Partial<IStudentEvaluation> }
+    >({
+      query: ({ id, body }) => ({
+        url: `studentevaluation/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["StudentEvaluation"],
+    }),
   }),
 });
 
 export const {
   useGetStudentEvaluationsBySessionQuery,
+  useGetStudentEvaluationByIdQuery,
   useCreateStudentEvaluationMutation,
   useDeleteStudentEvaluationMutation,
+  useUpdateStudentEvaluationMutation,
 } = studentEvaluationApi;

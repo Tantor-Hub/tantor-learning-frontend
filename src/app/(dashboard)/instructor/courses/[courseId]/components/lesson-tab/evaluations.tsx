@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AddLessonModal } from "./add-lesson";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { UpdateEvaluationModal } from "./update-evaluation";
+import { MoreHorizontal, Trash2, Edit } from "lucide-react";
 import {
   useGetStudentEvaluationsBySessionQuery,
   useDeleteStudentEvaluationMutation,
@@ -27,6 +28,9 @@ import {
 export function Evaluations() {
   const params = useParams();
   const courseId = params.courseId as string;
+
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [selectedEvaluationId, setSelectedEvaluationId] = useState<string | null>(null);
 
   const { data: evaluationsData, isLoading } = useGetStudentEvaluationsBySessionQuery(
     { sessionCoursId: courseId },
@@ -40,6 +44,16 @@ export function Evaluations() {
     if (confirm("Êtes-vous sûr de vouloir supprimer cette évaluation ?")) {
       await deleteEvaluation({ id });
     }
+  };
+
+  const handleEdit = (id: string) => {
+    setSelectedEvaluationId(id);
+    setUpdateModalOpen(true);
+  };
+
+  const handleCloseUpdateModal = () => {
+    setUpdateModalOpen(false);
+    setSelectedEvaluationId(null);
   };
 
   return (
@@ -112,6 +126,10 @@ export function Evaluations() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleEdit(evaluation.id)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Modifier
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-600"
                         onClick={() => handleDelete(evaluation.id)}
@@ -126,6 +144,15 @@ export function Evaluations() {
             ))}
           </TableBody>
         </Table>
+      )}
+
+      {selectedEvaluationId && (
+        <UpdateEvaluationModal
+          evaluationId={selectedEvaluationId}
+          courseId={courseId}
+          isOpen={updateModalOpen}
+          onClose={handleCloseUpdateModal}
+        />
       )}
     </div>
   );
