@@ -109,6 +109,12 @@ export default function Payment() {
       }
     }
 
+    // Check CPF link length
+    if (selectedMethods.includes("cpf") && cpfLink.length > 255) {
+      setError("Le lien CPF ne peut pas dépasser 255 caractères.");
+      return false;
+    }
+
     return true;
   };
 
@@ -232,6 +238,7 @@ export default function Payment() {
                 value={cpfLink}
                 onChange={(e) => handleCpfLinkChange(e.target.value)}
                 className="w-full"
+                maxLength={255}
               />
               <p className="text-xs text-gray-500">
                 Les étudiants pourront accéder à ce lien pour effectuer leur paiement CPF
