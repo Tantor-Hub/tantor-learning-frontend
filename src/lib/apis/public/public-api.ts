@@ -69,6 +69,11 @@ export const publicApi = createApi({
       query: (request) => `sessions/session/${request.id_session}`,
       providesTags: ["Public"],
     }),
+    // trainings with sessions for student
+    getTrainingsWithSessions: builder.query<IListFormationResponse, void>({
+      query: () => "trainings/student/with-sessions",
+      providesTags: ["Public"],
+    }),
   }),
 });
 
@@ -81,4 +86,5 @@ export const {
   useListFormationsQuery,
   useListSessionsByFormationIdQuery,
   useGetSessionByIdQuery,
+  useGetTrainingsWithSessionsQuery,
 } = publicApi;

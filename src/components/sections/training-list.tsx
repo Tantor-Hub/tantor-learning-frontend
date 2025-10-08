@@ -13,53 +13,38 @@ import {
 import { ArrowRight, Funnel, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useListFormationsQuery } from "@/lib/apis/public/public-api";
+import { useGetTrainingsWithSessionsQuery } from "@/lib/apis/public/public-api";
 import { TrainingListSkeleton } from "../skeletons/training-list-skeleton";
+import { ITrainingType } from "@/types/secretary/training-secretary";
 
-// Define types for your formation data
+// Define types based on the new API response
 interface Formation {
-  id: number;
-  titre: string;
-  sous_titre: string;
-  id_category: number;
-  id_thematic: number | null;
-  type_formation: string;
-  rnc: string;
+  id: string;
+  title: string;
+  subtitle: string;
+  type?: string; // public API variant
+  trainingtype?: ITrainingType; // secretary types variant
   description: string;
-  prerequis: string;
-  alternance: string;
-  status: number;
-  prix: number;
-  createdAt: string;
-  updatedAt: string;
-  Category: {
-    id: number;
-    category: string;
+  prix: string | number; // can be numeric or string
+  category?: {
+    title: string;
+  };
+  trainingCategory?: {
+    title: string;
   };
 }
 
 // Types for filters
 interface FilterState {
-  niveau: string;
   modalite: string;
   categorie: string;
-  duree: string;
   prix: string;
 }
 
 // Filter options
 const filterOptions = {
-  niveau: ["Tous les niveaux", "Débutant", "Intermédiaire", "Avancé"] as const,
-  modalite: ["Toutes les modalités", "Présentiel", "Distanciel", "Hybride"] as const,
-  categorie: [
-    "Toutes les catégories",
-    "Comptabilité et Finance (DCG, DSCG)",
-    "Management",
-    "Marketing",
-    "Informatique",
-  ] as const,
-  duree: ["Toutes les durées", "Courte (< 15h)", "Moyenne (15-50h)", "Longue (> 50h)"] as const,
-  prix: ["Tous les prix", "0-500€", "500-1000€", "1000-2000€", "2000€+"] as const,
+  modalite: ["Toutes les modalités", ...Object.values(ITrainingType)],
+  prix: ["Tous les prix", "0-500€", "500-1000€", "1000-2000€", "2000€+"],
 };
 
 export function TrainingList() {
@@ -67,50 +52,79 @@ export function TrainingList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isShown, setIsShown] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
-    niveau: "Tous les niveaux",
     modalite: "Toutes les modalités",
     categorie: "Toutes les catégories",
-    duree: "Toutes les durées",
     prix: "Tous les prix",
   });
 
-  const { data, isLoading } = useListFormationsQuery();
+  const { data, isLoading } = useGetTrainingsWithSessionsQuery();
+
+  console.log(data);
+  console.log(JSON.stringify(data));
+
+  // Build dynamic categories from API data
+  const categories = useMemo(() => {
+    const list: Formation[] = Array.isArray(data?.data) ? (data?.data as Formation[]) : [];
+    const unique = new Set<string>();
+    list.forEach((item) => {
+      const name =
+        (item as any).category?.title?.trim() || (item as any).trainingCategory?.title?.trim();
+      if (name) unique.add(name);
+    });
+    return ["Toutes les catégories", ...Array.from(unique)];
+  }, [data]);
 
   // Filter and search function
   const filteredData = useMemo(() => {
-    if (!data?.data?.list) return [];
+    const list: Formation[] = Array.isArray(data?.data) ? (data?.data as Formation[]) : [];
+    if (!list.length) return [];
 
-    return data?.data.list.filter((item: any) => {
-      // Search by title only
+    return list.filter((item) => {
       const matchesSearch =
-        searchTerm === "" || item.titre.toLowerCase().includes(searchTerm.toLowerCase());
+        searchTerm === "" || item.title.toLowerCase().includes(searchTerm.toLowerCase());
 
-      // Filters - adjust according to your data structure
-      const matchesNiveau =
-        filters.niveau === "Tous les niveaux" || (item.niveau && item.niveau === filters.niveau);
+      // Modalité: match contains to handle values like "En présentiel"
+      const matchesModalite = (() => {
+        if (filters.modalite === "Toutes les modalités") return true;
+        const selected = filters.modalite.toLowerCase();
+        const itemType = ((item as any).type || (item as any).trainingtype || "")
+          .toString()
+          .toLowerCase();
+        return itemType.includes(selected);
+      })();
 
-      const matchesModalite =
-        filters.modalite === "Toutes les modalités" ||
-        (item.modalite && item.modalite === filters.modalite);
+      // Catégorie: exact (case-insensitive) match against category.title
+      const matchesCategorie = (() => {
+        if (filters.categorie === "Toutes les catégories") return true;
+        const selected = filters.categorie.toLowerCase();
+        const cat = ((item as any).category?.title || (item as any).trainingCategory?.title || "")
+          .toString()
+          .toLowerCase();
+        return !!cat && cat === selected;
+      })();
 
-      const matchesCategorie =
-        filters.categorie === "Toutes les catégories" ||
-        (item.categorie && item.categorie === filters.categorie);
+      // Prix: numeric range filtering
+      const matchesPrix = (() => {
+        if (filters.prix === "Tous les prix") return true;
+        const priceValue =
+          typeof (item as any).prix === "number"
+            ? (item as any).prix
+            : parseFloat(((item as any).prix || "0") as string);
+        switch (filters.prix) {
+          case "0-500€":
+            return priceValue >= 0 && priceValue < 500;
+          case "500-1000€":
+            return priceValue >= 500 && priceValue < 1000;
+          case "1000-2000€":
+            return priceValue >= 1000 && priceValue < 2000;
+          case "2000€+":
+            return priceValue >= 2000;
+          default:
+            return true;
+        }
+      })();
 
-      const matchesDuree =
-        filters.duree === "Toutes les durées" || (item.duree && item.duree === filters.duree);
-
-      const matchesPrix =
-        filters.prix === "Tous les prix" || (item.prix && item.prix === filters.prix);
-
-      return (
-        matchesSearch &&
-        matchesNiveau &&
-        matchesModalite &&
-        matchesCategorie &&
-        matchesDuree &&
-        matchesPrix
-      );
+      return matchesSearch && matchesModalite && matchesCategorie && matchesPrix;
     });
   }, [data, searchTerm, filters]);
 
@@ -125,10 +139,8 @@ export function TrainingList() {
   // Reset filters
   const resetFilters = () => {
     setFilters({
-      niveau: "Tous les niveaux",
       modalite: "Toutes les modalités",
       categorie: "Toutes les catégories",
-      duree: "Toutes les durées",
       prix: "Tous les prix",
     });
     setSearchTerm("");
@@ -179,27 +191,6 @@ export function TrainingList() {
         <div className="border p-8 flex flex-col items-end gap-7 mb-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 md:gap-10 w-full">
             <div className="flex flex-col gap-[7px]">
-              <span>Niveau</span>
-              <Select
-                value={filters.niveau}
-                onValueChange={(value) => updateFilter("niveau", value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {filterOptions.niveau.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-[7px]">
               <span>Modalité d'enseignement</span>
               <Select
                 value={filters.modalite}
@@ -231,25 +222,7 @@ export function TrainingList() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {filterOptions.categorie.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-[7px]">
-              <span>Durée</span>
-              <Select value={filters.duree} onValueChange={(value) => updateFilter("duree", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {filterOptions.duree.map((option) => (
+                    {categories.map((option) => (
                       <SelectItem key={option} value={option}>
                         {option}
                       </SelectItem>
@@ -320,8 +293,8 @@ export function TrainingList() {
           filteredData.map((item: Formation) => (
             <div key={item.id} className="border border-blue-200 rounded-[6px] shadow-sm max-w-md">
               <div className="p-5 bg-[#007AFF26] flex flex-col gap-4">
-                <h2 className="text-xl font-semibold text-blue-900">{item.titre}</h2>
-                <p className="text-gray-700 font-medium">{item.sous_titre}</p>
+                <h2 className="text-xl font-semibold text-blue-900">{item.title}</h2>
+                <p className="text-gray-700 font-medium">{item.subtitle}</p>
               </div>
               <div className="p-10 pt-5 flex flex-col gap-4">
                 <p className="text-[#5C677D] mt-4 mb-5">
@@ -332,20 +305,22 @@ export function TrainingList() {
 
                 <div className="flex gap-2.5">
                   <Image src="/icons/house.svg" height={20} width={20} alt="house icon" />
-                  <p className="text-black">{item.type_formation}</p>
+                  <p className="text-black">{(item.type || item.trainingtype || "").toString()}</p>
                 </div>
-
-                <div className="flex items-center gap-2.5">
-                  <Image src="/icons/clock.svg" height={20} width={20} alt="clock icon" />
-                  {item.alternance}
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <Image src="/icons/graduation.svg" height={20} width={20} alt="graduation icon" />
-                  {item.rnc.startsWith("RNCP") ? item.rnc : `RNCP${item.rnc}`}
-                </div>
+                {item.category?.title && (
+                  <div className="flex items-center gap-2.5">
+                    <Image
+                      src="/icons/graduation.svg"
+                      height={20}
+                      width={20}
+                      alt="graduation icon"
+                    />
+                    {item.category.title}
+                  </div>
+                )}
                 <div className="flex items-center gap-2.5">
                   <Image src="/icons/money.svg" height={20} width={20} alt="money icon" />
-                  {item.prix} &euro;
+                  {Number(item.prix)} &euro;
                 </div>
                 <Link href={`/trainings/${item.id}`}>
                   <Button

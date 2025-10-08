@@ -1,4 +1,3 @@
-import { NewsLetter } from "@/components/sections/news-letter";
 import { TrainingList } from "@/components/sections/training-list";
 import { TrainingListSkeleton } from "@/components/skeletons/training-list-skeleton";
 import { Metadata } from "next";
