@@ -10,7 +10,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useGetSessionByIdQuery } from "@/lib/apis/public/public-api";
+import {
+  useGetSessionByIdQuery,
+  useGetStudentTrainingSessionByIdQuery,
+} from "@/lib/apis/public/public-api";
 import { Loading } from "@/components/shared/loading";
 import { EmptyState } from "@/components/shared/empty-state";
 import toast from "react-hot-toast";
@@ -103,6 +106,41 @@ export default function Page() {
   const { data: sessionResponse, isLoading: getSessionIsLoading } = useGetSessionByIdQuery({
     id_session: sessionId,
   });
+  const { data: studentTrainingSession } = useGetStudentTrainingSessionByIdQuery({ id: sessionId });
+  useEffect(() => {
+    if (studentTrainingSession) {
+      console.log("student training session:", JSON.stringify(studentTrainingSession, null, 2));
+    }
+  }, [studentTrainingSession]);
+
+  const adaptStudentTrainingSession = (payload: any) => {
+    if (!payload?.data) return undefined;
+    const d = payload.data;
+    return {
+      Formation: {
+        titre: d?.trainings?.title,
+        sous_titre: d?.trainings?.subtitle,
+        description: d?.trainings?.description,
+      },
+      Surveys: d?.survey
+        ? [
+            {
+              description: d?.survey?.description,
+              Questionnaires: d?.survey?.questions ?? [],
+            },
+          ]
+        : [],
+      text_reglement: d?.regulation_text,
+      type_formation: d?.trainings?.trainingtype,
+      date_session_debut: d?.date_session_debut,
+      date_session_fin: d?.date_session_fin,
+      duree: d?.duree,
+      prix: d?.trainings?.prix,
+      payment_methods: d?.payment_method ? [d.payment_method] : [],
+      designation: d?.title,
+      required_documents: d?.required_documents ?? [],
+    };
+  };
 
   const [applySessionMutation, { isLoading }] = useApplyToTrainingMutation();
 
@@ -114,7 +152,8 @@ export default function Page() {
   const [paymentData, setPaymentData] = useState<SessionPayload["payment"] | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  const session: SessionData | undefined | any = sessionResponse?.data;
+  const adaptedStudent = adaptStudentTrainingSession(studentTrainingSession);
+  const session: SessionData | undefined | any = adaptedStudent || sessionResponse?.data;
 
   const hasDocument = session?.required_documents && session.required_documents.length > 0;
 
@@ -307,13 +346,10 @@ export default function Page() {
     if (!session) return { hasQuestions: false, hasPayment: false, totalSteps: 0 };
 
     const hasQuestions = (session.Surveys?.[0]?.Questionnaires?.length ?? 0) > 0;
-    const hasPayment =
-      (session.payment_methods?.length ?? 0) > 0 && session.prix !== "0" && session.prix !== "0.00";
+    const price = typeof session.prix === "string" ? parseFloat(session.prix) : session.prix;
+    const hasPayment = (session.payment_methods?.length ?? 0) > 0 && !!price && price > 0;
 
-    const totalSteps =
-      (hasQuestions ? 1 : 0) +
-      1 + // Signature (toujours présente)
-      (hasPayment ? 1 : 0);
+    const totalSteps = (hasQuestions ? 1 : 0) + 1 + (hasPayment ? 1 : 0);
 
     return { hasQuestions, hasPayment, totalSteps };
   }, [session]);
@@ -609,77 +645,87 @@ export default function Page() {
                 </div>
 
                 <div className="mt-6 space-y-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-blue-100 p-1 rounded-full">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="text-blue-800"
-                        width="16"
-                        height="16"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect width="18" height="18" x="3" y="3" rx="2" />
-                        <path d="M3 9h18" />
-                      </svg>
-                    </div>
-                    <span className="font-medium text-gray-700">
-                      {session.type_formation === "onLine" ? "En ligne" : session.type_formation}
-                    </span>
-                  </div>
+                  {session.date_session_debut && session.date_session_fin && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <div className="bg-blue-100 p-1 rounded-full">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="text-blue-800"
+                            width="16"
+                            height="16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <rect width="18" height="18" x="3" y="3" rx="2" />
+                            <path d="M3 9h18" />
+                          </svg>
+                        </div>
+                        <span className="font-medium text-gray-700">
+                          {session.type_formation === "onLine"
+                            ? "En ligne"
+                            : session.type_formation}
+                        </span>
+                      </div>
 
-                  <div className="flex items-center gap-2">
-                    <div className="bg-blue-100 p-1 rounded-full">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="text-blue-800"
-                        width="16"
-                        height="16"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14" />
-                      </svg>
-                    </div>
-                    <span className="font-medium text-gray-700">
-                      {formatDate(session.date_session_debut)} -{" "}
-                      {formatDate(session.date_session_fin)}
-                    </span>
-                  </div>
+                      <div className="flex items-center gap-2">
+                        <div className="bg-blue-100 p-1 rounded-full">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="text-blue-800"
+                            width="16"
+                            height="16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                          </svg>
+                        </div>
+                        <span className="font-medium text-gray-700">
+                          {formatDate(session.date_session_debut)} -{" "}
+                          {formatDate(session.date_session_fin)}
+                        </span>
+                      </div>
+                    </>
+                  )}
 
-                  <div className="flex items-center gap-2">
-                    <div className="bg-blue-100 p-1 rounded-full">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="text-ring"
-                        width="16"
-                        height="16"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" x2="12" y1="8" y2="12" />
-                        <line x1="12" x2="12.01" y1="16" y2="16" />
-                      </svg>
+                  {session.duree && (
+                    <div className="flex items-center gap-2">
+                      <div className="bg-blue-100 p-1 rounded-full">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="text-ring"
+                          width="16"
+                          height="16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" x2="12" y1="8" y2="12" />
+                          <line x1="12" x2="12.01" y1="16" y2="16" />
+                        </svg>
+                      </div>
+                      <span className="font-medium text-gray-700">Durée: {session.duree}</span>
                     </div>
-                    <span className="font-medium text-gray-700">Durée: {session.duree}</span>
-                  </div>
+                  )}
                 </div>
 
                 <div className="mt-6 pt-6 border-t border-blue-200">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-600">Total à payer</span>
-                    <span className="text-xl font-bold text-blue-600">{session.prix} €</span>
+                    <span className="text-xl font-bold text-blue-600">
+                      {Number(session.prix).toFixed(2)} €
+                    </span>
                   </div>
                 </div>
 

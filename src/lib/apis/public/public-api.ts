@@ -79,6 +79,11 @@ export const publicApi = createApi({
       query: () => "trainings/student/with-sessions",
       providesTags: ["Public"],
     }),
+    // student access: get a specific training session by ID
+    getStudentTrainingSessionById: builder.query<any, { id: string }>({
+      query: ({ id }) => `trainingssession/student/${id}`,
+      providesTags: ["Public"],
+    }),
   }),
 });
 
@@ -93,4 +98,5 @@ export const {
   useListStudentSessionsByTrainingIdQuery,
   useGetSessionByIdQuery,
   useGetTrainingsWithSessionsQuery,
+  useGetStudentTrainingSessionByIdQuery,
 } = publicApi;
