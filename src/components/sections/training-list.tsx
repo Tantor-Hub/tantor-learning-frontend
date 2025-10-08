@@ -59,9 +59,6 @@ export function TrainingList() {
 
   const { data, isLoading } = useGetTrainingsWithSessionsQuery();
 
-  console.log(data);
-  console.log(JSON.stringify(data));
-
   // Build dynamic categories from API data
   const categories = useMemo(() => {
     const list: Formation[] = Array.isArray(data?.data) ? (data?.data as Formation[]) : [];

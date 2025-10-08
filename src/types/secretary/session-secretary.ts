@@ -1,9 +1,10 @@
 export interface IAddSessionRequest {
-  id_formation: number;
-  description: string;
-  date_session_debut: string; // or Date if you prefer
-  date_session_fin: string; // or Date if you prefer
+  id_trainings: string;
+  title: string;
   nb_places: number;
+  begining_date: string;
+  ending_date: string;
+  regulation_text: string;
   payment_methods?: string[]; //"OPCO" | "CPF" | "CARD";
   required_documents?: string[];
   // required_documents: Array<
@@ -18,7 +19,6 @@ export interface IAddSessionRequest {
   //   | "REGLEMENT_INTERIEUR"
   //   | "CGV"
   // >;
-  text_reglement?: string;
   questions?: Array<{
     titre: string;
     description: string;
@@ -36,7 +36,6 @@ export interface IUpdateSessionRequest {
   id_trainings?: string;
   title?: string;
   nb_places?: number;
-  available_places?: number;
   required_document_before?: string[];
   required_document_during?: string[];
   required_document_after?: string[];

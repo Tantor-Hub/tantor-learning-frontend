@@ -119,7 +119,6 @@ const CreateSessionForm = ({
     id_trainings: trainingId,
     title: "",
     nb_places: 1,
-    available_places: 0, // This will be calculated automatically by the backend
     regulation_text: "",
     begining_date: undefined as Date | undefined,
     ending_date: undefined as Date | undefined,
@@ -148,7 +147,6 @@ const CreateSessionForm = ({
         id_trainings: trainingId,
         title: "",
         nb_places: 1,
-        available_places: 0, // This will be calculated automatically by the backend
         regulation_text: "",
         begining_date: undefined,
         ending_date: undefined,

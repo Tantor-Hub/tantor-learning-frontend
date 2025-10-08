@@ -64,6 +64,11 @@ export const publicApi = createApi({
       query: ({ id }) => `sessions/byidformation/${id}`,
       providesTags: ["Public"],
     }),
+    // student access: get training sessions by training ID
+    listStudentSessionsByTrainingId: builder.query<any, { id: string }>({
+      query: ({ id }) => `trainingssession/student/training/${id}`,
+      providesTags: ["Public"],
+    }),
     // get Formations by Id -> sessions
     getSessionById: builder.query<IGetSessionByIdResponse, { id_session: string }>({
       query: (request) => `sessions/session/${request.id_session}`,
@@ -85,6 +90,7 @@ export const {
   useContactFormAPIMutation,
   useListFormationsQuery,
   useListSessionsByFormationIdQuery,
+  useListStudentSessionsByTrainingIdQuery,
   useGetSessionByIdQuery,
   useGetTrainingsWithSessionsQuery,
 } = publicApi;

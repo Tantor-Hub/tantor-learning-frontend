@@ -33,7 +33,6 @@ interface SessionFormData {
   id_trainings?: string;
   title?: string;
   nb_places?: number;
-  available_places?: number;
   regulation_text?: string;
   begining_date?: string;
   ending_date?: string;
@@ -60,7 +59,6 @@ export function EditSessionModal({ open, onOpenChange, sessionId }: EditSessionM
         id_trainings: session.id_trainings,
         title: session.title,
         nb_places: session.nb_places,
-        available_places: session.available_places,
         regulation_text: session.regulation_text,
         begining_date: session.begining_date
           ? new Date(session.begining_date).toISOString().split("T")[0]
@@ -82,19 +80,6 @@ export function EditSessionModal({ open, onOpenChange, sessionId }: EditSessionM
 
     if (!formData.nb_places || formData.nb_places <= 0) {
       newErrors.nb_places = "Le nombre de places doit être supérieur à 0";
-    }
-
-    if (!formData.available_places || formData.available_places < 0) {
-      newErrors.available_places = "Le nombre de places disponibles ne peut pas être négatif";
-    }
-
-    if (
-      formData.available_places &&
-      formData.nb_places &&
-      formData.available_places > formData.nb_places
-    ) {
-      newErrors.available_places =
-        "Les places disponibles ne peuvent pas dépasser le nombre total de places";
     }
 
     if (!formData.begining_date) {
@@ -224,50 +209,25 @@ export function EditSessionModal({ open, onOpenChange, sessionId }: EditSessionM
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nb_places" className="text-sm font-medium">
-                    Nombre total de places *
-                  </Label>
-                  <Input
-                    id="nb_places"
-                    type="number"
-                    min="1"
-                    value={formData.nb_places || ""}
-                    onChange={(e) => handleInputChange("nb_places", parseInt(e.target.value) || 0)}
-                    placeholder="Ex: 20"
-                    className={errors.nb_places ? "border-red-500" : ""}
-                  />
-                  {errors.nb_places && (
-                    <p className="text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {errors.nb_places}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="available_places" className="text-sm font-medium">
-                    Places disponibles *
-                  </Label>
-                  <Input
-                    id="available_places"
-                    type="number"
-                    min="0"
-                    value={formData.available_places || ""}
-                    onChange={(e) =>
-                      handleInputChange("available_places", parseInt(e.target.value) || 0)
-                    }
-                    placeholder="Ex: 15"
-                    className={errors.available_places ? "border-red-500" : ""}
-                  />
-                  {errors.available_places && (
-                    <p className="text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {errors.available_places}
-                    </p>
-                  )}
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="nb_places" className="text-sm font-medium">
+                  Nombre total de places *
+                </Label>
+                <Input
+                  id="nb_places"
+                  type="number"
+                  min="1"
+                  value={formData.nb_places || ""}
+                  onChange={(e) => handleInputChange("nb_places", parseInt(e.target.value) || 0)}
+                  placeholder="Ex: 20"
+                  className={errors.nb_places ? "border-red-500" : ""}
+                />
+                {errors.nb_places && (
+                  <p className="text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.nb_places}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

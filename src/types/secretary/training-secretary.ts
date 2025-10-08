@@ -180,7 +180,6 @@ export interface ICreateSessionRequest {
   id_trainings: string; // Required (UUID of the training)
   title: string; // Required
   nb_places: number; // Required (minimum: 1)
-  available_places: number; // Required (minimum: 0)
   required_document?: string[]; // Optional
   payment_method?: string[]; // Optional
   survey?: string[]; // Optional

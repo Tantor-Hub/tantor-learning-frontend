@@ -90,14 +90,14 @@ type Question = {
 };
 
 interface SessionFormState {
-  description: string;
-  date_session_debut: string;
-  date_session_fin: string;
+  title: string;
+  begining_date: string;
+  ending_date: string;
   nb_places: string;
   payment_methods: string[];
   questions: Question[];
   required_documents: string[];
-  text_reglement: string;
+  regulation_text: string;
 }
 
 const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess, trainingId }) => {
@@ -105,23 +105,23 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
   const totalSteps = 5;
 
   const [form, setForm] = useState<SessionFormState>({
-    description: "",
-    date_session_debut: "",
-    date_session_fin: "",
+    title: "",
+    begining_date: "",
+    ending_date: "",
     nb_places: "",
     payment_methods: [],
     questions: [],
     required_documents: [],
-    text_reglement: "",
+    regulation_text: "",
   });
 
   const [addSessionMutation, { isLoading }] = useAddSessionMutation();
 
   const isStep1Valid = () => {
     return (
-      form.description.trim() !== "" &&
-      form.date_session_debut !== "" &&
-      form.date_session_fin !== "" &&
+      form.title.trim() !== "" &&
+      form.begining_date !== "" &&
+      form.ending_date !== "" &&
       form.nb_places.trim() !== "" &&
       parseInt(form.nb_places) > 0
     );
@@ -219,14 +219,14 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
       toast.loading("Creation de la ssession");
       // Build the payload according to API structure
       const payload: IAddSessionRequest = {
-        id_formation: parseInt(trainingId),
-        description: form.description,
-        date_session_debut: form.date_session_debut + "T08:00:00",
-        date_session_fin: form.date_session_fin + "T17:30:00",
+        id_trainings: trainingId,
+        title: form.title,
+        begining_date: form.begining_date + "T08:00:00",
+        ending_date: form.ending_date + "T17:30:00",
         nb_places: parseInt(form.nb_places),
         required_documents: form.required_documents,
         payment_methods: form.payment_methods,
-        text_reglement: form.text_reglement,
+        regulation_text: form.regulation_text,
       };
 
       const validQuestions = form.questions
@@ -251,17 +251,15 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
           return questionData;
         });
 
-      console.log("Données envoyées:", payload);
-
       await addSessionMutation({
-        id_formation: parseInt(trainingId),
-        description: form.description,
-        date_session_debut: form.date_session_debut + "T08:00:00",
-        date_session_fin: form.date_session_fin + "T17:30:00",
+        id_trainings: trainingId,
+        title: form.title,
+        begining_date: form.begining_date + "T08:00:00",
+        ending_date: form.ending_date + "T17:30:00",
         nb_places: parseInt(form.nb_places),
         required_documents: form.required_documents,
         payment_methods: form.payment_methods,
-        text_reglement: form.text_reglement,
+        regulation_text: form.regulation_text,
         questions: validQuestions,
       }).unwrap();
       toast.dismiss();
@@ -270,14 +268,14 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
 
       // Reset form
       setForm({
-        description: "",
-        date_session_debut: "",
-        date_session_fin: "",
+        title: "",
+        begining_date: "",
+        ending_date: "",
         nb_places: "",
         payment_methods: [],
         questions: [],
         required_documents: [],
-        text_reglement: "",
+        regulation_text: "",
       });
       setCurrentStep(1);
       onOpenChange(false);
@@ -375,42 +373,42 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="description">
-                  Description <span className="text-red-500">*</span>
+                <Label htmlFor="title">
+                  Title <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
-                  id="description"
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  id="title"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Décrivez le contenu et les objectifs de cette session..."
                   rows={3}
-                  className={form.description.trim() === "" ? "border-red-300" : ""}
+                  className={form.title.trim() === "" ? "border-red-300" : ""}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="date_session_debut">
+                  <Label htmlFor="begining_date">
                     Date de début <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    id="date_session_debut"
+                    id="begining_date"
                     type="date"
-                    value={form.date_session_debut}
-                    onChange={(e) => setForm({ ...form, date_session_debut: e.target.value })}
-                    className={form.date_session_debut === "" ? "border-red-300" : ""}
+                    value={form.begining_date}
+                    onChange={(e) => setForm({ ...form, begining_date: e.target.value })}
+                    className={form.begining_date === "" ? "border-red-300" : ""}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="date_session_fin">
+                  <Label htmlFor="ending_date">
                     Date de fin <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    id="date_session_fin"
+                    id="ending_date"
                     type="date"
-                    value={form.date_session_fin}
-                    onChange={(e) => setForm({ ...form, date_session_fin: e.target.value })}
-                    className={form.date_session_fin === "" ? "border-red-300" : ""}
+                    value={form.ending_date}
+                    onChange={(e) => setForm({ ...form, ending_date: e.target.value })}
+                    className={form.ending_date === "" ? "border-red-300" : ""}
                   />
                 </div>
               </div>
@@ -637,8 +635,8 @@ const SessionForm: React.FC<SessionFormProps> = ({ open, onOpenChange, onSuccess
                 Définissez le règlement intérieur de cette session
               </p>
               <Textarea
-                value={form.text_reglement}
-                onChange={(e) => setForm({ ...form, text_reglement: e.target.value })}
+                value={form.regulation_text}
+                onChange={(e) => setForm({ ...form, regulation_text: e.target.value })}
                 placeholder="Ex: Les participants doivent avoir un niveau minimum en programmation. L'assiduité est obligatoire. Les absences doivent être justifiées..."
                 rows={6}
                 className="bg-white"

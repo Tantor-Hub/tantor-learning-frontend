@@ -27,7 +27,7 @@ const MinimalSessionForm: React.FC<MinimalSessionFormProps> = ({ trainingId, onS
   const [dateEnd, setDateEnd] = useState("");
   const [nbPlaces, setNbPlaces] = useState("");
   const [textReglement, setTextReglement] = useState("");
-
+  alert("Minimal open");
   const [createSession, { isLoading }] = useCreateSessionMutation();
 
   const isValid = () => {
@@ -51,7 +51,6 @@ const MinimalSessionForm: React.FC<MinimalSessionFormProps> = ({ trainingId, onS
         id_trainings: trainingId,
         title: description,
         nb_places: parseInt(nbPlaces),
-        available_places: parseInt(nbPlaces),
         regulation_text: textReglement,
         begining_date: dateStart + "T08:00:00",
         ending_date: dateEnd + "T17:30:00",
