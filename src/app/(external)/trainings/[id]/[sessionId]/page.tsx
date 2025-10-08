@@ -58,6 +58,7 @@ interface SessionData {
   duree: string;
   prix: number;
   payment_methods?: string[];
+  cpf_link?: string;
   designation?: string;
   required_documents?: string[];
 }
@@ -116,6 +117,12 @@ export default function Page() {
   const adaptStudentTrainingSession = (payload: any) => {
     if (!payload?.data) return undefined;
     const d = payload.data;
+    // Normalize payment methods to uppercase array and surface cpf_link
+    const rawPayment = d?.payment_method;
+    const paymentArray = Array.isArray(rawPayment) ? rawPayment : rawPayment ? [rawPayment] : [];
+    const normalizedPaymentMethods = paymentArray
+      .filter(Boolean)
+      .map((m: string) => (typeof m === "string" ? m.toUpperCase() : m));
     return {
       Formation: {
         titre: d?.trainings?.title,
@@ -136,7 +143,8 @@ export default function Page() {
       date_session_fin: d?.date_session_fin,
       duree: d?.duree,
       prix: d?.trainings?.prix,
-      payment_methods: d?.payment_method ? [d.payment_method] : [],
+      payment_methods: normalizedPaymentMethods,
+      cpf_link: d?.cpf_link,
       designation: d?.title,
       required_documents: d?.required_documents ?? [],
     };
@@ -205,11 +213,7 @@ export default function Page() {
         toast.error("Vous êtes déjà inscrit à la formation");
         // toast.error(error?.data?.data);
       }
-      if (error.status === 401) {
-        toast.error("Erreur d'authentification");
-        router.push("/signin");
-        return false;
-      }
+
       toast.error(error.message || "Erreur lors de l'inscription");
       return false;
     } finally {
@@ -218,38 +222,6 @@ export default function Page() {
   };
 
   // HANDLERS POUR LES DIFFÉRENTS TYPES DE PAIEMENT
-
-  const handleCPFPayment = async () => {
-    try {
-      const fullName = `${currentUser?.firstName} ${currentUser?.lastName}`.trim();
-      if (!fullName) {
-        toast.error("Nom d'utilisateur manquant");
-        return;
-      }
-
-      const cpfPaymentData: SessionPayload["payment"] = {
-        method: "CPF",
-        cpf: {
-          full_name: fullName,
-        },
-      };
-
-      // Set the payment data for UI feedback
-      setPaymentData(cpfPaymentData);
-
-      // Submit to API
-      const success = await handleApplyToSessionMutation(cpfPaymentData);
-      if (success) {
-        // Only redirect to external site after successful API call
-        window.open("https://www.moncompteformation.gouv.fr", "_blank");
-        toast.success("Redirection vers Mon Compte Formation");
-      }
-    } catch (error: any) {
-      toast.error("Une erreur est survenue");
-      // Reset payment data on error
-      setPaymentData(null);
-    }
-  };
 
   // OPCO PAYMENT
   const handleOPCOPayment = async (formData: OpcoFormData) => {
@@ -769,7 +741,8 @@ export default function Page() {
                     sessionId={sessionId}
                     isValidOPCO={isValidOPCO}
                     trainingId={trainingId}
-                    handleCPFPayment={handleCPFPayment}
+                    availableMethods={session.payment_methods}
+                    cpfLink={session.cpf_link}
                     handleOPCOPayment={handleOPCOPayment}
                     handleCARDPayment={handleCARDPayment}
                     hasDocument={hasDocument}

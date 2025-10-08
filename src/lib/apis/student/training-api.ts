@@ -65,6 +65,16 @@ export const trainingStudentApi = createApi({
       query: (request) => `courses/course/${request.id_cours}`,
       providesTags: ["TrainingStudent"],
     }),
+
+    // Create CPF payment method (student access)
+    createCpfPayment: builder.mutation<any, { id_session: string }>({
+      query: (body) => ({
+        url: `paymentmethodcpf/create`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["TrainingStudent"],
+    }),
   }),
 });
 
@@ -76,4 +86,5 @@ export const {
   useGetMySessionsQuery,
   useGetCoursesByIdQuery,
   useGetTrainingByIdQuery,
+  useCreateCpfPaymentMutation,
 } = trainingStudentApi;

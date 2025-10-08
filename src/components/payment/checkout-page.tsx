@@ -4,6 +4,9 @@ import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js"
 import { Button } from "../ui/button";
 import { Building, Euro, CreditCard } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { CPFCard } from "./cards/cpf-card";
+import { OPCOCard } from "./cards/opco-card";
+import { CardPayment } from "./cards/card";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { convertToSubcurrency } from "@/lib/convert-to-subcurrency";
@@ -24,7 +27,8 @@ export interface CheckoutPageProps {
   amount: number;
   sessionId: string;
   trainingId: string;
-  handleCPFPayment: () => void;
+  availableMethods?: string[];
+  cpfLink?: string;
   handleOPCOPayment: (formData: OpcoFormData) => Promise<void>;
   handleCARDPayment: (paymentData: any) => Promise<void>;
   hasDocument: boolean;
@@ -35,7 +39,8 @@ export function CheckoutPage({
   amount,
   sessionId,
   trainingId,
-  handleCPFPayment,
+  availableMethods = ["opco", "cpf", "card"],
+  cpfLink,
   isValidOPCO,
   handleOPCOPayment,
   handleCARDPayment,
@@ -47,7 +52,7 @@ export function CheckoutPage({
   const [errorMessage, setErrorMessage] = useState<string>();
   const [clientSecret, setClientSecret] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<"OPCO" | "CPF" | "CARD" | null>(null);
+  const [selectedOption, setSelectedOption] = useState<"opco" | "cpf" | "card" | null>(null);
   const [showOpcoForm, setShowOpcoForm] = useState(false);
   const [formData, setFormData] = useState<OpcoFormData>({
     companyName: "",
@@ -68,13 +73,13 @@ export function CheckoutPage({
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
   useEffect(() => {
+    // Pre-create card intent even if card isn't chosen yet to save time
     fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/stripe/payment/card`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      // parseFloat((amount * 100).toFixed(2))
-      body: JSON.stringify({ amount: amount, session_id: sessionId, user_id: currentUser?.id }), // Stripe utilise les centimes
+      body: JSON.stringify({ amount: amount, session_id: sessionId, user_id: currentUser?.id }),
     })
       .then((res) => res.json())
       .then((data) => setClientSecret(data.clientSecret))
@@ -84,11 +89,8 @@ export function CheckoutPage({
       });
   }, [amount, sessionId, currentUser?.id]);
 
-  // Gérer la sélection CPF
-  const handleCPFSelection = () => {
-    setSelectedOption("CPF");
-    handleCPFPayment();
-  };
+  // selection helpers
+  const select = (k: "opco" | "cpf" | "card") => setSelectedOption(k);
 
   // Gérer le paiement par carte
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -109,18 +111,15 @@ export function CheckoutPage({
     }
 
     try {
-      // Préparer les données de paiement
-      // const paymentData = {
-      //   stripe,
-      //   elements,
-      //   clientSecret,
-      //   confirmParams: {
-      //     return_url: `${process.env.NEXT_PUBLIC_APP_URL}/trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}&hasDocument=${hasDocument}&trainingId=${trainingId}&sessionId=${sessionId}`,
-      //   },
-      // };
-
       // Appeler la fonction du parent pour gérer le paiement par carte
-      await handleCARDPayment({ id_session: "kddk" });
+      await handleCARDPayment({
+        stripe,
+        elements,
+        clientSecret,
+        confirmParams: {
+          return_url: `${process.env.NEXT_PUBLIC_APP_URL}/trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}&hasDocument=${hasDocument}&trainingId=${trainingId}&sessionId=${sessionId}`,
+        },
+      });
     } catch (error: any) {
       setErrorMessage(error.message || "Erreur lors du paiement");
     } finally {
@@ -159,78 +158,56 @@ export function CheckoutPage({
     }
   };
 
-  if (!clientSecret || !stripe || !elements) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div
-          className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-e-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
-          role="status"
-        >
-          <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-            Loading...
-          </span>
-        </div>
-      </div>
-    );
-  }
+  // Determine which options to show based on availableMethods prop (values expected uppercase)
+  const showOPCO = availableMethods.map((m) => m.toUpperCase()).includes("OPCO");
+  const showCPF = availableMethods.map((m) => m.toUpperCase()).includes("CPF");
+  const showCARD = availableMethods.map((m) => m.toUpperCase()).includes("CARD");
 
   return (
     <div className="space-y-6">
       {/* Options de paiement */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
         {/* Option OPCO */}
-        <div
-          tabIndex={0}
-          className={`rounded-lg border-2 p-4 hover:cursor-pointer transition-all duration-200 ${
-            selectedOption === "OPCO"
-              ? "border-primary bg-primary/5 text-primary"
-              : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-900"
-          }`}
-          onClick={() => {
-            setSelectedOption("OPCO");
-            setShowOpcoForm(true);
-          }}
-        >
-          <div className="flex flex-col items-center text-center space-y-2">
-            <Building size={24} />
-            <p className="font-semibold">OPCO</p>
-            <p className="text-xs text-gray-500">Prise en charge employeur</p>
-          </div>
-        </div>
+        {showOPCO && (
+          <OPCOCard
+            isSelected={selectedOption === "opco"}
+            onSelect={() => select("opco")}
+            onConfigured={async (opco) => {
+              // delegate to parent handler
+              await handleOPCOPayment({
+                companyName: opco.nom_entreprise,
+                siren: opco.siren,
+                managerName: opco.nom_responsable,
+                phone: opco.telephone_responsable,
+                email: opco.email_responsable,
+              });
+            }}
+          />
+        )}
 
         {/* Option CPF */}
-        <div
-          tabIndex={1}
-          className={`rounded-lg border-2 p-4 hover:cursor-pointer transition-all duration-200 ${
-            selectedOption === "CPF"
-              ? "border-primary bg-primary/5 text-primary"
-              : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-900"
-          }`}
-          onClick={handleCPFSelection}
-        >
-          <div className="flex flex-col items-center text-center space-y-2">
-            <Euro size={24} />
-            <p className="font-semibold">CPF</p>
-            <p className="text-xs text-gray-500">Mon Compte Formation</p>
-          </div>
-        </div>
+        {showCPF && (
+          <CPFCard
+            sessionId={sessionId}
+            cpfLink={cpfLink}
+            isSelected={selectedOption === "cpf"}
+            onSelect={() => select("cpf")}
+          />
+        )}
 
         {/* Option Carte */}
-        <div
-          tabIndex={2}
-          className={`rounded-lg border-2 p-4 hover:cursor-pointer transition-all duration-200 ${
-            selectedOption === "CARD"
-              ? "border-primary bg-primary/5 text-primary"
-              : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-900"
-          }`}
-          onClick={() => setSelectedOption("CARD")}
-        >
-          <div className="flex flex-col items-center text-center space-y-2">
-            <CreditCard size={24} />
-            <p className="font-semibold">Carte</p>
-            <p className="text-xs text-gray-500">Paiement immédiat</p>
-          </div>
-        </div>
+        {showCARD && (
+          <CardPayment
+            amount={amount}
+            returnUrl={`${process.env.NEXT_PUBLIC_APP_URL}/trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}&hasDocument=${hasDocument}&trainingId=${trainingId}&sessionId=${sessionId}`}
+            clientSecret={clientSecret}
+            isSelected={selectedOption === "card"}
+            onSelect={() => select("card")}
+            onConfirm={async (payload) => {
+              await handleCARDPayment(payload);
+            }}
+          />
+        )}
       </div>
 
       {/* Message d'erreur global */}
@@ -362,41 +339,10 @@ export function CheckoutPage({
         </DialogContent>
       </Dialog>
 
-      {/* Paiement par carte - affiché seulement si CARD est sélectionné */}
-      {selectedOption === "CARD" && (
-        <div className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-            <h3 className="font-medium text-blue-900 mb-2">Paiement par carte bancaire</h3>
-            <p className="text-sm text-blue-700">
-              Votre paiement sera sécurisé via Stripe. Aucune donnée bancaire n'est stockée sur nos
-              serveurs.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {clientSecret && <PaymentElement options={{ layout: "tabs" }} />}
-
-            <Button
-              type="submit"
-              disabled={!stripe || loading}
-              className="w-full font-bold disabled:opacity-50 disabled:animate-pulse"
-              size="lg"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Traitement en cours...
-                </>
-              ) : (
-                `Payer ${amount} €`
-              )}
-            </Button>
-          </form>
-        </div>
-      )}
+      {/* Card details now rendered inside CardPayment when selected */}
 
       {/* Message de confirmation pour CPF */}
-      {selectedOption === "CPF" && (
+      {selectedOption === "cpf" && (
         <div className="bg-green-50 border border-green-200 rounded-md p-4">
           <h3 className="font-medium text-green-900 mb-2">Paiement CPF sélectionné</h3>
           <p className="text-sm text-green-700">
@@ -407,7 +353,7 @@ export function CheckoutPage({
       )}
 
       {/* Message de confirmation pour OPCO */}
-      {selectedOption === "OPCO" && !showOpcoForm && (
+      {selectedOption === "opco" && !showOpcoForm && (
         <div className="bg-orange-50 border border-orange-200 rounded-md p-4">
           <h3 className="font-medium text-orange-900 mb-2">Demande OPCO en cours</h3>
           <p className="text-sm text-orange-700">
