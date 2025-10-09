@@ -18,7 +18,7 @@ import { Loading } from "@/components/shared/loading";
 import { EmptyState } from "@/components/shared/empty-state";
 import toast from "react-hot-toast";
 import { useApplyToTrainingMutation } from "@/lib/apis/student/training-api";
-import { CheckoutPage, OpcoFormData } from "@/components/payment/checkout-page";
+import { CheckoutPage } from "@/components/payment/checkout-page";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { useSelector } from "react-redux";
@@ -222,41 +222,6 @@ export default function Page() {
   };
 
   // HANDLERS POUR LES DIFFÉRENTS TYPES DE PAIEMENT
-
-  // OPCO PAYMENT
-  const handleOPCOPayment = async (formData: OpcoFormData) => {
-    try {
-      const opcoPaymentData: SessionPayload["payment"] = {
-        method: "OPCO",
-        opco: {
-          nom_entreprise: formData.companyName,
-          siren: formData.siren,
-          nom_responsable: formData.managerName,
-          telephone_responsable: formData.phone,
-          email_responsable: formData.email,
-          // nom_opco peut être ajouté si vous avez cette info
-        },
-      };
-
-      // Set the payment data for UI feedback
-      setPaymentData(opcoPaymentData);
-
-      // Submit to API
-      const success = await handleApplyToSessionMutation(opcoPaymentData);
-      setIsValidOPCO(success);
-      if (success) {
-        toast.success("Informations OPCO enregistrées");
-      } else {
-        // Reset payment data on failure
-        setPaymentData(null);
-      }
-    } catch (error) {
-      // console.error("Erreur paiement OPCO:", error);
-      // toast.error("Une erreur est survenue");
-      // Reset payment data on error
-      setPaymentData(null);
-    }
-  };
 
   const handleCARDPayment = async (stripePaymentData: any) => {
     try {
@@ -743,7 +708,6 @@ export default function Page() {
                     trainingId={trainingId}
                     availableMethods={session.payment_methods}
                     cpfLink={session.cpf_link}
-                    handleOPCOPayment={handleOPCOPayment}
                     handleCARDPayment={handleCARDPayment}
                     hasDocument={hasDocument}
                   />

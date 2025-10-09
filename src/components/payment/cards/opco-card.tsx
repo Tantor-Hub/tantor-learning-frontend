@@ -6,21 +6,21 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
+import { useCreateOpcoPaymentMutation } from "@/lib/apis/student/training-api";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
+import { useRouter } from "next/navigation";
 
 interface OPCOCardProps {
+  sessionId: string;
   isSelected: boolean;
-  onSelect: () => void;
-  onConfigured: (payload: {
-    nom_entreprise: string;
-    siren: string;
-    nom_responsable: string;
-    telephone_responsable: string;
-    email_responsable: string;
-  }) => Promise<void> | void; // parent may apply session
+  onSelect: () => void; // for ui
 }
 
-export function OPCOCard({ isSelected, onSelect, onConfigured }: OPCOCardProps) {
+export function OPCOCard({ sessionId, isSelected, onSelect }: OPCOCardProps) {
   const [show, setShow] = useState(false);
+  const currentUser = useSelector(selectCurrentUser);
+  const router = useRouter();
   const [form, setForm] = useState({
     companyName: "",
     siren: "",
@@ -35,11 +35,12 @@ export function OPCOCard({ isSelected, onSelect, onConfigured }: OPCOCardProps) 
     phone: false,
     email: false,
   });
-  const [loading, setLoading] = useState(false);
+  const [createOpcoPayment, { isLoading }] = useCreateOpcoPaymentMutation();
+
   const validate = () => {
     const e = {
       companyName: !form.companyName.trim(),
-      siren: !form.siren.trim() || !/^\d{9}$/.test(form.siren),
+      siren: !form.siren.trim(),
       managerName: !form.managerName.trim(),
       phone: !form.phone.trim() || !/^[0-9 +-]+$/.test(form.phone),
       email: !form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email),
@@ -55,21 +56,20 @@ export function OPCOCard({ isSelected, onSelect, onConfigured }: OPCOCardProps) 
 
   const submit = async () => {
     if (!validate()) return;
-    setLoading(true);
     try {
-      await onConfigured({
+      await createOpcoPayment({
+        id_session: sessionId,
         nom_entreprise: form.companyName,
         siren: form.siren,
         nom_responsable: form.managerName,
         telephone_responsable: form.phone,
         email_responsable: form.email,
-      });
+      }).unwrap();
       toast.success("Informations OPCO enregistrées");
       setShow(false);
+      router.push(`/${currentUser?.role}`);
     } catch (e: any) {
-      toast.error(e?.message || "Erreur OPCO");
-    } finally {
-      setLoading(false);
+      toast.error(e?.data?.message || "Erreur OPCO");
     }
   };
 
@@ -143,8 +143,8 @@ export function OPCOCard({ isSelected, onSelect, onConfigured }: OPCOCardProps) 
                 className={errors.email ? "border-red-500" : ""}
               />
             </div>
-            <Button onClick={submit} disabled={loading} className="w-full mt-2">
-              {loading ? "Envoi..." : "Soumettre la demande OPCO"}
+            <Button onClick={submit} disabled={isLoading} className="w-full mt-2">
+              {isLoading ? "Envoi..." : "Soumettre la demande OPCO"}
             </Button>
           </div>
         </DialogContent>

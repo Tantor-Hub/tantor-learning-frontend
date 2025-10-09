@@ -75,6 +75,26 @@ export const trainingStudentApi = createApi({
       }),
       invalidatesTags: ["TrainingStudent"],
     }),
+
+    // Create OPCO payment method (student access)
+    createOpcoPayment: builder.mutation<
+      any,
+      {
+        id_session: string;
+        nom_entreprise: string;
+        siren: string;
+        nom_responsable: string;
+        telephone_responsable: string;
+        email_responsable: string;
+      }
+    >({
+      query: (body) => ({
+        url: `paymentmethodopco/create`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["TrainingStudent"],
+    }),
   }),
 });
 
@@ -87,4 +107,5 @@ export const {
   useGetCoursesByIdQuery,
   useGetTrainingByIdQuery,
   useCreateCpfPaymentMutation,
+  useCreateOpcoPaymentMutation,
 } = trainingStudentApi;

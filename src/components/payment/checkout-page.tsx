@@ -13,15 +13,6 @@ import { convertToSubcurrency } from "@/lib/convert-to-subcurrency";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 
-// Types pour les données OPCO
-export interface OpcoFormData {
-  companyName: string;
-  siren: string;
-  managerName: string;
-  phone: string;
-  email: string;
-}
-
 // Types pour les props du composant
 export interface CheckoutPageProps {
   amount: number;
@@ -29,7 +20,6 @@ export interface CheckoutPageProps {
   trainingId: string;
   availableMethods?: string[];
   cpfLink?: string;
-  handleOPCOPayment: (formData: OpcoFormData) => Promise<void>;
   handleCARDPayment: (paymentData: any) => Promise<void>;
   hasDocument: boolean;
   isValidOPCO: boolean;
@@ -42,7 +32,6 @@ export function CheckoutPage({
   availableMethods = ["opco", "cpf", "card"],
   cpfLink,
   isValidOPCO,
-  handleOPCOPayment,
   handleCARDPayment,
   hasDocument,
 }: CheckoutPageProps) {
@@ -54,13 +43,6 @@ export function CheckoutPage({
   const [loading, setLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState<"opco" | "cpf" | "card" | null>(null);
   const [showOpcoForm, setShowOpcoForm] = useState(false);
-  const [formData, setFormData] = useState<OpcoFormData>({
-    companyName: "",
-    siren: "",
-    managerName: "",
-    phone: "",
-    email: "",
-  });
   const currentUser = useSelector(selectCurrentUser);
   const [formErrors, setFormErrors] = useState({
     companyName: false,
@@ -127,37 +109,6 @@ export function CheckoutPage({
     }
   };
 
-  const validateForm = () => {
-    const errors = {
-      companyName: !formData.companyName.trim(),
-      siren: !formData.siren.trim() || !/^\d{9}$/.test(formData.siren),
-      managerName: !formData.managerName.trim(),
-      phone: !formData.phone.trim() || !/^[0-9 +-]+$/.test(formData.phone),
-      email: !formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email),
-    };
-    setFormErrors(errors);
-    return !Object.values(errors).some(Boolean);
-  };
-
-  const handleOpcoSubmit = async () => {
-    if (!validateForm()) return;
-
-    setSubmissionLoading(true);
-    try {
-      // Appeler la fonction du parent pour gérer le paiement OPCO
-      await handleOPCOPayment(formData);
-      setSubmissionSuccess(true);
-      setTimeout(() => {
-        setShowOpcoForm(false);
-        setSubmissionSuccess(isValidOPCO);
-      });
-    } catch (error: any) {
-      setErrorMessage(error.message || "Erreur lors de la soumission");
-    } finally {
-      setSubmissionLoading(false);
-    }
-  };
-
   // Determine which options to show based on availableMethods prop (values expected uppercase)
   const showOPCO = availableMethods.map((m) => m.toUpperCase()).includes("OPCO");
   const showCPF = availableMethods.map((m) => m.toUpperCase()).includes("CPF");
@@ -170,18 +121,9 @@ export function CheckoutPage({
         {/* Option OPCO */}
         {showOPCO && (
           <OPCOCard
+            sessionId={sessionId}
             isSelected={selectedOption === "opco"}
             onSelect={() => select("opco")}
-            onConfigured={async (opco) => {
-              // delegate to parent handler
-              await handleOPCOPayment({
-                companyName: opco.nom_entreprise,
-                siren: opco.siren,
-                managerName: opco.nom_responsable,
-                phone: opco.telephone_responsable,
-                email: opco.email_responsable,
-              });
-            }}
           />
         )}
 
@@ -216,128 +158,6 @@ export function CheckoutPage({
           <p className="text-sm text-red-600">{errorMessage}</p>
         </div>
       )}
-
-      {/* Formulaire OPCO */}
-      <Dialog open={showOpcoForm} onOpenChange={setShowOpcoForm}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Informations employeur</DialogTitle>
-          </DialogHeader>
-
-          {submissionSuccess ? (
-            <div className="space-y-4 text-center">
-              <div className="bg-green-50 border border-green-200 rounded-md p-4">
-                <p className="text-green-800 font-medium">✓ Demande OPCO enregistrée avec succès</p>
-                <p className="text-sm text-green-600 mt-2">
-                  Votre dossier sera traité par notre équipe
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Renseignez les informations de votre employeur. Votre dossier sera mis en attente de
-                validation.
-              </p>
-
-              <div className="space-y-2">
-                <Label htmlFor="companyName">Nom de l'entreprise *</Label>
-                <Input
-                  id="companyName"
-                  placeholder="Entrez le nom de l'entreprise"
-                  value={formData.companyName}
-                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                  className={formErrors.companyName ? "border-red-500" : ""}
-                />
-                {formErrors.companyName && (
-                  <p className="text-sm text-red-500">Ce champ est obligatoire</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="siren">Numéro SIREN (9 chiffres) *</Label>
-                <Input
-                  id="siren"
-                  placeholder="123456789"
-                  value={formData.siren}
-                  onChange={(e) => setFormData({ ...formData, siren: e.target.value })}
-                  className={formErrors.siren ? "border-red-500" : ""}
-                />
-                {formErrors.siren && (
-                  <p className="text-sm text-red-500">
-                    {!formData.siren.trim()
-                      ? "Ce champ est obligatoire"
-                      : "SIREN invalide (9 chiffres requis)"}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="managerName">Responsable formation *</Label>
-                <Input
-                  id="managerName"
-                  placeholder="Nom du responsable"
-                  value={formData.managerName}
-                  onChange={(e) => setFormData({ ...formData, managerName: e.target.value })}
-                  className={formErrors.managerName ? "border-red-500" : ""}
-                />
-                {formErrors.managerName && (
-                  <p className="text-sm text-red-500">Ce champ est obligatoire</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Téléphone *</Label>
-                <Input
-                  id="phone"
-                  placeholder="+33 6 12 34 56 78"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className={formErrors.phone ? "border-red-500" : ""}
-                />
-                {formErrors.phone && (
-                  <p className="text-sm text-red-500">
-                    {!formData.phone.trim()
-                      ? "Ce champ est obligatoire"
-                      : "Format de téléphone invalide"}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
-                <Input
-                  id="email"
-                  placeholder="contact@entreprise.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className={formErrors.email ? "border-red-500" : ""}
-                />
-                {formErrors.email && (
-                  <p className="text-sm text-red-500">
-                    {!formData.email.trim() ? "Ce champ est obligatoire" : "Email invalide"}
-                  </p>
-                )}
-              </div>
-
-              <Button
-                onClick={handleOpcoSubmit}
-                disabled={submissionLoading}
-                className="w-full mt-4"
-              >
-                {submissionLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Envoi en cours...
-                  </>
-                ) : (
-                  "Soumettre la demande OPCO"
-                )}
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Card details now rendered inside CardPayment when selected */}
 

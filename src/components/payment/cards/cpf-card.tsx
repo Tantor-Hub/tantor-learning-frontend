@@ -16,7 +16,6 @@ interface CPFCardProps {
 export function CPFCard({ sessionId, cpfLink, isSelected, onSelect }: CPFCardProps) {
   const router = useRouter();
   const currentUser = useSelector(selectCurrentUser);
-  console.log(currentUser?.role);
   const [createCpfPayment] = useCreateCpfPaymentMutation();
   const handleClick = async () => {
     try {
@@ -25,16 +24,16 @@ export function CPFCard({ sessionId, cpfLink, isSelected, onSelect }: CPFCardPro
       await createCpfPayment({ id_session: sessionId }).unwrap();
       toast.dismiss();
       toast.success("Méthode CPF créée. Ouverture du lien CPF...");
-      setTimeout(() => {
-        const link = cpfLink || "https://www.moncompteformation.gouv.fr";
-        window.open(link, "_blank");
-      });
+
+      const link = cpfLink || "https://www.moncompteformation.gouv.fr";
+      window.open(link, "_blank");
+
       router.push(`/${currentUser?.role}`);
     } catch (e: any) {
-      console.log(e);
       toast.dismiss();
       toast.error(
-        e?.message || "Vous avez déjà une méthode de paiement CPF pour cette session de formation."
+        e?.data?.message ||
+          "Vous avez déjà une méthode de paiement CPF pour cette session de formation."
       );
     }
   };

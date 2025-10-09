@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   useAverageScoreQuery,
   useNextLiveSessionQuery,
@@ -10,31 +10,40 @@ import OngoingCourse from "./components/ongoing-course";
 import { SessionProgress } from "./components/pie-chart";
 import CourseTab from "./courses/components/courses-tab";
 import { ongoingCourse } from "./data";
-import { BookOpen, ClipboardList, ListCheck, Percent, UserPlus } from "lucide-react";
+import { BookOpen, ClipboardList, ListCheck, Percent } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loading } from "@/components/shared/loading";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useGetMySessionsQuery, useGetTrainingByIdQuery } from "@/lib/apis/student/training-api";
-import { useSelector } from "react-redux";
-import { selectCurrentUser } from "@/features/auth/auth-slice";
+import { useGetMySessionsQuery } from "@/lib/apis/student/training-api";
+import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { useSelectedSession } from "@/hooks/use-selected-session";
+import { setSelectedSessionId } from "@/features/dashboard/dashboard-slice";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Page() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const studentsStatus = useStudentStatusQuery();
   const nextLiveSession = useNextLiveSessionQuery();
   const average = useAverageScoreQuery();
   const selectedSessionId = useSelectedSession();
 
   const listSessions = useGetMySessionsQuery();
-  // const sessionById = useGetTrainingByIdQuery({ id_session: +selectedSessionId });
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSessionLocal, setSelectedSessionLocal] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Check if any of the queries are loading
   const isLoading =
@@ -42,6 +51,21 @@ export default function Page() {
     nextLiveSession.isLoading ||
     average.isLoading ||
     listSessions.isLoading;
+
+  // Open dialog if no session selected and sessions loaded
+  useMemo(() => {
+    if (!selectedSessionId && listSessions.data?.data?.list?.length) {
+      setDialogOpen(true);
+    }
+  }, [selectedSessionId, listSessions.data]);
+
+  // Filter sessions by search term
+  const filteredSessions = useMemo(() => {
+    if (!listSessions.data?.data?.list) return [];
+    return listSessions.data.data.list.filter((session: any) =>
+      session.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, listSessions.data]);
 
   // Show loader when data is loading
   if (isLoading) {
@@ -54,8 +78,70 @@ export default function Page() {
   }
   // console.log(JSON.stringify(listSessions.data?.data.list));
 
+  // Handle continue button click
+  const handleContinue = () => {
+    if (selectedSessionLocal) {
+      dispatch(setSelectedSessionId(selectedSessionLocal));
+      setDialogOpen(false);
+    }
+  };
+
+  // Handle cancel button click
+  const handleCancel = () => {
+    setDialogOpen(false);
+    router.push("/");
+  };
+
   return (
     <>
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Veuillez sélectionner une session</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous devez vous inscrire à une session avant d'accéder au tableau de bord.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="my-4">
+            <Input
+              placeholder="Rechercher une session..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="mb-2"
+            />
+            <ScrollArea className="h-48 border rounded-md p-2">
+              {listSessions.isLoading ? (
+                <div className="flex justify-center items-center h-full">
+                  <Loading />
+                </div>
+              ) : filteredSessions.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground">Aucune session trouvée.</p>
+              ) : (
+                filteredSessions.map((session: any) => (
+                  <div
+                    key={session.id}
+                    className={`p-2 rounded cursor-pointer ${
+                      selectedSessionLocal === session.id
+                        ? "bg-blue-500 text-white"
+                        : "hover:bg-gray-100"
+                    }`}
+                    onClick={() => setSelectedSessionLocal(session.id)}
+                  >
+                    {session.name}
+                  </div>
+                ))
+              )}
+            </ScrollArea>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancel}>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleContinue} disabled={!selectedSessionLocal}>
+              Continuer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 md:gap-5">
         <Card
           className="gap-0 py-4 border hover:cursor-pointer hover:shadow-lg"
