@@ -1,12 +1,11 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { CPFCard } from "./cards/cpf-card";
 import { OPCOCard } from "./cards/opco-card";
 import { CardPayment } from "./cards/card";
 import { Elements } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
-import { useSelector } from "react-redux";
-import { selectToken } from "@/features/auth/auth-slice";
+import { convertToSubcurrency } from "@/lib/convert-to-subcurrency";
 
 export interface CheckoutPageProps {
   amount: number;
@@ -23,10 +22,7 @@ export function PaymentCardUI({
   cpfLink,
 }: CheckoutPageProps) {
   const [selectedOption, setSelectedOption] = useState<"opco" | "cpf" | "card" | null>(null);
-  const token = useSelector(selectToken);
 
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Determine which options to show
@@ -34,78 +30,7 @@ export function PaymentCardUI({
   const showCPF = availableMethods.map((m) => m.toUpperCase()).includes("CPF");
   const showCARD = availableMethods.map((m) => m.toUpperCase()).includes("CARD");
 
-  // Fetch payment intent only when card option is selected and clientSecret doesn't exist
-  useEffect(() => {
-    if (selectedOption !== "card" || clientSecret !== null || loading) {
-      return;
-    }
-
-    // Check if token exists
-    if (!token) {
-      setError("Authentication token is missing. Please log in again.");
-      return;
-    }
-
-    const createPaymentIntent = async () => {
-      setLoading(true);
-      setError(null);
-
-      // Debug logging
-      console.log("Creating payment intent with:", {
-        sessionId,
-        hasToken: !!token,
-        tokenPreview: token ? `${token.substring(0, 10)}...` : "none",
-      });
-
-      try {
-        const response = await fetch(
-          "https://modules-exemption-warrior-chronicles.trycloudflare.com/api/paymentmethodcard/create",
-          {
-            method: "POST",
-            headers: {
-              "x-connexion-tantor": `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              id_session: sessionId,
-            }),
-          }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          // Log the full error response for debugging
-          console.error("API Error Response:", data);
-          const errorMessage = data.message || data.error || `Server error: ${response.status}`;
-          throw new Error(errorMessage);
-        }
-
-        if (data.clientSecret) {
-          setClientSecret(data.clientSecret);
-          console.log("Payment intent created successfully");
-        } else {
-          console.error("No clientSecret in response:", data);
-          setError("Failed to create payment intent - no client secret returned");
-        }
-      } catch (error) {
-        console.error("Payment Intent Creation Error:", error);
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "An error occurred while loading the payment form";
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    createPaymentIntent();
-  }, [sessionId, token, selectedOption, clientSecret, loading]);
-
   const handleSelectCard = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
     setSelectedOption("card");
   };
 
@@ -206,45 +131,16 @@ export function PaymentCardUI({
             </button>
           </div>
 
-          {loading && (
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-              <p className="text-gray-600">Loading payment form...</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-              <p className="text-sm text-red-700 mb-2">{error}</p>
-              <button
-                onClick={() => {
-                  setError(null);
-                  setClientSecret(null);
-                  setLoading(false);
-                }}
-                className="text-sm text-red-600 hover:text-red-800 underline font-medium"
-              >
-                Try again
-              </button>
-            </div>
-          )}
-
-          {clientSecret && !loading && !error && (
-            <Elements
-              stripe={stripePromise}
-              options={{
-                clientSecret,
-                appearance: {
-                  theme: "stripe",
-                  variables: {
-                    colorPrimary: "#0066cc",
-                  },
-                },
-              }}
-            >
-              <CardPayment amount={amount} sessionId={sessionId} />
-            </Elements>
-          )}
+          <Elements
+            stripe={stripePromise}
+            options={{
+              amount: convertToSubcurrency(amount),
+              mode: "payment",
+              currency: "eur",
+            }}
+          >
+            <CardPayment amount={amount} sessionId={sessionId} />
+          </Elements>
         </div>
       )}
 
