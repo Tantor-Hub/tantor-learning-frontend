@@ -17,17 +17,9 @@ import {
 import { Loading } from "@/components/shared/loading";
 import { EmptyState } from "@/components/shared/empty-state";
 import toast from "react-hot-toast";
-import { CheckoutPage } from "@/components/payment/checkout-page";
-import { Elements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
-
-if (process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY === undefined) {
-  throw new Error("NEXT_PUBLIC_STRIPE_PUBLIC_KEY is not defined");
-}
-
-const stripePromise = loadStripe((process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY as string) ?? "");
+import { PaymentCardUI } from "@/components/payment/payment-card-ui";
 
 interface SessionData {
   Formation?: {
@@ -157,24 +149,6 @@ export default function Page() {
 
   const adaptedStudent = adaptStudentTrainingSession(studentTrainingSession);
   const session: SessionData | undefined | any = adaptedStudent || sessionResponse?.data;
-
-  const hasDocument = session?.required_documents && session.required_documents.length > 0;
-
-  // Préparer les données de la session pour l'API
-  const prepareSessionPayload = (paymentInfo: SessionPayload["payment"]): SessionPayload => {
-    // Convertir les réponses du questionnaire
-    const responses_survey = Object.entries(selectedOptions).map(([questionId, answerId]) => ({
-      id_question: parseInt(questionId),
-      answer: answerId,
-    }));
-
-    return {
-      id_session: parseInt(sessionId),
-      ...(responses_survey.length > 0 && { responses_survey: responses_survey }),
-      roi_accepted: termsAccepted,
-      payment: paymentInfo,
-    };
-  };
 
   const stepConfig = useMemo(() => {
     if (!session) return { hasQuestions: false, hasPayment: false, totalSteps: 0 };
@@ -590,21 +564,13 @@ export default function Page() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Elements
-                  stripe={stripePromise}
-                  options={{
-                    mode: "payment",
-                    currency: "eur",
-                  }}
-                >
-                  <CheckoutPage
-                    amount={session.prix}
-                    sessionId={sessionId}
-                    trainingId={trainingId}
-                    availableMethods={session.payment_methods}
-                    cpfLink={session.cpf_link}
-                  />
-                </Elements>
+                <PaymentCardUI
+                  amount={session.prix}
+                  sessionId={sessionId}
+                  trainingId={trainingId}
+                  availableMethods={session.payment_methods}
+                  cpfLink={session.cpf_link}
+                />
               </CardContent>
             </Card>
           </div>
