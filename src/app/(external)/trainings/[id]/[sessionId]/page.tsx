@@ -17,13 +17,11 @@ import {
 import { Loading } from "@/components/shared/loading";
 import { EmptyState } from "@/components/shared/empty-state";
 import toast from "react-hot-toast";
-import { useApplyToTrainingMutation } from "@/lib/apis/student/training-api";
 import { CheckoutPage } from "@/components/payment/checkout-page";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
-import { convertToSubcurrency } from "@/lib/convert-to-subcurrency";
 
 if (process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY === undefined) {
   throw new Error("NEXT_PUBLIC_STRIPE_PUBLIC_KEY is not defined");
@@ -98,7 +96,6 @@ export default function Page() {
   const params = useParams();
   const router = useRouter();
   const pathname = usePathname();
-  const [isValidOPCO, setIsValidOPCO] = useState<boolean>(false);
   const sessionId = params.sessionId as string;
 
   const pathSegments = pathname.split("/");
@@ -150,8 +147,6 @@ export default function Page() {
     };
   };
 
-  const [applySessionMutation, { isLoading }] = useApplyToTrainingMutation();
-
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
@@ -179,104 +174,6 @@ export default function Page() {
       roi_accepted: termsAccepted,
       payment: paymentInfo,
     };
-  };
-
-  // Soumettre la session complète à l'API
-  const handleApplyToSessionMutation = async (paymentInfo: SessionPayload["payment"]) => {
-    toast.loading("Inscription en cours...");
-    if (!paymentInfo) {
-      toast.dismiss();
-      toast.error("Aucune méthode de paiement sélectionnée");
-      return false;
-    }
-
-    try {
-      setIsProcessingPayment(true);
-      const payload = prepareSessionPayload(paymentInfo);
-
-      // Appel à votre API
-      const result = await applySessionMutation(payload).unwrap();
-      toast.dismiss();
-      toast.success("Inscription complétée avec succès!");
-
-      // Redirection selon le contexte
-      if (hasDocument) {
-        router.push(`/trainings/${trainingId}/${sessionId}/documents`);
-      } else {
-        router.push("/");
-      }
-      return true;
-    } catch (error: any) {
-      toast.dismiss();
-      // console.error("Erreur lors de l'inscription:", error);
-      if (error.status === 400) {
-        toast.error("Vous êtes déjà inscrit à la formation");
-        // toast.error(error?.data?.data);
-      }
-
-      toast.error(error.message || "Erreur lors de l'inscription");
-      return false;
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  // HANDLERS POUR LES DIFFÉRENTS TYPES DE PAIEMENT
-
-  const handleCARDPayment = async (stripePaymentData: any) => {
-    try {
-      const { stripe, elements, clientSecret, confirmParams } = stripePaymentData;
-
-      // Set processing state early
-      setIsProcessingPayment(true);
-
-      // Traitement Stripe
-      const { error, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        clientSecret,
-        confirmParams,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Récupérer les informations de la carte
-      const paymentMethod = paymentIntent.payment_method;
-
-      const cardPaymentData: SessionPayload["payment"] = {
-        method: "CARD",
-        card: {
-          full_name:
-            paymentMethod?.billing_details?.name ||
-            `${currentUser?.firstName} ${currentUser?.lastName}`.trim() ||
-            "Nom non fourni",
-          card_number: `****-****-****-${paymentMethod?.card?.last4 || "0000"}`,
-          cvv: 0, // Le CVV n'est pas retourné par Stripe pour des raisons de sécurité
-          year: paymentMethod?.card?.exp_year || new Date().getFullYear(),
-          month: paymentMethod?.card?.exp_month || 1,
-          id_stripe_payment: paymentIntent.id,
-        },
-      };
-
-      // Set the payment data for UI feedback
-      setPaymentData(cardPaymentData);
-
-      // Submit to API
-      const success = await handleApplyToSessionMutation(cardPaymentData);
-      if (success) {
-        toast.success("Paiement par carte réussi");
-      } else {
-        // Reset payment data on failure
-        setPaymentData(null);
-      }
-    } catch (error: any) {
-      console.error("Erreur paiement carte:", error);
-      toast.error("Erreur paiement carte");
-      // Reset payment data on error
-      setPaymentData(null);
-      setIsProcessingPayment(false);
-    }
   };
 
   const stepConfig = useMemo(() => {
@@ -697,19 +594,15 @@ export default function Page() {
                   stripe={stripePromise}
                   options={{
                     mode: "payment",
-                    amount: convertToSubcurrency(session.prix),
                     currency: "eur",
                   }}
                 >
                   <CheckoutPage
                     amount={session.prix}
                     sessionId={sessionId}
-                    isValidOPCO={isValidOPCO}
                     trainingId={trainingId}
                     availableMethods={session.payment_methods}
                     cpfLink={session.cpf_link}
-                    handleCARDPayment={handleCARDPayment}
-                    hasDocument={hasDocument}
                   />
                 </Elements>
               </CardContent>

@@ -20,9 +20,6 @@ export interface CheckoutPageProps {
   trainingId: string;
   availableMethods?: string[];
   cpfLink?: string;
-  handleCARDPayment: (paymentData: any) => Promise<void>;
-  hasDocument: boolean;
-  isValidOPCO: boolean;
 }
 
 export function CheckoutPage({
@@ -31,9 +28,6 @@ export function CheckoutPage({
   trainingId,
   availableMethods = ["opco", "cpf", "card"],
   cpfLink,
-  isValidOPCO,
-  handleCARDPayment,
-  hasDocument,
 }: CheckoutPageProps) {
   // const amount = parseFloat((0.5 * 100).toFixed(2));
   const stripe = useStripe();
@@ -94,14 +88,6 @@ export function CheckoutPage({
 
     try {
       // Appeler la fonction du parent pour gérer le paiement par carte
-      await handleCARDPayment({
-        stripe,
-        elements,
-        clientSecret,
-        confirmParams: {
-          return_url: `${process.env.NEXT_PUBLIC_APP_URL}/trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}&hasDocument=${hasDocument}&trainingId=${trainingId}&sessionId=${sessionId}`,
-        },
-      });
     } catch (error: any) {
       setErrorMessage(error.message || "Erreur lors du paiement");
     } finally {
@@ -141,13 +127,10 @@ export function CheckoutPage({
         {showCARD && (
           <CardPayment
             amount={amount}
-            returnUrl={`${process.env.NEXT_PUBLIC_APP_URL}/trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}&hasDocument=${hasDocument}&trainingId=${trainingId}&sessionId=${sessionId}`}
+            returnUrl={`${process.env.NEXT_PUBLIC_APP_URL}/trainings/${trainingId}/${sessionId}/success-payment?amount=${amount}&trainingId=${trainingId}&sessionId=${sessionId}`}
             clientSecret={clientSecret}
             isSelected={selectedOption === "card"}
             onSelect={() => select("card")}
-            onConfirm={async (payload) => {
-              await handleCARDPayment(payload);
-            }}
           />
         )}
       </div>
