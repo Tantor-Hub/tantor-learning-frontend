@@ -87,6 +87,7 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
       confirmParams: {
         return_url: `http://www.localhost:3000/trainings/id/payment/success-payment?amount=${amount}`,
       },
+      redirect: "if_required",
     });
 
     if (error) {

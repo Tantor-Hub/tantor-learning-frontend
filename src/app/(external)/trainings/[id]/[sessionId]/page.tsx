@@ -2,8 +2,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -14,75 +12,91 @@ import {
   useGetSessionByIdQuery,
   useGetStudentTrainingSessionByIdQuery,
 } from "@/lib/apis/public/public-api";
-import { Loading } from "@/components/shared/loading";
 import { EmptyState } from "@/components/shared/empty-state";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { PaymentCardUI } from "@/components/payment/payment-card-ui";
 
-interface SessionData {
-  Formation?: {
-    titre?: string;
-    sous_titre?: string;
-    description?: string;
-  };
-  Surveys?: Array<{
-    description?: string;
-    Questionnaires?: Array<{
-      id: string;
-      titre: string;
-      description?: string;
-      is_required: boolean;
-      type: string;
-      Options?: Array<{
-        id: string;
-        text: string;
-      }>;
-    }>;
-  }>;
-  text_reglement?: string;
-  type_formation: string;
-  date_session_debut: string;
-  date_session_fin: string;
-  duree: string;
-  prix: number;
-  payment_methods?: string[];
-  cpf_link?: string;
-  designation?: string;
-  required_documents?: string[];
-}
+// Simple inline skeleton component
+const Skeleton = ({ className = "", width = "100%", height = "1rem" }) => (
+  <div className={`animate-pulse bg-gray-200 rounded ${className}`} style={{ width, height }} />
+);
 
-interface SessionPayload {
-  id_session: number;
-  responses_survey?: {
-    id_question: number;
-    answer: string;
-  }[];
-  roi_accepted: boolean;
-  payment: {
-    method: "CARD" | "OPCO" | "CPF";
-    card?: {
-      full_name: string;
-      card_number: string;
-      cvv: number;
-      year: number;
-      month: number;
-      id_stripe_payment: string;
-    };
-    opco?: {
-      nom_opco?: string;
-      nom_entreprise: string;
-      siren: string;
-      nom_responsable: string;
-      telephone_responsable: string;
-      email_responsable: string;
-    };
-    cpf?: {
-      full_name: string;
-    };
-  };
-}
+const PageSkeleton = () => (
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12 space-y-8">
+    {/* Back button skeleton */}
+    <Skeleton width="200px" height="2.5rem" className="rounded" />
+
+    {/* Progress bar skeleton */}
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-4">
+        {Array.from({ length: 2 }, (_, i) => i + 1).map((step) => (
+          <div key={step} className="flex items-center">
+            <Skeleton width="40px" height="40px" className="rounded-full" />
+            {step < 2 && <Skeleton width="100px" height="4px" className="mx-4 rounded-full" />}
+          </div>
+        ))}
+      </div>
+      <Skeleton height="2rem" width="300px" className="mx-auto" />
+    </div>
+
+    {/* Signature step skeleton */}
+    <div className="bg-white border rounded-lg p-6 space-y-4">
+      <Skeleton height="2rem" width="250px" />
+      <Skeleton height="1rem" width="200px" />
+      <div className="h-64 border rounded p-4">
+        <Skeleton height="1.5rem" width="150px" />
+        <Skeleton height="1rem" width="100%" className="mt-4" />
+        <Skeleton height="1rem" width="90%" />
+      </div>
+      <div className="flex items-center space-x-2">
+        <Skeleton width="20px" height="20px" className="rounded" />
+        <Skeleton width="300px" height="1rem" />
+      </div>
+    </div>
+
+    {/* Payment step skeleton */}
+    <div className="grid md:grid-cols-2 gap-8">
+      {/* Course info skeleton */}
+      <div className="space-y-4">
+        <Skeleton height="2rem" width="200px" />
+        <Skeleton height="1rem" width="150px" />
+        <div className="space-y-2">
+          <Skeleton height="1rem" width="100%" />
+          <Skeleton height="1rem" width="90%" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton height="1rem" width="80px" />
+          <Skeleton height="1rem" width="120px" />
+        </div>
+        <div className="flex justify-between pt-4 border-t">
+          <Skeleton height="1rem" width="100px" />
+          <Skeleton height="1.5rem" width="80px" />
+        </div>
+      </div>
+
+      {/* Payment form skeleton */}
+      <div className="space-y-4">
+        <Skeleton height="2rem" width="150px" />
+        <Skeleton height="1rem" width="200px" />
+        <div className="space-y-4 p-4 border rounded">
+          <Skeleton height="1rem" width="100px" />
+          <Skeleton height="3rem" width="100%" className="rounded" />
+          <Skeleton height="3rem" width="100%" className="rounded mt-2" />
+          <Skeleton height="2.5rem" width="100%" className="rounded" />
+        </div>
+      </div>
+    </div>
+
+    {/* Navigation skeleton */}
+    <div className="flex justify-between items-center">
+      <Skeleton width="120px" height="2.5rem" className="rounded" />
+      <Skeleton width="100px" height="1rem" />
+      <Skeleton width="120px" height="2.5rem" className="rounded" />
+    </div>
+  </div>
+);
 
 export default function Page() {
   const params = useParams();
@@ -93,96 +107,34 @@ export default function Page() {
   const pathSegments = pathname.split("/");
   const trainingId = pathSegments[2];
   const currentUser = useSelector(selectCurrentUser);
-  const { data: sessionResponse, isLoading: getSessionIsLoading } = useGetSessionByIdQuery({
-    id_session: sessionId,
-  });
-  const { data: studentTrainingSession } = useGetStudentTrainingSessionByIdQuery({ id: sessionId });
-  useEffect(() => {
-    if (studentTrainingSession) {
-      console.log("student training session:", JSON.stringify(studentTrainingSession, null, 2));
-    }
-  }, [studentTrainingSession]);
-
-  const adaptStudentTrainingSession = (payload: any) => {
-    if (!payload?.data) return undefined;
-    const d = payload.data;
-    // Normalize payment methods to uppercase array and surface cpf_link
-    const rawPayment = d?.payment_method;
-    const paymentArray = Array.isArray(rawPayment) ? rawPayment : rawPayment ? [rawPayment] : [];
-    const normalizedPaymentMethods = paymentArray
-      .filter(Boolean)
-      .map((m: string) => (typeof m === "string" ? m.toUpperCase() : m));
-    return {
-      Formation: {
-        titre: d?.trainings?.title,
-        sous_titre: d?.trainings?.subtitle,
-        description: d?.trainings?.description,
-      },
-      Surveys: d?.survey
-        ? [
-            {
-              description: d?.survey?.description,
-              Questionnaires: d?.survey?.questions ?? [],
-            },
-          ]
-        : [],
-      text_reglement: d?.regulation_text,
-      type_formation: d?.trainings?.trainingtype,
-      date_session_debut: d?.date_session_debut,
-      date_session_fin: d?.date_session_fin,
-      duree: d?.duree,
-      prix: d?.trainings?.prix,
-      payment_methods: normalizedPaymentMethods,
-      cpf_link: d?.cpf_link,
-      designation: d?.title,
-      required_documents: d?.required_documents ?? [],
-    };
-  };
+  const { data: studentTrainingSession, isLoading: isLoadingSession } =
+    useGetStudentTrainingSessionByIdQuery({ id: sessionId });
 
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
 
   // Payment state
-  const [paymentData, setPaymentData] = useState<SessionPayload["payment"] | null>(null);
+  const [paymentData, setPaymentData] = useState<any | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  const adaptedStudent = adaptStudentTrainingSession(studentTrainingSession);
-  const session: SessionData | undefined | any = adaptedStudent || sessionResponse?.data;
+  const session = studentTrainingSession?.data;
 
   const stepConfig = useMemo(() => {
-    if (!session) return { hasQuestions: false, hasPayment: false, totalSteps: 0 };
+    if (!session) return { hasPayment: false, totalSteps: 2 };
 
-    const hasQuestions = (session.Surveys?.[0]?.Questionnaires?.length ?? 0) > 0;
-    const price = typeof session.prix === "string" ? parseFloat(session.prix) : session.prix;
-    const hasPayment = (session.payment_methods?.length ?? 0) > 0 && !!price && price > 0;
+    const price = parseFloat(session.trainings?.prix || "0");
+    const hasPayment = (session.payment_method?.length ?? 0) > 0 && price > 0;
 
-    const totalSteps = (hasQuestions ? 1 : 0) + 1 + (hasPayment ? 1 : 0);
-
-    return { hasQuestions, hasPayment, totalSteps };
+    return { hasPayment, totalSteps: 2 };
   }, [session]);
 
-  const { hasQuestions, hasPayment, totalSteps } = stepConfig;
+  const { hasPayment, totalSteps } = stepConfig;
 
   useEffect(() => {
     if (currentStep > totalSteps && totalSteps > 0) {
       setCurrentStep(totalSteps);
     }
   }, [currentStep, totalSteps]);
-
-  const handleOptionSelect = (questionId: string, optionId: string) => {
-    setSelectedOptions((prev) => ({
-      ...prev,
-      [questionId]: optionId,
-    }));
-  };
-
-  const isQuestionsValid = (): boolean => {
-    if (!hasQuestions) return true;
-    const requiredQuestions =
-      session?.Surveys?.[0]?.Questionnaires?.filter((q: any) => q.is_required) || [];
-    return requiredQuestions.every((q: any) => selectedOptions[q.id] !== undefined);
-  };
 
   const isSignatureValid = (): boolean => {
     return termsAccepted;
@@ -193,48 +145,27 @@ export default function Page() {
   };
 
   const canProceedToNext = (): boolean => {
-    const currentStepNumber = getCurrentStepNumber();
-
-    if (hasQuestions && currentStepNumber === 1) {
-      return isQuestionsValid();
-    }
-
-    if (currentStepNumber === (hasQuestions ? 2 : 1)) {
+    if (currentStep === 1) {
       return isSignatureValid();
     }
 
-    if (hasPayment && currentStepNumber === (hasQuestions ? 3 : 2)) {
+    if (currentStep === 2) {
       return isPaymentValid();
     }
 
     return false;
   };
 
-  const getCurrentStepNumber = (): number => {
-    return currentStep;
-  };
-
-  const isCurrentStep = (stepType: "questions" | "signature" | "payment"): boolean => {
-    let stepNumber = 0;
-
-    if (stepType === "questions" && hasQuestions) {
-      stepNumber = 1;
-    } else if (stepType === "signature") {
-      stepNumber = (hasQuestions ? 1 : 0) + 1;
-    } else if (stepType === "payment" && hasPayment) {
-      stepNumber = (hasQuestions ? 1 : 0) + 1 + 1;
-    }
-
-    return currentStep === stepNumber;
+  const isCurrentStep = (stepType: "signature" | "payment"): boolean => {
+    if (stepType === "signature") return currentStep === 1;
+    if (stepType === "payment") return currentStep === 2;
+    return false;
   };
 
   const getStepTitle = (step: number): string => {
-    const steps = [];
-    if (hasQuestions) steps.push("Questionnaire d'évaluation");
-    steps.push("Signature du contrat");
-    if (hasPayment) steps.push("Paiement");
-
-    return steps[step - 1] || "";
+    if (step === 1) return "Signature du contrat";
+    if (step === 2) return "Paiement";
+    return "";
   };
 
   const handleNext = () => {
@@ -262,20 +193,8 @@ export default function Page() {
     }
   };
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-
-  const surveyQuestions = useMemo(() => {
-    return session?.Surveys?.[0]?.Questionnaires || [];
-  }, [session?.Surveys]);
-
-  if (getSessionIsLoading) {
-    return <Loading />;
+  if (isLoadingSession) {
+    return <PageSkeleton />;
   }
 
   if (!session) {
@@ -333,57 +252,7 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Step 1: Questions */}
-      {hasQuestions && isCurrentStep("questions") && (
-        <Card className="border">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center">
-              Questionnaire d'évaluation
-            </CardTitle>
-            <p className="text-muted-foreground text-center">{session.Surveys?.[0]?.description}</p>
-          </CardHeader>
-          <Separator />
-          <CardContent className="space-y-8">
-            {surveyQuestions.length > 0 ? (
-              surveyQuestions.map((question: any, index: number) => (
-                <div key={question.id} className="space-y-4">
-                  <h3 className="text-lg font-medium">
-                    {question.titre}
-                    {question.is_required && <span className="text-red-500 ml-1">*</span>}
-                  </h3>
-                  {question.description && (
-                    <p className="text-sm text-muted-foreground">{question.description}</p>
-                  )}
-                  {question.type === "QCM" && question.Options && (
-                    <RadioGroup
-                      value={selectedOptions[question.id]}
-                      onValueChange={(value) => handleOptionSelect(question.id, value)}
-                      className="space-y-2"
-                    >
-                      {question.Options.map((option: any) => (
-                        <div key={option.id} className="flex items-center space-x-2">
-                          <RadioGroupItem
-                            value={option.id}
-                            id={`question-${question.id}-${option.id}`}
-                          />
-                          <Label htmlFor={`question-${question.id}-${option.id}`}>
-                            {option.text}
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  )}
-                  {index < surveyQuestions.length - 1 && <Separator />}
-                </div>
-              ))
-            ) : (
-              <p className="text-center text-muted-foreground">Aucune question disponible</p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 2: Signature */}
+      {/* Step 1: Signature */}
       {isCurrentStep("signature") && (
         <Card className="border">
           <CardHeader className="text-center">
@@ -404,7 +273,7 @@ export default function Page() {
                 <div className="space-y-4">
                   <h3 className="font-medium">Règlement de la formation</h3>
                   <div className="text-sm whitespace-pre-line">
-                    {session.text_reglement || "Conditions générales de la formation..."}
+                    {session.regulation_text || "Conditions générales de la formation..."}
                   </div>
                 </div>
               </ScrollArea>
@@ -415,10 +284,10 @@ export default function Page() {
                   checked={termsAccepted}
                   onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
                 />
-                <Label htmlFor="conditions" className="font-normal leading-snug">
+                <label htmlFor="conditions" className="font-normal leading-snug">
                   Je reconnais avoir lu et accepté les conditions générales de participation et
                   m'engage à poursuivre la formation dans les règles établies.
-                </Label>
+                </label>
               </div>
             </div>
           </CardContent>
@@ -436,103 +305,27 @@ export default function Page() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h2 className="text-lg font-bold text-blue-600">
-                      {session.Formation?.titre || "Formation"}
+                      {session.trainings?.title || "Formation"}
                     </h2>
                     <p className="text-sm font-medium mt-1 text-blue-600/70">
-                      {session.Formation?.sous_titre || session.designation}
+                      {session.trainings?.subtitle || session.title}
                     </p>
                   </div>
-                  <Badge variant="outline">{session.type_formation}</Badge>
+                  <Badge variant="outline">{session.trainings?.trainingtype}</Badge>
                 </div>
 
                 <div className="mt-4 text-sm text-gray-600">
                   <p>
-                    {session.Formation?.description ||
-                      session.text_reglement?.slice(0, 200) + "..."}
+                    {session.trainings?.description ||
+                      session.regulation_text?.slice(0, 200) + "..."}
                   </p>
-                </div>
-
-                <div className="mt-6 space-y-3 text-sm">
-                  {session.date_session_debut && session.date_session_fin && (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <div className="bg-blue-100 p-1 rounded-full">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="text-blue-800"
-                            width="16"
-                            height="16"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <rect width="18" height="18" x="3" y="3" rx="2" />
-                            <path d="M3 9h18" />
-                          </svg>
-                        </div>
-                        <span className="font-medium text-gray-700">
-                          {session.type_formation === "onLine"
-                            ? "En ligne"
-                            : session.type_formation}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <div className="bg-blue-100 p-1 rounded-full">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="text-blue-800"
-                            width="16"
-                            height="16"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 6 12 12 16 14" />
-                          </svg>
-                        </div>
-                        <span className="font-medium text-gray-700">
-                          {formatDate(session.date_session_debut)} -{" "}
-                          {formatDate(session.date_session_fin)}
-                        </span>
-                      </div>
-                    </>
-                  )}
-
-                  {session.duree && (
-                    <div className="flex items-center gap-2">
-                      <div className="bg-blue-100 p-1 rounded-full">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="text-ring"
-                          width="16"
-                          height="16"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <line x1="12" x2="12" y1="8" y2="12" />
-                          <line x1="12" x2="12.01" y1="16" y2="16" />
-                        </svg>
-                      </div>
-                      <span className="font-medium text-gray-700">Durée: {session.duree}</span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="mt-6 pt-6 border-t border-blue-200">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-600">Total à payer</span>
                     <span className="text-xl font-bold text-blue-600">
-                      {Number(session.prix).toFixed(2)} €
+                      {Number(session.trainings?.prix || 0).toFixed(2)} €
                     </span>
                   </div>
                 </div>
@@ -565,10 +358,12 @@ export default function Page() {
               </CardHeader>
               <CardContent>
                 <PaymentCardUI
-                  amount={session.prix}
+                  amount={session.trainings.prix}
                   sessionId={sessionId}
                   trainingId={trainingId}
-                  availableMethods={session.payment_methods}
+                  availableMethods={
+                    session.payment_method?.map((m: string) => m.toUpperCase()) || []
+                  }
                   cpfLink={session.cpf_link}
                 />
               </CardContent>
