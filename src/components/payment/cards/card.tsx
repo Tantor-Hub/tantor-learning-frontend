@@ -13,16 +13,14 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
   const token = useSelector(selectToken);
   const [clientSecret, setClientSecret] = useState("");
   const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL as string;
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>();
   const [loading, setLoading] = useState(false);
-  const [submissionLoading, setSubmissionLoading] = useState(false);
-  const [submissionSuccess, setSubmissionSuccess] = useState(false);
-  const [isReady, setIsReady] = useState<boolean>(false);
+  const [isCreating, setIsCreating] = useState(true);
 
   // the to communicate with the backend
 
   useEffect(() => {
+    setIsCreating(true);
     // console.log("Fetching client secret for sessionId:", sessionId);
     fetch(`${BASE_URL}/paymentmethodcard/payment-intent`, {
       method: "POST",
@@ -38,7 +36,9 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
         // console.log(res);
         // console.log("Fetch response status:", res.status);
         if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+          return res.json().then((err) => {
+            throw new Error(err.data?.message || `HTTP error! status: ${res.status}`);
+          });
         }
         return res.json();
       })
@@ -49,11 +49,13 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
         if (!data.data.clientSecret) {
           throw new Error("No client secret received from server");
         }
-        // console.log("Client secret set:", data.clientSecret);
+        // console.log("Client secret set:", data.data.clientSecret);
+        setIsCreating(false);
       })
       .catch((error) => {
         // console.error("Error fetching client secret:", error);
         setErrorMessage(error.message || "Failed to initialize payment");
+        setIsCreating(false);
       });
   }, [sessionId]);
   // handle submit to the server
@@ -91,27 +93,12 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
     });
 
     if (error) {
+      console.log(error);
       setErrorMessage(error.message);
     }
     setLoading(false);
   };
 
-  // waiting client secrete
-
-  // if (!clientSecret || !stripe || !elements) {
-  //   return (
-  //     <div className="flex items-center justify-center py-12">
-  //       <div
-  //         className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-e-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
-  //         role="status"
-  //       >
-  //         <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-  //           Loading...
-  //         </span>
-  //       </div>
-  //     </div>
-  //   );
-  // }
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
@@ -129,10 +116,10 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
       <Button
         type="submit"
         size="lg"
-        disabled={!stripe || isLoading || !clientSecret}
+        disabled={!stripe || loading || !clientSecret}
         className="w-full disabled:cursor-not-allowed"
       >
-        {isLoading ? <Loader2 className="animate-spin" /> : `Pay ${+amount} €`}
+        {loading ? <Loader2 className="animate-spin" /> : `Pay ${+amount} €`}
       </Button>
     </form>
   );
