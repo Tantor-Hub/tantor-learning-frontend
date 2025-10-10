@@ -12,6 +12,7 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
   const elements = useElements();
   const token = useSelector(selectToken);
   const [clientSecret, setClientSecret] = useState("");
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL as string;
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>();
   const [loading, setLoading] = useState(false);
@@ -22,23 +23,39 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
   // the to communicate with the backend
 
   useEffect(() => {
-    fetch(
-      "https://modules-exemption-warrior-chronicles.trycloudflare.com/api/paymentmethodcard/create",
-      {
-        method: "POST",
-        headers: {
-          "x-connexion-tantor": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id_session: sessionId,
-        }),
-      }
-    )
-      .then((res) => res.json())
-      .then((data) => setClientSecret(data.clientSecret));
+    // console.log("Fetching client secret for sessionId:", sessionId);
+    fetch(`${BASE_URL}/paymentmethodcard/payment-intent`, {
+      method: "POST",
+      headers: {
+        "x-connexion-tantor": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id_session: sessionId,
+      }),
+    })
+      .then((res) => {
+        // console.log(res);
+        // console.log("Fetch response status:", res.status);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        // console.log(data.data.clientSecret);
+        setClientSecret(data.data.clientSecret);
+        // console.log("Received data:", data);
+        if (!data.data.clientSecret) {
+          throw new Error("No client secret received from server");
+        }
+        // console.log("Client secret set:", data.clientSecret);
+      })
+      .catch((error) => {
+        // console.error("Error fetching client secret:", error);
+        setErrorMessage(error.message || "Failed to initialize payment");
+      });
   }, [sessionId]);
-
   // handle submit to the server
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -46,6 +63,13 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
     setLoading(true);
 
     if (!stripe || !elements) {
+      setLoading(false);
+      return;
+    }
+
+    if (!clientSecret) {
+      setErrorMessage("Payment initialization failed. Please refresh and try again.");
+      setLoading(false);
       return;
     }
 
@@ -56,6 +80,7 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
       return;
     }
 
+    //
     const { error } = await stripe.confirmPayment({
       elements,
       clientSecret,
@@ -70,20 +95,40 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
     setLoading(false);
   };
 
+  // waiting client secrete
+
+  // if (!clientSecret || !stripe || !elements) {
+  //   return (
+  //     <div className="flex items-center justify-center py-12">
+  //       <div
+  //         className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-e-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+  //         role="status"
+  //       >
+  //         <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+  //           Loading...
+  //         </span>
+  //       </div>
+  //     </div>
+  //   );
+  // }
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <PaymentElement
-          options={{
-            layout: "tabs",
-          }}
-        />
+        {
+          <PaymentElement
+            options={{
+              layout: "tabs",
+            }}
+          />
+        }
       </div>
+
+      {errorMessage && <div className="text-red-600 text-sm">{errorMessage}</div>}
 
       <Button
         type="submit"
         size="lg"
-        disabled={!stripe || !elements || isLoading || !isReady}
+        disabled={!stripe || isLoading || !clientSecret}
         className="w-full disabled:cursor-not-allowed"
       >
         {isLoading ? <Loader2 className="animate-spin" /> : `Pay ${+amount} €`}
