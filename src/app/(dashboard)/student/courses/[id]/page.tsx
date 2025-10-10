@@ -107,7 +107,7 @@ export default function Page() {
                     className="object-cover w-full h-auto rounded-md"
                   />
                   <div className="flex justify-between mt-2.5">
-                    <span
+                    {/* <span
                       className={`text-xs font-semibold px-2 py-0.5 rounded-xl ${
                         session.CreatedBy.email === "En direct"
                           ? "bg-[#E8F8ED] text-[#1BB66C]"
@@ -115,9 +115,9 @@ export default function Page() {
                             ? "bg-[#FDF6E8] text-[#DFA100]"
                             : "bg-[#F1F5F9] text-[#334155]"
                       }`}
-                    >
-                      {session.id_formateur}
-                    </span>
+                    > */}
+                    {/* {session.id_formateur} */}
+                    {/* </span> */}
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Image src="/icons/users.svg" alt="Participants" width={14} height={14} />
                       <span>{"49"} inscrits</span>
@@ -126,12 +126,12 @@ export default function Page() {
                 </div>
                 <div className="px-4 py-3 space-y-2">
                   <p className="text-sm text-[#0466C8] font-medium leading-tight">
-                    {session.Title.title}
+                    {/* {session.Title.title} */}
                   </p>
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 bg-gray-200 rounded-md" />
                     <div className="text-sm text-gray-800 flex flex-col">
-                      <span className="text-[#0466C8]">{session.CreatedBy.firstName}</span>
+                      {/* <span className="text-[#0466C8]">{session.CreatedBy.firstName}</span> */}
                       <span className="text-[10px] text-gray-500">Professeur</span>
                     </div>
                   </div>

@@ -152,31 +152,18 @@ export interface IListCourses {
   data: {
     length: number;
     rows: Array<{
-      id: number;
-      id_preset_cours: number;
-      duree: null | string;
-      ponderation: null | number;
+      id: string;
+      title: string;
+      description: string;
       is_published: boolean;
-      createdBy: number;
-      id_session: number;
-      id_category: number;
-      id_formateur: number;
-      Session: {
-        designation: string;
-        duree: string;
-        type_formation: string;
-      };
-      CreatedBy: {
-        id: number;
+      ponderation: number;
+      formateurs: Array<{
+        id: string;
         firstName: string;
         lastName: string;
-        email: string;
-      };
-      Title: {
-        id: number;
-        title: string;
-        description: string;
-      };
+      }>;
+      createdAt: string;
+      updatedAt: string;
     }>;
   };
 }

@@ -58,8 +58,9 @@ export const trainingStudentApi = createApi({
       providesTags: ["TrainingStudent"],
     }),
 
+    // List courses by session ID (Student access)
     listCoursesBySessionId: builder.query<IListCourses, { id_session: string }>({
-      query: (request) => `courses/listall/${request.id_session}`,
+      query: (request) => `sessioncours/student/session/${request.id_session}`,
       providesTags: ["TrainingStudent"],
     }),
     getCoursesById: builder.query<ICoursDetailsResponse, { id_cours: string }>({
