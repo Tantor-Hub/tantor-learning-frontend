@@ -83,7 +83,7 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
     }
 
     //
-    const { error } = await stripe.confirmPayment({
+    const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       clientSecret,
       confirmParams: {
@@ -95,8 +95,13 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
     if (error) {
       console.log(error);
       setErrorMessage(error.message);
+      setLoading(false);
+    } else if (paymentIntent && paymentIntent.status === "succeeded") {
+      // Payment succeeded, redirect to success page
+      window.location.href = `http://www.localhost:3000/trainings/id/payment/success-payment?amount=${amount}`;
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
