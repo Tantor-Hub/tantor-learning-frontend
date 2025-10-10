@@ -275,3 +275,20 @@ export interface ICoursDetailsResponse {
     };
   };
 }
+
+export interface IGetUserSessionsResponse {
+  status: number;
+  message: string;
+  data: Array<{
+    status: "refusedpayment" | "notpaid" | "pending" | "in" | "out";
+    trainingSession: {
+      id: string;
+      title: string;
+      begining_date: string;
+      ending_date: string;
+    };
+    training: {
+      title: string;
+    };
+  }>;
+}

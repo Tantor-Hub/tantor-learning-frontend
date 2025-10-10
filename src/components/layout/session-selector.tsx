@@ -1,5 +1,5 @@
 "use client";
-import { useGetMySessionsQuery } from "@/lib/apis/student/training-api";
+import { useGetUserSessionsQuery } from "@/lib/apis/student/training-api";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import {
@@ -18,7 +18,7 @@ interface SessionSelectorProps {
 export function SessionSelector({ selectedSessionId, onSessionChange }: SessionSelectorProps) {
   const currentUser = useSelector(selectCurrentUser);
 
-  const { data: sessions, isLoading } = useGetMySessionsQuery(undefined, {
+  const { data: sessions, isLoading } = useGetUserSessionsQuery(undefined, {
     skip: currentUser?.role !== "student",
   });
 
@@ -32,9 +32,9 @@ export function SessionSelector({ selectedSessionId, onSessionChange }: SessionS
         <SelectValue placeholder="Sélectionner une session" />
       </SelectTrigger>
       <SelectContent>
-        {sessions?.data.list.map((session) => (
-          <SelectItem key={session.id} value={String(session.id)}>
-            {session.Session.designation || "Session sans nom"} - {session.Formation.titre}
+        {sessions?.data.map((session) => (
+          <SelectItem key={session.trainingSession.id} value={session.trainingSession.id}>
+            {session.trainingSession.title || "Session sans nom"} - {session.training.title}
           </SelectItem>
         ))}
       </SelectContent>
