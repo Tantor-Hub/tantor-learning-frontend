@@ -67,6 +67,11 @@ export const EventApi = createApi({
       query: () => "event/instructor/mycourses",
       providesTags: ["Event"],
     }),
+
+    listStudentEventsBySession: builder.query<IListPlanning, string>({
+      query: (sessionId) => `event/student/session/${sessionId}`,
+      providesTags: ["Event"],
+    }),
     addEvent: builder.mutation<AddEventResponse, AddEventRequest>({
       query: (body) => ({
         url: "cms/events/event/add",
@@ -88,6 +93,7 @@ export const EventApi = createApi({
 export const {
   useListEventsQuery,
   useListInstructorEventsQuery,
+  useListStudentEventsBySessionQuery,
   useAddEventMutation,
   useDeleteEventMutation,
 } = EventApi;
