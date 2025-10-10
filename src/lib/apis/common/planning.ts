@@ -38,6 +38,30 @@ export interface InstructorEventsResponse {
   message: string;
 }
 
+export interface IStudentEventsResponse {
+  status: number;
+  message: string;
+  data: Array<{
+    id: string;
+    title: string;
+    description: string;
+    begining_date: string;
+    beginning_hour: string;
+    ending_hour: string;
+    createdBy: string;
+    sessionCours: {
+      id: string;
+      title: string;
+    };
+    creator: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+    };
+  }>;
+}
+
 export interface AddEventRequest {
   titre: string;
   description: string;
@@ -68,7 +92,7 @@ export const EventApi = createApi({
       providesTags: ["Event"],
     }),
 
-    listStudentEventsBySession: builder.query<IListPlanning, string>({
+    listStudentEventsBySession: builder.query<IStudentEventsResponse, string>({
       query: (sessionId) => `event/student/session/${sessionId}`,
       providesTags: ["Event"],
     }),

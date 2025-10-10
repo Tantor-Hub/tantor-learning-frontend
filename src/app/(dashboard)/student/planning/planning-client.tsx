@@ -20,16 +20,7 @@ export function PlanningClient() {
     return <PlanningSkeleton />;
   }
 
-  const rawEvents = data?.data.list || [];
-  const events = rawEvents.map((event: any) => ({
-    ...event,
-    title: event.titre,
-    begining_date: event.timeline[0],
-    beginning_hour: event.timeline[0]
-      ? new Date(event.timeline[0]).toTimeString().split(" ")[0]
-      : "",
-    ending_hour: event.timeline[1] ? new Date(event.timeline[1]).toTimeString().split(" ")[0] : "",
-  }));
+  const events = data?.data || [];
   const datesWithEvents = new Set(
     events.map((event: any) => new Date(event.begining_date).toDateString())
   );
