@@ -8,12 +8,10 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { filters, documentsData } from "../courses/data";
 import { ChevronLeft } from "lucide-react";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
@@ -25,7 +23,6 @@ import { useState } from "react";
 export default function Page() {
   const router = useRouter();
   const sessionId = useSelectedSession();
-  const currentUser = useSelector(selectCurrentUser);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPublished, setFilterPublished] = useState<boolean | null>(null);
   const [filterPonderation, setFilterPonderation] = useState<string>("all");

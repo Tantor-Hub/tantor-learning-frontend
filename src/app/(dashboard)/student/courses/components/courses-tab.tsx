@@ -1,80 +1,33 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useGetTrainingByIdQuery } from "@/lib/apis/student/training-api";
+import { useListCoursesBySessionIdQuery } from "@/lib/apis/student/training-api";
 import { Loading } from "@/components/shared/loading";
 import Link from "next/link";
 
 // Types pour les données de cours
 interface Cours {
-  id: number;
-  id_preset_cours: number;
-  duree: number | null;
-  ponderation: number | null;
+  id: string;
+  title: string;
+  description: string;
   is_published: boolean;
-  createdBy: number;
-  id_session: number;
-  id_formateur: number | null;
-  Title: {
-    id: number;
-    title: string;
-    description: string;
-  };
+  ponderation: number;
+  formateurs: Array<{
+    firstName: string;
+    lastName: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
 }
 
-interface SessionData {
-  id: number;
-  Cours: Cours[];
-  date_session_debut: string;
-  date_session_fin: string;
-  [key: string]: any;
-}
-
-interface SessionResponse {
-  status: number;
-  message: string;
-  data: SessionData;
-}
-
-// Fonction pour déterminer le statut d'un cours
-const getCourseStatus = (
-  course: Cours,
-  sessionStart: string,
-  sessionEnd: string
-): "actifs" | "avenir" | "termines" => {
-  const now = new Date();
-  const start = new Date(sessionStart);
-  const end = new Date(sessionEnd);
-
-  // Pour simplifier, on considère:
-  // - Actif: cours publié et session en cours
-  // - À venir: cours non publié ou session future
-  // - Terminé: session passée
-
-  if (now > end) return "termines";
-  if (now < start) return "avenir";
-
-  return course.is_published ? "actifs" : "avenir";
-};
-
-// Fonction pour formater la durée
-const formatDuration = (minutes: number | null): string => {
-  if (!minutes) return "Durée non définie";
-
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-
-  if (hours === 0) return `${mins}min`;
-  if (mins === 0) return `${hours}h`;
-
-  return `${hours}h ${mins}min`;
-};
-
-const CourseTab = ({ id_session }: { id_session: number }) => {
-  const { data: sessionResponse, isLoading } = useGetTrainingByIdQuery({ id_session });
+const CourseTab = ({ idSession }: { idSession: string }) => {
+  const { data: coursesResponse, isLoading } = useListCoursesBySessionIdQuery(
+    { id_session: idSession },
+    { skip: !idSession }
+  );
 
   if (isLoading) {
     return (
-      <div className="bg-white p-4 rounded-md border">
+      <div className="p-4 rounded border">
         <div className="flex items-center justify-center h-40">
           <Loading />
         </div>
@@ -82,76 +35,59 @@ const CourseTab = ({ id_session }: { id_session: number }) => {
     );
   }
 
-  if (!sessionResponse?.data) {
+  console.log(JSON.stringify(coursesResponse));
+  if (!coursesResponse?.data.rows) {
     return (
-      <div className="bg-white p-8 rounded-md shadow-md shadow-gray-300 border-t">
-        <div className="flex flex-col mb-5">
-          <h2 className="text-[#0466C8] text-[18px] font-semibold mb-2.5">Mes Cours</h2>
-          <p>Aucune donnée de session disponible</p>
+      <div className="p-8 rounded">
+        <div className="flex flex-col mb-4">
+          <h2 className="text-primary text-[18px] font-semibold mb-2.5">Mes Matières</h2>
+          <p>Aucune donnée de cours disponible</p>
         </div>
       </div>
     );
   }
 
-  const session = sessionResponse.data;
-  const { Cours, date_session_debut, date_session_fin } = session;
+  const courses = coursesResponse.data.rows;
 
-  // Organiser les cours par statut
-  const coursesByStatus = {
-    actifs: Cours.filter(
-      (course) => getCourseStatus(course, date_session_debut, date_session_fin) === "actifs"
-    ),
-    avenir: Cours.filter(
-      (course) => getCourseStatus(course, date_session_debut, date_session_fin) === "avenir"
-    ),
-    termines: Cours.filter(
-      (course) => getCourseStatus(course, date_session_debut, date_session_fin) === "termines"
-    ),
+  // Organiser les cours par filtre
+  const coursesByFilter = {
+    toutes: courses,
+    publiques: courses.filter((course) => course.is_published),
+    "non-publiques": courses.filter((course) => !course.is_published),
   };
 
   return (
-    <Tabs defaultValue="actifs">
-      <div className="bg-white p-8 rounded-md border">
+    <Tabs defaultValue="toutes">
+      <div className="p-4 rounded border">
         <div className="flex flex-col mb-5">
-          <h2 className="text-[#0466C8] text-[18px] font-semibold mb-2.5">Mes Cours</h2>
-          <p className="text-gray-600">
-            Session du {new Date(date_session_debut).toLocaleDateString("fr-FR")} au{" "}
-            {new Date(date_session_fin).toLocaleDateString("fr-FR")}
-          </p>
+          <h2 className="text-primary text-[18px] font-semibold mb-2.5">Mes Matières</h2>
         </div>
 
         <TabsList className="flex w-full mb-4 border">
-          <TabsTrigger value="actifs" className="flex-1 py-3 rounded-xl">
-            Actifs ({coursesByStatus.actifs.length})
+          <TabsTrigger value="toutes" className="flex-1 py-3 rounded">
+            Toutes ({coursesByFilter.toutes.length})
           </TabsTrigger>
-          <TabsTrigger value="avenir" className="flex-1 py-3 rounded-xl">
-            À venir ({coursesByStatus.avenir.length})
+          <TabsTrigger value="publiques" className="flex-1 py-3 rounded">
+            Publiques ({coursesByFilter.publiques.length})
           </TabsTrigger>
-          <TabsTrigger value="termines" className="flex-1 py-3 rounded-xl">
-            Terminés ({coursesByStatus.termines.length})
+          <TabsTrigger value="non-publiques" className="flex-1 py-3 rounded">
+            Non publiques ({coursesByFilter["non-publiques"].length})
           </TabsTrigger>
         </TabsList>
 
-        {(["actifs", "avenir", "termines"] as const).map((status) => (
-          <TabsContent key={status} value={status}>
+        {(["toutes", "publiques", "non-publiques"] as const).map((filter) => (
+          <TabsContent key={filter} value={filter}>
             <div className="space-y-4">
-              {coursesByStatus[status].length === 0 ? (
-                <p className="text-center text-gray-500 py-6">
-                  Aucun cours {getStatusLabel(status)}
-                </p>
+              {coursesByFilter[filter].length === 0 ? (
+                <p className="text-center text-gray-500 py-6">Aucun cours trouvé</p>
               ) : (
-                coursesByStatus[status].map((course) => (
+                coursesByFilter[filter].map((course) => (
                   <Link
                     key={course.id}
-                    href={`/student/courses/${id_session}/${course.id}`}
+                    href={`/student/courses/${course.id}`}
                     className="mb-4 block"
                   >
-                    <CourseCard
-                      course={course}
-                      status={status}
-                      sessionStart={date_session_debut}
-                      sessionEnd={date_session_fin}
-                    />
+                    <CourseCard course={course} />
                   </Link>
                 ))
               )}
@@ -164,44 +100,37 @@ const CourseTab = ({ id_session }: { id_session: number }) => {
 };
 
 // Composant de carte de cours
-const CourseCard = ({
-  course,
-  status,
-  sessionStart,
-  sessionEnd,
-}: {
-  course: Cours;
-  status: "actifs" | "avenir" | "termines";
-  sessionStart: string;
-  sessionEnd: string;
-}) => {
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      actifs: { text: "Actif", color: "bg-green-100 text-green-800" },
-      avenir: { text: "À venir", color: "bg-blue-100 text-blue-800" },
-      termines: { text: "Terminé", color: "bg-gray-100 text-gray-800" },
-    };
+const CourseCard = ({ course }: { course: Cours }) => {
+  const getStatusBadge = (course: Cours) => {
+    const text = course.is_published ? "Publié" : "Non publié";
+    const color = course.is_published ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800";
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.actifs;
-
-    return <span className={`px-2 py-1 text-xs rounded-full ${config.color}`}>{config.text}</span>;
+    return <span className={`px-2 py-1 text-xs rounded-full ${color}`}>{text}</span>;
   };
 
   return (
-    <div className="p-4 border rounded-lg hover:shadow-md transition-shadow">
+    <div className="p-4 border rounded hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-2">
-        <h3 className="font-semibold text-gray-900">{course.Title.title}</h3>
-        {getStatusBadge(status)}
+        <h3 className="font-semibold text-gray-900">{course.title}</h3>
+        {getStatusBadge(course)}
       </div>
 
-      <p className="text-sm text-gray-600 mb-3">{course.Title.description}</p>
+      <p className="text-sm text-gray-600 mb-3">{course.description}</p>
 
       <div className="flex justify-between items-center text-sm text-gray-500">
-        <span>Durée: {formatDuration(course.duree)}</span>
         <span>Pondération: {course.ponderation || "N/A"}</span>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-gray-200 rounded-md" />
+          <div className="text-sm text-gray-800 flex flex-col">
+            <span className="text-[#0466C8]">
+              {course.formateurs[0]?.firstName} {course.formateurs[0]?.lastName}
+            </span>
+            <span className="text-[10px] text-gray-500">Professeur</span>
+          </div>
+        </div>
       </div>
 
-      {status === "actifs" && course.is_published && (
+      {course.is_published && (
         <div className="mt-3">
           <p className="text-sm font-medium text-gray-800 mb-1">Progression</p>
           <div className="h-2 w-full bg-gray-200 rounded-full">
@@ -214,16 +143,6 @@ const CourseCard = ({
       )}
     </div>
   );
-};
-
-// Helper function pour les labels de statut
-const getStatusLabel = (status: string): string => {
-  const labels = {
-    actifs: "actif",
-    avenir: "à venir",
-    termines: "terminé",
-  };
-  return labels[status as keyof typeof labels] || status;
 };
 
 export default CourseTab;

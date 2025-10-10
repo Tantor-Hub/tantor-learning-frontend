@@ -265,7 +265,7 @@ export default function Page() {
         </div>
         <SessionProgress id_session={+selectedSessionId} />
       </div>
-      <CourseTab id_session={+selectedSessionId} />
+      <CourseTab idSession={selectedSessionId} />
     </>
   );
 }

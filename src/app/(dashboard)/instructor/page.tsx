@@ -23,7 +23,7 @@ export default function Page() {
           <div className="h-40 md:h-72">{<AreaChartComponent />}</div>
         </div>
       </div>
-      <CourseTab id_session={1} />
+      <CourseTab idSession={"1"} />
       <div className="p-5 my-5 rounded-md bg-white flex flex-col md:flex-row gap-5 md:gap-10">
         <div className="rounded-sm shadow-sm p-2.5 flex-[1]">
           <div className="flex flex-col mb-5">
