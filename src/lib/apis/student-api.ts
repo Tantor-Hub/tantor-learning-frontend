@@ -38,6 +38,21 @@ interface AverageScoreResponse {
   };
 }
 
+interface Lesson {
+  id: string;
+  title: string;
+  description: string;
+}
+
+interface LessonsResponse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    rows: Lesson[];
+  };
+}
+
 export const studentApi = createApi({
   reducerPath: "studentApi",
   baseQuery,
@@ -55,7 +70,16 @@ export const studentApi = createApi({
       query: () => "cms/dashboard/averages",
       providesTags: ["Student"],
     }),
+    getLessons: builder.query<LessonsResponse, string>({
+      query: (courseId) => `lesson/student/cours/${courseId}/lessons`,
+      providesTags: ["Student"],
+    }),
   }),
 });
 
-export const { useAverageScoreQuery, useNextLiveSessionQuery, useStudentStatusQuery } = studentApi;
+export const {
+  useAverageScoreQuery,
+  useNextLiveSessionQuery,
+  useStudentStatusQuery,
+  useGetLessonsQuery,
+} = studentApi;

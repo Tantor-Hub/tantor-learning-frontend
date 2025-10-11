@@ -13,7 +13,7 @@ import { ongoingCourse } from "./data";
 import { BookOpen, ClipboardList, ListCheck, Percent } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loading } from "@/components/shared/loading";
-import { useGetMySessionsQuery } from "@/lib/apis/student/training-api";
+import { useGetMySessionsQuery, useGetSessionDetailsQuery } from "@/lib/apis/student/training-api";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { useSelectedSession } from "@/hooks/use-selected-session";
@@ -40,6 +40,11 @@ export default function Page() {
   const selectedSessionId = useSelectedSession();
 
   const listSessions = useGetMySessionsQuery();
+
+  const sessionDetails = useGetSessionDetailsQuery(
+    { id: selectedSessionId },
+    { skip: !selectedSessionId }
+  );
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSessionLocal, setSelectedSessionLocal] = useState<string | null>(null);
@@ -233,29 +238,24 @@ export default function Page() {
             <p className="text-[10px] text-[#5C677D]">par rapport au dernier semestre</p>
           </CardFooter>
         </Card>
-
-        {/* <Card className="gap-0 py-4">
-          <CardHeader className="px-4">
-            <CardTitle className="flex justify-between items-center">
-              <h1 className="text-sm md:text-base">Messages non lus</h1>
-              <span>
-                <UserPlus size={20} />
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 flex gap-2.5 items-center">
-            <span className="font-black text-xl md:text-2xl">
-              {studentsStatus.data?.data[2].unreadMessageNumber}
-            </span>
-            <span className="text-[10px] text-[#00CBB8]">
-              ↗ +{studentsStatus.data?.data[2].unreadMessageNumber}%
-            </span>
-          </CardContent>
-          <CardFooter className="px-4">
-            <p className="text-[10px] text-[#5C677D]">à lire</p>
-          </CardFooter>
-        </Card> */}
       </div>
+      {sessionDetails.data && (
+        <Card className="mb-5">
+          <CardHeader>
+            <CardTitle>Détails de la Session</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <h3 className="text-lg font-semibold">{sessionDetails.data.data.title}</h3>
+            <p className="text-sm text-gray-600">{sessionDetails.data.data.trainings.title}</p>
+            <p className="text-sm">{sessionDetails.data.data.trainings.description}</p>
+            <p className="text-sm">Prix: {sessionDetails.data.data.trainings.prix} €</p>
+            <p className="text-sm">Type: {sessionDetails.data.data.trainings.trainingtype}</p>
+            {sessionDetails.data.data.regulation_text && (
+              <p className="text-sm">Règlement: {sessionDetails.data.data.regulation_text}</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
       {(nextLiveSession.data?.data?.length ?? 0) > 0 && <OngoingCourse ongoing={ongoingCourse} />}
       <div className="flex flex-col lg:flex-row gap-5 my-5">
         <div className="flex-[3] border border-border rounded-xl py-4  bg-white">
@@ -263,7 +263,7 @@ export default function Page() {
             <BarVisual id_session={selectedSessionId} />
           </div>
         </div>
-        <SessionProgress id_session={+selectedSessionId} />
+        <SessionProgress id_session={selectedSessionId} />
       </div>
       <CourseTab idSession={selectedSessionId} />
     </>

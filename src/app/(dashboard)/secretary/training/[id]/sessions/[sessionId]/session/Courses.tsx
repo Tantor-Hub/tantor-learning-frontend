@@ -78,18 +78,9 @@ export default function Courses({ sessionId }: { sessionId: string }) {
   const [selectedFormateurs, setSelectedFormateurs] = React.useState<string[]>([]);
   const [open, setOpen] = React.useState(false);
 
-  // Lazy load users only when popover is opened
-  const {
-    data: usersData,
-    isLoading: isLoadingUsers,
-    refetch: refetchUsers,
-  } = useListUserByRoleQuery({ role: UserRole.INSTRUCTOR }, { skip: true });
-
-  React.useEffect(() => {
-    if (open) {
-      refetchUsers();
-    }
-  }, [open, refetchUsers]);
+  const { data: usersData, isLoading: isLoadingUsers } = useListUserByRoleQuery({
+    role: UserRole.INSTRUCTOR,
+  });
 
   const handleDelete = async (id: string) => {
     try {

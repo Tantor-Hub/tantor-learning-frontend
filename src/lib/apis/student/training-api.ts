@@ -7,6 +7,7 @@ import {
   IGetMySessionsResponse,
   ICoursDetailsResponse,
   IGetUserSessionsResponse,
+  IGetSessionDetailsResponse,
 } from "@/types/student/traning-api";
 
 // Including showing the student courses
@@ -73,6 +74,11 @@ export const trainingStudentApi = createApi({
       providesTags: ["TrainingStudent"],
     }),
 
+    getSessionDetails: builder.query<IGetSessionDetailsResponse, { id: string }>({
+      query: (request) => `trainingsession/student/${request.id}`,
+      providesTags: ["TrainingStudent"],
+    }),
+
     // Create CPF payment method (student access)
     createCpfPayment: builder.mutation<any, { id_session: string }>({
       query: (body) => ({
@@ -116,4 +122,5 @@ export const {
   useCreateCpfPaymentMutation,
   useCreateOpcoPaymentMutation,
   useGetUserSessionsQuery,
+  useGetSessionDetailsQuery,
 } = trainingStudentApi;

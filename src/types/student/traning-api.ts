@@ -279,3 +279,23 @@ export interface IGetUserSessionsResponse {
     };
   }>;
 }
+
+export interface IGetSessionDetailsResponse {
+  status: number;
+  message: string;
+  data: {
+    id: string;
+    title: string;
+    payment_method: string | null;
+    cpf_link: string | null;
+    survey: string | null;
+    regulation_text: string;
+    trainings: {
+      title: string;
+      subtitle: string;
+      description: string;
+      trainingtype: string;
+      prix: string;
+    };
+  };
+}

@@ -16,7 +16,7 @@ export const useLogout = () => {
       await logoutMutation().unwrap();
     } catch (error) {
       // Even if logout API fails, we still clear local tokens
-      console.error("Logout API failed:", error);
+      // console.error("Logout API failed:", error);
     } finally {
       // Clear Redux state
       dispatch(clearCredentials());
