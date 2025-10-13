@@ -13,8 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ChevronLeft } from "lucide-react";
-import { useSelector } from "react-redux";
-import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { EmptyState } from "@/components/shared/empty-state";
 import Link from "next/link";
 import { useSelectedSession } from "@/hooks/use-selected-session";
@@ -58,7 +56,7 @@ export default function Page() {
   if (!sessionId) {
     return (
       <div className="flex flex-col items-center justify-center py-10">
-        <img src="/empty.svg" alt="No session" className="w-16 h-16 mb-4" />
+        <Image src="/empty.svg" alt="No session" className="w-16 h-16 mb-4" />
         <p className="text-center text-gray-600">
           vous devez etre dans une session ou etre enregistrer dans une session pour voir les
           evenment de la session
@@ -157,8 +155,8 @@ export default function Page() {
       {filteredCourses.length > 0 ? (
         <div className="py-5 grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-5">
           {filteredCourses.map((course) => (
-            <Link key={course.id} href={`/student/courses/${sessionId}/${course.id}`}>
-              <div className="border border-blue-200 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow">
+            <Link key={course.id} href={`/student/courses/${course.id}`}>
+              <div className="border border-blue-200 rounded shadow-sm bg-white hover:shadow-md transition-shadow">
                 <div className="p-2.5">
                   <Image
                     src="/icons/video-placeholder.svg"

@@ -16,12 +16,14 @@ import { manageCoursesApi } from "./common/courses-api";
 import { seanceSecretaryApi } from "./secretary/seance-secretary-api";
 import { documentStudentApi } from "./student/document-api";
 import { instructorApi } from "./instructor/instructor";
-import { studentEvaluationApi } from "./instructor/student-evaluation";
 import { evaluationQuestionApi } from "./instructor/evaluation-question";
 import { roleApi } from "./admin/role-api";
 import { documentsApi } from "./common/document-api";
 import { eventApi } from "./event-api";
 import { evaluationQuestionOptionApi } from "./instructor/evaluation-question-option";
+import { lessonDocumentApi } from "./lessondocument";
+import { studentEvaluationsApi } from "./student-evaluations";
+
 // Export all API slices for easy access
 export {
   authApi,
@@ -43,11 +45,12 @@ export {
   seanceSecretaryApi,
   documentStudentApi,
   instructorApi,
-  studentEvaluationApi,
   evaluationQuestionApi,
   evaluationQuestionOptionApi,
   roleApi,
   eventApi,
+  lessonDocumentApi,
+  studentEvaluationsApi,
 };
 
 // Combine all reducers for easy store setup
@@ -70,12 +73,13 @@ export const apiReducers = {
   [seanceSecretaryApi.reducerPath]: seanceSecretaryApi.reducer,
   [documentStudentApi.reducerPath]: documentStudentApi.reducer,
   [instructorApi.reducerPath]: instructorApi.reducer,
-  [studentEvaluationApi.reducerPath]: studentEvaluationApi.reducer,
+  [studentEvaluationsApi.reducerPath]: studentEvaluationsApi.reducer,
   [evaluationQuestionApi.reducerPath]: evaluationQuestionApi.reducer,
   [evaluationQuestionOptionApi.reducerPath]: evaluationQuestionOptionApi.reducer,
   [roleApi.reducerPath]: roleApi.reducer,
   [documentsApi.reducerPath]: documentsApi.reducer,
   [eventApi.reducerPath]: eventApi.reducer,
+  [lessonDocumentApi.reducerPath]: lessonDocumentApi.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -98,10 +102,11 @@ export const apiMiddlewares = [
   seanceSecretaryApi.middleware,
   documentStudentApi.middleware,
   instructorApi.middleware,
-  studentEvaluationApi.middleware,
+  studentEvaluationsApi.middleware,
   evaluationQuestionApi.middleware,
   evaluationQuestionOptionApi.middleware,
   roleApi.middleware,
   documentsApi.middleware,
   eventApi.middleware,
+  lessonDocumentApi.middleware,
 ];

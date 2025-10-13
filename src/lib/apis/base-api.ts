@@ -120,6 +120,8 @@ export const commonTagTypes = [
   "Event",
   "Message",
   "Document",
+  "LessonDocument",
+  "StudentEvaluations",
 ];
 
 // Re-export for convenience

@@ -13,10 +13,14 @@ export default function Page() {
       <Button onClick={() => router.back()}>
         <ChevronLeft /> Retour
       </Button>
-      <Tabs>
-        <TabsList defaultValue="lessons">
-          <TabsTrigger value="lessons">Lessons</TabsTrigger>
-          <TabsTrigger value="documents">Evaluations</TabsTrigger>
+      <Tabs defaultValue="lessons">
+        <TabsList className="flex w-full mb-4 border rounded">
+          <TabsTrigger value="lessons" className="flex-1 py-3 rounded">
+            Lessons
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="flex-1 py-3 rounded">
+            Evaluations
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="lessons">
           <LessonsTab />

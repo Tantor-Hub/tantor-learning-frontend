@@ -23,7 +23,7 @@ import { MoreHorizontal, Trash2, Edit, FileText, Ellipsis } from "lucide-react";
 import {
   useGetStudentEvaluationsBySessionQuery,
   useDeleteStudentEvaluationMutation,
-} from "@/lib/apis/instructor/student-evaluation";
+} from "@/lib/apis/student-evaluations";
 import {
   AlertDialog,
   AlertDialogContent,

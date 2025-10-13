@@ -21,8 +21,8 @@ import { useGetLessonsByCourseIdQuery } from "@/lib/apis/instructor/instructor";
 import {
   useGetStudentEvaluationByIdQuery,
   useUpdateStudentEvaluationMutation,
-  StudentevaluationType,
-} from "@/lib/apis/instructor/student-evaluation";
+} from "@/lib/apis/student-evaluations";
+import { StudentevaluationType } from "@/types/student-evaluations";
 import { toast } from "react-hot-toast";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";

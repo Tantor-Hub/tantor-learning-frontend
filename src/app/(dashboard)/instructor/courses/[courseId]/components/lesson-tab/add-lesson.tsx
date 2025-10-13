@@ -24,10 +24,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, Plus, X, Loader2, ChevronsUpDown } from "lucide-react";
 import { useGetLessonsByCourseIdQuery } from "@/lib/apis/instructor/instructor";
-import {
-  useCreateStudentEvaluationMutation,
-  StudentevaluationType,
-} from "@/lib/apis/instructor/student-evaluation";
+import { useCreateStudentEvaluationMutation } from "@/lib/apis/student-evaluations";
+import { StudentevaluationType } from "@/types/student-evaluations";
 import { toast } from "react-hot-toast";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
