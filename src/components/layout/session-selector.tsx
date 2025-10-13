@@ -1,14 +1,21 @@
 "use client";
+import { useEffect, useState } from "react";
 import { useGetUserSessionsQuery } from "@/lib/apis/student/training-api";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 
 interface SessionSelectorProps {
   selectedSessionId: string | null;
@@ -17,27 +24,109 @@ interface SessionSelectorProps {
 
 export function SessionSelector({ selectedSessionId, onSessionChange }: SessionSelectorProps) {
   const currentUser = useSelector(selectCurrentUser);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [localSessions, setLocalSessions] = useState<any[]>([]);
+  const [selectedInDialog, setSelectedInDialog] = useState<string>("");
 
   const { data: sessions, isLoading } = useGetUserSessionsQuery(undefined, {
     skip: currentUser?.role !== "student",
   });
 
+  // Load sessions from localStorage on mount
+  useEffect(() => {
+    const savedSessions = localStorage.getItem("userSessions");
+    if (savedSessions) {
+      const parsed = JSON.parse(savedSessions);
+      setLocalSessions(parsed);
+      // Set selectedInDialog to first session or current selected
+      const firstId = parsed[0]?.trainingSession.id;
+      setSelectedInDialog(selectedSessionId || firstId || "");
+    }
+  }, [selectedSessionId]);
+
+  // Load selectedSessionId from localStorage if not set
+  useEffect(() => {
+    const savedSelected = localStorage.getItem("selectedSessionId");
+    if (savedSelected && !selectedSessionId) {
+      onSessionChange(savedSelected);
+    }
+  }, [selectedSessionId, onSessionChange]);
+
+  // When sessions data is loaded, update localStorage and local state
+  useEffect(() => {
+    if (sessions?.data) {
+      localStorage.setItem("userSessions", JSON.stringify(sessions.data));
+      setLocalSessions(sessions.data);
+      // Set selectedInDialog to current selected or first
+      const firstId = sessions.data[0]?.trainingSession.id;
+      setSelectedInDialog(selectedSessionId || firstId || "");
+    }
+  }, [sessions?.data, selectedSessionId]);
+
+  // Persist selectedSessionId to localStorage
+  const handleSessionChange = (value: string) => {
+    onSessionChange(value);
+    localStorage.setItem("selectedSessionId", value);
+  };
+
   if (isLoading) {
     return <div className="min-w-[300px] h-10 bg-gray-200 animate-pulse rounded-md" />;
   }
 
+  const selectedSession = localSessions.find((s) => s.trainingSession.id === selectedSessionId);
+
   return (
-    <Select onValueChange={onSessionChange} value={selectedSessionId || ""}>
-      <SelectTrigger className="min-w-[300px]">
-        <SelectValue placeholder="Sélectionner une session" />
-      </SelectTrigger>
-      <SelectContent>
-        {sessions?.data.map((session) => (
-          <SelectItem key={session.trainingSession.id} value={session.trainingSession.id}>
-            {session.trainingSession.title || "Session sans nom"} - {session.training.title}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <>
+      <Button
+        variant="outline"
+        onClick={() => setOpenDialog(true)}
+        className="min-w-[300px] justify-start"
+      >
+        {selectedSession
+          ? `${selectedSession.trainingSession.title || "Session sans nom"} - ${selectedSession.training.title}`
+          : "Sélectionner une session"}
+      </Button>
+
+      <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="mx-auto sm:mx-0 mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+              <Badge variant="outline" className="py-1">
+                Sessions
+              </Badge>
+            </div>
+            <AlertDialogTitle className="text-2xl font-bold tracking-tight">
+              Sélectionner une session
+            </AlertDialogTitle>
+            <AlertDialogDescription className="mt-3 text-[15px]">
+              Choisissez une session pour continuer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {localSessions.map((session) => (
+              <Button
+                key={session.trainingSession.id}
+                variant={selectedInDialog === session.trainingSession.id ? "default" : "outline"}
+                onClick={() => setSelectedInDialog(session.trainingSession.id)}
+                className="w-full justify-start"
+              >
+                {session.trainingSession.title || "Session sans nom"} - {session.training.title}
+              </Button>
+            ))}
+          </div>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                handleSessionChange(selectedInDialog);
+                setOpenDialog(false);
+              }}
+            >
+              Continuer <ArrowRight />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
