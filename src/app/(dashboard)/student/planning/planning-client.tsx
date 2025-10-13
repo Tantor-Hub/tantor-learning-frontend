@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { EventViewer } from "./event-viewer";
 import { useListStudentEventsBySessionQuery } from "@/lib/apis/common/planning";
 import { CalendarEvent } from "@/components/ui/calendar-event";
@@ -47,7 +48,13 @@ export function PlanningClient() {
         </Card>
         {!sessionId ? (
           <div className="flex-1 p-4 bg-gray-50 rounded border flex flex-col items-center justify-center">
-            <img src="/empty.svg" alt="No schedule" className="w-16 h-16 mb-4" />
+            <Image
+              src="/empty.svg"
+              alt="No schedule"
+              width={64}
+              height={64}
+              className="w-16 h-16 mb-4"
+            />
             <p className="text-center text-gray-600">
               vous devez etre dans une session ou etre enregistrer dans une session pour voir les
               evenment de la session

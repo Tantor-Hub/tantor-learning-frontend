@@ -56,7 +56,13 @@ export default function Page() {
   if (!sessionId) {
     return (
       <div className="flex flex-col items-center justify-center py-10">
-        <Image src="/empty.svg" alt="No session" className="w-16 h-16 mb-4" />
+        <Image
+          src="/empty.svg"
+          alt="No session"
+          className="w-16 h-16 mb-4"
+          width={64}
+          height={64}
+        />
         <p className="text-center text-gray-600">
           vous devez etre dans une session ou etre enregistrer dans une session pour voir les
           evenment de la session

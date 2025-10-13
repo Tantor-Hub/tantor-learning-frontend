@@ -30,3 +30,27 @@ export interface IStudentEvaluation {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface ISessionCours {
+  id: string;
+  title: string;
+  description: string;
+}
+
+export interface ILesson {
+  id: string;
+  title: string;
+  description: string;
+}
+
+export interface IStudentEvaluationsResponse {
+  evaluations: IStudentEvaluation[];
+  total: number;
+  sessionCours: ISessionCours;
+}
+
+export interface IStudentEvaluationsApiResponse {
+  status: number;
+  message: string;
+  data: IStudentEvaluationsResponse;
+}

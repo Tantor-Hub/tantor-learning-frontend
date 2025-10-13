@@ -1,5 +1,9 @@
 import { createApi, enhancedBaseQuery } from "./base-api";
-import { IStudentEvaluation } from "@/types/student-evaluations";
+import {
+  IStudentEvaluation,
+  IStudentEvaluationsResponse,
+  IStudentEvaluationsApiResponse,
+} from "@/types/student-evaluations";
 
 export const studentEvaluationsApi = createApi({
   reducerPath: "studentEvaluationsApi",
@@ -10,7 +14,10 @@ export const studentEvaluationsApi = createApi({
     ######################### STUDENT ACCESS ########################################
     #################################################################################*/
 
-    getStudentEvaluationsBySession: builder.query<any, { sessionCoursId: string }>({
+    getStudentEvaluationsBySession: builder.query<
+      IStudentEvaluationsApiResponse,
+      { sessionCoursId: string }
+    >({
       query: ({ sessionCoursId }) => `studentevaluation/sessioncours/${sessionCoursId}`,
       providesTags: ["StudentEvaluations"],
     }),

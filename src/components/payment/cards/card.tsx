@@ -57,7 +57,7 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
         setErrorMessage(error.message || "Failed to initialize payment");
         setIsCreating(false);
       });
-  }, [sessionId]);
+  }, [sessionId, BASE_URL, token]);
   // handle submit to the server
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
