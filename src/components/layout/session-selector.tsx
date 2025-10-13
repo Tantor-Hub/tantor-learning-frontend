@@ -27,22 +27,28 @@ export function SessionSelector({ selectedSessionId, onSessionChange }: SessionS
   const [openDialog, setOpenDialog] = useState(false);
   const [localSessions, setLocalSessions] = useState<any[]>([]);
   const [selectedInDialog, setSelectedInDialog] = useState<string>("");
+  const [fetchSessions, setFetchSessions] = useState(false);
 
-  const { data: sessions, isLoading } = useGetUserSessionsQuery(undefined, {
-    skip: currentUser?.role !== "student",
+  const {
+    data: sessions,
+    isLoading,
+    refetch,
+  } = useGetUserSessionsQuery(undefined, {
+    skip: currentUser?.role !== "student" || !fetchSessions,
   });
 
-  // Load sessions from localStorage on mount
+  // Load sessions from localStorage on mount and set first if no selected
   useEffect(() => {
     const savedSessions = localStorage.getItem("userSessions");
     if (savedSessions) {
       const parsed = JSON.parse(savedSessions);
       setLocalSessions(parsed);
-      // Set selectedInDialog to first session or current selected
-      const firstId = parsed[0]?.trainingSession.id;
-      setSelectedInDialog(selectedSessionId || firstId || "");
+      if (!selectedSessionId) {
+        const firstId = parsed[0]?.trainingSession.id;
+        if (firstId) onSessionChange(firstId);
+      }
     }
-  }, [selectedSessionId]);
+  }, [selectedSessionId, onSessionChange]);
 
   // Load selectedSessionId from localStorage if not set
   useEffect(() => {
@@ -52,16 +58,18 @@ export function SessionSelector({ selectedSessionId, onSessionChange }: SessionS
     }
   }, [selectedSessionId, onSessionChange]);
 
-  // When sessions data is loaded, update localStorage and local state
+  // When sessions data is loaded, update localStorage and set first if no selected
   useEffect(() => {
     if (sessions?.data) {
       localStorage.setItem("userSessions", JSON.stringify(sessions.data));
       setLocalSessions(sessions.data);
-      // Set selectedInDialog to current selected or first
-      const firstId = sessions.data[0]?.trainingSession.id;
-      setSelectedInDialog(selectedSessionId || firstId || "");
+      if (!selectedSessionId) {
+        const firstId = sessions.data[0]?.trainingSession.id;
+        if (firstId) onSessionChange(firstId);
+      }
+      setSelectedInDialog(selectedSessionId || sessions.data[0]?.trainingSession.id || "");
     }
-  }, [sessions?.data, selectedSessionId]);
+  }, [sessions?.data, selectedSessionId, onSessionChange]);
 
   // Persist selectedSessionId to localStorage
   const handleSessionChange = (value: string) => {
@@ -69,19 +77,23 @@ export function SessionSelector({ selectedSessionId, onSessionChange }: SessionS
     localStorage.setItem("selectedSessionId", value);
   };
 
-  if (isLoading) {
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
+    setFetchSessions(true);
+    refetch();
+    setSelectedInDialog(selectedSessionId || localSessions[0]?.trainingSession.id || "");
+  };
+
+  if (isLoading && fetchSessions) {
     return <div className="min-w-[300px] h-10 bg-gray-200 animate-pulse rounded-md" />;
   }
 
-  const selectedSession = localSessions.find((s) => s.trainingSession.id === selectedSessionId);
+  const selectedSession =
+    localSessions.find((s) => s.trainingSession.id === selectedSessionId) || localSessions[0];
 
   return (
     <>
-      <Button
-        variant="outline"
-        onClick={() => setOpenDialog(true)}
-        className="min-w-[300px] justify-start"
-      >
+      <Button variant="outline" onClick={handleOpenDialog} className="min-w-[300px] justify-start">
         {selectedSession
           ? `${selectedSession.trainingSession.title || "Session sans nom"} - ${selectedSession.training.title}`
           : "Sélectionner une session"}
