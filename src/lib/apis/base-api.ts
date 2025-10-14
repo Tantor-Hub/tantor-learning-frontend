@@ -122,6 +122,7 @@ export const commonTagTypes = [
   "Document",
   "LessonDocument",
   "StudentEvaluations",
+  "UserInSession",
 ];
 
 // Re-export for convenience

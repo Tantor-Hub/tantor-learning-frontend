@@ -26,6 +26,7 @@ import { studentEvaluationsApi } from "./student-evaluations";
 import { evaluationQuestionsApi } from "./evaluation-questions";
 import { studentAnswersApi } from "./student-answers";
 import { studentAnswerOptionsApi } from "./student-answer-options";
+import { userInSessionApi } from "./user-in-session";
 
 // Export all API slices for easy access
 export {
@@ -57,6 +58,7 @@ export {
   evaluationQuestionsApi,
   studentAnswersApi,
   studentAnswerOptionsApi,
+  userInSessionApi,
 };
 
 // Combine all reducers for easy store setup
@@ -89,6 +91,7 @@ export const apiReducers = {
   [documentsApi.reducerPath]: documentsApi.reducer,
   [eventApi.reducerPath]: eventApi.reducer,
   [lessonDocumentApi.reducerPath]: lessonDocumentApi.reducer,
+  [userInSessionApi.reducerPath]: userInSessionApi.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -121,4 +124,5 @@ export const apiMiddlewares = [
   documentsApi.middleware,
   eventApi.middleware,
   lessonDocumentApi.middleware,
+  userInSessionApi.middleware,
 ];

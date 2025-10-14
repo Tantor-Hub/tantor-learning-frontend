@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useGetUserSessionsQuery } from "@/lib/apis/student/training-api";
+import { useGetUserSessionsByUserQuery } from "../../lib/apis/user-in-session";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import {
@@ -33,7 +33,7 @@ export function SessionSelector({ selectedSessionId, onSessionChange }: SessionS
     data: sessions,
     isLoading,
     refetch,
-  } = useGetUserSessionsQuery(undefined, {
+  } = useGetUserSessionsByUserQuery(undefined, {
     skip: currentUser?.role !== "student" || !fetchSessions,
   });
 
@@ -79,8 +79,11 @@ export function SessionSelector({ selectedSessionId, onSessionChange }: SessionS
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
-    setFetchSessions(true);
-    refetch();
+    if (fetchSessions) {
+      refetch();
+    } else {
+      setFetchSessions(true);
+    }
     setSelectedInDialog(selectedSessionId || localSessions[0]?.trainingSession.id || "");
   };
 
