@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { PaymentCardUI } from "@/components/payment/payment-card-ui";
+import { calculateStripeTotal } from "@/lib/convert-to-subcurrency";
 
 // Simple inline skeleton component
 const Skeleton = ({ className = "", width = "100%", height = "1rem" }) => (
@@ -127,6 +128,11 @@ export default function Page() {
 
     return { hasPayment, totalSteps: 2 };
   }, [session]);
+
+  const { stripeFee, totalAmount } = useMemo(() => {
+    const basePrice = parseFloat(session?.trainings?.prix || "0");
+    return calculateStripeTotal(basePrice);
+  }, [session?.trainings?.prix]);
 
   const { hasPayment, totalSteps } = stepConfig;
 
@@ -323,9 +329,21 @@ export default function Page() {
 
                 <div className="mt-6 pt-6 border-t border-blue-200">
                   <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Prix de base</span>
+                    <span className="text-lg text-gray-700">
+                      {Number(session.trainings?.prix || 0).toFixed(2)} €
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-sm font-medium text-gray-600">
+                      Frais Stripe (1.4% + 0.25€)
+                    </span>
+                    <span className="text-sm text-gray-600">{stripeFee.toFixed(2)} €</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-2 pt-2 border-t border-blue-200">
                     <span className="text-sm font-medium text-gray-600">Total à payer</span>
                     <span className="text-xl font-bold text-blue-600">
-                      {Number(session.trainings?.prix || 0).toFixed(2)} €
+                      {totalAmount.toFixed(2)} €
                     </span>
                   </div>
                 </div>
@@ -358,7 +376,7 @@ export default function Page() {
               </CardHeader>
               <CardContent>
                 <PaymentCardUI
-                  amount={session.trainings.prix}
+                  amount={totalAmount}
                   sessionId={sessionId}
                   trainingId={trainingId}
                   availableMethods={

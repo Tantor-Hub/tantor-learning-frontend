@@ -2,6 +2,7 @@ import { authApi } from "@/lib/apis/auth-api";
 import { usersApi } from "@/lib/apis/users-api";
 import { IUser, UserRole } from "@/types/user";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { setAuthCookie, removeAuthCookie } from "@/lib/cookies";
 
 export interface AuthState {
   token: string | null;
@@ -259,7 +260,10 @@ export const authSlice = createSlice({
         if (typeof window !== "undefined") {
           localStorage.removeItem("authState");
         }
+        // Remove cookie on logout
+        removeAuthCookie("auth_token");
       })
+
       .addMatcher(authApi.endpoints.logout.matchRejected, (state) => {
         // Even if the logout API fails, we should clear local state
         state.token = null;

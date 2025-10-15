@@ -1,11 +1,11 @@
 import { ReactNode } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { DashboardProvider } from "@/components/providers/dashboard-provider";
+import { AuthWrapper } from "@/components/AuthWrapper";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <DashboardProvider>
+    <AuthWrapper>
       <DashboardShell>{children}</DashboardShell>
-    </DashboardProvider>
+    </AuthWrapper>
   );
 }

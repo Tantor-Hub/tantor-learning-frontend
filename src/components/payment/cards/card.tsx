@@ -124,7 +124,7 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
         disabled={!stripe || loading || !clientSecret}
         className="w-full disabled:cursor-not-allowed"
       >
-        {loading ? <Loader2 className="animate-spin" /> : `Pay ${+amount} €`}
+        {loading ? <Loader2 className="animate-spin" /> : `Payer ${+amount} €`}
       </Button>
     </form>
   );
