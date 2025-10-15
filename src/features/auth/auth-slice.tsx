@@ -2,7 +2,13 @@ import { authApi } from "@/lib/apis/auth-api";
 import { usersApi } from "@/lib/apis/users-api";
 import { IUser, UserRole } from "@/types/user";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { setAuthCookie, removeAuthCookie } from "@/lib/cookies";
+import {
+  setAuthCookie,
+  removeAuthCookie,
+  setAuthStateCookie,
+  clearAllAuthCookies,
+} from "@/lib/cookies";
+import { tokenStorage } from "@/features/token-storage";
 
 export interface AuthState {
   token: string | null;
@@ -88,6 +94,16 @@ export const authSlice = createSlice({
       state.isAuthenticated = true;
       if (user) state.user = user;
 
+      // Save tokens to cookies via tokenStorage
+      tokenStorage.save({ accessToken: token, refreshToken });
+
+      // Save individual auth state to flat cookies
+      setAuthStateCookie("token", token);
+      setAuthStateCookie("refreshToken", refreshToken);
+      setAuthStateCookie("expiresAt", state.expiresAt.toString());
+      setAuthStateCookie("isAuthenticated", "true");
+      if (user) setAuthStateCookie("user", JSON.stringify(user));
+
       persistAuthState(state);
     },
     clearCredentials: (state) => {
@@ -97,6 +113,12 @@ export const authSlice = createSlice({
       state.isAuthenticated = false;
       state.user = null;
       state.error = null;
+
+      // Clear all auth cookies
+      clearAllAuthCookies();
+
+      // Clear tokens from cookies
+      tokenStorage.clear();
 
       if (typeof window !== "undefined") {
         localStorage.removeItem("authState");
@@ -257,11 +279,15 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.error = null;
 
+        // Clear all auth cookies
+        clearAllAuthCookies();
+
+        // Clear tokens from cookies
+        tokenStorage.clear();
+
         if (typeof window !== "undefined") {
           localStorage.removeItem("authState");
         }
-        // Remove cookie on logout
-        removeAuthCookie("auth_token");
       })
 
       .addMatcher(authApi.endpoints.logout.matchRejected, (state) => {
@@ -273,6 +299,12 @@ export const authSlice = createSlice({
         state.user = null;
         state.isLoading = false;
         state.error = null;
+
+        // Clear all auth cookies
+        clearAllAuthCookies();
+
+        // Clear tokens from cookies
+        tokenStorage.clear();
 
         if (typeof window !== "undefined") {
           localStorage.removeItem("authState");

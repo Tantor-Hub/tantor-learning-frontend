@@ -1,4 +1,10 @@
-const TOKEN_KEY = "auth_tokens";
+import {
+  setAuthCookie,
+  setRefreshTokenCookie,
+  getValidAuthTokens,
+  removeAuthCookie,
+  removeRefreshTokenCookie,
+} from "@/lib/cookies";
 
 interface TokenData {
   accessToken: string;
@@ -17,27 +23,51 @@ export const tokenStorage = {
       refreshTokenExpiration: now + 48 * 60 * 60 * 1000, // 48 hours
     };
 
+    // Store tokens in cookies
+    setAuthCookie(tokens.accessToken, "auth_token");
+    setRefreshTokenCookie(tokens.refreshToken);
+
+    // Store expiration times in localStorage for expiration checks
     if (typeof window !== "undefined") {
-      localStorage.setItem(TOKEN_KEY, JSON.stringify(tokenData));
+      localStorage.setItem(
+        "token_expirations",
+        JSON.stringify({
+          accessTokenExpiration: tokenData.accessTokenExpiration,
+          refreshTokenExpiration: tokenData.refreshTokenExpiration,
+        })
+      );
     }
   },
 
   get: (): TokenData | null => {
+    const tokens = getValidAuthTokens();
+    if (!tokens.token || !tokens.refreshToken) return null;
+
+    // Get expiration times from localStorage
     if (typeof window === "undefined") return null;
 
-    const stored = localStorage.getItem(TOKEN_KEY);
-    if (!stored) return null;
+    const expirations = localStorage.getItem("token_expirations");
+    if (!expirations) return null;
 
     try {
-      return JSON.parse(stored);
+      const { accessTokenExpiration, refreshTokenExpiration } = JSON.parse(expirations);
+      return {
+        accessToken: tokens.token,
+        refreshToken: tokens.refreshToken,
+        accessTokenExpiration,
+        refreshTokenExpiration,
+      };
     } catch {
       return null;
     }
   },
 
   clear: () => {
+    removeAuthCookie("auth_token");
+    removeRefreshTokenCookie();
+
     if (typeof window !== "undefined") {
-      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem("token_expirations");
     }
   },
 

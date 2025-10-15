@@ -68,9 +68,9 @@ const formatDuration = (minutes: number): string => {
   return `${hours}h ${mins}min`;
 };
 
-export function SessionProgress({ id_session }: { id_session: number }) {
+export function SessionProgress({ id_session }: { id_session: string }) {
   const { data: sessionResponse, isLoading } = useGetTrainingSessionByIdQuery({
-    id: id_session.toString(),
+    id: id_session,
   });
 
   if (isLoading) {

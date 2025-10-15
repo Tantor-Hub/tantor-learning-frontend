@@ -1,17 +1,17 @@
-import { RootState } from "@/store/store";
 import { fetchBaseQuery, createApi } from "@reduxjs/toolkit/query/react";
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { tokenStorage } from "@/features/token-storage";
+import { getValidAuthTokens } from "@/lib/cookies";
 
 // Base query with authentication
 export const baseQuery = fetchBaseQuery({
   baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
-  prepareHeaders: (headers, { getState }) => {
+  // credentials: 'include',
+  prepareHeaders: (headers) => {
     headers.set("Content-Type", "application/json");
 
-    // Get token from state with proper type handling
-    const state = getState() as RootState;
-    const token = state.auth?.token;
+    // Get token from cookies
+    const { token } = getValidAuthTokens();
 
     if (token) {
       headers.set("x-connexion-tantor", `Bearer ${token}`);
@@ -98,12 +98,12 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
       } catch (error) {
         // Refresh failed, logout user
         tokenStorage.clear();
-        window.location.href = "/signin";
+        // window.location.href = "/signin";
       }
     } else {
       // No valid refresh token, logout user
       tokenStorage.clear();
-      window.location.href = "/signin";
+      // window.location.href = "/signin";
     }
   }
 

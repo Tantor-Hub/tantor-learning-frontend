@@ -15,8 +15,9 @@ import {
   DropdownMenuLabel,
 } from "../ui/dropdown-menu";
 import { useSelector } from "react-redux";
-import { selectCurrentUser, selectIsAuthenticated } from "@/features/auth/auth-slice";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { useLogout } from "@/hooks/use-logout";
+import { getValidAuthTokens, getAuthStateCookie } from "@/lib/cookies";
 
 const publicLinks = [
   { href: "/trainings", label: "Formation" },
@@ -175,7 +176,8 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isAuthenticatedCookie = getAuthStateCookie("isAuthenticated");
+  const isAuthenticated = isAuthenticatedCookie === "true";
 
   useEffect(() => {
     setMounted(true);
