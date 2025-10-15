@@ -2,53 +2,15 @@
 import * as React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loading } from "@/components/shared/loading";
-import { useGetTrainingByIdQuery } from "@/lib/apis/student/training-api";
+import { useGetTrainingSessionByIdQuery } from "@/lib/apis/training-sessions";
 
-// Types pour les données de session
-interface Formation {
-  id: number;
-  titre: string;
-  sous_titre?: string;
-  description?: string;
-}
-
-interface Cours {
-  id: number;
-  id_preset_cours: number;
-  duree: number | null;
-  ponderation: number | null;
-  is_published: boolean;
-  createdBy: number;
-  id_session: number;
-  id_formateur: number | null;
-  Title: {
-    id: number;
-    title: string;
-    description: string;
-  };
-}
-
-interface SessionData {
-  id: number;
-  uuid: string;
-  designation: string;
-  date_session_debut: string;
-  date_session_fin: string;
-  nb_places: number;
-  nb_places_disponible: number;
-  progression: number;
-  id_formation: number;
-  type_formation: string;
-  Formation: Formation;
-  Cours: Cours[];
-  // Autres champs non utilisés dans ce composant
-  [key: string]: any;
-}
+// Import the correct types from the types file
+import type { TrainingSession } from "@/types/training-sessions";
 
 interface SessionResponse {
   status: number;
   message: string;
-  data: SessionData;
+  data: TrainingSession;
 }
 
 // Function to calculate progress percentage
@@ -89,11 +51,10 @@ const formatRemainingTime = (startDate: string, endDate: string): string => {
   return `${daysRemaining} jour${daysRemaining > 1 ? "s" : ""} restant${daysRemaining > 1 ? "s" : ""}`;
 };
 
-// Function to calculate total course duration
-const calculateTotalDuration = (cours: Cours[]): number => {
-  return cours.reduce((total, coursItem) => {
-    return total + (coursItem.duree || 0);
-  }, 0);
+// Function to calculate total course duration (placeholder since we don't have course data)
+const calculateTotalDuration = (courses: any[]): number => {
+  // Since the TrainingSession type doesn't include courses, return a default value
+  return 0;
 };
 
 // Function to format duration in hours and minutes
@@ -108,11 +69,13 @@ const formatDuration = (minutes: number): string => {
 };
 
 export function SessionProgress({ id_session }: { id_session: number }) {
-  const { data: sessionResponse, isLoading } = useGetTrainingByIdQuery({ id_session });
+  const { data: sessionResponse, isLoading } = useGetTrainingSessionByIdQuery({
+    id: id_session.toString(),
+  });
 
   if (isLoading) {
     return (
-      <Card className="w-full max-w-md mx-auto border flex-[2]">
+      <Card className="w-full max-w-md mx-auto rounded shadow-none border flex-[2]">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl">Progression de la session</CardTitle>
           <CardDescription>Chargement des données...</CardDescription>
@@ -126,7 +89,7 @@ export function SessionProgress({ id_session }: { id_session: number }) {
 
   if (!sessionResponse?.data) {
     return (
-      <Card className="w-full max-w-md mx-auto border flex-[2]">
+      <Card className="w-full max-w-md mx-auto rounded shadow-none border flex-[2]">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl">Progression de la session</CardTitle>
           <CardDescription>Session non trouvée</CardDescription>
@@ -139,9 +102,9 @@ export function SessionProgress({ id_session }: { id_session: number }) {
   }
 
   const session = sessionResponse?.data;
-  const progress = calculateProgress(session.date_session_debut, session.date_session_fin);
-  const totalDuration = calculateTotalDuration(session.Cours);
-  const remainingText = formatRemainingTime(session.date_session_debut, session.date_session_fin);
+  const progress = calculateProgress(session.begining_date, session.ending_date);
+  const totalDuration = calculateTotalDuration([]);
+  const remainingText = formatRemainingTime(session.begining_date, session.ending_date);
 
   // Format dates for display
   const formatDate = (dateString: string): string => {
@@ -155,8 +118,8 @@ export function SessionProgress({ id_session }: { id_session: number }) {
   // Get session status
   const getSessionStatus = (): { text: string; color: string } => {
     const now = new Date();
-    const start = new Date(session.date_session_debut);
-    const end = new Date(session.date_session_fin);
+    const start = new Date(session.begining_date);
+    const end = new Date(session.ending_date);
 
     if (now < start) {
       return { text: "À venir", color: "text-blue-500" };
@@ -170,15 +133,15 @@ export function SessionProgress({ id_session }: { id_session: number }) {
   const status = getSessionStatus();
 
   return (
-    <Card className="w-full mx-auto border flex-[2]">
+    <Card className="w-full mx-auto border rounded shadow-none flex-[2]">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-xl">Progression de la session</CardTitle>
             <CardDescription>
-              {formatDate(session.date_session_debut)} - {formatDate(session.date_session_fin)}
+              {formatDate(session.begining_date)} - {formatDate(session.ending_date)}
             </CardDescription>
-            <CardDescription>{session.Formation.titre}</CardDescription>
+            <CardDescription>{session.trainings.title}</CardDescription>
           </div>
           <span
             className={`text-sm font-medium px-2 py-1 rounded-full ${status.color} bg-opacity-20`}

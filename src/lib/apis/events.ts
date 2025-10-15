@@ -5,11 +5,11 @@ import {
   UpdateEventRequest,
   EventListResponse,
   EventResponse,
-} from "@/types/event";
+} from "@/types/events";
 import { ICourseBySessionIdResponse } from "@/types/secretary/training-secretary";
 
-export const eventApi = createApi({
-  reducerPath: "eventApi",
+export const eventsApi = createApi({
+  reducerPath: "eventsApi",
   baseQuery: enhancedBaseQuery,
   tagTypes: ["Event", "Course"],
   endpoints: (builder) => ({
@@ -62,4 +62,4 @@ export const {
   useUpdateEventMutation,
   useDeleteEventMutation,
   useGetCoursesBySessionQuery,
-} = eventApi;
+} = eventsApi;

@@ -12,8 +12,8 @@ import {
   useCreateEventMutation,
   useUpdateEventMutation,
   useDeleteEventMutation,
-} from "@/lib/apis/event-api";
-import { Event, CreateEventRequest, UpdateEventRequest } from "@/types/event";
+} from "@/lib/apis/events";
+import { Event, CreateEventRequest, UpdateEventRequest } from "@/types/events";
 import { EventEditor } from "@/components/event/EventEditor";
 import { EventItem } from "@/components/event/EventItem";
 

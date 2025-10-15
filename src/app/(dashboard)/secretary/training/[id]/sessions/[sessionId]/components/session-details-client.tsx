@@ -3,14 +3,27 @@
 import React, { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit } from "lucide-react";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { GeneralInfoSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/GeneralInfoSkeleton";
 import { CoursesSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/CoursesSkeleton";
 import { EventsSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/EventsSkeleton";
 import { DocumentsSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/DocumentsSkeleton";
 import { PaymentSkeleton } from "@/app/(dashboard)/secretary/training/skeletons/PaymentSkeleton";
 import { EditSessionModal } from "./edit-session-modal";
+import { useDeleteSessionMutation } from "@/lib/apis/secretary/session-secretary-api";
+import { toast } from "react-hot-toast";
 
 const GeneralInfo = React.lazy(() => import("../session/GeneralInfo"));
 const Courses = React.lazy(() => import("../session/Courses"));
@@ -24,6 +37,7 @@ export default function SessionDetailsClient() {
   const trainingId = params.id as string;
   const sessionId = params.sessionId as string;
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteSession, { isLoading: isDeleting }] = useDeleteSessionMutation();
 
   const handleGoBack = () => {
     router.push(`/secretary/training/${trainingId}/sessions`);
@@ -31,6 +45,17 @@ export default function SessionDetailsClient() {
 
   const handleEdit = () => {
     setEditModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteSession({ id: sessionId }).unwrap();
+      toast.success("Session supprimée avec succès !");
+      router.push(`/secretary/training/${trainingId}/sessions`);
+    } catch (error) {
+      console.error("Error deleting session:", error);
+      toast.error("Erreur lors de la suppression de la session");
+    }
   };
 
   return (
@@ -44,10 +69,38 @@ export default function SessionDetailsClient() {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Retour aux sessions
               </Button>
-              <Button onClick={handleEdit}>
-                <Edit className="mr-2 h-4 w-4" />
-                Modifier
-              </Button>
+              <div className="flex items-center gap-4">
+                <Button onClick={handleEdit}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Modifier
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Supprimer
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Supprimer la session</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Êtes-vous sûr de vouloir supprimer la session ? Cette action est
+                        irréversible.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Supprimer
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
 
             <div className="flex-1">

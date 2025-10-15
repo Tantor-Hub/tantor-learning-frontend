@@ -14,8 +14,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Event, CreateEventRequest, UpdateEventRequest } from "@/types/event";
-import { useGetCoursesBySessionQuery } from "@/lib/apis/event-api";
+import { Event, CreateEventRequest, UpdateEventRequest } from "@/types/events";
+import { useGetCoursesBySessionQuery } from "@/lib/apis/events";
 import {
   Select,
   SelectContent,
@@ -220,7 +220,7 @@ export function EventEditor({
                       <Skeleton className="h-6 w-full" />
                     </div>
                   ) : coursesData && coursesData.data.rows.length > 0 ? (
-                    coursesData.data.rows.map((course) => (
+                    coursesData.data.rows.map((course: any) => (
                       <SelectItem key={course.id} value={course.id}>
                         {course.title}
                       </SelectItem>

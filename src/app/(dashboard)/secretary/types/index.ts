@@ -9,10 +9,15 @@ export interface SecDocData {
   name: string;
   date: string;
   action: string;
+  sessionTitle: string;
+  nbPlaces: number;
+  availablePlaces: number;
 }
 
 export interface SecDocsData {
-  waiting: SecDocData[];
-  inProgress: SecDocData[];
-  completed: SecDocData[];
+  refusedpayment: SecDocData[];
+  notpaid: SecDocData[];
+  pending: SecDocData[];
+  in: SecDocData[];
+  out: SecDocData[];
 }

@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Download, Trash2, Ellipsis, Plus } from "lucide-react";
+import { Download, Trash2, Ellipsis, Upload, Edit, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,7 +34,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useListStudentDocBySessionIdQuery } from "@/lib/apis/student/document-api";
+import { useGetTrainingSessionByIdQuery } from "@/lib/apis/training-sessions";
 import { Loading } from "@/components/shared/loading";
+import { Skeleton } from "@/components/ui/skeleton";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { selectCurrentUser, selectToken } from "@/features/auth/auth-slice";
@@ -60,6 +62,10 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
   const [isUploading, setIsUploading] = useState(false);
   const currentUser = useSelector(selectCurrentUser);
   const token = useSelector(selectToken);
+
+  // Get session data to show required documents
+  const { data: sessionData } = useGetTrainingSessionByIdQuery({ id: sessionId });
+
   const {
     data: documents,
     isLoading,
@@ -70,7 +76,38 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
     id_student: currentUser?.id || "",
   });
 
-  if (isLoading) return <Loading />;
+  if (isLoading) {
+    return (
+      <div className="mx-auto">
+        <Skeleton className="h-8 w-48 mb-4" />
+        <div className="border rounded-lg">
+          <div className="p-4">
+            <Skeleton className="h-6 w-64 mb-4" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center space-x-2">
+                  <Skeleton className="h-4 w-4 rounded" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <Skeleton className="h-10 w-full mb-4" />
+          <div className="space-y-4 p-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex space-x-4">
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const documentList = documents?.data?.list || [];
 
@@ -197,16 +234,14 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
     return translations[key] || key;
   };
 
+  const requiredDocuments = sessionData?.data?.required_document_before || [];
+
   return (
     <div className="mx-auto">
-      <Button className="my-4" onClick={handleAddDocument}>
-        <Plus className="mr-2 h-4 w-4" />
-        Ajouter un document
-      </Button>
-
       <Table className="border">
         <TableHeader>
           <TableRow>
+            <TableHead className="w-8"></TableHead>
             <TableHead>Nom</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Date d'ajout</TableHead>
@@ -215,9 +250,90 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {documentList.length > 0 ? (
+          {requiredDocuments.length > 0 ? (
+            requiredDocuments.map((requiredDoc, index) => {
+              const submittedDoc = documentList.find((doc) => doc.key_document === requiredDoc);
+              return (
+                <TableRow key={index}>
+                  <TableCell>
+                    <input
+                      type="checkbox"
+                      checked={!!submittedDoc}
+                      readOnly
+                      className="rounded border-gray-300"
+                      title={submittedDoc ? "Document soumis" : "Document non soumis"}
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {submittedDoc ? submittedDoc.document : translateDocumentKey(requiredDoc)}
+                  </TableCell>
+                  <TableCell>
+                    {submittedDoc ? (
+                      <Badge variant={"outline"}>
+                        {getFileExtension(submittedDoc.piece_jointe)}
+                      </Badge>
+                    ) : (
+                      <Badge variant={"secondary"}>Non soumis</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>{submittedDoc ? formatDate(submittedDoc.createdAt) : "-"}</TableCell>
+                  <TableCell>{translateDocumentKey(requiredDoc)}</TableCell>
+                  <TableCell className="text-center">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <Ellipsis className="h-4 w-4" />
+                          <span className="sr-only">Ouvrir le menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleAddDocument}>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Uploader
+                        </DropdownMenuItem>
+                        {submittedDoc && (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleAction("download", submittedDoc.id, submittedDoc.document)
+                              }
+                            >
+                              <Download className="mr-2 h-4 w-4" />
+                              Télécharger
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleAction("delete", submittedDoc.id, submittedDoc.document)
+                              }
+                              className="text-red-600 focus:text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Supprimer
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        <DropdownMenuItem>
+                          <FileCheck className="mr-2 h-4 w-4" />
+                          Compléter
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              );
+            })
+          ) : documentList.length > 0 ? (
             documentList.map((document) => (
               <TableRow key={document.id}>
+                <TableCell>
+                  <input
+                    type="checkbox"
+                    checked={true}
+                    readOnly
+                    className="rounded border-gray-300"
+                    title="Document soumis"
+                  />
+                </TableCell>
                 <TableCell className="font-medium">{document.document}</TableCell>
                 <TableCell>
                   <Badge variant={"outline"}>{getFileExtension(document.piece_jointe)}</Badge>
@@ -227,25 +343,32 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
                 <TableCell className="text-center">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Badge variant="secondary" className="hover:cursor-pointer">
-                        <Ellipsis />
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Ellipsis className="h-4 w-4" />
                         <span className="sr-only">Ouvrir le menu</span>
-                      </Badge>
+                      </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleAddDocument}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Uploader
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleAction("download", document.id, document.document)}
                       >
                         <Download className="mr-2 h-4 w-4" />
                         Télécharger
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => handleAction("delete", document.id, document.document)}
                         className="text-red-600 focus:text-red-600"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Supprimer
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <FileCheck className="mr-2 h-4 w-4" />
+                        Compléter
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -254,7 +377,7 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                 Aucun document disponible pour le moment
               </TableCell>
             </TableRow>

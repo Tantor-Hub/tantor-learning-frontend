@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Event } from "@/types/event";
+import { Event } from "@/types/events";
 import { Edit, Trash2, Calendar, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";

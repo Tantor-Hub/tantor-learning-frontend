@@ -19,7 +19,7 @@ import { instructorApi } from "./instructor/instructor";
 import { evaluationQuestionApi } from "./instructor/evaluation-question";
 import { roleApi } from "./admin/role-api";
 import { documentsApi } from "./common/document-api";
-import { eventApi } from "./event-api";
+import { eventsApi } from "./events";
 import { evaluationQuestionOptionApi } from "./instructor/evaluation-question-option";
 import { lessonDocumentApi } from "./lessondocument";
 import { studentEvaluationsApi } from "./student-evaluations";
@@ -27,6 +27,7 @@ import { evaluationQuestionsApi } from "./evaluation-questions";
 import { studentAnswersApi } from "./student-answers";
 import { studentAnswerOptionsApi } from "./student-answer-options";
 import { userInSessionApi } from "./user-in-session";
+import { trainingSessionApi } from "./training-sessions";
 
 // Export all API slices for easy access
 export {
@@ -52,13 +53,14 @@ export {
   evaluationQuestionApi,
   evaluationQuestionOptionApi,
   roleApi,
-  eventApi,
+  eventsApi,
   lessonDocumentApi,
   studentEvaluationsApi,
   evaluationQuestionsApi,
   studentAnswersApi,
   studentAnswerOptionsApi,
   userInSessionApi,
+  trainingSessionApi,
 };
 
 // Combine all reducers for easy store setup
@@ -89,9 +91,10 @@ export const apiReducers = {
   [evaluationQuestionOptionApi.reducerPath]: evaluationQuestionOptionApi.reducer,
   [roleApi.reducerPath]: roleApi.reducer,
   [documentsApi.reducerPath]: documentsApi.reducer,
-  [eventApi.reducerPath]: eventApi.reducer,
+  [eventsApi.reducerPath]: eventsApi.reducer,
   [lessonDocumentApi.reducerPath]: lessonDocumentApi.reducer,
   [userInSessionApi.reducerPath]: userInSessionApi.reducer,
+  [trainingSessionApi.reducerPath]: trainingSessionApi.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -122,7 +125,8 @@ export const apiMiddlewares = [
   evaluationQuestionOptionApi.middleware,
   roleApi.middleware,
   documentsApi.middleware,
-  eventApi.middleware,
+  eventsApi.middleware,
   lessonDocumentApi.middleware,
   userInSessionApi.middleware,
+  trainingSessionApi.middleware,
 ];

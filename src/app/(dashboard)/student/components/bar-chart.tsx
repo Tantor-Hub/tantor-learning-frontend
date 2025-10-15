@@ -1,13 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useGetTrainingByIdQuery } from "@/lib/apis/student/training-api";
+import { useGetTrainingSessionByIdQuery } from "@/lib/apis/training-sessions";
 import { Loading } from "@/components/shared/loading";
 import { Badge } from "@/components/ui/badge";
 
-// Type pour les données de session
-interface SessionData {
-  name: string;
-  pv: number;
+// Type pour les données de progression temporelle
+interface TimeProgressData {
+  day: string;
+  progress: number;
+  date: string;
 }
 
 // Type pour les props du composant
@@ -15,75 +16,95 @@ interface BarVisualProps {
   id_session: string;
 }
 
-// Type pour les données de l'API
-interface Formation {
-  id: number;
-  titre: string;
-  sous_titre?: string;
-  description?: string;
-}
-
-interface SessionDetails {
-  id: number;
-  uuid: string;
-  designation: string;
-  duree: string;
-  nb_places: number;
-  nb_places_disponible: number;
-  progression: number;
-  id_formation: number;
-  type_formation: string;
-  date_session_debut: string;
-  date_session_fin: string;
-  description: string | null;
-  prix: number;
-  initial_price: number | null;
-  status: number;
-  Formation: Formation;
-  payment_methods: string[];
-  required_documents: string[];
-}
+// Import the correct types from the types file
+import type { TrainingSession } from "@/types/training-sessions";
 
 interface SessionResponse {
   status: number;
   message: string;
-  data: SessionDetails;
+  data: TrainingSession;
 }
 
+// Fonction pour calculer la progression basée sur le temps
+const calculateTimeProgress = (
+  startDate: string,
+  endDate: string,
+  currentDate: Date = new Date()
+): number => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+
+  const totalDuration = end.getTime() - start.getTime();
+  const elapsed = currentDate.getTime() - start.getTime();
+
+  if (currentDate < start) return 0;
+  if (currentDate > end) return 100;
+
+  return Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+};
+
 export function BarVisual({ id_session }: BarVisualProps) {
-  const [data, setData] = useState<any>([]);
+  const [timeProgressData, setTimeProgressData] = useState<TimeProgressData[]>([]);
   const {
     data: sessionResponse,
     isLoading,
     error,
-  } = useGetTrainingByIdQuery({ id_session: +id_session });
+  } = useGetTrainingSessionByIdQuery({ id: id_session });
 
-  // Données simulées pour le graphique (basées sur les mois de la session)
+  // Générer les données de progression temporelle
   useEffect(() => {
     if (sessionResponse) {
       const session = sessionResponse.data;
-      const startDate = new Date(session.date_session_debut);
-      const endDate = new Date(session.date_session_fin);
+      const startDate = new Date(session.begining_date);
+      const endDate = new Date(session.ending_date);
+      const now = new Date();
 
-      // Générer des données mensuelles basées sur la durée de la session
-      const monthsData: SessionData[] = [];
-      const currentDate = new Date(startDate);
+      // Générer des données quotidiennes pour la durée de la session
+      const dailyData: TimeProgressData[] = [];
+      const totalDays = Math.ceil(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
-      while (currentDate <= endDate) {
-        const monthName = currentDate.toLocaleDateString("fr-FR", { month: "long" });
-        // Valeur simulée basée sur le nombre de places
-        const pvValue = Math.floor(Math.random() * session.nb_places);
+      // Limiter à 30 points de données maximum pour la lisibilité
+      const step = Math.max(1, Math.floor(totalDays / 30));
 
-        monthsData.push({
-          name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-          pv: pvValue,
+      for (let i = 0; i <= totalDays; i += step) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+
+        if (currentDate > endDate) break;
+
+        const progress = calculateTimeProgress(
+          session.begining_date,
+          session.ending_date,
+          currentDate
+        );
+
+        dailyData.push({
+          day: `Jour ${i + 1}`,
+          progress: Math.round(progress),
+          date: currentDate.toLocaleDateString("fr-FR", {
+            day: "numeric",
+            month: "short",
+          }),
         });
-
-        // Passer au mois suivant
-        currentDate.setMonth(currentDate.getMonth() + 1);
       }
 
-      setData(monthsData);
+      // Toujours inclure le point final si ce n'est pas déjà inclus
+      if (dailyData.length > 0 && dailyData[dailyData.length - 1].progress < 100) {
+        dailyData.push({
+          day: `Jour ${totalDays}`,
+          progress: 100,
+          date: endDate.toLocaleDateString("fr-FR", {
+            day: "numeric",
+            month: "short",
+          }),
+        });
+      }
+
+      setTimeProgressData(dailyData);
     }
   }, [sessionResponse]);
 
@@ -116,29 +137,12 @@ export function BarVisual({ id_session }: BarVisualProps) {
   }
 
   const session = sessionResponse.data;
-  // console.log("sessionId", JSON.stringify(session));
-  // Formater les dates
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
-
-  // Formater le prix
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "EUR",
-    }).format(price);
-  };
 
   // Obtenir le statut de la session
   const getSessionStatus = () => {
     const now = new Date();
-    const startDate = new Date(session.date_session_debut);
-    const endDate = new Date(session.date_session_fin);
+    const startDate = new Date(session.begining_date);
+    const endDate = new Date(session.ending_date);
 
     if (now < startDate) {
       return { text: "À venir", color: "bg-blue-100 text-blue-800" };
@@ -151,88 +155,187 @@ export function BarVisual({ id_session }: BarVisualProps) {
 
   const status = getSessionStatus();
 
+  // Formater les dates
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  // Formater le prix
+  const formatPrice = (price: string) => {
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
+    }).format(parseFloat(price));
+  };
+
   return (
     <div className="space-y-4 p-4">
       {/* Détails de la session */}
-      <div className="bg-white">
-        <div className="flex justify-between items-start mb-4">
-          <h3 className="text-xl font-semibold text-gray-900">Détails de la session</h3>
+      <div className="bg-white p-6 rounded-lg border">
+        <div className="flex justify-between items-start mb-6">
+          <h3 className="text-2xl font-semibold text-gray-900">Détails de la session</h3>
           <Badge className={`px-3 py-1 text-sm rounded-full ${status.color}`}>{status.text}</Badge>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Informations générales */}
+          <div className="space-y-6">
             <div>
-              <h4 className="font-medium text-gray-700 mb-2">Informations générales</h4>
-              <dl className="space-y-2 text-sm">
+              <h4 className="text-lg font-medium text-gray-700 mb-4">Informations générales</h4>
+              <dl className="space-y-3">
                 <div className="flex justify-between">
-                  <dt className="text-gray-600">Désignation:</dt>
-                  <dd className="font-medium">{session.designation}</dd>
+                  <dt className="text-gray-600">Titre de la session:</dt>
+                  <dd className="font-medium">{session.title}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Formation:</dt>
-                  <dd className="font-medium">{session.Formation.titre}</dd>
+                  <dd className="font-medium">{session.trainings.title}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-gray-600">Sous-titre:</dt>
+                  <dd className="font-medium">{session.trainings.subtitle}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Type:</dt>
-                  <dd className="font-medium capitalize">{session.type_formation.toLowerCase()}</dd>
+                  <dd className="font-medium">{session.trainings.trainingtype}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Prix:</dt>
-                  <dd className="font-medium">{formatPrice(session.prix)}</dd>
+                  <dd className="font-medium">{formatPrice(session.trainings.prix)}</dd>
                 </div>
               </dl>
             </div>
 
+            {/* Places disponibles */}
             <div>
-              <h4 className="font-medium text-gray-700 mb-2">Places disponibles</h4>
-              <div className="bg-gray-100 rounded-lg p-3">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-gray-600">Occupées</span>
+              <h4 className="text-lg font-medium text-gray-700 mb-4">Places disponibles</h4>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm text-gray-600">Places occupées</span>
                   <span className="font-medium">
-                    {session.nb_places - session.nb_places_disponible}/{session.nb_places}
+                    {session.nb_places - session.available_places}/{session.nb_places}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
-                    className="bg-blue-600 h-2 rounded-full"
+                    className="bg-blue-600 h-3 rounded-full transition-all duration-300"
                     style={{
-                      width: `${((session.nb_places - session.nb_places_disponible) / session.nb_places) * 100}%`,
+                      width: `${((session.nb_places - session.available_places) / session.nb_places) * 100}%`,
                     }}
                   />
+                </div>
+                <div className="mt-2 text-sm text-gray-600">
+                  {session.available_places} places restantes
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="space-y-4">
+          {/* Dates et documents */}
+          <div className="space-y-6">
+            {/* Dates */}
             <div>
-              <h4 className="font-medium text-gray-700 mb-2">Dates</h4>
-              <dl className="space-y-2 text-sm">
+              <h4 className="text-lg font-medium text-gray-700 mb-4">Dates</h4>
+              <dl className="space-y-3">
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Début:</dt>
-                  <dd className="font-medium">{formatDate(session.date_session_debut)}</dd>
+                  <dd className="font-medium">{formatDate(session.begining_date)}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Fin:</dt>
-                  <dd className="font-medium">{formatDate(session.date_session_fin)}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-gray-600">Durée:</dt>
-                  <dd className="font-medium">{session.duree}</dd>
+                  <dd className="font-medium">{formatDate(session.ending_date)}</dd>
                 </div>
               </dl>
             </div>
 
+            {/* Documents requis */}
             <div>
-              <h4 className="font-medium text-gray-700 mb-2">Méthodes de paiement</h4>
+              <h4 className="text-lg font-medium text-gray-700 mb-4">Documents requis</h4>
+              <div className="space-y-3">
+                <div>
+                  <h5 className="text-sm font-medium text-gray-600 mb-2">Avant la formation:</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {session.required_document_before.map((doc, index) => (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded"
+                      >
+                        {doc}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h5 className="text-sm font-medium text-gray-600 mb-2">Pendant la formation:</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {session.required_document_during.map((doc, index) => (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded"
+                      >
+                        {doc}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h5 className="text-sm font-medium text-gray-600 mb-2">Après la formation:</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {session.required_document_after.map((doc, index) => (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded"
+                      >
+                        {doc}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Méthodes de paiement */}
+            <div>
+              <h4 className="text-lg font-medium text-gray-700 mb-4">Méthodes de paiement</h4>
               <div className="flex flex-wrap gap-2">
-                {session.payment_methods.map((method: any, index: number) => (
-                  <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                    {method}
+                {session.payment_method.map((method, index) => (
+                  <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded">
+                    {method.toUpperCase()}
                   </span>
                 ))}
               </div>
+              {session.cpf_link && (
+                <div className="mt-3">
+                  <a
+                    href={session.cpf_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 text-sm underline"
+                  >
+                    Lien CPF
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Description et règlement */}
+        <div className="mt-8 pt-6 border-t">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <h4 className="text-lg font-medium text-gray-700 mb-3">Description</h4>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                {session.trainings.description}
+              </p>
+            </div>
+            <div>
+              <h4 className="text-lg font-medium text-gray-700 mb-3">Règlement intérieur</h4>
+              <p className="text-gray-600 text-sm leading-relaxed">{session.regulation_text}</p>
             </div>
           </div>
         </div>

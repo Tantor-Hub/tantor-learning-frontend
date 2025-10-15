@@ -4,20 +4,18 @@ import { Pie, PieChart, ResponsiveContainer, Cell, Legend, Sector, Label } from 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartConfig, ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { useEffect, useState } from "react";
-
-const chartData = [
-  { name: "done", value: 150, fill: "#979DAC", label: "Terminés" },
-  { name: "inProgress", value: 100, fill: "#65A9F0", label: "En cours" },
-  { name: "toDo", value: 275, fill: "#1976D2", label: "À faire" },
-];
+import { useGetAllUserInSessionsQuery } from "@/lib/apis/user-in-session";
 
 const chartConfig = {
-  Terminé: { label: "Terminés", color: "#979DAC" },
-  "En cours": { label: "En cours", color: "#65A9F0" },
-  "A faire": { label: "À faire", color: "#1976D2" },
+  refusedpayment: { label: "Paiement refusé", color: "#D62828" },
+  notpaid: { label: "Non payé", color: "#856404" },
+  pending: { label: "En attente", color: "#0C5460" },
+  in: { label: "Inscrit", color: "#059669" },
+  out: { label: "Sorti", color: "#383D41" },
 } satisfies ChartConfig;
 
 export function SecPieChart() {
+  const { data, isLoading, error } = useGetAllUserInSessionsQuery();
   const [innerRadius, setInnerRadius] = useState(50);
   const [outerRadius, setOuterRadius] = useState(120);
 
@@ -35,14 +33,67 @@ export function SecPieChart() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  if (isLoading) {
+    return (
+      <Card className="flex flex-col h-full min-h-[300px] rounded border shadow-none sm:min-h-[400px]">
+        <CardContent className="flex-1 flex items-center justify-center">
+          <div className="text-center">Chargement...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="flex flex-col h-full min-h-[300px] rounded border shadow-none sm:min-h-[400px]">
+        <CardContent className="flex-1 flex items-center justify-center">
+          <div className="text-center text-destructive">Erreur lors du chargement des données.</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const chartData = [
+    {
+      name: "refusedpayment",
+      value: data?.data?.filter((u) => u.status === "refusedpayment").length || 0,
+      fill: "#D62828",
+      label: "Paiement refusé",
+    },
+    {
+      name: "notpaid",
+      value: data?.data?.filter((u) => u.status === "notpaid").length || 0,
+      fill: "#856404",
+      label: "Non payé",
+    },
+    {
+      name: "pending",
+      value: data?.data?.filter((u) => u.status === "pending").length || 0,
+      fill: "#0C5460",
+      label: "En attente",
+    },
+    {
+      name: "in",
+      value: data?.data?.filter((u) => u.status === "in").length || 0,
+      fill: "#059669",
+      label: "Inscrit",
+    },
+    {
+      name: "out",
+      value: data?.data?.filter((u) => u.status === "out").length || 0,
+      fill: "#383D41",
+      label: "Sorti",
+    },
+  ].filter((item) => item.value > 0);
+
   return (
-    <Card className="flex flex-col h-full min-h-[300px] sm:min-h-[400px]">
+    <Card className="flex flex-col h-full min-h-[300px] rounded border shadow-none sm:min-h-[400px]">
       <CardHeader className="flex flex-col">
         <CardTitle className="text-lg sm:text-xl text-[#0466C8] font-semibold">
-          Statut des tâches
+          Statut des inscriptions
         </CardTitle>
         <CardDescription className="text-xs font-light">
-          Répartition des tâches par statut
+          Répartition des utilisateurs par statut d'inscription
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pt-0 pb-0 px-2 sm:px-4">
@@ -55,10 +106,12 @@ export function SecPieChart() {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="rounded-lg border bg-background p-2 shadow-sm">
+                      <div className="rounded border bg-background p-2">
                         <div className="flex flex-col">
                           <span className="text-sm font-semibold">{data.label}</span>
-                          <span className="text-xs text-muted-foreground">{data.value} tâches</span>
+                          <span className="text-xs text-muted-foreground">
+                            {data.value} utilisateurs
+                          </span>
                         </div>
                       </div>
                     );
@@ -124,7 +177,7 @@ export function SecPieChart() {
                           {total}
                         </tspan>
                         <tspan x={cx} y={cy + 10} className="text-[10px]">
-                          tâches
+                          utilisateurs
                         </tspan>
                       </text>
                     );

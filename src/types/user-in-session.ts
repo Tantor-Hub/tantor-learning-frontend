@@ -1,6 +1,6 @@
 // Types for User In Session API
 
-export type UserInSessionStatus = "pending" | "in" | "refusedpayment" | "confirmed" | "cancelled";
+export type UserInSessionStatus = "refusedpayment" | "notpaid" | "pending" | "in" | "out";
 
 export interface TrainingSession {
   id: string;
@@ -13,10 +13,10 @@ export interface TrainingSession {
 
 export interface User {
   id: string;
-  firstname: string;
-  lastname: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  phone: string;
+  phone: string | null;
 }
 
 export interface UserInSession {

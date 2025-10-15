@@ -35,7 +35,6 @@ const CourseTab = ({ idSession }: { idSession: string }) => {
     );
   }
 
-  console.log(JSON.stringify(coursesResponse));
   if (!coursesResponse?.data.rows) {
     return (
       <div className="p-8 rounded">
