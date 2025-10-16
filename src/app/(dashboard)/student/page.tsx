@@ -13,12 +13,15 @@ import { useGetTrainingSessionByIdQuery } from "@/lib/apis/training-sessions";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { useSelectedSession } from "@/hooks/use-selected-session";
+import { useSessionAlert } from "@/hooks/use-session-alert";
+import { SessionAlert } from "@/components/shared/session-alert";
 
 export default function Page() {
   // const studentsStatus = useStudentStatusQuery();
   // const nextLiveSession = useNextLiveSessionQuery();
   // const average = useAverageScoreQuery();
   const selectedSessionId = useSelectedSession();
+  const { shouldShowAlert, isLoading: alertLoading } = useSessionAlert();
 
   // const listSessions = useGetMySessionsQuery();
 
@@ -27,7 +30,7 @@ export default function Page() {
     { skip: !selectedSessionId }
   );
 
-  if (sessionDetails.isLoading) {
+  if (alertLoading || sessionDetails.isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh]">
         {" "}
@@ -35,12 +38,17 @@ export default function Page() {
       </div>
     );
   }
+
+  // if (shouldShowAlert) {
+  //   return <SessionAlert />;
+  // }
   // Show loader when data is loading
 
   // console.log(JSON.stringify(listSessions.data?.data.list));
 
   return (
     <>
+      {shouldShowAlert && <SessionAlert />}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 md:gap-5">
         <Card className="gap-0 py-4 border rounded shadow-none">
           <CardHeader className="px-4">

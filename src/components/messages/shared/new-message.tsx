@@ -150,11 +150,11 @@ export function MessageAlert() {
       form.reset();
       setSearchTerm("");
       setOpen(false);
-      setDialogOpen(false);
     } catch {
       toast.error(`Une erreur est survenue`);
     } finally {
       setIsLoading(false);
+      setDialogOpen(false);
     }
   };
 

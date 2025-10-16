@@ -6,11 +6,20 @@ import { AfterTab } from "./after";
 import { BeforeTab } from "./before";
 import { DuringTab } from "./during";
 import { useSelectedSession } from "@/hooks/use-selected-session";
+import { useSessionAlert } from "@/hooks/use-session-alert";
+import { SessionAlert } from "@/components/shared/session-alert";
 
 export default function Page() {
   const selectedSessionId = useSelectedSession();
+  const { shouldShowAlert, isLoading: alertLoading } = useSessionAlert();
+
+  if (alertLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div>
+      {shouldShowAlert && <SessionAlert />}
       <div className="flex flex-col sm:flex-row gap-5 md:gap-10 mb-5">
         <div className="flex items-center border px-2.5 w-full rounded-md bg-white">
           <Image src="/icons/search.svg" height={20} width={20} alt="search icon" />

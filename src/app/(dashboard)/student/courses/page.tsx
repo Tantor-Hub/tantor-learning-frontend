@@ -16,11 +16,14 @@ import { ChevronLeft } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import Link from "next/link";
 import { useSelectedSession } from "@/hooks/use-selected-session";
+import { useSessionAlert } from "@/hooks/use-session-alert";
+import { SessionAlert } from "@/components/shared/session-alert";
 import { useState } from "react";
 
 export default function Page() {
   const router = useRouter();
   const sessionId = useSelectedSession();
+  const { shouldShowAlert, isLoading: alertLoading } = useSessionAlert();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPublished, setFilterPublished] = useState<boolean | null>(null);
   const [filterPonderation, setFilterPonderation] = useState<string>("all");
@@ -42,7 +45,7 @@ export default function Page() {
       return matchesSearch && matchesPublished && matchesPonderation;
     }) || [];
 
-  if (isLoading) {
+  if (alertLoading || isLoading) {
     return (
       <div className="space-y-6">
         <Button onClick={() => router.back()}>
@@ -53,26 +56,9 @@ export default function Page() {
     );
   }
 
-  if (!sessionId) {
-    return (
-      <div className="flex flex-col items-center justify-center py-10">
-        <Image
-          src="/empty.svg"
-          alt="No session"
-          className="w-16 h-16 mb-4"
-          width={64}
-          height={64}
-        />
-        <p className="text-center text-gray-600">
-          vous devez etre dans une session ou etre enregistrer dans une session pour voir les
-          evenment de la session
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
+      {shouldShowAlert && <SessionAlert />}
       <Button onClick={() => router.back()}>
         <ChevronLeft /> Retour
       </Button>
