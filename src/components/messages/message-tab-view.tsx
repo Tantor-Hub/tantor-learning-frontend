@@ -8,9 +8,6 @@ import { Button } from "../ui/button";
 import { ChevronLeft, Mail, Send, Inbox, Trash2, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MessageAlert } from "./shared/new-message";
-import { RealtimeNotifications } from "./shared/realtime-notifications";
-import { RealtimeComposer } from "./shared/realtime-composer";
-import { WebSocketGuide } from "./shared/websocket-guide";
 import { Suspense, useState } from "react";
 import { NewMessageSkeleton } from "@/components/skeletons/new-message-skeleton";
 

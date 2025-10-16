@@ -67,6 +67,7 @@ export function MessageAlert() {
   const currentUser = useSelector(selectCurrentUser);
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -87,7 +88,7 @@ export function MessageAlert() {
   const [trigger, { data, isFetching }] = useLazyListUserByRoleQuery();
 
   useEffect(() => {
-    if (open && users.length === 0) {
+    if (dialogOpen && open && users.length === 0) {
       setIsLoadingUsers(true);
       trigger({ role: "all" })
         .unwrap()
@@ -103,7 +104,7 @@ export function MessageAlert() {
           setIsLoadingUsers(false);
         });
     }
-  }, [open, users.length, trigger, currentUser?.id]);
+  }, [dialogOpen, open, users.length, trigger, currentUser?.id]);
 
   // Filter users based on search term
   useEffect(() => {
@@ -149,6 +150,7 @@ export function MessageAlert() {
       form.reset();
       setSearchTerm("");
       setOpen(false);
+      setDialogOpen(false);
     } catch {
       toast.error(`Une erreur est survenue`);
     } finally {
@@ -159,7 +161,7 @@ export function MessageAlert() {
   const isFormValid = form.formState.isValid;
 
   return (
-    <AlertDialog>
+    <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <AlertDialogTrigger asChild>
         <Button>
           <Plus /> Nouveau Message
@@ -318,6 +320,7 @@ export function MessageAlert() {
                 onClick={() => {
                   form.reset();
                   setSearchTerm("");
+                  setDialogOpen(false);
                 }}
               >
                 Annuler

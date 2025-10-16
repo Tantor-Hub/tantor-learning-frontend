@@ -159,47 +159,6 @@ export function SessionSelector({ selectedSessionId, onSessionChange }: SessionS
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="mx-auto sm:mx-0 mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-              <Badge variant="outline" className="py-1">
-                Sessions
-              </Badge>
-            </div>
-            <AlertDialogTitle className="text-2xl font-bold tracking-tight">
-              Sélectionner une session
-            </AlertDialogTitle>
-            <AlertDialogDescription className="mt-3 text-[15px]">
-              Choisissez une session pour continuer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="space-y-2 max-h-60 overflow-y-auto">
-            {localSessions.map((session) => (
-              <Button
-                key={session.trainingSession.id}
-                variant={selectedInDialog === session.trainingSession.id ? "default" : "outline"}
-                onClick={() => setSelectedInDialog(session.trainingSession.id)}
-                className="w-full justify-start"
-              >
-                {session.trainingSession.title || "Session sans nom"} - {session.training.title}
-              </Button>
-            ))}
-          </div>
-          <AlertDialogFooter className="mt-4">
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                handleSessionChange(selectedInDialog);
-                setOpenDialog(false);
-              }}
-            >
-              Continuer <ArrowRight />
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

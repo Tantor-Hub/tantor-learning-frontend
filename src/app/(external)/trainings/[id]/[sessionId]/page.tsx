@@ -329,21 +329,9 @@ export default function Page() {
 
                 <div className="mt-6 pt-6 border-t border-blue-200">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-600">Prix de base</span>
+                    <span className="text-sm font-medium text-gray-600">Prix de la formation</span>
                     <span className="text-lg text-gray-700">
                       {Number(session.trainings?.prix || 0).toFixed(2)} €
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-sm font-medium text-gray-600">
-                      Frais Stripe (1.4% + 0.25€)
-                    </span>
-                    <span className="text-sm text-gray-600">{stripeFee.toFixed(2)} €</span>
-                  </div>
-                  <div className="flex justify-between items-center mt-2 pt-2 border-t border-blue-200">
-                    <span className="text-sm font-medium text-gray-600">Total à payer</span>
-                    <span className="text-xl font-bold text-blue-600">
-                      {totalAmount.toFixed(2)} €
                     </span>
                   </div>
                 </div>
@@ -376,7 +364,7 @@ export default function Page() {
               </CardHeader>
               <CardContent>
                 <PaymentCardUI
-                  amount={totalAmount}
+                  amount={session.trainings.prix}
                   sessionId={sessionId}
                   trainingId={trainingId}
                   availableMethods={
