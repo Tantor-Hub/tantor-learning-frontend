@@ -173,7 +173,7 @@ export default function Courses({ sessionId }: { sessionId: string }) {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Matière de la session</h3>
-        <AddCourseModal sessionId={sessionId} />
+        <AddCourseModal sessionId={sessionId} onCourseAdded={refetch} />
       </div>
       {courses.length === 0 ? (
         <EmptyState

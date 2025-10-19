@@ -16,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAddCourseMutation } from "@/lib/apis/common/courses-api";
 import { toast } from "react-hot-toast"; // ou autre lib de notifications
+import { Loader2, Plus } from "lucide-react";
 
 const formSchema = z.object({
   title: z.string().min(1, "Veuillez entrer un titre pour le cours"),
@@ -27,11 +28,19 @@ type CourseFormValues = z.infer<typeof formSchema>;
 
 interface CreateCourseFormProps {
   onCancel: () => void;
+  onSuccess?: () => void;
   onSubmitSuccess?: (data: CourseFormValues) => void;
   sessionId: string;
+  setIsLoading?: (loading: boolean) => void;
 }
 
-export function AddCourseForm({ onCancel, onSubmitSuccess, sessionId }: CreateCourseFormProps) {
+export function AddCourseForm({
+  onCancel,
+  onSuccess,
+  onSubmitSuccess,
+  sessionId,
+  setIsLoading,
+}: CreateCourseFormProps) {
   const [addCourse, { isLoading }] = useAddCourseMutation();
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(formSchema),
@@ -40,6 +49,7 @@ export function AddCourseForm({ onCancel, onSubmitSuccess, sessionId }: CreateCo
   });
 
   const handleSubmit = async (data: CourseFormValues) => {
+    setIsLoading?.(true);
     try {
       const response = await addCourse({
         title: data.title,
@@ -54,6 +64,10 @@ export function AddCourseForm({ onCancel, onSubmitSuccess, sessionId }: CreateCo
         onSubmitSuccess(data);
       }
 
+      if (onSuccess) {
+        onSuccess();
+      }
+
       form.reset();
     } catch (error) {
       if (error instanceof Error && error.message.includes("Network Error")) {
@@ -62,6 +76,8 @@ export function AddCourseForm({ onCancel, onSubmitSuccess, sessionId }: CreateCo
         toast.error("Erreur lors de la création du cours");
       }
       console.error("Submission error:", error);
+    } finally {
+      setIsLoading?.(false);
     }
   };
 
@@ -76,11 +92,11 @@ export function AddCourseForm({ onCancel, onSubmitSuccess, sessionId }: CreateCo
           name="title"
           render={({ field }) => (
             <FormItem className="flex flex-col gap-2.5">
-              <FormLabel>Titre du cours</FormLabel>
+              <FormLabel>Titre de la matière</FormLabel>
               <FormControl>
                 <Input
                   {...field}
-                  placeholder="Entrez le titre du cours"
+                  placeholder="Entrez le titre de la matière"
                   className="text-sm font-extralight py-5"
                   disabled={isLoading}
                 />
@@ -130,22 +146,24 @@ export function AddCourseForm({ onCancel, onSubmitSuccess, sessionId }: CreateCo
           )}
         />
 
-        <div className="flex gap-5 md:gap-10 justify-end md:mt-5">
+        <div className="flex gap-4 md:gap-8 justify-end md:mt-4">
           <Button
             variant="outline"
-            className="p-5 px-7 border-primary text-primary"
+            className="border-primary text-primary"
             type="button"
             onClick={onCancel}
             disabled={isLoading}
           >
             Annuler
           </Button>
-          <Button
-            type="submit"
-            className="p-5 px-7"
-            disabled={!form.formState.isValid || isLoading}
-          >
-            {isLoading ? "Création..." : "Créer le cours"}
+          <Button type="submit" disabled={!form.formState.isValid || isLoading}>
+            {isLoading ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <>
+                <Plus /> Créer une matière
+              </>
+            )}
           </Button>
         </div>
       </form>
