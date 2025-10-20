@@ -9,9 +9,7 @@ export const AllMessagesTab = ({ refreshKey }: { refreshKey: number }) => {
   const { data, isLoading, isSuccess, isError, refetch } = useListMessageByUserIdQuery({});
 
   useEffect(() => {
-    if (refreshKey > 0) {
-      refetch();
-    }
+    refetch();
   }, [refreshKey, refetch]);
 
   if (isError) {

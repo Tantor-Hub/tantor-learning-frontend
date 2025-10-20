@@ -81,8 +81,8 @@ export function EventEditor({
       title: "",
       description: "",
       begining_date: undefined,
-      beginning_hour: "",
-      ending_hour: "",
+      beginning_hour: "10:30:00",
+      ending_hour: "10:30:00",
     },
   });
 
@@ -162,7 +162,9 @@ export function EventEditor({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Title */}
           <div>
-            <Label htmlFor="title">Titre de l'événement *</Label>
+            <Label htmlFor="title">
+              Titre de l'événement <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="title"
               {...register("title")}
@@ -174,7 +176,9 @@ export function EventEditor({
 
           {/* Description */}
           <div>
-            <Label htmlFor="description">Description *</Label>
+            <Label htmlFor="description">
+              Description <span className="text-destructive">*</span>
+            </Label>
             <Textarea
               id="description"
               {...register("description")}
@@ -202,7 +206,9 @@ export function EventEditor({
           {/* Course Select */}
           {!isEditing && (
             <div>
-              <Label htmlFor="course">Sélectionner une matière *</Label>
+              <Label htmlFor="course">
+                Sélectionner une matière <span className="text-destructive">*</span>
+              </Label>
               <Select
                 onOpenChange={setCourseSelectOpen}
                 onValueChange={(value) => setSelectedCourseId(value)}
@@ -235,7 +241,9 @@ export function EventEditor({
 
           {/* Date */}
           <div>
-            <Label>Date de début *</Label>
+            <Label>
+              Date de l'événement <span className="text-destructive">*</span>
+            </Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -262,6 +270,7 @@ export function EventEditor({
                   }}
                   initialFocus
                   disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                  locale={fr}
                 />
               </PopoverContent>
             </Popover>
@@ -273,20 +282,33 @@ export function EventEditor({
           {/* Hours */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="beginning_hour">Heure de début *</Label>
+              <Label htmlFor="beginning_hour">
+                Heure de début <span className="text-destructive">*</span>
+              </Label>
               <Input
-                id="beginning_hour"
                 type="time"
+                id="beginning_hour"
+                step="60"
                 {...register("beginning_hour")}
-                className="mt-1"
+                className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none mt-1"
+                lang="fr-FR"
               />
               {errors.beginning_hour && (
                 <p className="text-sm text-red-600 mt-1">{errors.beginning_hour.message}</p>
               )}
             </div>
             <div>
-              <Label htmlFor="ending_hour">Heure de fin *</Label>
-              <Input id="ending_hour" type="time" {...register("ending_hour")} className="mt-1" />
+              <Label htmlFor="ending_hour">
+                Heure de fin <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                type="time"
+                id="ending_hour"
+                step="60"
+                {...register("ending_hour")}
+                className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none mt-1"
+                lang="fr-FR"
+              />
               {errors.ending_hour && (
                 <p className="text-sm text-red-600 mt-1">{errors.ending_hour.message}</p>
               )}

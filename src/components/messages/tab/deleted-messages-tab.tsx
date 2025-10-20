@@ -14,9 +14,7 @@ export const DeletedMessagesTab = ({ refreshKey }: { refreshKey: number }) => {
   const [restoreChat] = useRestoreChatMutation();
 
   useEffect(() => {
-    if (refreshKey > 0) {
-      refetch();
-    }
+    refetch();
   }, [refreshKey, refetch]);
 
   if (isError) {

@@ -15,9 +15,7 @@ export const ReceivedMessagesTab = ({ refreshKey }: { refreshKey: number }) => {
   } = useListReceivedMessagesQuery();
 
   useEffect(() => {
-    if (refreshKey > 0) {
-      refetch();
-    }
+    refetch();
   }, [refreshKey, refetch]);
 
   if (isError) {
