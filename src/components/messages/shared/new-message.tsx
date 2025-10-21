@@ -36,12 +36,22 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useLazyListUserByRoleQuery } from "@/lib/apis/users-api";
-import { IUser } from "@/types/user";
+import { IUser, UserRole } from "@/types/user";
 import { UserListSkeleton } from "@/components/skeletons/user-list-skeleton";
 import { useSelector } from "react-redux";
 import { selectToken, selectCurrentUser } from "@/features/auth/auth-slice";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 const messageFormSchema = z.object({
   subject: z
     .string()
@@ -60,6 +70,8 @@ interface User {
   firstName?: string | null;
   lastName?: string | null;
   avatar?: string | null;
+  role?: UserRole;
+  email?: string;
 }
 
 export function MessageAlert() {
@@ -72,6 +84,7 @@ export function MessageAlert() {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<UserRole | "all">("all");
 
   const form = useForm<z.infer<typeof messageFormSchema>>({
     resolver: zodResolver(messageFormSchema),
@@ -90,7 +103,7 @@ export function MessageAlert() {
   useEffect(() => {
     if (dialogOpen && open && users.length === 0) {
       setIsLoadingUsers(true);
-      trigger({ role: "all" })
+      trigger({ role: selectedRole })
         .unwrap()
         .then((result: any) => {
           if (result.data) {
@@ -104,7 +117,7 @@ export function MessageAlert() {
           setIsLoadingUsers(false);
         });
     }
-  }, [dialogOpen, open, users.length, trigger, currentUser?.id]);
+  }, [dialogOpen, open, users.length, trigger, currentUser?.id, selectedRole]);
 
   // Filter users based on search term
   useEffect(() => {
@@ -150,6 +163,9 @@ export function MessageAlert() {
       form.reset();
       setSearchTerm("");
       setOpen(false);
+      setSelectedRole("all");
+      setUsers([]);
+      setFilteredUsers([]);
     } catch {
       toast.error(`Une erreur est survenue`);
     } finally {
@@ -167,7 +183,7 @@ export function MessageAlert() {
           <Plus /> Nouveau Message
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="max-w-2xl">
+      <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-hidden">
         <AlertDialogHeader>
           <AlertDialogTitle>Nouveau Message</AlertDialogTitle>
           <AlertDialogDescription>
@@ -176,7 +192,39 @@ export function MessageAlert() {
         </AlertDialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 overflow-y-auto max-h-[calc(90vh-8rem)]"
+          >
+            {/* Role Selection */}
+            <div>
+              <FormLabel>Rôle des destinataires</FormLabel>
+              <Select
+                value={selectedRole}
+                onValueChange={(value: UserRole | "all") => {
+                  setSelectedRole(value);
+                  setUsers([]);
+                  setFilteredUsers([]);
+                  setSearchTerm("");
+                  form.setValue("recipientId", []);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Sélectionner un rôle" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Rôles</SelectLabel>
+                    <SelectItem value="all">Tous les utilisateurs</SelectItem>
+                    <SelectItem value={UserRole.STUDENT}>Étudiants</SelectItem>
+                    <SelectItem value={UserRole.INSTRUCTOR}>Formateurs</SelectItem>
+                    <SelectItem value={UserRole.SECRETARY}>Secrétaires</SelectItem>
+                    <SelectItem value={UserRole.ADMIN}>Administrateurs</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Recipient Field */}
             <FormField
               control={form.control}
@@ -184,34 +232,65 @@ export function MessageAlert() {
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Destinataire</FormLabel>
+                  {/* Selected Recipients Chips */}
+                  {field.value && field.value.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {field.value.map((id: string) => {
+                        const user = users.find((u: User) => u.id.toString() === id);
+                        const name = `${user?.lastName || ""} ${user?.firstName || ""}`.trim();
+                        return (
+                          <div
+                            key={id}
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-sm rounded-md"
+                          >
+                            <span>{name}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const current = form.getValues("recipientId") || [];
+                                form.setValue(
+                                  "recipientId",
+                                  current.filter((i) => i !== id)
+                                );
+                              }}
+                              className="hover:bg-primary/20 rounded-full p-0.5"
+                              aria-label={`Retirer ${name}`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                      <span className="text-sm text-muted-foreground self-center">
+                        ({field.value.length} sélectionné{field.value.length > 1 ? "s" : ""})
+                      </span>
+                    </div>
+                  )}
                   <Popover open={open} onOpenChange={setOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant="outline"
                           role="combobox"
+                          aria-expanded={open}
+                          aria-haspopup="listbox"
                           className={cn(
                             "w-full justify-between",
-                            !field.value && "text-muted-foreground"
+                            !field.value || field.value.length === 0 ? "text-muted-foreground" : ""
                           )}
                         >
-                          {field.value && users.length > 0
-                            ? field.value.length > 0
-                              ? field.value
-                                  .map((id: string) => {
-                                    const user = users.find(
-                                      (user: User) => user.id.toString() === id
-                                    );
-                                    return `${user?.lastName || ""} ${user?.firstName || ""}`.trim();
-                                  })
-                                  .join(", ")
-                              : "Sélectionner un destinataire"
+                          {field.value && field.value.length > 0
+                            ? `${field.value.length} destinataire${field.value.length > 1 ? "s" : ""} sélectionné${field.value.length > 1 ? "s" : ""}`
                             : "Sélectionner un destinataire"}
                           <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
+                    <PopoverContent
+                      className="w-full p-0 max-h-64 overflow-hidden"
+                      side="bottom"
+                      align="start"
+                    >
                       {isLoadingUsers ? (
                         <UserListSkeleton />
                       ) : (
@@ -221,7 +300,66 @@ export function MessageAlert() {
                             onValueChange={(search) => setSearchTerm(search)}
                           />
                           <CommandEmpty>Aucun destinataire trouvé.</CommandEmpty>
-                          <CommandGroup className="max-h-60 overflow-y-auto">
+                          <CommandGroup className="max-h-48 overflow-y-auto">
+                            {/* Select All / Deselect All Option */}
+                            {filteredUsers.length > 0 && (
+                              <CommandItem
+                                onSelect={() => {
+                                  const currentRecipients = form.getValues("recipientId") || [];
+                                  const allUserIds = filteredUsers.map((user) =>
+                                    user.id.toString()
+                                  );
+                                  const isAllSelected = allUserIds.every((id) =>
+                                    currentRecipients.includes(id)
+                                  );
+                                  if (isAllSelected) {
+                                    // Deselect all
+                                    form.setValue(
+                                      "recipientId",
+                                      currentRecipients.filter((id) => !allUserIds.includes(id))
+                                    );
+                                  } else {
+                                    // Select all
+                                    const newRecipients = [
+                                      ...new Set([...currentRecipients, ...allUserIds]),
+                                    ];
+                                    form.setValue("recipientId", newRecipients);
+                                  }
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    (() => {
+                                      const currentRecipients = form.getValues("recipientId") || [];
+                                      const allUserIds = filteredUsers.map((user) =>
+                                        user.id.toString()
+                                      );
+                                      const isAllSelected = allUserIds.every((id) =>
+                                        currentRecipients.includes(id)
+                                      );
+                                      return isAllSelected ? "opacity-100" : "opacity-0";
+                                    })()
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">
+                                    {(() => {
+                                      const currentRecipients = form.getValues("recipientId") || [];
+                                      const allUserIds = filteredUsers.map((user) =>
+                                        user.id.toString()
+                                      );
+                                      const isAllSelected = allUserIds.every((id) =>
+                                        currentRecipients.includes(id)
+                                      );
+                                      return isAllSelected
+                                        ? "Désélectionner tous"
+                                        : "Sélectionner tous";
+                                    })()}
+                                  </span>
+                                </div>
+                              </CommandItem>
+                            )}
                             {filteredUsers.map((user: User) => (
                               <CommandItem
                                 value={user.id.toString()}
@@ -237,6 +375,10 @@ export function MessageAlert() {
                                     form.setValue("recipientId", [...currentRecipients, value]);
                                   }
                                 }}
+                                role="option"
+                                aria-selected={form
+                                  .getValues("recipientId")
+                                  .includes(user.id.toString())}
                               >
                                 <Check
                                   className={cn(
@@ -250,6 +392,7 @@ export function MessageAlert() {
                                   <span>
                                     {user.firstName || ""} {user.lastName || ""}
                                   </span>
+                                  <span className="text-sm text-muted-foreground">{user.role}</span>
                                 </div>
                               </CommandItem>
                             ))}
@@ -320,6 +463,9 @@ export function MessageAlert() {
                 onClick={() => {
                   form.reset();
                   setSearchTerm("");
+                  setSelectedRole("all");
+                  setUsers([]);
+                  setFilteredUsers([]);
                   setDialogOpen(false);
                 }}
               >
