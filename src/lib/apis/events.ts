@@ -31,10 +31,10 @@ export const eventsApi = createApi({
 
     // Update event
     updateEvent: builder.mutation<EventResponse, UpdateEventRequest>({
-      query: ({ id, ...data }) => ({
+      query: ({ id, courseId, ...data }) => ({
         url: `event/update/${id}`,
         method: "PATCH",
-        body: data,
+        body: courseId ? { ...data, id_cible_cours: courseId } : data,
       }),
       invalidatesTags: (result, error, { id }) => [{ type: "Event", id }, "Event"],
     }),

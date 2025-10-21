@@ -95,7 +95,7 @@ export function EventEditor({
   } = useGetCoursesBySessionQuery(
     { sessionId },
     {
-      skip: !courseSelectOpen,
+      skip: !isEditing && !courseSelectOpen,
     }
   );
 
@@ -108,8 +108,8 @@ export function EventEditor({
         beginning_hour: initialEvent.beginning_hour,
         ending_hour: initialEvent.ending_hour,
       });
-      if (initialEvent.trainingSessions && initialEvent.trainingSessions.length > 0) {
-        setSelectedCourseId(initialEvent.trainingSessions[0].id);
+      if (initialEvent.sessionCours) {
+        setSelectedCourseId(initialEvent.sessionCours.id);
       }
     } else {
       reset({
@@ -124,7 +124,7 @@ export function EventEditor({
   }, [initialEvent, reset]);
 
   const onSubmit = (data: EventFormData) => {
-    if (!isEditing && !selectedCourseId) {
+    if (!selectedCourseId) {
       alert("Veuillez sélectionner une matière");
       return;
     }
@@ -140,7 +140,7 @@ export function EventEditor({
     if (!isEditing) {
       onSave({ ...eventData, courseId: selectedCourseId! } as any);
     } else {
-      onSave(eventData as UpdateEventRequest);
+      onSave({ ...eventData, courseId: selectedCourseId! } as UpdateEventRequest);
     }
   };
 
@@ -192,52 +192,46 @@ export function EventEditor({
           </div>
 
           {/* Associated Course (for editing) */}
-          {isEditing &&
-            initialEvent?.trainingSessions &&
-            initialEvent.trainingSessions.length > 0 && (
-              <div>
-                <Label>Matière associée</Label>
-                <p className="mt-1 text-sm text-gray-700">
-                  {initialEvent.trainingSessions[0].title}
-                </p>
-              </div>
-            )}
-
-          {/* Course Select */}
-          {!isEditing && (
+          {isEditing && initialEvent?.sessionCours && (
             <div>
-              <Label htmlFor="course">
-                Sélectionner une matière <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                onOpenChange={setCourseSelectOpen}
-                onValueChange={(value) => setSelectedCourseId(value)}
-                value={selectedCourseId}
-                disabled={coursesLoading}
-              >
-                <SelectTrigger id="course" className="w-full mt-1">
-                  <SelectValue placeholder="Sélectionner une matière" />
-                </SelectTrigger>
-                <SelectContent>
-                  {coursesLoading ? (
-                    <div className="p-4">
-                      <Skeleton className="h-6 w-full mb-2" />
-                      <Skeleton className="h-6 w-full mb-2" />
-                      <Skeleton className="h-6 w-full" />
-                    </div>
-                  ) : coursesData && coursesData.data.rows.length > 0 ? (
-                    coursesData.data.rows.map((course: any) => (
-                      <SelectItem key={course.id} value={course.id}>
-                        {course.title}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-gray-500">Aucune matière disponible</div>
-                  )}
-                </SelectContent>
-              </Select>
+              <Label>Matière associée</Label>
+              <p className="mt-1 text-sm text-gray-700">{initialEvent.sessionCours.title}</p>
             </div>
           )}
+
+          {/* Course Select */}
+          <div>
+            <Label htmlFor="course">
+              Sélectionner une matière <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              onOpenChange={setCourseSelectOpen}
+              onValueChange={(value) => setSelectedCourseId(value)}
+              value={selectedCourseId}
+              disabled={coursesLoading}
+            >
+              <SelectTrigger id="course" className="w-full mt-1">
+                <SelectValue placeholder="Sélectionner une matière" />
+              </SelectTrigger>
+              <SelectContent>
+                {coursesLoading ? (
+                  <div className="p-4">
+                    <Skeleton className="h-6 w-full mb-2" />
+                    <Skeleton className="h-6 w-full mb-2" />
+                    <Skeleton className="h-6 w-full" />
+                  </div>
+                ) : coursesData && coursesData.data.rows.length > 0 ? (
+                  coursesData.data.rows.map((course: any) => (
+                    <SelectItem key={course.id} value={course.id}>
+                      {course.title}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-gray-500">Aucune matière disponible</div>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Date */}
           <div>
@@ -320,14 +314,14 @@ export function EventEditor({
             <Button type="button" variant="outline" onClick={handleCancel} disabled={isLoading}>
               Annuler
             </Button>
-            <Button type="submit" disabled={!isValid || isLoading}>
+            <Button type="submit" disabled={!isValid || isLoading || !selectedCourseId}>
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                   {isEditing ? "Mise à jour..." : "Création..."}
                 </>
               ) : isEditing ? (
-                "Mettre à jour l'événement"
+                "Enregistrer les modifications"
               ) : (
                 "Créer un événement"
               )}

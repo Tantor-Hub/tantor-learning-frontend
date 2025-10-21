@@ -3,6 +3,12 @@ export interface TrainingSession {
   title: string;
 }
 
+export interface SessionCours {
+  id: string;
+  title: string;
+  id_session: string;
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -13,6 +19,7 @@ export interface Event {
   ending_hour: string;
   ending_date?: string;
   trainingSessions?: TrainingSession[];
+  sessionCours?: SessionCours;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -35,6 +42,7 @@ export interface UpdateEventRequest {
   beginning_hour?: string;
   ending_hour?: string;
   ending_date?: string;
+  courseId?: string;
 }
 
 export interface EventListResponse {

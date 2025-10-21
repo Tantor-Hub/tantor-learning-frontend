@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Loader2,
   CreditCard,
@@ -67,6 +67,7 @@ export default function Payment() {
   // Initialize form with existing data
   useEffect(() => {
     if (sessionData?.data) {
+      // console.log(JSON.stringify(sessionData.data));
       setSelectedMethods(sessionData.data.payment_method || []);
       setCpfLink(sessionData.data.cpf_link || "");
     }
@@ -153,6 +154,23 @@ export default function Payment() {
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>Erreur lors du chargement des données de paiement.</AlertDescription>
       </Alert>
+    );
+  }
+
+  const isFreeTraining = sessionData?.data?.trainings?.prix === "0.00";
+
+  if (isFreeTraining) {
+    return (
+      <div className="space-y-6">
+        {/* Free Training Alert */}
+        <Alert className="bg-green-500/10 border-0 border-l-4 border-l-green-500 rounded mb-4">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertTitle>Formation gratuite</AlertTitle>
+          <AlertDescription className="text-sm text-muted-foreground">
+            Cette formation est gratuite. Aucun paiement n'est requis pour les étudiants.
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
