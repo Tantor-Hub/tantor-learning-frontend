@@ -29,6 +29,7 @@ import { studentAnswerOptionsApi } from "./student-answer-options";
 import { userInSessionApi } from "./user-in-session";
 import { trainingSessionApi } from "./training-sessions";
 import { moduleDeFormationApi } from "./module-de-formation-api";
+import { sessionCoursesApi } from "./session-courses";
 
 // Export all API slices for easy access
 export {
@@ -63,6 +64,7 @@ export {
   userInSessionApi,
   trainingSessionApi,
   moduleDeFormationApi,
+  sessionCoursesApi,
 };
 
 // Combine all reducers for easy store setup
@@ -98,6 +100,7 @@ export const apiReducers = {
   [userInSessionApi.reducerPath]: userInSessionApi.reducer,
   [trainingSessionApi.reducerPath]: trainingSessionApi.reducer,
   [moduleDeFormationApi.reducerPath]: moduleDeFormationApi.reducer,
+  [sessionCoursesApi.reducerPath]: sessionCoursesApi.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -133,4 +136,5 @@ export const apiMiddlewares = [
   userInSessionApi.middleware,
   trainingSessionApi.middleware,
   moduleDeFormationApi.middleware,
+  sessionCoursesApi.middleware,
 ];

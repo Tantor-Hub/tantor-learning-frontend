@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "dev:live": "next dev & ngrok http 3000",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

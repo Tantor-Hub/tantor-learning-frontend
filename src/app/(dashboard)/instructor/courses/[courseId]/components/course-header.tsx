@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useGetCourseByIdQuery } from "@/lib/apis/instructor/instructor";
+import { useGetSessionCourseByIdQuery } from "@/lib/apis/session-courses";
 import { ChevronLeft } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 
@@ -11,9 +11,7 @@ export function CourseHeader() {
   const courseId = params.courseId as string;
   const router = useRouter();
 
-  const { data: course, isLoading: isLoadingCourse } = useGetCourseByIdQuery({
-    id_cours: courseId,
-  });
+  const { data: course, isLoading: isLoadingCourse } = useGetSessionCourseByIdQuery(courseId);
 
   if (isLoadingCourse) {
     return (
@@ -40,7 +38,7 @@ export function CourseHeader() {
       </div>
     );
   }
-
+  console.log("inside course header", JSON.stringify(course));
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
@@ -50,8 +48,8 @@ export function CourseHeader() {
           </button>
           {course?.data ? (
             <div>
-              <p className="text-2xl font-bold">{course.data.Title.title}</p>
-              <p className="text-muted-foreground">{course.data.Title.description}</p>
+              <p className="text-2xl font-bold">{course.data.title}</p>
+              <p className="text-muted-foreground">{course.data.description}</p>
             </div>
           ) : (
             <div>
@@ -62,10 +60,12 @@ export function CourseHeader() {
         </div>
         {course?.data ? (
           <div className="text-right">
-            <div className="text-sm text-muted-foreground">{course.data.Session.designation}</div>
-            <div className="text-sm text-muted-foreground">Durée: {course.data.Session.duree}</div>
+            <div className="text-sm text-muted-foreground">{course.data.trainingSession.title}</div>
             <div className="text-sm text-muted-foreground">
-              Type: {course.data.Session.type_formation}
+              Places: {course.data.trainingSession.nb_places}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Disponible: {course.data.trainingSession.available_places}
             </div>
           </div>
         ) : (
