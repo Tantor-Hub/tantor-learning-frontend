@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { selectIsAuthenticated } from "@/features/auth/auth-slice";
+import { useGetModulesQuery } from "@/lib/apis/module-de-formation-api";
 
 export default function Hero() {
   const router = useRouter();
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const { data: modulesData } = useGetModulesQuery();
   return (
     <section className="hero relative mask-b-from-90% h-[100vh] flex items-center justify-center">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-start h-full m-auto">
@@ -28,7 +30,22 @@ export default function Hero() {
             >
               Decouvrir nos formations
             </Button>
-            <Button size="lg" onClick={() => router.push("/signup")}>
+            <Button
+              size="lg"
+              onClick={() => {
+                if (
+                  isAuthenticated &&
+                  modulesData?.data?.rows &&
+                  modulesData.data.rows.length > 0
+                ) {
+                  const firstModule = modulesData.data.rows[0];
+                  window.open(firstModule.piece_jointe, "_blank");
+                  return;
+                } else {
+                  router.push("/signup");
+                }
+              }}
+            >
               {isAuthenticated && "Télécharger le module de Formation"}
               {!isAuthenticated && "S'inscrire maintenant"}
             </Button>

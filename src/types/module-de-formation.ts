@@ -5,6 +5,10 @@ export interface ModuleDeFormation {
 }
 
 export interface GetModulesResponse {
-  length: number;
-  rows: ModuleDeFormation[];
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    rows: ModuleDeFormation[];
+  };
 }
