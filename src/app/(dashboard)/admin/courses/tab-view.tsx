@@ -16,11 +16,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
+import { useCreateModuleMutation } from "@/lib/apis/module-de-formation-api";
+import { ModuleFormationTab } from "./module-formation-tab";
 
 function UploadDialog() {
   const [file, setFile] = useState<File | null>(null);
+  const [description, setDescription] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [createModule, { isLoading }] = useCreateModuleMutation();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -28,23 +32,27 @@ function UploadDialog() {
     }
   };
 
-  const simulateUpload = () => {
-    if (!file) return;
+  const handleUpload = async () => {
+    if (!file || !description.trim()) return;
 
     setIsUploading(true);
     setUploadProgress(0);
 
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 500);
+    try {
+      await createModule({
+        description: description.trim(),
+        piece_jointe: file,
+      }).unwrap();
+
+      alert("Module de formation ajouté avec succès");
+      setFile(null);
+      setDescription("");
+      setUploadProgress(0);
+    } catch (error) {
+      alert("Erreur lors de l'ajout du module");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -57,9 +65,22 @@ function UploadDialog() {
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Ajouter un module de formation</DialogTitle>
-          <DialogDescription>Les formats supportés: PDF</DialogDescription>
+          <DialogDescription>Les formats supportés: PDF, DOCX, PPTX</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right">
+              Description
+            </Label>
+            <Input
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Entrez la description du module"
+              className="col-span-3"
+              disabled={isUploading}
+            />
+          </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="file" className="text-right">
               Fichier
@@ -90,8 +111,12 @@ function UploadDialog() {
           )}
         </div>
         <DialogFooter>
-          <Button type="submit" onClick={simulateUpload} disabled={!file || isUploading}>
-            {isUploading ? "Téléchargement..." : "Télécharger"}
+          <Button
+            type="submit"
+            onClick={handleUpload}
+            disabled={!file || !description.trim() || isUploading || isLoading}
+          >
+            {isUploading || isLoading ? "Téléchargement..." : "Télécharger"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -107,7 +132,7 @@ export function TabsView() {
           <TabsTrigger value="courses" className="p-3.5 bg-none">
             Matières
           </TabsTrigger>
-          <TabsTrigger value="roles" className="p-3.5 bg-none">
+          <TabsTrigger value="moduleFormation" className="p-3.5 bg-none">
             Module Formation
           </TabsTrigger>
         </TabsList>
@@ -122,6 +147,9 @@ export function TabsView() {
             </div>
           </div>
         </div>
+      </TabsContent>
+      <TabsContent value="moduleFormation">
+        <ModuleFormationTab />
       </TabsContent>
     </Tabs>
   );
