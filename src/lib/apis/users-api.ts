@@ -128,6 +128,22 @@ export const usersApi = createApi({
       query: (userId) => `users/user/${userId}`,
       providesTags: (result, error, userId) => [{ type: "User", id: userId }],
     }),
+
+    // change User Role -> Admin Access Only
+    changeUserRole: builder.mutation<
+      void,
+      {
+        email: string;
+        role: UserRole;
+      }
+    >({
+      query: (request) => ({
+        url: "users/change-role",
+        method: "PATCH",
+        body: request,
+      }),
+      invalidatesTags: ["User"],
+    }),
   }),
 });
 
@@ -139,4 +155,5 @@ export const {
   usePublicListUsersQuery,
   useListUserByRoleQuery,
   useLazyListUserByRoleQuery,
+  useChangeUserRoleMutation,
 } = usersApi;

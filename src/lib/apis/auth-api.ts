@@ -160,10 +160,10 @@ export const authApi = createApi({
       invalidatesTags: ["Auth"],
     }),
     resendCode: builder.mutation<void, ResendCodeRequest>({
-      query: (data) => ({
-        url: "users/user/resendcode",
+      query: (request) => ({
+        url: "/users/user/resendcode",
         method: "PUT",
-        body: data,
+        body: request,
       }),
     }),
     verifyBeforeResetPassword: builder.mutation<

@@ -8,6 +8,7 @@ import { UserInSession } from "@/types/user-in-session";
 export default function Page() {
   const { data: eventsData, isLoading: eventsLoading } = useListEventsQuery();
   const { data: planningData, isLoading: planningLoading } = useGetAllUserInSessionsQuery();
+
   const todayEvents = (eventsData?.data || []).filter((event: any) => {
     const eventDate = new Date(event.begining_date).toDateString();
     const today = new Date().toDateString();

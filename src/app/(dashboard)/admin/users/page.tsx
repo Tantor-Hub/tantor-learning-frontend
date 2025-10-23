@@ -15,7 +15,7 @@ export default function Page() {
           <Button variant="outline" onClick={() => router.back()}>
             <ChevronLeft /> Retour
           </Button>
-          <NewUser />
+          {/* <NewUser /> */}
         </div>
         <p className="truncate font-semibold text-xl">Gestion des utilisateurs - Admin</p>
       </div>
