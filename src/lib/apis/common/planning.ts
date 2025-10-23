@@ -111,6 +111,10 @@ export const EventApi = createApi({
       }),
       invalidatesTags: ["Event"],
     }),
+    listAllEvents: builder.query<IListPlanning, void>({
+      query: () => "event/getall",
+      providesTags: ["Event"],
+    }),
   }),
 });
 
@@ -120,4 +124,5 @@ export const {
   useListStudentEventsBySessionQuery,
   useAddEventMutation,
   useDeleteEventMutation,
+  useListAllEventsQuery,
 } = EventApi;
