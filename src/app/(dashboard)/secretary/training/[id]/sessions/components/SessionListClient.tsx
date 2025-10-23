@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import {
   useListSessionByTrainingIdQuery,
   useCreateSessionMutation,
+  useUpdateTrainingMutation,
+  useDeleteTrainingByIdMutation,
+  useListTrainingByIdQuery,
 } from "@/lib/apis/secretary/training-secretary-api";
 import { useDeleteSessionMutation } from "@/lib/apis/secretary/session-secretary-api";
 import { useRouter, useParams } from "next/navigation";
@@ -32,11 +35,25 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, Calendar as CalendarIcon, Clock, Users, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar as CalendarIcon,
+  Clock,
+  Users,
+  Plus,
+  Trash2,
+  Edit,
+} from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "react-hot-toast";
-import { ISession, ICreateSessionRequest } from "@/types/secretary/training-secretary";
+import {
+  ISession,
+  ICreateSessionRequest,
+  ITraining,
+  IUpdateTrainingRequest,
+  ITrainingType,
+} from "@/types/secretary/training-secretary";
 
 const SessionCard = ({
   session,
@@ -79,6 +96,147 @@ const SessionCard = ({
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+const UpdateTrainingForm = ({
+  training,
+  onSuccess,
+}: {
+  training: ITraining;
+  onSuccess: () => void;
+}) => {
+  const [updateTraining, { isLoading }] = useUpdateTrainingMutation();
+  const [formData, setFormData] = useState({
+    id: training.id,
+    title: training.title,
+    subtitle: training.subtitle,
+    id_trainingcategory: training.id_trainingcategory,
+    trainingtype: training.trainingtype,
+    rnc: training.rnc,
+    description: training.description,
+    requirement: training.requirement,
+    pedagogygoals: training.pedagogygoals,
+    prix: training.prix,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const submitData: IUpdateTrainingRequest = {
+        id: formData.id,
+        title: formData.title,
+        subtitle: formData.subtitle,
+        id_trainingcategory: formData.id_trainingcategory,
+        trainingtype: formData.trainingtype,
+        rnc: formData.rnc,
+        description: formData.description,
+        requirement: formData.requirement,
+        pedagogygoals: formData.pedagogygoals,
+        prix: formData.prix,
+      };
+
+      await updateTraining(submitData).unwrap();
+      toast.success("Formation mise à jour avec succès !");
+      onSuccess();
+    } catch (error) {
+      console.error("Error updating training:", error);
+      toast.error("Erreur lors de la mise à jour de la formation");
+    }
+  };
+
+  const handleInputChange = (field: string, value: string | number | ITrainingType) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="title">Titre *</Label>
+        <Input
+          id="title"
+          value={formData.title}
+          onChange={(e) => handleInputChange("title", e.target.value)}
+          required
+          placeholder="Entrez le titre de la formation"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="subtitle">Sous-titre</Label>
+        <Input
+          id="subtitle"
+          value={formData.subtitle}
+          onChange={(e) => handleInputChange("subtitle", e.target.value)}
+          placeholder="Entrez le sous-titre de la formation"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="description">Description *</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => handleInputChange("description", e.target.value)}
+          required
+          rows={3}
+          placeholder="Entrez la description de la formation"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="requirement">Prérequis</Label>
+        <Textarea
+          id="requirement"
+          value={formData.requirement}
+          onChange={(e) => handleInputChange("requirement", e.target.value)}
+          rows={2}
+          placeholder="Entrez les prérequis de la formation"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="pedagogygoals">Objectifs pédagogiques</Label>
+        <Textarea
+          id="pedagogygoals"
+          value={formData.pedagogygoals}
+          onChange={(e) => handleInputChange("pedagogygoals", e.target.value)}
+          rows={2}
+          placeholder="Entrez les objectifs pédagogiques"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="prix">Prix *</Label>
+        <Input
+          id="prix"
+          type="number"
+          min="0"
+          value={formData.prix}
+          onChange={(e) => handleInputChange("prix", parseFloat(e.target.value) || 0)}
+          required
+          placeholder="Prix de la formation"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="rnc">RNC</Label>
+        <Input
+          id="rnc"
+          value={formData.rnc}
+          onChange={(e) => handleInputChange("rnc", e.target.value)}
+          placeholder="Numéro RNC"
+        />
+      </div>
+
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? "Mise à jour..." : "Mettre à jour la formation"}
+      </Button>
+    </form>
   );
 };
 
@@ -294,9 +452,12 @@ export default function SessionListClient() {
   const params = useParams();
   const trainingId = params.id as string;
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
 
   const { data, isLoading, refetch } = useListSessionByTrainingIdQuery({ trainingId });
+  const { data: trainingData } = useListTrainingByIdQuery({ id: trainingId });
   const [deleteSession, { isLoading: isDeleting }] = useDeleteSessionMutation();
+  const [deleteTraining] = useDeleteTrainingByIdMutation();
 
   const handleViewDetails = (session: ISession) => {
     router.push(`/secretary/training/${trainingId}/sessions/${session.id}`);
@@ -319,6 +480,21 @@ export default function SessionListClient() {
     } catch (error) {
       console.error("Error deleting session:", error);
       toast.error("Erreur lors de la suppression de la session");
+    }
+  };
+
+  const handleUpdateTrainingSuccess = () => {
+    setIsUpdateDialogOpen(false);
+  };
+
+  const handleDeleteTraining = async () => {
+    try {
+      await deleteTraining({ id: trainingId }).unwrap();
+      toast.success("Formation supprimée avec succès !");
+      router.push("/secretary/training"); // Redirect to training list
+    } catch (error) {
+      console.error("Error deleting training:", error);
+      toast.error("Erreur lors de la suppression de la formation");
     }
   };
 
@@ -348,11 +524,62 @@ export default function SessionListClient() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="mb-8">
-          <Button variant="outline" onClick={handleGoBack} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Retour aux formations
-          </Button>
+        <div className="mb-8 flex-col">
+          <div className="flex justify-between items-center mb-4">
+            <Button variant="outline" onClick={handleGoBack}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Retour aux formations
+            </Button>
+
+            <div className="flex gap-2">
+              <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Edit /> Modifier la formation
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Modifier la formation</DialogTitle>
+                  </DialogHeader>
+                  {trainingData?.data && (
+                    <UpdateTrainingForm
+                      training={trainingData.data}
+                      onSuccess={handleUpdateTrainingSuccess}
+                    />
+                  )}
+                </DialogContent>
+              </Dialog>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button className="bg-destructive text-white hover:bg-destructive/90">
+                    <Trash2 />
+                    Supprimer la formation
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Cette action est irréversible. Cela supprimera définitivement la formation et
+                      toutes ses sessions associées.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteTraining}
+                      className="bg-destructive text-white hover:bg-destructive/90"
+                    >
+                      Supprimer
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+
           <div className="flex justify-between items-start mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Sessions de formation</h1>
@@ -360,6 +587,7 @@ export default function SessionListClient() {
                 Découvrez toutes les sessions disponibles pour cette formation
               </p>
             </div>
+
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button>

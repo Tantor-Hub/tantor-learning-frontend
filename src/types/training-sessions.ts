@@ -29,6 +29,21 @@ export interface TrainingSession {
   trainings: Training;
 }
 
+export interface UpdateTrainingSessionRequest {
+  id: string;
+  id_trainings?: string;
+  title?: string;
+  nb_places?: number;
+  required_document_before?: string[];
+  required_document_during?: string[];
+  required_document_after?: string[];
+  payment_method?: string[];
+  survey?: string | null;
+  regulation_text?: string;
+  begining_date?: string;
+  ending_date?: string;
+}
+
 export interface ApiResponse<T> {
   status: number;
   message: string;
