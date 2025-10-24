@@ -1,11 +1,7 @@
 "use client";
-
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import {
-  useGetLessonsByCourseIdQuery,
-  useCreateLessonMutation,
-} from "@/lib/apis/instructor/instructor";
+import { useGetLessonsByCourseIdQuery, useCreateLessonMutation } from "@/lib/apis/lessons";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { LessonCard } from "./lesson-card";
@@ -18,21 +14,20 @@ export function LessonList() {
   const params = useParams();
   const courseId = params.courseId as string;
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const { data: lessons, isLoading } = useGetLessonsByCourseIdQuery(
-    { courseId },
-    { skip: !courseId }
-  );
+  const {
+    data: lessons,
+    isLoading,
+    refetch: refetchLessons,
+  } = useGetLessonsByCourseIdQuery(courseId, {
+    skip: !courseId,
+  });
 
   const [createLesson, { isLoading: isCreating }] = useCreateLessonMutation();
-
-  if (isLoading) {
-    return <LessonListSkeleton />;
-  }
 
   const handleCreateLesson = async (lessonData: {
     title: string;
     description: string;
-    ispublish?: boolean;
+    ispublish: boolean;
   }) => {
     let toastId: string | null = null;
     try {
@@ -47,7 +42,7 @@ export function LessonList() {
         title: lessonData.title,
         description: lessonData.description,
         id_cours: courseId,
-        ...(lessonData.ispublish !== undefined ? { ispublish: lessonData.ispublish } : {}),
+        ispublish: lessonData.ispublish,
       }).unwrap();
       console.log(response);
 
@@ -79,9 +74,11 @@ export function LessonList() {
     }
   };
 
+  if (isLoading) {
+    return <LessonListSkeleton />;
+  }
   return (
     <div className="space-y-6">
-      {/* Header with create button - Static content */}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Leçons</h2>
@@ -97,7 +94,6 @@ export function LessonList() {
         </Button>
       </div>
 
-      {/* Lessons grid - Dynamic content */}
       {!lessons?.data?.rows?.length ? (
         <div className="py-10">
           <EmptyState
@@ -108,13 +104,18 @@ export function LessonList() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {lessons?.data?.rows?.map((lesson) => (
-            <LessonCard key={lesson.id} lesson={lesson} courseId={courseId} />
+          {lessons.data.rows.map((lesson) => (
+            <LessonCard
+              key={lesson.id}
+              lesson={lesson}
+              courseId={courseId}
+              lessonId={lesson.id}
+              onRefetch={refetchLessons}
+            />
           ))}
         </div>
       )}
 
-      {/* Create lesson dialog */}
       <CreateLessonDialog
         isOpen={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}

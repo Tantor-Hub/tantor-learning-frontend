@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 interface CreateLessonDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { title: string; description: string; ispublish?: boolean }) => void;
+  onSubmit: (data: { title: string; description: string; ispublish: boolean }) => void;
   isLoading: boolean;
 }
 

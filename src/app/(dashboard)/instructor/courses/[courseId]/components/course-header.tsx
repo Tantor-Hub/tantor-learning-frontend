@@ -38,7 +38,6 @@ export function CourseHeader() {
       </div>
     );
   }
-  console.log("inside course header", JSON.stringify(course));
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">

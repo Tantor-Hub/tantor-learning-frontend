@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { LessonCard } from "../lesson-card";
+import { ILesson } from "@/types/instructor";
 import { EmptyState } from "@/components/shared/empty-state";
 import { CreateLessonDialog } from "../create-lesson-dialog";
 import { LessonListSkeleton } from "@/components/skeletons/lesson-list-skeleton";
@@ -109,7 +110,7 @@ export function LessonList() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {lessons?.data?.rows?.map((lesson) => (
-            <LessonCard key={lesson.id} lesson={lesson} courseId={courseId} />
+            <LessonCard key={lesson.id} lesson={lesson} courseId={courseId} lessonId={lesson.id} />
           ))}
         </div>
       )}
