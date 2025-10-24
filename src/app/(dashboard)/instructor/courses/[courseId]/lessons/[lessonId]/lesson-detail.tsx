@@ -10,7 +10,7 @@ import {
   useDeleteLessonDocumentMutation,
 } from "@/lib/apis/instructor/instructor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, ClipboardList, FileText, Upload, Download, Trash2 } from "lucide-react";
+import { BookOpen, ClipboardList, FileText, Upload, Download, Trash2, X } from "lucide-react";
 import { ChevronLeft } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "react-hot-toast";
 import { ContentTab } from "./tab/content";
 import { EvaluationTab } from "./tab/evalution";
@@ -33,6 +34,7 @@ export function LessonDetail() {
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const {
     data: lesson,
@@ -61,54 +63,84 @@ export function LessonDetail() {
     }
 
     setIsUploading(true);
-    let toastId: string | null = null;
+    setUploadProgress(0);
 
-    try {
-      toastId = toast.loading("Téléchargement du document...");
+    return new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
 
+      // Track upload progress
+      xhr.upload.addEventListener(
+        "progress",
+        (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress(percentComplete);
+          }
+        },
+        false
+      );
+
+      // Handle successful upload
+      xhr.addEventListener("load", () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const result = JSON.parse(xhr.responseText);
+            toast.success("Document ajouté avec succès");
+            setSelectedFile(null);
+            setUploadProgress(0);
+
+            // Reset file input
+            const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+            if (fileInput) {
+              fileInput.value = "";
+            }
+
+            // Refetch documents to update the list
+            refetchDocuments();
+            resolve();
+          } catch (error) {
+            toast.error("Erreur lors du traitement de la réponse");
+            reject(error);
+          }
+        } else {
+          try {
+            const errorData = JSON.parse(xhr.responseText);
+            toast.error(errorData.message || `Erreur HTTP: ${xhr.status}`);
+          } catch {
+            toast.error(`Erreur HTTP: ${xhr.status}`);
+          }
+          reject(new Error(`HTTP error! status: ${xhr.status}`));
+        }
+        setIsUploading(false);
+      });
+
+      // Handle network errors
+      xhr.addEventListener("error", () => {
+        toast.error("Erreur réseau lors du téléchargement");
+        setIsUploading(false);
+        setUploadProgress(0);
+        reject(new Error("Network error"));
+      });
+
+      // Handle aborted uploads
+      xhr.addEventListener("abort", () => {
+        toast.error("Téléchargement annulé");
+        setIsUploading(false);
+        setUploadProgress(0);
+        reject(new Error("Upload aborted"));
+      });
+
+      // Prepare form data
       const formData = new FormData();
       formData.append("document", selectedFile);
       formData.append("id_lesson", lessonId);
+      formData.append("ispublish", "false");
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/lessondocument/create`, {
-        method: "POST",
-        headers: {
-          "x-connexion-tantor": `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (toastId) {
-        toast.dismiss(toastId);
-      }
-      toast.success("Document ajouté avec succès");
-      setSelectedFile(null);
-
-      // Reset file input
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      if (fileInput) {
-        fileInput.value = "";
-      }
-
-      // Refetch documents to update the list
-      refetchDocuments();
-    } catch (error: any) {
-      if (toastId) {
-        toast.dismiss(toastId);
-      }
-      const errorMessage = error.message || "Erreur lors de l'ajout du document";
-      toast.error(errorMessage);
-      console.error("Upload error:", error);
-    } finally {
-      setIsUploading(false);
-    }
+      // Open and send request
+      xhr.open("POST", `${process.env.NEXT_PUBLIC_BASE_URL}/lessondocument/create`);
+      xhr.setRequestHeader("x-connexion-tantor", `Bearer ${token}`);
+      xhr.send(formData);
+    });
   };
 
   const handleDeleteDocument = async (documentId: string, fileName: string) => {
@@ -134,6 +166,15 @@ export function LessonDetail() {
       const errorMessage = error?.data?.message || "Erreur lors de la suppression du document";
       toast.error(errorMessage);
       console.error("Delete error:", error);
+    }
+  };
+
+  const cancelUpload = () => {
+    setSelectedFile(null);
+    setUploadProgress(0);
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
     }
   };
 
@@ -183,7 +224,7 @@ export function LessonDetail() {
   }
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -212,17 +253,6 @@ export function LessonDetail() {
 
       {/* Content Sections */}
       <Tabs defaultValue="contenu" className="w-full">
-        <TabsList className="bg-white border font-semibold px-2.5 py-6 grid-cols-1 gap-4">
-          <TabsTrigger value="contenu" className="p-5 px-2 md:px-5">
-            Contenu
-          </TabsTrigger>
-          <TabsTrigger value="evaluations" className="p-5 px-2 md:px-5">
-            Évaluations
-          </TabsTrigger>
-          <TabsTrigger value="devoirs" className="p-5 px-2 md:px-5">
-            Devoirs
-          </TabsTrigger>
-        </TabsList>
         <TabsContent value="contenu">
           <div className="bg-white border rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
@@ -236,6 +266,7 @@ export function LessonDetail() {
                   onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                   className="max-w-xs"
                   accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.ppt,.pptx,.xls,.xlsx"
+                  disabled={isUploading}
                 />
                 <Button
                   onClick={handleFileUpload}
@@ -247,6 +278,47 @@ export function LessonDetail() {
                 </Button>
               </div>
             </div>
+
+            {/* Upload Progress Bar */}
+            {isUploading && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    <span className="text-sm font-medium text-gray-700">{selectedFile?.name}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-blue-600">{uploadProgress}%</span>
+                </div>
+                <Progress value={uploadProgress} className="h-2" />
+                <p className="text-xs text-gray-600 mt-2">
+                  Téléchargement en cours... Veuillez patienter.
+                </p>
+              </div>
+            )}
+
+            {/* Selected File Preview (before upload) */}
+            {selectedFile && !isUploading && (
+              <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-700">{selectedFile.name}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </Badge>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={cancelUpload}
+                    className="text-gray-600 hover:text-red-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {isLoadingDocuments ? (
               <div className="space-y-4">
                 {[...Array(3)].map((_, i) => (
@@ -307,76 +379,6 @@ export function LessonDetail() {
                 description="Commencer à créer les contenu."
               />
             )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="evaluations">
-          <div className="bg-white border rounded-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <ClipboardList className="w-5 h-5" />
-                <h3 className="text-lg font-semibold">Quiz (Évaluations)</h3>
-              </div>
-              <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                + Évaluation
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold">Quiz 1: Bases de la Programmation</h4>
-                <p className="text-gray-600">
-                  10 questions à choix multiples. Durée: 20 minutes. Score moyen: 85%.
-                </p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold">Exercice: Algorithmes Simples</h4>
-                <p className="text-gray-600">
-                  Résoudre 5 problèmes algorithmiques de base. Note maximale: 20 points.
-                </p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold">Test Final: Programmation Avancée</h4>
-                <p className="text-gray-600">
-                  Évaluation complète avec code et questions théoriques. Durée: 1 heure.
-                </p>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-        <TabsContent value="devoirs">
-          <div className="bg-white border rounded-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                <h3 className="text-lg font-semibold">Devoirs</h3>
-              </div>
-              <button className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
-                + Devoir
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold">Projet 1: Application Console</h4>
-                <p className="text-gray-600">
-                  Développer une application console en Python pour gérer une liste de tâches. Date
-                  limite: 15 mai.
-                </p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold">Devoir Maison: Algorithmes de Tri</h4>
-                <p className="text-gray-600">
-                  Implémenter et comparer différents algorithmes de tri. Rapport requis. Date
-                  limite: 20 mai.
-                </p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold">Tâche: Révision des Concepts</h4>
-                <p className="text-gray-600">
-                  Réviser les concepts de base et préparer des questions pour la prochaine séance.
-                  Soumission: 10 mai.
-                </p>
-              </div>
-            </div>
           </div>
         </TabsContent>
       </Tabs>
