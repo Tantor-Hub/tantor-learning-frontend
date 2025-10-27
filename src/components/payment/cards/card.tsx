@@ -6,11 +6,13 @@ import { useSelector } from "react-redux";
 import { selectToken } from "@/features/auth/auth-slice";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useCreatePaymentIntentMutation } from "@/lib/apis/payment-method-card";
 
 export function CardPayment({ sessionId, amount }: { sessionId: string; amount: number }) {
   const stripe = useStripe();
   const elements = useElements();
   const token = useSelector(selectToken);
+  const [createPayment] = useCreatePaymentIntentMutation();
   const [clientSecret, setClientSecret] = useState("");
   const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL as string;
   const [errorMessage, setErrorMessage] = useState<string>();
@@ -89,16 +91,30 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
       confirmParams: {
         return_url: `http://www.localhost:3000/trainings/id/payment/success-payment?amount=${amount}`,
       },
+      // payment_method_types: ["card"],
       redirect: "if_required",
     });
+    // if sucess
 
     if (error) {
-      console.log(error);
+      // console.log(error);
       setErrorMessage(error.message);
       setLoading(false);
     } else if (paymentIntent && paymentIntent.status === "succeeded") {
-      // Payment succeeded, redirect to success page
-      window.location.href = `http://www.localhost:3000/trainings/id/payment/success-payment?amount=${amount}`;
+      // console.log("Payment succeeded:", paymentIntent);
+      // Create the payment record on the backend
+      try {
+        await createPayment({
+          id_session: sessionId,
+          stripe_payment_intent_id: paymentIntent.id,
+        }).unwrap();
+        // Payment record created, redirect to success page
+        window.location.href = `http://localhost:3000/trainings/id/payment/success-payment?amount=${amount}`;
+      } catch (error) {
+        // console.error("Error creating payment record:", error);
+        setErrorMessage("Payment succeeded but failed to record. Please contact support.");
+        setLoading(false);
+      }
     } else {
       setLoading(false);
     }
@@ -110,7 +126,16 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
         {
           <PaymentElement
             options={{
+              // wallets: { applePay: "never", googlePay: "never" },
               layout: "tabs",
+              // fields: {
+              //   billingDetails: {
+              //     email: "never", // Adjust as needed
+              //     phone: "never",
+              //     name: "never",
+              //     address: "never",
+              //   },
+              // },
             }}
           />
         }

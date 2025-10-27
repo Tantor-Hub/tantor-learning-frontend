@@ -18,10 +18,10 @@ export interface CheckoutPageProps {
 export function PaymentCardUI({
   amount,
   sessionId,
-  availableMethods = ["opco", "cpf", "card"],
+  availableMethods = ["card"],
   cpfLink,
 }: CheckoutPageProps) {
-  const [selectedOption, setSelectedOption] = useState<"opco" | "cpf" | "card" | null>(null);
+  const [selectedOption, setSelectedOption] = useState<"opco" | "cpf" | "card" | null>("card");
 
   const [error, setError] = useState<string | null>(null);
 
@@ -137,6 +137,7 @@ export function PaymentCardUI({
               amount: convertToSubcurrency(amount),
               mode: "payment",
               currency: "eur",
+              locale: "fr",
             }}
           >
             <CardPayment amount={amount} sessionId={sessionId} />

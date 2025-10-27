@@ -31,6 +31,7 @@ import { trainingSessionApi } from "./training-sessions";
 import { moduleDeFormationApi } from "./module-de-formation-api";
 import { sessionCoursesApi } from "./session-courses";
 import { lessonsApi } from "./lessons";
+import { paymentMethodCardApi } from "./payment-method-card";
 
 // Export all API slices for easy access
 export {
@@ -67,6 +68,7 @@ export {
   moduleDeFormationApi,
   sessionCoursesApi,
   lessonsApi,
+  paymentMethodCardApi,
 };
 
 // Combine all reducers for easy store setup
@@ -104,6 +106,7 @@ export const apiReducers = {
   [moduleDeFormationApi.reducerPath]: moduleDeFormationApi.reducer,
   [sessionCoursesApi.reducerPath]: sessionCoursesApi.reducer,
   [lessonsApi.reducerPath]: lessonsApi.reducer,
+  [paymentMethodCardApi.reducerPath]: paymentMethodCardApi.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -141,4 +144,5 @@ export const apiMiddlewares = [
   moduleDeFormationApi.middleware,
   sessionCoursesApi.middleware,
   lessonsApi.middleware,
+  paymentMethodCardApi.middleware,
 ];
