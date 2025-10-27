@@ -5,6 +5,16 @@ import {
   IStudentAnswerOptionResponse,
 } from "@/types/student-answer-options";
 
+export interface IStudentAnswerOptionsByQuestionResponse {
+  status: number;
+  message: string;
+  data: {
+    answerOptions: IStudentAnswerOption[];
+    total: number;
+    questionId: string;
+  };
+}
+
 export const studentAnswerOptionsApi = createApi({
   reducerPath: "studentAnswerOptionsApi",
   baseQuery: enhancedBaseQuery,
@@ -16,7 +26,7 @@ export const studentAnswerOptionsApi = createApi({
     }),
     createStudentAnswerOption: builder.mutation<
       IStudentAnswerOptionResponse,
-      { studentAnswerId: string; optionId: string }
+      { questionId: string; optionId: string }
     >({
       query: (body) => ({
         url: "studentansweroption",
@@ -51,6 +61,16 @@ export const studentAnswerOptionsApi = createApi({
       query: (studentAnswerId) => `studentansweroption/student-answer/${studentAnswerId}`,
       providesTags: ["StudentAnswerOption"],
     }),
+
+    // student access
+
+    getStudentAnswerOptionsByQuestionId: builder.query<
+      IStudentAnswerOptionsByQuestionResponse,
+      string
+    >({
+      query: (questionId) => `studentansweroption/question/${questionId}`,
+      providesTags: ["StudentAnswerOption"],
+    }),
   }),
 });
 
@@ -61,4 +81,7 @@ export const {
   useUpdateStudentAnswerOptionMutation,
   useDeleteStudentAnswerOptionMutation,
   useGetStudentAnswerOptionsByStudentAnswerIdQuery,
+  // student access
+  useLazyGetStudentAnswerOptionsByQuestionIdQuery,
+  useGetStudentAnswerOptionsByQuestionIdQuery,
 } = studentAnswerOptionsApi;

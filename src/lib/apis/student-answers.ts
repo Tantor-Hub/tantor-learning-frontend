@@ -10,7 +10,7 @@ export const studentAnswersApi = createApi({
       query: () => "studentanswer",
       providesTags: ["StudentAnswer"],
     }),
-    submitStudentAnswer: builder.mutation<
+    createStudentAnswer: builder.mutation<
       { status: number; message: string; data: IStudentAnswer },
       { questionId: string; evaluationId: string; answerText: string }
     >({
@@ -65,7 +65,7 @@ export const studentAnswersApi = createApi({
 
 export const {
   useGetAllStudentAnswersQuery,
-  useSubmitStudentAnswerMutation,
+  useCreateStudentAnswerMutation,
   useGetStudentAnswerByIdQuery,
   useUpdateStudentAnswerMutation,
   useDeleteStudentAnswerMutation,
