@@ -13,7 +13,7 @@ import { useGetEvaluationQuestionsByEvaluationIdQuery } from "@/lib/apis/evaluat
 import {
   useSubmitStudentAnswerMutation,
   useGetStudentAnswersByEvaluationIdQuery,
-  useGetStudentAnswersByQuestionIdQuery,
+  useLazyGetStudentAnswersByQuestionIdQuery,
 } from "@/lib/apis/student-answers";
 import { useCreateStudentAnswerOptionMutation } from "@/lib/apis/student-answer-options";
 import { isButtonDisabled } from "../utils";
@@ -32,6 +32,7 @@ export function QuizDialog({ showQuizDialog, onClose, evaluation }: QuizDialogPr
   const [questionAlreadyAnswered, setQuestionAlreadyAnswered] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [isFetchingAnswer, setIsFetchingAnswer] = useState(false);
 
   // API queries
   const {
@@ -49,13 +50,11 @@ export function QuizDialog({ showQuizDialog, onClose, evaluation }: QuizDialogPr
     skip: !evaluation.id || !showQuizDialog,
   });
 
-  // Get current question ID safely
-  const currentQuestionId = questions[currentQuestionIndex]?.id || "";
-
-  const { data: currentQuestionAnswers } = useGetStudentAnswersByQuestionIdQuery(
-    currentQuestionId,
-    { skip: !evaluation.id || !currentQuestionId || !showQuizDialog }
-  );
+  // Lazy query for student answers by question ID
+  const [
+    getStudentAnswersByQuestionId,
+    { data: currentQuestionAnswers, isFetching: isLoadingAnswers },
+  ] = useLazyGetStudentAnswersByQuestionIdQuery();
 
   // API mutations
   const [submitAnswer] = useSubmitStudentAnswerMutation();
@@ -70,10 +69,20 @@ export function QuizDialog({ showQuizDialog, onClose, evaluation }: QuizDialogPr
       setQuestionAlreadyAnswered(false);
       setIsSubmitting(false);
       setQuizCompleted(false);
+      setIsFetchingAnswer(false);
     }
   }, [showQuizDialog]);
 
-  // Load existing answer when question changes
+  // Fetch answer when current question changes
+  useEffect(() => {
+    const currentQuestionId = questions[currentQuestionIndex]?.id;
+    if (currentQuestionId && showQuizDialog) {
+      setIsFetchingAnswer(true);
+      getStudentAnswersByQuestionId(currentQuestionId).finally(() => setIsFetchingAnswer(false));
+    }
+  }, [currentQuestionIndex, questions, showQuizDialog, getStudentAnswersByQuestionId]);
+
+  // Update UI when answers data changes
   useEffect(() => {
     const answersData = currentQuestionAnswers?.data as any;
     if (answersData?.answers && answersData.answers.length > 0) {
@@ -95,7 +104,7 @@ export function QuizDialog({ showQuizDialog, onClose, evaluation }: QuizDialogPr
       setSelectedOption("");
       setTextAnswer("");
     }
-  }, [currentQuestionIndex, currentQuestionAnswers, questions]);
+  }, [currentQuestionAnswers, currentQuestionIndex, questions]);
 
   const resetQuizState = () => {
     setCurrentQuestionIndex(0);
@@ -104,15 +113,13 @@ export function QuizDialog({ showQuizDialog, onClose, evaluation }: QuizDialogPr
     setQuestionAlreadyAnswered(false);
     setIsSubmitting(false);
     setQuizCompleted(false);
+    setIsFetchingAnswer(false);
     onClose();
   };
 
   const handleNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setSelectedOption("");
-      setTextAnswer("");
-      setQuestionAlreadyAnswered(false);
     } else {
       setQuizCompleted(true);
       setTimeout(() => {
@@ -160,6 +167,16 @@ export function QuizDialog({ showQuizDialog, onClose, evaluation }: QuizDialogPr
     }
   };
 
+  const handleTerminate = () => {
+    setQuizCompleted(true);
+    setTimeout(() => {
+      resetQuizState();
+    }, 3000);
+  };
+
+  // Get current question safely
+  const currentQuestion = questions[currentQuestionIndex];
+
   return (
     <Dialog open={showQuizDialog} onOpenChange={(open) => !open && resetQuizState()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -201,33 +218,65 @@ export function QuizDialog({ showQuizDialog, onClose, evaluation }: QuizDialogPr
             <p className="text-lg">Vous avez terminé l'évaluation avec succès.</p>
             <p className="text-muted-foreground">Fermeture automatique dans quelques secondes...</p>
           </div>
-        ) : questions.length > 0 && questions[currentQuestionIndex] ? (
+        ) : questions.length > 0 && currentQuestion ? (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-medium mb-2">{questions[currentQuestionIndex].text}</h3>
-              <p className="text-sm text-muted-foreground">
-                Points : {questions[currentQuestionIndex].points}
-              </p>
+              <h3 className="text-lg font-medium mb-2">{currentQuestion.text}</h3>
+              <p className="text-sm text-muted-foreground">Points : {currentQuestion.points}</p>
             </div>
 
-            {questions[currentQuestionIndex].isImmediateResult ? (
+            {/* Show skeleton when fetching answer data */}
+            {isFetchingAnswer || isLoadingAnswers ? (
+              <div className="space-y-4">
+                <Skeleton className="h-6 w-32" />
+                {currentQuestion.isImmediateResult ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="flex items-center space-x-2">
+                        <Skeleton className="h-4 w-4 rounded-full" />
+                        <Skeleton className="h-4 w-64" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <Skeleton className="h-32 w-full" />
+                )}
+              </div>
+            ) : questionAlreadyAnswered ? (
+              <div className="space-y-4">
+                <Label>Votre réponse :</Label>
+                <div className="p-4 bg-gray-50 rounded-lg border">
+                  {currentQuestion.isImmediateResult ? (
+                    <div className="flex items-center space-x-2">
+                      <RadioGroup value={selectedOption} disabled>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value={selectedOption} checked disabled />
+                          <Label className="font-medium">
+                            {
+                              currentQuestion.options?.find((opt) => opt.id === selectedOption)
+                                ?.text
+                            }
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                  ) : (
+                    <p className="text-gray-700 whitespace-pre-wrap">{textAnswer}</p>
+                  )}
+                </div>
+                <p className="text-sm text-green-600">Vous avez déjà répondu à cette question.</p>
+              </div>
+            ) : currentQuestion.isImmediateResult ? (
               <div className="space-y-4">
                 <Label>Sélectionnez votre réponse :</Label>
-                <RadioGroup
-                  value={selectedOption}
-                  onValueChange={setSelectedOption}
-                  disabled={questionAlreadyAnswered}
-                >
-                  {questions[currentQuestionIndex].options?.map((option) => (
+                <RadioGroup value={selectedOption} onValueChange={setSelectedOption}>
+                  {currentQuestion.options?.map((option) => (
                     <div key={option.id} className="flex items-center space-x-2">
                       <RadioGroupItem value={option.id} id={option.id} />
                       <Label htmlFor={option.id}>{option.text}</Label>
                     </div>
                   ))}
                 </RadioGroup>
-                {questionAlreadyAnswered && (
-                  <p className="text-sm text-green-600">Vous avez déjà répondu à cette question.</p>
-                )}
               </div>
             ) : (
               <div className="space-y-4">
@@ -238,11 +287,7 @@ export function QuizDialog({ showQuizDialog, onClose, evaluation }: QuizDialogPr
                   value={textAnswer}
                   onChange={(e) => setTextAnswer(e.target.value)}
                   rows={4}
-                  disabled={questionAlreadyAnswered}
                 />
-                {questionAlreadyAnswered && (
-                  <p className="text-sm text-green-600">Vous avez déjà répondu à cette question.</p>
-                )}
               </div>
             )}
 
@@ -250,31 +295,47 @@ export function QuizDialog({ showQuizDialog, onClose, evaluation }: QuizDialogPr
               <Button
                 variant="outline"
                 onClick={handlePreviousQuestion}
-                disabled={currentQuestionIndex === 0}
+                disabled={currentQuestionIndex === 0 || isFetchingAnswer}
               >
                 Précédent
               </Button>
-              <Button
-                onClick={handleSubmitAnswer}
-                disabled={isButtonDisabled(
-                  isSubmitting,
-                  questionAlreadyAnswered,
-                  questions[currentQuestionIndex],
-                  selectedOption,
-                  textAnswer
-                )}
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Soumission...
-                  </>
-                ) : currentQuestionIndex === questions.length - 1 ? (
-                  "Terminer"
-                ) : (
-                  "Suivant"
-                )}
-              </Button>
+
+              {questionAlreadyAnswered ? (
+                <div className="flex gap-2">
+                  {currentQuestionIndex === questions.length - 1 && (
+                    <Button onClick={handleTerminate} variant="default">
+                      Terminer
+                    </Button>
+                  )}
+                  <Button onClick={handleNextQuestion} disabled={isFetchingAnswer}>
+                    Suivant
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  onClick={handleSubmitAnswer}
+                  disabled={
+                    isButtonDisabled(
+                      isSubmitting,
+                      questionAlreadyAnswered,
+                      currentQuestion,
+                      selectedOption,
+                      textAnswer
+                    ) || isFetchingAnswer
+                  }
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Soumission...
+                    </>
+                  ) : currentQuestionIndex === questions.length - 1 ? (
+                    "Terminer"
+                  ) : (
+                    "Suivant"
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         ) : (

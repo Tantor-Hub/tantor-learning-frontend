@@ -73,4 +73,5 @@ export const {
   useGetMyStudentAnswersQuery,
   // student access
   useGetStudentAnswersByQuestionIdQuery,
+  useLazyGetStudentAnswersByQuestionIdQuery,
 } = studentAnswersApi;
