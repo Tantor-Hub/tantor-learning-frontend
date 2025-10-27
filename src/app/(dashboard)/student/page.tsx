@@ -8,7 +8,6 @@ import { ongoingCourse } from "./data";
 import { ClipboardList, ListCheck, Percent } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loading } from "@/components/shared/loading";
-import { useGetMySessionsQuery } from "@/lib/apis/student/training-api";
 import { useGetTrainingSessionByIdQuery } from "@/lib/apis/training-sessions";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
@@ -22,8 +21,6 @@ export default function Page() {
   // const average = useAverageScoreQuery();
   const selectedSessionId = useSelectedSession();
   const { shouldShowAlert, isLoading: alertLoading } = useSessionAlert();
-
-  // const listSessions = useGetMySessionsQuery();
 
   const sessionDetails = useGetTrainingSessionByIdQuery(
     { id: selectedSessionId as string },

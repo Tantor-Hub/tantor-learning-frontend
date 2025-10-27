@@ -54,6 +54,12 @@ export const studentAnswersApi = createApi({
       query: () => "studentanswer/student/my-answers",
       providesTags: ["StudentAnswer"],
     }),
+
+    // student access
+    getStudentAnswersByQuestionId: builder.query<IStudentAnswersResponse, string>({
+      query: (questionId) => `studentanswer/question/${questionId}`,
+      providesTags: ["StudentAnswer"],
+    }),
   }),
 });
 
@@ -65,4 +71,6 @@ export const {
   useDeleteStudentAnswerMutation,
   useGetStudentAnswersByEvaluationIdQuery,
   useGetMyStudentAnswersQuery,
+  // student access
+  useGetStudentAnswersByQuestionIdQuery,
 } = studentAnswersApi;

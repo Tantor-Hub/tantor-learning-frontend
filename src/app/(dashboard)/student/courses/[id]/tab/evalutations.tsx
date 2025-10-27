@@ -30,6 +30,7 @@ import {
 import { useCreateStudentAnswerOptionMutation } from "@/lib/apis/student-answer-options";
 import { StudentevaluationType, IStudentEvaluation } from "@/types/student-evaluations";
 import { IEvaluationQuestion } from "@/types/evaluation-questions";
+import { LottieSuccessView } from "@/components/payment/lottie-success-view";
 
 export function EvaluationsTab() {
   const { id: sessionCoursId } = useParams();
@@ -39,15 +40,20 @@ export function EvaluationsTab() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string>("");
   const [textAnswer, setTextAnswer] = useState<string>("");
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [quizCompleted, setQuizCompleted] = useState(false);
 
   const { data, isLoading, error } = useGetStudentEvaluationsBySessionQuery({
     sessionCoursId: sessionCoursId as string,
   });
 
-  const { data: questionsData, isLoading: questionsLoading } =
-    useGetEvaluationQuestionsByEvaluationIdQuery(selectedEvaluation?.id || "", {
-      skip: !selectedEvaluation,
-    });
+  const {
+    data: questionsData,
+    isLoading: questionsLoading,
+    error: questionsError,
+  } = useGetEvaluationQuestionsByEvaluationIdQuery(selectedEvaluation?.id || "", {
+    skip: !selectedEvaluation,
+  });
 
   const { data: existingAnswers } = useGetStudentAnswersByEvaluationIdQuery(
     selectedEvaluation?.id || "",
@@ -66,6 +72,8 @@ export function EvaluationsTab() {
     setSelectedOption("");
     setTextAnswer("");
     setQuizDialogOpen(true);
+    setQuizCompleted(false);
+    setShowSuccessAnimation(false);
   };
 
   const handleSubmitAnswer = async () => {
@@ -95,8 +103,15 @@ export function EvaluationsTab() {
         setSelectedOption("");
         setTextAnswer("");
       } else {
-        setQuizDialogOpen(false);
-        setSelectedEvaluation(null);
+        setQuizCompleted(true);
+        setShowSuccessAnimation(true);
+        // Show success animation for 3 seconds, then close
+        setTimeout(() => {
+          setShowSuccessAnimation(false);
+          setQuizDialogOpen(false);
+          setSelectedEvaluation(null);
+          setQuizCompleted(false);
+        }, 3000);
       }
     } catch (error) {
       console.error("Error submitting answer:", error);
@@ -116,8 +131,10 @@ export function EvaluationsTab() {
   if (error) {
     return (
       <div className="text-red-500 text-center py-8">
-        Error:{" "}
-        {error instanceof Error ? error.message : "An error occurred while fetching evaluations"}
+        Erreur :{" "}
+        {error instanceof Error
+          ? error.message
+          : "Une erreur s'est produite lors de la récupération des évaluations"}
       </div>
     );
   }
@@ -128,7 +145,7 @@ export function EvaluationsTab() {
   if (evaluations.length === 0) {
     return (
       <div className="text-center py-8">
-        <p>No evaluations available for this course.</p>
+        <p>Aucune évaluation disponible pour ce cours.</p>
       </div>
     );
   }
@@ -176,7 +193,7 @@ export function EvaluationsTab() {
 
       {/* Evaluations List */}
       <div>
-        <h2 className="text-2xl font-bold mb-4">Evaluations ({evaluations.length})</h2>
+        <h2 className="text-2xl font-bold mb-4">Évaluations ({evaluations.length})</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {evaluations.map((evaluation: IStudentEvaluation) => (
             <Card
@@ -196,20 +213,20 @@ export function EvaluationsTab() {
                   {evaluation.description}
                 </p>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">Points: {evaluation.points}</span>
+                  <span className="font-medium">Points : {evaluation.points}</span>
                   <span className="text-muted-foreground">
-                    {evaluation.ispublish ? "Published" : "Draft"}
+                    {evaluation.ispublish ? "Publié" : "Brouillon"}
                   </span>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  <p>Submission: {formatDate(evaluation.submittiondate)}</p>
+                  <p>Soumission : {formatDate(evaluation.submittiondate)}</p>
                   {evaluation.isImmediateResult && (
-                    <p className="text-green-600">Immediate results</p>
+                    <p className="text-green-600">Résultats immédiats</p>
                   )}
                 </div>
                 {evaluation.questions && evaluation.questions.length > 0 && (
                   <div className="text-sm text-muted-foreground">
-                    Questions: {evaluation.questions.length}
+                    Questions : {evaluation.questions.length}
                   </div>
                 )}
                 {evaluation.ispublish && (
@@ -228,23 +245,23 @@ export function EvaluationsTab() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Start {evaluation.type}?</AlertDialogTitle>
+                          <AlertDialogTitle>Démarrer {evaluation.type} ?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            You are about to start the {evaluation.title} evaluation.
+                            Vous êtes sur le point de commencer l'évaluation {evaluation.title}.
                             {hasExistingAnswers && selectedEvaluation?.id === evaluation.id
-                              ? " You have already completed this evaluation."
-                              : " Make sure you have enough time to complete it."}
+                              ? " Vous avez déjà terminé cette évaluation."
+                              : " Assurez-vous d'avoir suffisamment de temps pour la terminer."}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel>Annuler</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => setQuizDialogOpen(true)}
                             disabled={
                               hasExistingAnswers && selectedEvaluation?.id === evaluation.id
                             }
                           >
-                            Start
+                            Démarrer
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -262,7 +279,7 @@ export function EvaluationsTab() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedEvaluation?.title} - Question {currentQuestionIndex + 1} of{" "}
+              {selectedEvaluation?.title} - Question {currentQuestionIndex + 1} sur{" "}
               {questions.length}
             </DialogTitle>
           </DialogHeader>
@@ -272,18 +289,40 @@ export function EvaluationsTab() {
               <Skeleton className="h-6 w-full" />
               <Skeleton className="h-20 w-full" />
             </div>
+          ) : questionsError ? (
+            <div className="text-center py-8">
+              <p className="text-red-500">
+                {questionsError &&
+                "status" in questionsError &&
+                questionsError.status === 403 &&
+                questionsError.data &&
+                typeof questionsError.data === "object" &&
+                "message" in questionsError.data &&
+                questionsError.data.message === "This evaluation has expired"
+                  ? "Vous ne pouvez pas faire le quiz car les détails ont expiré"
+                  : "Erreur lors du chargement des questions"}
+              </p>
+            </div>
+          ) : quizCompleted ? (
+            <div className="text-center py-8 space-y-4">
+              <div className="text-2xl font-bold text-green-600">Félicitations !</div>
+              <p className="text-lg">Vous avez terminé l'évaluation avec succès.</p>
+              <p className="text-muted-foreground">
+                Fermeture automatique dans quelques secondes...
+              </p>
+            </div>
           ) : questions.length > 0 && questions[currentQuestionIndex] ? (
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-2">{questions[currentQuestionIndex].text}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Points: {questions[currentQuestionIndex].points}
+                  Points : {questions[currentQuestionIndex].points}
                 </p>
               </div>
 
               {questions[currentQuestionIndex].isImmediateResult ? (
                 <div className="space-y-4">
-                  <Label>Select your answer:</Label>
+                  <Label>Sélectionnez votre réponse :</Label>
                   <RadioGroup value={selectedOption} onValueChange={setSelectedOption}>
                     {questions[currentQuestionIndex].options.map((option) => (
                       <div key={option.id} className="flex items-center space-x-2">
@@ -295,10 +334,10 @@ export function EvaluationsTab() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <Label htmlFor="answer">Your answer:</Label>
+                  <Label htmlFor="answer">Votre réponse :</Label>
                   <Textarea
                     id="answer"
-                    placeholder="Type your answer here..."
+                    placeholder="Tapez votre réponse ici..."
                     value={textAnswer}
                     onChange={(e) => setTextAnswer(e.target.value)}
                     rows={4}
@@ -318,7 +357,7 @@ export function EvaluationsTab() {
                   }}
                   disabled={currentQuestionIndex === 0}
                 >
-                  Previous
+                  Précédent
                 </Button>
                 <Button
                   onClick={handleSubmitAnswer}
@@ -328,17 +367,19 @@ export function EvaluationsTab() {
                       : !textAnswer.trim()
                   }
                 >
-                  {currentQuestionIndex === questions.length - 1 ? "Fini" : "Suivant"}
+                  {currentQuestionIndex === questions.length - 1 ? "Terminer" : "Suivant"}
                 </Button>
               </div>
             </div>
           ) : (
             <div className="text-center py-8">
-              <p>No questions available for this evaluation.</p>
+              <p>Aucune question disponible pour cette évaluation.</p>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {showSuccessAnimation && <LottieSuccessView />}
     </div>
   );
 }

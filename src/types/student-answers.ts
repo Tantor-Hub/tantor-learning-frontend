@@ -31,3 +31,13 @@ export interface IStudentAnswersResponse {
   message: string;
   data: IStudentAnswer[];
 }
+
+export interface IStudentAnswersByQuestionResponse {
+  status: number;
+  message: string;
+  data: {
+    answers: IStudentAnswer[];
+    total: number;
+    questionId: string;
+  };
+}

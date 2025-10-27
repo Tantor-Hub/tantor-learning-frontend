@@ -11,21 +11,23 @@ export function CourseList() {
 
   if (isLoading) {
     return <CourseListSkeleton />;
-    return null; // Suspense will handle the loading state
   }
+  console.log(JSON.stringify(courses));
+  // if (error) {
+  //   return (
+  //     <div className="py-10">
+  //       <EmptyState
+  //         icon="ExclamationTriangleIcon"
+  //         title="Erreur de chargement"
+  //         description="Une erreur s'est produite lors du chargement des matière."
+  //       />
+  //     </div>
+  //   );
+  // }
 
   if (error) {
-    return (
-      <div className="py-10">
-        <EmptyState
-          icon="ExclamationTriangleIcon"
-          title="Erreur de chargement"
-          description="Une erreur s'est produite lors du chargement des matière."
-        />
-      </div>
-    );
+    console.log(error);
   }
-
   if (!courses?.data.rows.length) {
     return (
       <div className="py-10">
