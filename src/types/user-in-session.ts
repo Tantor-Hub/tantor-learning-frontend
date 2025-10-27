@@ -65,3 +65,7 @@ export interface UpdateUserInSessionRequest {
 export interface DeleteUserInSessionRequest {
   id: string;
 }
+
+export interface CreateFreeUserInSessionRequest {
+  id_session: string;
+}

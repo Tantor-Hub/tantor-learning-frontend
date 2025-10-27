@@ -6,18 +6,16 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import {
-  useGetSessionByIdQuery,
-  useGetStudentTrainingSessionByIdQuery,
-} from "@/lib/apis/public/public-api";
+import { useGetStudentTrainingSessionByIdQuery } from "@/lib/apis/public/public-api";
 import { EmptyState } from "@/components/shared/empty-state";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { PaymentCardUI } from "@/components/payment/payment-card-ui";
 import { calculateStripeTotal } from "@/lib/convert-to-subcurrency";
+import { useCreateFreeUserInSessionMutation } from "@/lib/apis/user-in-session";
 
 // Simple inline skeleton component
 const Skeleton = ({ className = "", width = "100%", height = "1rem" }) => (
@@ -110,6 +108,8 @@ export default function Page() {
   const currentUser = useSelector(selectCurrentUser);
   const { data: studentTrainingSession, isLoading: isLoadingSession } =
     useGetStudentTrainingSessionByIdQuery({ id: sessionId });
+  const [createFreeUserInSession, { isLoading: isCreatingFreeSession }] =
+    useCreateFreeUserInSessionMutation();
 
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
@@ -121,12 +121,13 @@ export default function Page() {
   const session = studentTrainingSession?.data;
 
   const stepConfig = useMemo(() => {
-    if (!session) return { hasPayment: false, totalSteps: 2 };
+    if (!session) return { hasPayment: false, totalSteps: 1 };
 
     const price = parseFloat(session.trainings?.prix || "0");
     const hasPayment = (session.payment_method?.length ?? 0) > 0 && price > 0;
+    const totalSteps = hasPayment ? 2 : 1;
 
-    return { hasPayment, totalSteps: 2 };
+    return { hasPayment, totalSteps };
   }, [session]);
 
   const { stripeFee, totalAmount } = useMemo(() => {
@@ -169,12 +170,12 @@ export default function Page() {
   };
 
   const getStepTitle = (step: number): string => {
-    if (step === 1) return "Signature du contrat";
+    if (step === 1) return hasPayment ? "Signature du contrat" : "Inscription à la session";
     if (step === 2) return "Paiement";
     return "";
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!canProceedToNext()) {
       let message = "Veuillez compléter toutes les étapes requises";
 
@@ -188,6 +189,22 @@ export default function Page() {
 
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
+    } else if (currentStep === totalSteps && !hasPayment) {
+      // For free sessions, enroll directly after signature
+      try {
+        await createFreeUserInSession({ id_session: sessionId }).unwrap();
+        toast.success("Inscription réussie !");
+        router.push(`/${currentUser?.role}`);
+      } catch (error: any) {
+        const errorMessage =
+          error?.data?.error ||
+          error?.message ||
+          "Erreur lors de l'inscription. Veuillez réessayer.";
+        toast.error(errorMessage, {
+          duration: 60000, // 1 minute in milliseconds
+        });
+        console.error(error);
+      }
     }
     // Note: For payment step, the submission is handled by the payment handlers
     // No need to call handleApplyToSessionMutation here as it's already handled in payment methods
@@ -398,18 +415,20 @@ export default function Page() {
         {(!hasPayment || !isCurrentStep("payment")) && (
           <Button
             onClick={handleNext}
-            disabled={!canProceedToNext() || isProcessingPayment}
+            disabled={!canProceedToNext() || isProcessingPayment || isCreatingFreeSession}
             className="flex items-center gap-2"
           >
-            {isProcessingPayment ? (
+            {isProcessingPayment || isCreatingFreeSession ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Traitement...
+                <Loader2 className="animate-spin" />
+                {isCreatingFreeSession ? "Inscription..." : "Traitement..."}
               </>
             ) : (
-              "Continuer"
+              <>
+                {hasPayment ? "Continuer" : "S'inscrire à la session"}
+                <ArrowRight className="w-4 h-4" />
+              </>
             )}
-            {!isProcessingPayment && <ArrowRight className="w-4 h-4" />}
           </Button>
         )}
 

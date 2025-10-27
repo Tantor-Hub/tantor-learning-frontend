@@ -6,6 +6,7 @@ import type {
   CreateUserInSessionRequest,
   UpdateUserInSessionRequest,
   DeleteUserInSessionRequest,
+  CreateFreeUserInSessionRequest,
   UserInSessionStatus,
 } from "@/types/user-in-session";
 
@@ -47,6 +48,19 @@ export const userInSessionApi = createApi({
     createUserInSession: builder.mutation<ApiResponse<UserInSession>, CreateUserInSessionRequest>({
       query: (body) => ({
         url: "/userinsession/create",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["UserInSession"],
+    }),
+
+    // Create UserInSession for free training session
+    createFreeUserInSession: builder.mutation<
+      ApiResponse<UserInSession>,
+      CreateFreeUserInSessionRequest
+    >({
+      query: (body) => ({
+        url: "/userinsession/create-free-session",
         method: "POST",
         body,
       }),
@@ -106,6 +120,7 @@ export const {
   useDeleteUserInSessionMutation,
   useGetUserInSessionByIdQuery,
   useCreateUserInSessionMutation,
+  useCreateFreeUserInSessionMutation,
   useDeleteAllUserInSessionsMutation,
   useGetUserInSessionsBySessionIdQuery,
   useGetUserInSessionsByStatusQuery,
