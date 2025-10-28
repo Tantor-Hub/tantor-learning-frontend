@@ -259,40 +259,40 @@ export function BarVisual({ id_session }: BarVisualProps) {
                 <div>
                   <h5 className="text-sm font-medium text-gray-600 mb-2">Avant la formation:</h5>
                   <div className="flex flex-wrap gap-2">
-                    {session.required_document_before.map((doc, index) => (
+                    {session.required_document_before?.map((doc, index) => (
                       <span
                         key={index}
                         className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded"
                       >
                         {doc}
                       </span>
-                    ))}
+                    )) || []}
                   </div>
                 </div>
                 <div>
                   <h5 className="text-sm font-medium text-gray-600 mb-2">Pendant la formation:</h5>
                   <div className="flex flex-wrap gap-2">
-                    {session.required_document_during.map((doc, index) => (
+                    {session.required_document_during?.map((doc, index) => (
                       <span
                         key={index}
                         className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded"
                       >
                         {doc}
                       </span>
-                    ))}
+                    )) || []}
                   </div>
                 </div>
                 <div>
                   <h5 className="text-sm font-medium text-gray-600 mb-2">Après la formation:</h5>
                   <div className="flex flex-wrap gap-2">
-                    {session.required_document_after.map((doc, index) => (
+                    {session.required_document_after?.map((doc, index) => (
                       <span
                         key={index}
                         className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded"
                       >
                         {doc}
                       </span>
-                    ))}
+                    )) || []}
                   </div>
                 </div>
               </div>
