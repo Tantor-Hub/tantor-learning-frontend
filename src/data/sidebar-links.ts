@@ -14,6 +14,7 @@ import {
   LucideIcon,
   Shapes,
   Bell,
+  BadgeEuro,
 } from "lucide-react";
 
 interface NavigationMenu {
@@ -182,6 +183,11 @@ const navigationMenus: NavigationMenus = {
       title: "Emploi du temps",
       url: "secretary/planning",
       icon: CalendarDays,
+    },
+    {
+      title: "Inscriptions",
+      url: "secretary/payment",
+      icon: BadgeEuro,
     },
     // {
     //   title: "Notifications",
