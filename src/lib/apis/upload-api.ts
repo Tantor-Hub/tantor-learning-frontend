@@ -2,6 +2,7 @@ import { baseQuery, createApi } from "./base-api";
 
 interface UploadImageResponse {
   url: string;
+  publicId: string;
 }
 
 export const uploadApi = createApi({

@@ -13,9 +13,12 @@ export const baseQuery = fetchBaseQuery({
     // Get token from cookies
     const { token } = getValidAuthTokens();
     console.log("Using token from cookies in baseQuery:", token);
-    if (token) {
-      headers.set("x-connexion-tantor", `Bearer ${token}`);
-    }
+    // if (token) {
+    headers.set(
+      "x-connexion-tantor",
+      `Bearer VmpKNGIyTXhUWGxTYTJoVVlUSm9ZVlJYTVRSVlZteFhWbTVrVkdKR2NGcFpNRlozVkd4YVZWWnVaRlpOVjJoUVZUSXhTMk14VGxWU2JIQk9VbFJXVEZaSE1UQmpNazUwVkd0a2FGSnRVbE5VVldNMFRWWlNTRTFXWkU5V2F6VXhWVmN4UjFVeVJuUmtSRkpZVjBoQ1RGWnFTbGRXYlVwSlVtMXNUbUpZYUZCWGJHUTBXVmRPYzFWc2FFNVdWbkJQVm14U1IwMUdXbGRoUms1WVlrWnNNMWt3YUVkWFIwcEdUVlJPVlZaV2NETlpNVnAzVG14V2NrMVdaRk5OYkVWM1ZtdGplR1F4Vm5SVmEyUnFVbGRvVjFaclZURlVNV3hZWkVkR2FtSkhVbHBaTUZwUFlVWmFWVkpyV2xwV1YxSjZWVEl4UjFkV2NFbFJiVVpUWWxkb1dWZFVRbUZrTVVsM1QxWldVMkpZUWs5WmExcDJUVlpWZUZwSVpHdGlWVnBYVkZaU1lWWXlTbGxWYXpsYVlrWmFWMXBWV2xOWFJURlhVMjEwVTJKWWFGcFdWRWw0WkRGc1YxWnFXbEpYUjFKWldXeG9RMlJXVW5KV2FsSlhWbTA1TmxsVlZUVmhSMHBHVjFoa1YwMXVVbkpXVjNOM1pEQXhXVkpzVG1sWFJrcG9WMnhrTkZNeVRrZFZiRnBXWWxSc2IxWnNaRFJrTVhCRlUyNU9hRlpyYkRSV01XaHpWMGRLU0ZWVVFsaGlWRVpJVmpCVk1WZEhVa2hoUm1ST1VrWmFNbFl5ZEZkaGF6VllWbXhhYVZORlduQmFWM2hoVkRGV1ZWUnRkR3BTYlhoWVYydFdhMVJzU2xobFNHaGFZV3MxZGxaRVNsZGpNa3BGVld4V2FXSnJTbFJYYkdSNlRWWmFWMk5FV2xKaGVrWlRWRlZvUTJWc1pITldiVGxTWWxWYVYxUXhhRWRWTVZwR1RsWkNXbFl6VWxkVVZWcFRWMGRPU1ZOck9WZFdSM2hIVm14a2QyTnRVbGRYYTJoclVqTlNjbFJWYUVOaVZsRjNWVzVPYWxZeFdubFdNVkpUVjBaS1ZXSklXbFpOUm5CVVdYcEdVMDVWTVZsUmJHUk9UV3hLVDFaWE1UQlNNVkpYVjI1V1ZXRXdjSE5aYkZKelpFWmtWMWt6YUU1TmJGcDZWVmMxYjFVeFdsZGpTRVpZWW0xTk5WVkdSVGxRVVQwOQ==","refresh_token":"VmpKNGIyTXhUWGxTYTJoVVlUSm9ZVlJYTVRSVlZteFhWbTVrVkdKR2NGcFpNRlozVkd4YVZWWnVaRlpOVjJoUVZUSXhTMk14VGxWU2JIQk9VbFJXVEZaSE1UQmpNazUwVkd0a2FGSnRVbE5VVldNMFRWWlNTRTFXWkU5V2F6VXhWVmN4UjFVeVJuUmtSRkpZVjBoQ1RGWnFTbGRXYlVwSlVtMXNUbUpZYUZCWGJHUTBXVmRPYzFWc2FFNVdWbkJQVm14U1IwMUdXbGRoUms1WVlrWnNNMWt3YUVkWFIwcEdUVlJPVlZaV2NETlpNVnAzVG14V2NrMVdaRk5OYkVWM1ZtdGplR1F4Vm5SVmEyUnFVbGRvVjFaclZURlVNV3hZWkVkR2FtSkhVbHBaTUZwUFlVWmFWVkpyV2xwV1YxSjZWVEl4UjFkV2NFbFJiVVpUWWxkb1dWZFVRbUZrTVVsM1QxWldVMkpZUWs5WmExcDJUVlpWZUZwSVpHdGlWVnBYVkZaU1lWWXlTbGxWYXpsYVlrWmFWMXBWV2xOWFJURlhVMjEwVTJKWWFGcFdWRWw0WkRGc1YxWnFXbEpYUjFKWldXeG9RMlJXVW5KV2FsSlhWbTA1TmxsVlZUVmhSMHBHVjFoa1YwMXVVbkpXVjNOM1pEQXhXVkpzVG1sWFJrcG9WMnhrTkZNeVRrZFZiRnBXWWxSc2IxWnNaRFJrTVhCRlUyNU9hRlpyYkRSV01XaHpWMGRLU0ZWVVFsaGlWRVpJVmpCVk1WZEhVa2hoUm1ST1VrWmFNbFl5ZEZkaGF6VllWbXhhYVZORlduQmFWM2hoVkRGV1ZWUnRkR3BTYlhoWVYydFdhMVJzU2xobFNHaGFZV3MxZGxaRVNsZGpNa3BGVld4V2FXSnJTbFJYYkdSNlRWWmFWMk5FV2xKaGVrWlRWRlZvUTJWc1pITldiVGxTWWxWYVYxUXhhRWRWTVZwR1RsWkNXbFl6VW5wVVZFWlRWbXhXY21ORk5VNVNSM2hIVm14a2QyTnRVbGhVYTFwVllYcFdWMWxyWkZOTlZtUllZMGRHYWxJd2NERlhhazV6VlRKR05scDZSbGhXTTBKVVZHdGFVMUp0U2taVWJGSnBWMFUwZDFadGRHRlNNbFpYVTJ4b1UySnJXazlXTUZwTFYyeGFjVkZ0ZEZKTmF6VlhWREJTVTFaV1RraGhSbHBYVFZWVk5WVkdSVGxRVVQwOQ==`
+    );
+    // }
     return headers;
   },
 });
@@ -32,9 +35,9 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
       try {
         const refreshResult = await baseQuery(
           {
-            url: "users/user/refresh",
-            method: "PUT",
-            body: { refresh_token: tokens.refreshToken },
+            url: "users/auth/refresh",
+            method: "POST",
+            body: { refreshToken: tokens.refreshToken },
           },
           api,
           extraOptions
@@ -42,14 +45,24 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 
         if (refreshResult.data) {
           const newTokens = refreshResult.data as {
-            token: string;
-            refreshToken?: string;
+            auth_token: string;
+            refresh_token?: string;
           };
 
           // Update tokens in storage
           tokenStorage.save({
-            accessToken: newTokens.token,
-            refreshToken: newTokens.refreshToken || tokens.refreshToken,
+            accessToken: newTokens.auth_token,
+            refreshToken: newTokens.refresh_token || tokens.refreshToken,
+          });
+
+          // Update Redux state as well
+          api.dispatch({
+            type: "auth/refreshTokenSuccess",
+            payload: {
+              token: newTokens.auth_token,
+              refreshToken: newTokens.refresh_token || tokens.refreshToken,
+              expiresIn: 3600, // Default 1 hour
+            },
           });
         }
       } catch (error) {
@@ -68,7 +81,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
       try {
         const refreshResult = await baseQuery(
           {
-            url: "auth/refresh",
+            url: "users/auth/refresh",
             method: "POST",
             body: { refreshToken: tokens.refreshToken },
           },
@@ -78,32 +91,45 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 
         if (refreshResult.data) {
           const newTokens = refreshResult.data as {
-            token: string;
-            refreshToken?: string;
+            auth_token: string;
+            refresh_token?: string;
           };
 
           // Update tokens
           tokenStorage.save({
-            accessToken: newTokens.token,
-            refreshToken: newTokens.refreshToken || tokens.refreshToken,
+            accessToken: newTokens.auth_token,
+            refreshToken: newTokens.refresh_token || tokens.refreshToken,
+          });
+
+          // Update Redux state
+          api.dispatch({
+            type: "auth/refreshTokenSuccess",
+            payload: {
+              token: newTokens.auth_token,
+              refreshToken: newTokens.refresh_token || tokens.refreshToken,
+              expiresIn: 3600, // Default 1 hour
+            },
           });
 
           // Retry the original request
           result = await baseQuery(args, api, extraOptions);
         } else {
           // Refresh failed, logout user
+          api.dispatch({ type: "auth/clearCredentials" });
           tokenStorage.clear();
-          // window.location.href = "/signin";
+          window.location.href = "/signin";
         }
       } catch (error) {
         // Refresh failed, logout user
+        api.dispatch({ type: "auth/clearCredentials" });
         tokenStorage.clear();
-        // window.location.href = "/signin";
+        window.location.href = "/signin";
       }
     } else {
       // No valid refresh token, logout user
+      api.dispatch({ type: "auth/clearCredentials" });
       tokenStorage.clear();
-      // window.location.href = "/signin";
+      window.location.href = "/signin";
     }
   }
 

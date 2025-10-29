@@ -1,18 +1,25 @@
 import { clearCredentials } from "@/features/auth/auth-slice";
 import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { selectIsAuthenticated } from "@/features/auth/auth-slice";
 
 function useAuth() {
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const dispatch = useDispatch();
+  const reduxIsAuthenticated = useSelector(selectIsAuthenticated);
+  const [isAuthenticated, setIsAuthenticated] = useState(reduxIsAuthenticated);
 
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        // Get token inside useEffect to ensure it's fresh
-        const token = localStorage.getItem("authState.token");
+        // Get token from Redux state first, fallback to localStorage
+        const token = reduxIsAuthenticated ? localStorage.getItem("authState.token") : null;
 
         if (!token) {
           setIsAuthenticated(false);
+          if (reduxIsAuthenticated) {
+            dispatch(clearCredentials());
+          }
           return;
         }
 
@@ -28,18 +35,26 @@ function useAuth() {
 
         // Return true only if status is 200 and token is valid
         // Return false for 401 (expired token) or any other error
-        setIsAuthenticated(data.status === 200 && data.data?.isTokenValid === true);
+        const isValid = data.status === 200 && data.data?.isTokenValid === true;
+        setIsAuthenticated(isValid);
+
+        // If server says token is invalid but Redux thinks user is authenticated, clear credentials
+        if (!isValid && reduxIsAuthenticated) {
+          dispatch(clearCredentials());
+        }
       } catch (error) {
         console.error("Auth check failed:", error);
         setIsAuthenticated(false);
-        clearCredentials();
+        if (reduxIsAuthenticated) {
+          dispatch(clearCredentials());
+        }
       }
     };
 
     if (baseURL) {
       checkAuthStatus();
     }
-  }, [baseURL]);
+  }, [baseURL, reduxIsAuthenticated, dispatch]);
 
   return isAuthenticated; // Returns only boolean
 }

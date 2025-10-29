@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyle } from "@tiptap/extension-text-style";
@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { useUploadImageMutation } from "@/lib/apis/upload-api";
+
 import { useAppDispatch } from "@/store/store";
 import { toast } from "react-hot-toast";
 import {
@@ -188,7 +188,13 @@ export default function DocumentTemplateBuilder({
   const [variableName, setVariableName] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadImage] = useUploadImageMutation();
+
+  // Update title when initialTitle prop changes
+  useEffect(() => {
+    if (initialTitle !== undefined) {
+      setTitle(initialTitle);
+    }
+  }, [initialTitle]);
 
   const editor = useEditor({
     extensions: [
@@ -254,6 +260,13 @@ export default function DocumentTemplateBuilder({
     },
   });
 
+  // Update editor content when initialContent prop changes
+  useEffect(() => {
+    if (editor && initialContent !== undefined) {
+      editor.commands.setContent(initialContent);
+    }
+  }, [editor, initialContent]);
+
   const extractVariables = useCallback((jsonContent: any): string[] => {
     const variables: string[] = [];
     const traverse = (node: any) => {
@@ -296,6 +309,68 @@ export default function DocumentTemplateBuilder({
     }
   }, []);
 
+  const resizeImage = useCallback((file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        reject(new Error("Canvas context not available"));
+        return;
+      }
+
+      img.onload = () => {
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 600;
+        let { width, height } = img;
+
+        // Calculate new dimensions maintaining aspect ratio
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = (height * MAX_WIDTH) / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = (width * MAX_HEIGHT) / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw the resized image
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to blob
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              // Create new file with original name but resized
+              const resizedFile = new File([blob], file.name, {
+                type: file.type,
+                lastModified: Date.now(),
+              });
+              resolve(resizedFile);
+            } else {
+              reject(new Error("Failed to create image blob"));
+            }
+          },
+          file.type,
+          0.8 // Quality 80%
+        );
+      };
+
+      img.onerror = () => {
+        reject(new Error("Failed to load image"));
+      };
+
+      img.src = URL.createObjectURL(file);
+    });
+  }, []);
+
   const handleFileSelect = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -309,23 +384,89 @@ export default function DocumentTemplateBuilder({
       setIsUploading(true);
 
       try {
-        const formData = new FormData();
-        formData.append("file", file);
+        // Resize image before upload
+        let uploadFile = file;
+        if (file.type.startsWith("image/")) {
+          uploadFile = await resizeImage(file);
+        }
 
-        const result = await uploadImage(formData).unwrap();
-        editor.chain().focus().setImage({ src: result.url }).run();
-        toast.success("Image uploaded successfully");
+        const formData = new FormData();
+        formData.append("image", uploadFile);
+
+        // Get token from cookies
+        const token = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("token="))
+          ?.split("=")[1];
+
+        if (!token) {
+          throw new Error("No authentication token found");
+        }
+
+        // Use XMLHttpRequest to upload the image
+        const xhr = new XMLHttpRequest();
+
+        xhr.open("POST", `${process.env.NEXT_PUBLIC_BASE_URL}uploads/image`, true);
+
+        // Set authorization header
+        xhr.setRequestHeader("x-connexion-tantor", `Bearer ${decodeURIComponent(token)}`);
+
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const result = JSON.parse(xhr.responseText);
+              // Access the URL from the data object
+              const imageUrl = result.data?.url || result.url;
+              if (imageUrl) {
+                editor.chain().focus().setImage({ src: imageUrl }).run();
+                toast.success("Image uploaded successfully");
+              } else {
+                toast.error("No image URL in response");
+              }
+            } catch (parseError) {
+              toast.error("Failed to parse upload response");
+              console.error("Parse error:", parseError);
+            }
+          } else {
+            try {
+              const errorData = JSON.parse(xhr.responseText);
+              toast.error(errorData.message || "Failed to upload image");
+            } catch {
+              toast.error("Failed to upload image");
+            }
+          }
+          setIsUploading(false);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+        };
+
+        xhr.onerror = function () {
+          toast.error("Network error occurred during upload");
+          setIsUploading(false);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+        };
+
+        xhr.upload.onprogress = function (event) {
+          if (event.lengthComputable) {
+            // You can add progress tracking here if needed
+            console.log(`Upload progress: ${Math.round((event.loaded / event.total) * 100)}%`);
+          }
+        };
+
+        xhr.send(formData);
       } catch (error) {
         toast.error("Failed to upload image");
         console.error("Upload error:", error);
-      } finally {
         setIsUploading(false);
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
       }
     },
-    [editor, uploadImage]
+    [editor, resizeImage]
   );
 
   const addLink = useCallback(() => {
@@ -359,7 +500,7 @@ export default function DocumentTemplateBuilder({
         })
         .run();
       setVariableName("");
-      setShowVariableDialog(false);
+      // setShowVariableDialog(false);
     }
   }, [editor, variableName]);
 

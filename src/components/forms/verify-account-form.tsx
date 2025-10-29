@@ -15,7 +15,7 @@ import { setCredentials } from "@/features/auth/auth-slice";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { syncAuthToCookies } from "@/lib/auth-sync";
+
 import { Loader2 } from "lucide-react";
 
 const RESEND_COOLDOWN = 60; // 60 secondes
@@ -109,14 +109,13 @@ export function VerifyAccountForm() {
           user: response.data.user,
         })
       );
-      syncAuthToCookies();
       toast.dismiss(toastRef.current);
       toastRef.current = null;
 
       toast.success(response.message);
 
       // Navigation vers la page d'accueil
-      router.replace("/");
+      // router.replace("/");
     } catch (error: any) {
       if (toastRef.current) {
         toast.dismiss(toastRef.current);

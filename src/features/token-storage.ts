@@ -24,7 +24,7 @@ export const tokenStorage = {
     };
 
     // Store tokens in cookies
-    setAuthCookie(tokens.accessToken, "auth_token");
+    setAuthCookie(tokens.accessToken, "token");
     setRefreshTokenCookie(tokens.refreshToken);
 
     // Store expiration times in localStorage for expiration checks
@@ -63,7 +63,7 @@ export const tokenStorage = {
   },
 
   clear: () => {
-    removeAuthCookie("auth_token");
+    removeAuthCookie("token");
     removeRefreshTokenCookie();
 
     if (typeof window !== "undefined") {

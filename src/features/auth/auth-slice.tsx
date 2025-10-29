@@ -7,6 +7,8 @@ import {
   removeAuthCookie,
   setAuthStateCookie,
   clearAllAuthCookies,
+  setRefreshTokenCookie,
+  getAuthStateCookie,
 } from "@/lib/cookies";
 import { tokenStorage } from "@/features/token-storage";
 
@@ -30,39 +32,49 @@ const initialState: AuthState = {
   error: null,
 };
 
-// Helper to persist auth state to localStorage - now using stringified dates and consistent property names
+// Helper to persist auth state to cookies - using flat cookie storage
 const persistAuthState = (state: AuthState) => {
   if (typeof window !== "undefined") {
-    localStorage.setItem(
-      "authState",
-      JSON.stringify({
-        token: state.token,
-        refreshToken: state.refreshToken,
-        expiresAt: state.expiresAt,
-        isAuthenticated: state.isAuthenticated,
-        user: state.user,
-      })
-    );
+    // Store auth state in flat cookies
+    setAuthStateCookie("token", state.token || "");
+    setAuthStateCookie("refreshToken", state.refreshToken || "");
+    setAuthStateCookie("expiresAt", state.expiresAt?.toString() || "");
+    setAuthStateCookie("isAuthenticated", state.isAuthenticated.toString());
+    setAuthStateCookie("user", state.user ? JSON.stringify(state.user) : "");
+
+    // Also store tokens in dedicated cookies for API calls
+    if (state.token) {
+      setAuthCookie(state.token, "token");
+    }
+    if (state.refreshToken) {
+      setRefreshTokenCookie(state.refreshToken);
+    }
   }
 };
 
-// Helper to load auth state from localStorage
+// Helper to load auth state from cookies
 const loadAuthState = (): Partial<AuthState> => {
   if (typeof window !== "undefined") {
-    const savedState = localStorage.getItem("authState");
-    if (savedState) {
-      try {
-        const parsedState = JSON.parse(savedState);
-        return {
-          token: parsedState.token,
-          refreshToken: parsedState.refreshToken,
-          expiresAt: parsedState.expiresAt,
-          isAuthenticated: parsedState.token && parsedState.refreshToken ? true : false,
-          user: parsedState.user,
-        };
-      } catch (e) {
-        console.error("Failed to parse auth state from localStorage", e);
-      }
+    try {
+      const token = getAuthStateCookie("token");
+      const refreshToken = getAuthStateCookie("refreshToken");
+      const expiresAtStr = getAuthStateCookie("expiresAt");
+      const isAuthenticatedStr = getAuthStateCookie("isAuthenticated");
+      const userStr = getAuthStateCookie("user");
+
+      const expiresAt = expiresAtStr ? parseInt(expiresAtStr) : null;
+      const isAuthenticated = isAuthenticatedStr === "true";
+      const user = userStr ? JSON.parse(userStr) : null;
+
+      return {
+        token: token || null,
+        refreshToken: refreshToken || null,
+        expiresAt,
+        isAuthenticated: token && refreshToken ? true : false,
+        user,
+      };
+    } catch (e) {
+      console.error("Failed to parse auth state from cookies", e);
     }
   }
   return {};
@@ -104,6 +116,10 @@ export const authSlice = createSlice({
       setAuthStateCookie("isAuthenticated", "true");
       if (user) setAuthStateCookie("user", JSON.stringify(user));
 
+      // Also store tokens in dedicated cookies for API calls
+      setAuthCookie(token, "token");
+      setRefreshTokenCookie(refreshToken);
+
       persistAuthState(state);
     },
     clearCredentials: (state) => {
@@ -120,6 +136,7 @@ export const authSlice = createSlice({
       // Clear tokens from cookies
       tokenStorage.clear();
 
+      // Clear localStorage as well
       if (typeof window !== "undefined") {
         localStorage.removeItem("authState");
       }
@@ -285,6 +302,7 @@ export const authSlice = createSlice({
         // Clear tokens from cookies
         tokenStorage.clear();
 
+        // Clear localStorage as well
         if (typeof window !== "undefined") {
           localStorage.removeItem("authState");
         }
@@ -306,6 +324,7 @@ export const authSlice = createSlice({
         // Clear tokens from cookies
         tokenStorage.clear();
 
+        // Clear localStorage as well
         if (typeof window !== "undefined") {
           localStorage.removeItem("authState");
         }

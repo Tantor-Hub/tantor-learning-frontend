@@ -27,10 +27,17 @@ import {
   useGetSurveysBySessionQuery,
   useDeleteSurveyQuestionMutation,
 } from "@/lib/apis/secretary/session-secretary-api";
-import { useCreateDocumentTemplateMutation } from "@/lib/apis/documents";
+import {
+  useCreateDocumentTemplateMutation,
+  useGetDocumentTemplatesQuery,
+  useGetDocumentsTemplatesBySessionIdQuery,
+  useGetDocumentTemplateByIdQuery,
+  useLazyGetDocumentTemplateByIdQuery,
+  useUpdateDocumentTemplateMutation,
+} from "@/lib/apis/documents";
 
 import { toast } from "react-hot-toast";
-import { Loader2, Save, Plus, FileText, Trash2, FileDown } from "lucide-react";
+import { Loader2, Save, Plus, FileText, Trash2, FileDown, Edit } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SurveyQuestionBuilder } from "./components/survey-question-builder";
 import { Badge } from "@/components/ui/badge";
@@ -92,6 +99,12 @@ export default function Documents() {
   const [deleteSurvey] = useDeleteSurveyQuestionMutation();
   const [createDocumentTemplate, { isLoading: creatingTemplate }] =
     useCreateDocumentTemplateMutation();
+  const [updateDocumentTemplate, { isLoading: updatingTemplate }] =
+    useUpdateDocumentTemplateMutation();
+  const { data: templatesData, isLoading: templatesLoading } =
+    useGetDocumentsTemplatesBySessionIdQuery({
+      sessionId,
+    });
   const { data: surveysData, isLoading: surveysLoading } = useGetSurveysBySessionQuery({
     sessionId,
   });
@@ -135,6 +148,11 @@ export default function Documents() {
   const [selectedCategory, setSelectedCategory] = React.useState<"before" | "during" | "after">(
     "before"
   );
+  const [editingTemplateId, setEditingTemplateId] = React.useState<string | null>(null);
+  const { data: editingTemplateData, isLoading: editingTemplateLoading } =
+    useGetDocumentTemplateByIdQuery(editingTemplateId ? { id: editingTemplateId } : { id: "" }, {
+      skip: !editingTemplateId,
+    });
 
   const handleDocumentToggle = (category: "before" | "during" | "after", documentValue: string) => {
     setSelectedDocuments((prev) => ({
@@ -191,8 +209,12 @@ export default function Documents() {
     setSurveyBuilderOpen(true);
   };
 
-  const openDocumentTemplateBuilder = (category: "before" | "during" | "after") => {
+  const openDocumentTemplateBuilder = (
+    category: "before" | "during" | "after",
+    templateId?: string
+  ) => {
     setSelectedCategory(category);
+    setEditingTemplateId(templateId || null);
     setDocumentTemplateBuilderOpen(true);
   };
 
@@ -204,17 +226,30 @@ export default function Documents() {
     type: "before" | "during" | "after";
   }) => {
     try {
-      await createDocumentTemplate({
-        title: template.title,
-        content: template.content,
-        sessionId: template.sessionId,
-        type: template.type,
-        variables: template.variables,
-      }).unwrap();
-      toast.success("Modèle de document créé avec succès");
-      setDocumentTemplateBuilderOpen(false);
+      if (editingTemplateId) {
+        await updateDocumentTemplate({
+          id: editingTemplateId,
+          title: template.title,
+          content: template.content,
+          variables: template.variables,
+        }).unwrap();
+        toast.success("Modèle de document mis à jour avec succès !");
+      } else {
+        await createDocumentTemplate({
+          title: template.title,
+          content: template.content,
+          sessionId: template.sessionId,
+          type: template.type,
+          variables: template.variables,
+        }).unwrap();
+        toast.success(
+          "Modèle de document sauvegardé avec succès ! Vous pouvez continuer à éditer."
+        );
+      }
+      setEditingTemplateId(null);
+      // Keep the dialog open to allow continued editing
     } catch (error) {
-      toast.error("Erreur lors de la création du modèle");
+      toast.error("Erreur lors de la sauvegarde du modèle");
       console.error(error);
     }
   };
@@ -327,6 +362,49 @@ export default function Documents() {
                       <Plus className="w-4 h-4 mr-2" />
                       Créer un modèle
                     </Button>
+                  </div>
+
+                  {/* Document Templates Section */}
+                  <div className="mb-4">
+                    <h5 className="text-sm font-medium mb-2">Modèles de documents créés</h5>
+                    <div className="space-y-2">
+                      {templatesData?.data
+                        ?.filter((template) => template.type === "before")
+                        .map((template) => (
+                          <div
+                            key={template.id}
+                            className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <FileText className="w-4 h-4 text-green-600" />
+                              <div>
+                                <p className="text-sm font-medium">{template.title}</p>
+                                <p className="text-xs text-gray-500">
+                                  {template.variables?.length || 0} variable(s)
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openDocumentTemplateBuilder("before", template.id)}
+                                title="Edit template"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      {(!templatesData?.data ||
+                        templatesData.data.filter((template) => template.type === "before")
+                          .length === 0) && (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          Aucun modèle créé pour cette catégorie
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {DOCUMENT_CATEGORIES.before.map((document) => (
@@ -454,6 +532,48 @@ export default function Documents() {
                       Créer un modèle
                     </Button>
                   </div>
+
+                  {/* Document Templates Section */}
+                  <div className="mb-4">
+                    <h5 className="text-sm font-medium mb-2">Modèles de documents créés</h5>
+                    <div className="space-y-2">
+                      {templatesData?.data
+                        ?.filter((template) => template.type === "during")
+                        .map((template) => (
+                          <div
+                            key={template.id}
+                            className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <FileText className="w-4 h-4 text-green-600" />
+                              <div>
+                                <p className="text-sm font-medium">{template.title}</p>
+                                <p className="text-xs text-gray-500">
+                                  {template.variables?.length || 0} variable(s)
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openDocumentTemplateBuilder("during", template.id)}
+                              title="Edit template"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      {(!templatesData?.data ||
+                        templatesData.data.filter((template) => template.type === "during")
+                          .length === 0) && (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          Aucun modèle créé pour cette catégorie
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {DOCUMENT_CATEGORIES.during.map((document) => (
                       <div
@@ -580,6 +700,48 @@ export default function Documents() {
                       Créer un modèle
                     </Button>
                   </div>
+
+                  {/* Document Templates Section */}
+                  <div className="mb-4">
+                    <h5 className="text-sm font-medium mb-2">Modèles de documents créés</h5>
+                    <div className="space-y-2">
+                      {templatesData?.data
+                        ?.filter((template) => template.type === "after")
+                        .map((template) => (
+                          <div
+                            key={template.id}
+                            className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <FileText className="w-4 h-4 text-green-600" />
+                              <div>
+                                <p className="text-sm font-medium">{template.title}</p>
+                                <p className="text-xs text-gray-500">
+                                  {template.variables?.length || 0} variable(s)
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openDocumentTemplateBuilder("after", template.id)}
+                              title="Edit template"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      {(!templatesData?.data ||
+                        templatesData.data.filter((template) => template.type === "after")
+                          .length === 0) && (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          Aucun modèle créé pour cette catégorie
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {DOCUMENT_CATEGORIES.after.map((document) => (
                       <div
@@ -724,10 +886,15 @@ export default function Documents() {
       {/* Document Template Builder */}
       <DocumentTemplateBuilder
         open={documentTemplateBuilderOpen}
-        onOpenChange={setDocumentTemplateBuilderOpen}
+        onOpenChange={(open) => {
+          setDocumentTemplateBuilderOpen(open);
+          if (!open) setEditingTemplateId(null);
+        }}
         onSave={handleCreateDocumentTemplate}
         sessionId={sessionId}
         type={selectedCategory}
+        initialContent={editingTemplateData?.content}
+        initialTitle={editingTemplateData?.title}
       />
     </div>
   );

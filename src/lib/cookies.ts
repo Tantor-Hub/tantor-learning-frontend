@@ -10,8 +10,8 @@ const getAuthCookie = (name: string) => {
 };
 
 export const getValidAuthTokens = () => {
-  const token = getAuthCookie("auth_token");
-  const refreshToken = getAuthCookie("refresh_token");
+  const token = getAuthCookie("token");
+  const refreshToken = getAuthCookie("refreshToken");
 
   if (!token) return { token: undefined, refreshToken: undefined };
 
@@ -39,7 +39,7 @@ export const setAuthCookie = (token: string, name: string) => {
 export const setRefreshTokenCookie = (refreshToken: string) => {
   const toBase64 = Buffer.from(refreshToken).toString("base64");
 
-  setCookie("refresh_token", toBase64, {
+  setCookie("refreshToken", toBase64, {
     maxAge: 30 * 24 * 60 * 60, // 30 days
     path: "/",
     // more security options here
@@ -50,7 +50,7 @@ export const setRefreshTokenCookie = (refreshToken: string) => {
 };
 
 export const getRefreshToken = () => {
-  return getAuthCookie("refresh_token");
+  return getAuthCookie("refreshToken");
 };
 
 export const removeAuthCookie = (name: string) => {
@@ -58,30 +58,30 @@ export const removeAuthCookie = (name: string) => {
 };
 
 export const removeRefreshTokenCookie = () => {
-  deleteCookie("refresh_token");
+  deleteCookie("refreshToken");
 };
 
 // Flat cookie storage for auth state
 export const setAuthStateCookie = (key: string, value: string) => {
   const toBase64 = Buffer.from(value).toString("base64");
 
-  setCookie(`auth_${key}`, toBase64, {
+  setCookie(key, toBase64, {
     maxAge: 30 * 24 * 60 * 60, // 30 days
     path: "/",
   });
 };
 
 export const getAuthStateCookie = (key: string) => {
-  return getAuthCookie(`auth_${key}`);
+  return getAuthCookie(key);
 };
 
 export const removeAuthStateCookie = (key: string) => {
-  deleteCookie(`auth_${key}`);
+  deleteCookie(key);
 };
 
 export const clearAllAuthCookies = () => {
   // Remove token cookies
-  removeAuthCookie("auth_token");
+  removeAuthCookie("token");
   removeRefreshTokenCookie();
 
   // Remove auth state cookies
