@@ -18,7 +18,7 @@ import { documentStudentApi } from "./student/document-api";
 import { instructorApi } from "./instructor/instructor";
 import { evaluationQuestionApi } from "./instructor/evaluation-question";
 import { roleApi } from "./admin/role-api";
-import { documentsApi } from "./common/document-api";
+// import { documentsApi } from "./common/document-api";
 import { eventsApi } from "./events";
 import { evaluationQuestionOptionApi } from "./instructor/evaluation-question-option";
 import { lessonDocumentApi } from "./lessondocument";
@@ -34,6 +34,8 @@ import { lessonsApi } from "./lessons";
 import { paymentMethodCardApi } from "./payment-method-card";
 import { paymentMethodCPFApi } from "./payment-method-CPF";
 import { paymentMethodOPCOApi } from "./payment-method-OPCO";
+import { uploadApi } from "./upload-api";
+import { documentsApi } from "./documents";
 
 // Export all API slices for easy access
 export {
@@ -73,6 +75,7 @@ export {
   paymentMethodCardApi,
   paymentMethodCPFApi,
   paymentMethodOPCOApi,
+  uploadApi,
 };
 
 // Combine all reducers for easy store setup
@@ -113,6 +116,7 @@ export const apiReducers = {
   [paymentMethodCardApi.reducerPath]: paymentMethodCardApi.reducer,
   [paymentMethodCPFApi.reducerPath]: paymentMethodCPFApi.reducer,
   [paymentMethodOPCOApi.reducerPath]: paymentMethodOPCOApi.reducer,
+  [uploadApi.reducerPath]: uploadApi.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -153,4 +157,5 @@ export const apiMiddlewares = [
   paymentMethodCardApi.middleware,
   paymentMethodCPFApi.middleware,
   paymentMethodOPCOApi.middleware,
+  uploadApi.middleware,
 ];

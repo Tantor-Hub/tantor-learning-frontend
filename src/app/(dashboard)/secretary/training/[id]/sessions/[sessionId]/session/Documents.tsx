@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   Accordion,
   AccordionContent,
@@ -13,23 +14,43 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   useGetSessionByIdQuery,
   useUpdateSessionMutation,
   useCreateSurveyQuestionMutation,
   useGetSurveysBySessionQuery,
   useDeleteSurveyQuestionMutation,
 } from "@/lib/apis/secretary/session-secretary-api";
+import { useCreateDocumentTemplateMutation } from "@/lib/apis/documents";
 
 import { toast } from "react-hot-toast";
-import { Loader2, Save, Plus, FileText, Trash2 } from "lucide-react";
+import { Loader2, Save, Plus, FileText, Trash2, FileDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SurveyQuestionBuilder } from "./components/survey-question-builder";
 import { Badge } from "@/components/ui/badge";
+import DocumentTemplateBuilder from "./components/document-template-builder";
+
+interface Placeholder {
+  key: string;
+  label: string;
+  value: string;
+}
+
+interface SelectedDocument {
+  value: string;
+  placeholders: Placeholder[];
+}
 
 interface SelectedDocuments {
-  before: string[];
-  during: string[];
-  after: string[];
+  before: SelectedDocument[];
+  during: SelectedDocument[];
+  after: SelectedDocument[];
 }
 
 const DOCUMENT_CATEGORIES = {
@@ -69,27 +90,48 @@ export default function Documents() {
   const [updateSession, { isLoading: updating }] = useUpdateSessionMutation();
   const [createSurvey, { isLoading: creatingSurvey }] = useCreateSurveyQuestionMutation();
   const [deleteSurvey] = useDeleteSurveyQuestionMutation();
+  const [createDocumentTemplate, { isLoading: creatingTemplate }] =
+    useCreateDocumentTemplateMutation();
   const { data: surveysData, isLoading: surveysLoading } = useGetSurveysBySessionQuery({
     sessionId,
   });
 
   const [selectedDocuments, setSelectedDocuments] = useState<SelectedDocuments>({
-    before: session?.data?.required_document_before || [],
-    during: session?.data?.required_document_during || [],
-    after: session?.data?.required_document_after || [],
+    before: (session?.data?.required_document_before || []).map((value) => ({
+      value,
+      placeholders: [],
+    })),
+    during: (session?.data?.required_document_during || []).map((value) => ({
+      value,
+      placeholders: [],
+    })),
+    after: (session?.data?.required_document_after || []).map((value) => ({
+      value,
+      placeholders: [],
+    })),
   });
 
   React.useEffect(() => {
     if (session?.data) {
       setSelectedDocuments({
-        before: session.data.required_document_before || [],
-        during: session.data.required_document_during || [],
-        after: session.data.required_document_after || [],
+        before: (session.data.required_document_before || []).map((value) => ({
+          value,
+          placeholders: [],
+        })),
+        during: (session.data.required_document_during || []).map((value) => ({
+          value,
+          placeholders: [],
+        })),
+        after: (session.data.required_document_after || []).map((value) => ({
+          value,
+          placeholders: [],
+        })),
       });
     }
   }, [session]);
 
   const [surveyBuilderOpen, setSurveyBuilderOpen] = React.useState(false);
+  const [documentTemplateBuilderOpen, setDocumentTemplateBuilderOpen] = React.useState(false);
   const [selectedCategory, setSelectedCategory] = React.useState<"before" | "during" | "after">(
     "before"
   );
@@ -97,9 +139,9 @@ export default function Documents() {
   const handleDocumentToggle = (category: "before" | "during" | "after", documentValue: string) => {
     setSelectedDocuments((prev) => ({
       ...prev,
-      [category]: prev[category].includes(documentValue)
-        ? prev[category].filter((doc) => doc !== documentValue)
-        : [...prev[category], documentValue],
+      [category]: prev[category].some((doc) => doc.value === documentValue)
+        ? prev[category].filter((doc) => doc.value !== documentValue)
+        : [...prev[category], { value: documentValue, placeholders: [] }],
     }));
   };
 
@@ -107,9 +149,9 @@ export default function Documents() {
     try {
       await updateSession({
         id: sessionId,
-        required_document_before: selectedDocuments.before,
-        required_document_during: selectedDocuments.during,
-        required_document_after: selectedDocuments.after,
+        required_document_before: selectedDocuments.before.map((doc) => doc.value),
+        required_document_during: selectedDocuments.during.map((doc) => doc.value),
+        required_document_after: selectedDocuments.after.map((doc) => doc.value),
       }).unwrap();
       toast.success("Documents requis mis à jour avec succès");
     } catch (error) {
@@ -147,6 +189,34 @@ export default function Documents() {
   const openSurveyBuilder = (category: "before" | "during" | "after") => {
     setSelectedCategory(category);
     setSurveyBuilderOpen(true);
+  };
+
+  const openDocumentTemplateBuilder = (category: "before" | "during" | "after") => {
+    setSelectedCategory(category);
+    setDocumentTemplateBuilderOpen(true);
+  };
+
+  const handleCreateDocumentTemplate = async (template: {
+    title: string;
+    content: any;
+    variables: string[];
+    sessionId: string;
+    type: "before" | "during" | "after";
+  }) => {
+    try {
+      await createDocumentTemplate({
+        title: template.title,
+        content: template.content,
+        sessionId: template.sessionId,
+        type: template.type,
+        variables: template.variables,
+      }).unwrap();
+      toast.success("Modèle de document créé avec succès");
+      setDocumentTemplateBuilderOpen(false);
+    } catch (error) {
+      toast.error("Erreur lors de la création du modèle");
+      console.error(error);
+    }
   };
 
   const surveys = surveysData?.data?.surveys || [];
@@ -246,7 +316,18 @@ export default function Documents() {
               <div className="space-y-4">
                 {/* Documents Section */}
                 <div>
-                  <h4 className="text-sm font-medium mb-3">Documents requis</h4>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-sm font-medium">Documents requis</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openDocumentTemplateBuilder("before")}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Créer un modèle
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {DOCUMENT_CATEGORIES.before.map((document) => (
                       <div
@@ -255,7 +336,9 @@ export default function Documents() {
                       >
                         <Checkbox
                           id={document.value}
-                          checked={selectedDocuments.before.includes(document.value)}
+                          checked={selectedDocuments.before.some(
+                            (doc) => doc.value === document.value
+                          )}
                           onCheckedChange={() => handleDocumentToggle("before", document.value)}
                         />
                         <Label
@@ -264,6 +347,38 @@ export default function Documents() {
                         >
                           {document.label}
                         </Label>
+                        {selectedDocuments.before.some((doc) => doc.value === document.value) && (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <FileDown className="w-4 h-4 mr-2" />
+                                Configurer
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>
+                                  Configurer les placeholders pour {document.label}
+                                </DialogTitle>
+                              </DialogHeader>
+                              <PlaceholderConfigurator
+                                document={
+                                  selectedDocuments.before.find(
+                                    (doc) => doc.value === document.value
+                                  )!
+                                }
+                                onUpdate={(placeholders) => {
+                                  setSelectedDocuments((prev) => ({
+                                    ...prev,
+                                    before: prev.before.map((doc) =>
+                                      doc.value === document.value ? { ...doc, placeholders } : doc
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -327,7 +442,18 @@ export default function Documents() {
               <div className="space-y-4">
                 {/* Documents Section */}
                 <div>
-                  <h4 className="text-sm font-medium mb-3">Documents requis</h4>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-sm font-medium">Documents requis</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openDocumentTemplateBuilder("during")}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Créer un modèle
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {DOCUMENT_CATEGORIES.during.map((document) => (
                       <div
@@ -336,7 +462,9 @@ export default function Documents() {
                       >
                         <Checkbox
                           id={document.value}
-                          checked={selectedDocuments.during.includes(document.value)}
+                          checked={selectedDocuments.during.some(
+                            (doc) => doc.value === document.value
+                          )}
                           onCheckedChange={() => handleDocumentToggle("during", document.value)}
                         />
                         <Label
@@ -345,6 +473,38 @@ export default function Documents() {
                         >
                           {document.label}
                         </Label>
+                        {selectedDocuments.during.some((doc) => doc.value === document.value) && (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <FileDown className="w-4 h-4 mr-2" />
+                                Configurer
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>
+                                  Configurer les placeholders pour {document.label}
+                                </DialogTitle>
+                              </DialogHeader>
+                              <PlaceholderConfigurator
+                                document={
+                                  selectedDocuments.during.find(
+                                    (doc) => doc.value === document.value
+                                  )!
+                                }
+                                onUpdate={(placeholders) => {
+                                  setSelectedDocuments((prev) => ({
+                                    ...prev,
+                                    during: prev.during.map((doc) =>
+                                      doc.value === document.value ? { ...doc, placeholders } : doc
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -408,7 +568,18 @@ export default function Documents() {
               <div className="space-y-4">
                 {/* Documents Section */}
                 <div>
-                  <h4 className="text-sm font-medium mb-3">Documents requis</h4>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-sm font-medium">Documents requis</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openDocumentTemplateBuilder("after")}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Créer un modèle
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {DOCUMENT_CATEGORIES.after.map((document) => (
                       <div
@@ -417,7 +588,9 @@ export default function Documents() {
                       >
                         <Checkbox
                           id={document.value}
-                          checked={selectedDocuments.after.includes(document.value)}
+                          checked={selectedDocuments.after.some(
+                            (doc) => doc.value === document.value
+                          )}
                           onCheckedChange={() => handleDocumentToggle("after", document.value)}
                         />
                         <Label
@@ -426,6 +599,38 @@ export default function Documents() {
                         >
                           {document.label}
                         </Label>
+                        {selectedDocuments.after.some((doc) => doc.value === document.value) && (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <FileDown className="w-4 h-4 mr-2" />
+                                Configurer
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>
+                                  Configurer les placeholders pour {document.label}
+                                </DialogTitle>
+                              </DialogHeader>
+                              <PlaceholderConfigurator
+                                document={
+                                  selectedDocuments.after.find(
+                                    (doc) => doc.value === document.value
+                                  )!
+                                }
+                                onUpdate={(placeholders) => {
+                                  setSelectedDocuments((prev) => ({
+                                    ...prev,
+                                    after: prev.after.map((doc) =>
+                                      doc.value === document.value ? { ...doc, placeholders } : doc
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -515,6 +720,84 @@ export default function Documents() {
         category={selectedCategory}
         onSuccess={handleCreateSurvey}
       />
+
+      {/* Document Template Builder */}
+      <DocumentTemplateBuilder
+        open={documentTemplateBuilderOpen}
+        onOpenChange={setDocumentTemplateBuilderOpen}
+        onSave={handleCreateDocumentTemplate}
+        sessionId={sessionId}
+        type={selectedCategory}
+      />
+    </div>
+  );
+}
+
+interface PlaceholderConfiguratorProps {
+  document: SelectedDocument;
+  onUpdate: (placeholders: Placeholder[]) => void;
+}
+
+function PlaceholderConfigurator({ document, onUpdate }: PlaceholderConfiguratorProps) {
+  const [placeholders, setPlaceholders] = useState<Placeholder[]>(document.placeholders);
+
+  const addPlaceholder = () => {
+    setPlaceholders([...placeholders, { key: "", label: "", value: "" }]);
+  };
+
+  const updatePlaceholder = (index: number, field: keyof Placeholder, value: string) => {
+    const updated = placeholders.map((p, i) => (i === index ? { ...p, [field]: value } : p));
+    setPlaceholders(updated);
+    onUpdate(updated);
+  };
+
+  const removePlaceholder = (index: number) => {
+    const updated = placeholders.filter((_, i) => i !== index);
+    setPlaceholders(updated);
+    onUpdate(updated);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h4 className="text-sm font-medium">Placeholders</h4>
+        <Button type="button" variant="outline" size="sm" onClick={addPlaceholder}>
+          <Plus className="w-4 h-4 mr-2" />
+          Ajouter
+        </Button>
+      </div>
+      <div className="space-y-2">
+        {placeholders.map((placeholder, index) => (
+          <div key={index} className="flex items-center space-x-2">
+            <Input
+              placeholder="Clé (ex: {{nom}})"
+              value={placeholder.key}
+              onChange={(e) => updatePlaceholder(index, "key", e.target.value)}
+              className="flex-1"
+            />
+            <Input
+              placeholder="Label"
+              value={placeholder.label}
+              onChange={(e) => updatePlaceholder(index, "label", e.target.value)}
+              className="flex-1"
+            />
+            <Input
+              placeholder="Valeur par défaut"
+              value={placeholder.value}
+              onChange={(e) => updatePlaceholder(index, "value", e.target.value)}
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => removePlaceholder(index)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

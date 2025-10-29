@@ -12,7 +12,7 @@ export const baseQuery = fetchBaseQuery({
 
     // Get token from cookies
     const { token } = getValidAuthTokens();
-
+    console.log("Using token from cookies in baseQuery:", token);
     if (token) {
       headers.set("x-connexion-tantor", `Bearer ${token}`);
     }
