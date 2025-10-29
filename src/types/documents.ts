@@ -5,6 +5,7 @@ export interface DocumentTemplate {
   sessionId: string;
   type: DocumentTemplateType;
   variables?: string[];
+  imageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

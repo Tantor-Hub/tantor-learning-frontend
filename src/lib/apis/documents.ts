@@ -42,7 +42,10 @@ export const documentsApi = createApi({
       }),
       providesTags: ["DocumentTemplates"],
     }),
-    getDocumentTemplateById: builder.query<DocumentTemplate, { id: string }>({
+    getDocumentTemplateById: builder.query<
+      { status: number; message: string; data: DocumentTemplate },
+      { id: string }
+    >({
       query: ({ id }) => ({
         url: `documents/templates/${id}`,
         method: "GET",
@@ -51,11 +54,11 @@ export const documentsApi = createApi({
     }),
     updateDocumentTemplate: builder.mutation<
       { message: string },
-      { id: string; title: string; content: any; variables?: string[] }
+      { id: string; title: string; content: any; variables?: string[]; imageUrl?: string }
     >({
       query: ({ id, ...body }) => ({
         url: `documents/templates/${id}`,
-        method: "PUT",
+        method: "PATCH",
         body,
       }),
       invalidatesTags: ["DocumentTemplates"],

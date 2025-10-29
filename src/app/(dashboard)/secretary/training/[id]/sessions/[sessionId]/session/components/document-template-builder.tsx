@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { useAppDispatch } from "@/store/store";
 import { toast } from "react-hot-toast";
@@ -56,6 +57,7 @@ import {
   Type as StrikeIcon,
   Upload,
   Loader2,
+  FileText,
 } from "lucide-react";
 
 // Custom extension for font size
@@ -168,33 +170,30 @@ interface DocumentTemplateBuilderProps {
     sessionId: string;
     type: "before" | "during" | "after";
   }) => void;
-  initialContent?: any;
-  initialTitle?: string;
+  templateData?: any;
+  isLoading?: boolean;
+  isEditing?: boolean;
   sessionId: string;
   type: "before" | "during" | "after";
+  templates?: any[];
 }
 
 export default function DocumentTemplateBuilder({
   open,
   onOpenChange,
   onSave,
-  initialContent,
-  initialTitle,
+  templateData,
+  isLoading = false,
+  isEditing = false,
   sessionId,
   type,
+  templates = [],
 }: DocumentTemplateBuilderProps) {
-  const [title, setTitle] = useState(initialTitle || "");
+  const [title, setTitle] = useState(templateData?.title || "");
   const [showVariableDialog, setShowVariableDialog] = useState(false);
   const [variableName, setVariableName] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Update title when initialTitle prop changes
-  useEffect(() => {
-    if (initialTitle !== undefined) {
-      setTitle(initialTitle);
-    }
-  }, [initialTitle]);
 
   const editor = useEditor({
     extensions: [
@@ -250,7 +249,20 @@ export default function DocumentTemplateBuilder({
       HorizontalRule,
       Variable,
     ],
-    content: initialContent,
+    content: {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Start writing your document template here...",
+            },
+          ],
+        },
+      ],
+    },
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -260,12 +272,39 @@ export default function DocumentTemplateBuilder({
     },
   });
 
-  // Update editor content when initialContent prop changes
+  // Update title when templateData changes
   useEffect(() => {
-    if (editor && initialContent !== undefined) {
-      editor.commands.setContent(initialContent);
+    if (templateData?.data) {
+      setTitle(templateData.data.title || "");
+    } else {
+      setTitle("");
     }
-  }, [editor, initialContent]);
+  }, [templateData]);
+
+  // Handle content loading when editor and template data are available
+  useEffect(() => {
+    if (!editor) return;
+
+    if (open) {
+      if (isEditing && templateData?.data) {
+        setTitle(templateData.data.title || "");
+        try {
+          if (templateData.data.content) {
+            editor.commands.setContent(templateData.data.content);
+          } else {
+            editor.commands.clearContent();
+          }
+        } catch (error) {
+          console.error("Failed to load template content:", error);
+          editor.commands.clearContent();
+        }
+      } else if (!isEditing) {
+        // Clear for new template
+        setTitle("");
+        editor.commands.clearContent();
+      }
+    }
+  }, [open, editor, templateData, isEditing]);
 
   const extractVariables = useCallback((jsonContent: any): string[] => {
     const variables: string[] = [];
@@ -321,8 +360,8 @@ export default function DocumentTemplateBuilder({
       }
 
       img.onload = () => {
-        const MAX_WIDTH = 800;
-        const MAX_HEIGHT = 600;
+        const MAX_WIDTH = 400;
+        const MAX_HEIGHT = 200;
         let { width, height } = img;
 
         // Calculate new dimensions maintaining aspect ratio
@@ -500,7 +539,7 @@ export default function DocumentTemplateBuilder({
         })
         .run();
       setVariableName("");
-      // setShowVariableDialog(false);
+      setShowVariableDialog(false);
     }
   }, [editor, variableName]);
 
@@ -560,7 +599,9 @@ export default function DocumentTemplateBuilder({
       <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl h-[95vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-semibold">Document Template Builder</h2>
+          <h2 className="text-xl font-semibold">
+            {isEditing ? "Edit Document Template" : "Create Document Template"}
+          </h2>
           <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
             <X className="w-4 h-4" />
           </Button>
@@ -568,286 +609,316 @@ export default function DocumentTemplateBuilder({
 
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Title Input */}
-          <div className="p-4 border-b bg-gray-50">
-            <Label htmlFor="template-title" className="text-sm font-medium">
-              Template Title
-            </Label>
-            <Input
-              id="template-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter template title..."
-              className="mt-1"
-            />
+          <div className="p-4 border-b bg-gray-50 flex items-center justify-between">
+            <div className="flex-1">
+              <Label htmlFor="template-title" className="text-sm font-medium">
+                Template Title
+              </Label>
+              {isLoading ? (
+                <Skeleton className="h-10 w-full mt-1" />
+              ) : (
+                <Input
+                  id="template-title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter template title..."
+                  className="mt-1"
+                />
+              )}
+            </div>
           </div>
 
           {/* Toolbar */}
           <div className="p-3 border-b bg-gray-50 overflow-x-auto">
-            <div className="flex flex-wrap items-center gap-1 min-w-max">
-              {/* Undo/Redo */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => editor?.chain().focus().undo().run()}
-                disabled={!editor?.can().undo()}
-                title="Undo"
-              >
-                <Undo className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => editor?.chain().focus().redo().run()}
-                disabled={!editor?.can().redo()}
-                title="Redo"
-              >
-                <Redo className="w-4 h-4" />
-              </Button>
-
-              <Separator orientation="vertical" className="h-6 mx-1" />
-
-              {/* Font Family */}
-              <Select onValueChange={(value) => editor?.chain().focus().setFontFamily(value).run()}>
-                <SelectTrigger className="w-36 h-8 text-sm">
-                  <SelectValue placeholder="Font" />
-                </SelectTrigger>
-                <SelectContent>
-                  {fontFamilies.map((font) => (
-                    <SelectItem key={font} value={font} style={{ fontFamily: font }}>
-                      {font}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Font Size */}
-              <Select onValueChange={(value) => editor?.chain().focus().setFontSize(value).run()}>
-                <SelectTrigger className="w-24 h-8 text-sm">
-                  <SelectValue placeholder="Size" />
-                </SelectTrigger>
-                <SelectContent>
-                  {fontSizes.map((size) => (
-                    <SelectItem key={size} value={size}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Separator orientation="vertical" className="h-6 mx-1" />
-
-              {/* Text Formatting */}
-              <Button
-                variant={editor?.isActive("bold") ? "default" : "outline"}
-                size="sm"
-                onClick={() => editor?.chain().focus().toggleBold().run()}
-                title="Bold"
-              >
-                <Bold className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={editor?.isActive("italic") ? "default" : "outline"}
-                size="sm"
-                onClick={() => editor?.chain().focus().toggleItalic().run()}
-                title="Italic"
-              >
-                <Italic className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={editor?.isActive("underline") ? "default" : "outline"}
-                size="sm"
-                onClick={() => editor?.chain().focus().toggleUnderline().run()}
-                title="Underline"
-              >
-                <UnderlineIcon className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={editor?.isActive("strike") ? "default" : "outline"}
-                size="sm"
-                onClick={() => editor?.chain().focus().toggleStrike().run()}
-                title="Strikethrough"
-              >
-                <StrikeIcon className="w-4 h-4" />
-              </Button>
-
-              <Separator orientation="vertical" className="h-6 mx-1" />
-
-              {/* Text Color */}
-              <div className="flex items-center gap-1">
-                <input
-                  type="color"
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-8 h-8 rounded cursor-pointer border"
-                  title="Text Color"
-                />
-                <input
-                  type="color"
-                  onChange={(e) => setHighlight(e.target.value)}
-                  className="w-8 h-8 rounded cursor-pointer border"
-                  title="Highlight Color"
-                />
+            {isLoading ? (
+              <div className="flex flex-wrap items-center gap-1 min-w-max">
+                {Array.from({ length: 15 }).map((_, index) => (
+                  <Skeleton key={index} className="h-8 w-20" />
+                ))}
               </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-1 min-w-max">
+                {/* Undo/Redo */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editor?.chain().focus().undo().run()}
+                  disabled={!editor?.can().undo()}
+                  title="Undo"
+                >
+                  <Undo className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editor?.chain().focus().redo().run()}
+                  disabled={!editor?.can().redo()}
+                  title="Redo"
+                >
+                  <Redo className="w-4 h-4" />
+                </Button>
 
-              <Separator orientation="vertical" className="h-6 mx-1" />
+                <Separator orientation="vertical" className="h-6 mx-1" />
 
-              {/* Subscript/Superscript */}
-              <Button
-                variant={editor?.isActive("subscript") ? "default" : "outline"}
-                size="sm"
-                onClick={() => editor?.chain().focus().toggleSubscript().run()}
-                title="Subscript"
-              >
-                <SubscriptIcon className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={editor?.isActive("superscript") ? "default" : "outline"}
-                size="sm"
-                onClick={() => editor?.chain().focus().toggleSuperscript().run()}
-                title="Superscript"
-              >
-                <SuperscriptIcon className="w-4 h-4" />
-              </Button>
+                {/* Font Family */}
+                <Select
+                  onValueChange={(value) => editor?.chain().focus().setFontFamily(value).run()}
+                >
+                  <SelectTrigger className="w-36 h-8 text-sm">
+                    <SelectValue placeholder="Font" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fontFamilies.map((font) => (
+                      <SelectItem key={font} value={font} style={{ fontFamily: font }}>
+                        {font}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Separator orientation="vertical" className="h-6 mx-1" />
+                {/* Font Size */}
+                <Select onValueChange={(value) => editor?.chain().focus().setFontSize(value).run()}>
+                  <SelectTrigger className="w-24 h-8 text-sm">
+                    <SelectValue placeholder="Size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fontSizes.map((size) => (
+                      <SelectItem key={size} value={size}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              {/* Headings */}
-              <Select
-                onValueChange={(value) => {
-                  if (value === "0") {
-                    editor?.chain().focus().setParagraph().run();
-                  } else {
-                    editor
-                      ?.chain()
-                      .focus()
-                      .toggleHeading({ level: parseInt(value) as any })
-                      .run();
-                  }
-                }}
-              >
-                <SelectTrigger className="w-28 h-8 text-sm">
-                  <SelectValue placeholder="Style" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Normal</SelectItem>
-                  <SelectItem value="1">Heading 1</SelectItem>
-                  <SelectItem value="2">Heading 2</SelectItem>
-                  <SelectItem value="3">Heading 3</SelectItem>
-                  <SelectItem value="4">Heading 4</SelectItem>
-                  <SelectItem value="5">Heading 5</SelectItem>
-                  <SelectItem value="6">Heading 6</SelectItem>
-                </SelectContent>
-              </Select>
+                <Separator orientation="vertical" className="h-6 mx-1" />
 
-              <Separator orientation="vertical" className="h-6 mx-1" />
+                {/* Text Formatting */}
+                <Button
+                  variant={editor?.isActive("bold") ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().toggleBold().run()}
+                  title="Bold"
+                >
+                  <Bold className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={editor?.isActive("italic") ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().toggleItalic().run()}
+                  title="Italic"
+                >
+                  <Italic className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={editor?.isActive("underline") ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().toggleUnderline().run()}
+                  title="Underline"
+                >
+                  <UnderlineIcon className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={editor?.isActive("strike") ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().toggleStrike().run()}
+                  title="Strikethrough"
+                >
+                  <StrikeIcon className="w-4 h-4" />
+                </Button>
 
-              {/* Alignment */}
-              <Button
-                variant={editor?.isActive({ textAlign: "left" }) ? "default" : "outline"}
-                size="sm"
-                onClick={() => editor?.chain().focus().setTextAlign("left").run()}
-                title="Align Left"
-              >
-                <AlignLeft className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={editor?.isActive({ textAlign: "center" }) ? "default" : "outline"}
-                size="sm"
-                onClick={() => editor?.chain().focus().setTextAlign("center").run()}
-                title="Align Center"
-              >
-                <AlignCenter className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={editor?.isActive({ textAlign: "right" }) ? "default" : "outline"}
-                size="sm"
-                onClick={() => editor?.chain().focus().setTextAlign("right").run()}
-                title="Align Right"
-              >
-                <AlignRight className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={editor?.isActive({ textAlign: "justify" }) ? "default" : "outline"}
-                size="sm"
-                onClick={() => editor?.chain().focus().setTextAlign("justify").run()}
-                title="Justify"
-              >
-                <AlignJustify className="w-4 h-4" />
-              </Button>
+                <Separator orientation="vertical" className="h-6 mx-1" />
 
-              <Separator orientation="vertical" className="h-6 mx-1" />
+                {/* Text Color */}
+                <div className="flex items-center gap-1">
+                  <input
+                    type="color"
+                    onChange={(e) => setColor(e.target.value)}
+                    className="w-8 h-8 rounded cursor-pointer border"
+                    title="Text Color"
+                  />
+                  <input
+                    type="color"
+                    onChange={(e) => setHighlight(e.target.value)}
+                    className="w-8 h-8 rounded cursor-pointer border"
+                    title="Highlight Color"
+                  />
+                </div>
 
-              {/* Lists */}
-              <Button
-                variant={editor?.isActive("bulletList") ? "default" : "outline"}
-                size="sm"
-                onClick={() => editor?.chain().focus().toggleBulletList().run()}
-                title="Bullet List"
-              >
-                <List className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={editor?.isActive("orderedList") ? "default" : "outline"}
-                size="sm"
-                onClick={() => editor?.chain().focus().toggleOrderedList().run()}
-                title="Numbered List"
-              >
-                <ListOrdered className="w-4 h-4" />
-              </Button>
+                <Separator orientation="vertical" className="h-6 mx-1" />
 
-              <Separator orientation="vertical" className="h-6 mx-1" />
+                {/* Subscript/Superscript */}
+                <Button
+                  variant={editor?.isActive("subscript") ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().toggleSubscript().run()}
+                  title="Subscript"
+                >
+                  <SubscriptIcon className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={editor?.isActive("superscript") ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().toggleSuperscript().run()}
+                  title="Superscript"
+                >
+                  <SuperscriptIcon className="w-4 h-4" />
+                </Button>
 
-              {/* Insert Elements */}
-              <Button variant="outline" size="sm" onClick={addLink} title="Insert Link">
-                <Link2 className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addImage}
-                title="Insert Image"
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <ImageIcon className="w-4 h-4" />
-                )}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                style={{ display: "none" }}
-              />
-              <Button variant="outline" size="sm" onClick={addTable} title="Insert Table">
-                <TableIcon className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => editor?.chain().focus().setHorizontalRule().run()}
-                title="Insert Horizontal Rule"
-              >
-                <Minus className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowVariableDialog(true)}
-                title="Insert Variable"
-                className="bg-yellow-50 hover:bg-yellow-100"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Variable
-              </Button>
-            </div>
+                <Separator orientation="vertical" className="h-6 mx-1" />
+
+                {/* Headings */}
+                <Select
+                  onValueChange={(value) => {
+                    if (value === "0") {
+                      editor?.chain().focus().setParagraph().run();
+                    } else {
+                      editor
+                        ?.chain()
+                        .focus()
+                        .toggleHeading({ level: parseInt(value) as any })
+                        .run();
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-28 h-8 text-sm">
+                    <SelectValue placeholder="Style" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Normal</SelectItem>
+                    <SelectItem value="1">Heading 1</SelectItem>
+                    <SelectItem value="2">Heading 2</SelectItem>
+                    <SelectItem value="3">Heading 3</SelectItem>
+                    <SelectItem value="4">Heading 4</SelectItem>
+                    <SelectItem value="5">Heading 5</SelectItem>
+                    <SelectItem value="6">Heading 6</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Separator orientation="vertical" className="h-6 mx-1" />
+
+                {/* Alignment */}
+                <Button
+                  variant={editor?.isActive({ textAlign: "left" }) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().setTextAlign("left").run()}
+                  title="Align Left"
+                >
+                  <AlignLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={editor?.isActive({ textAlign: "center" }) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().setTextAlign("center").run()}
+                  title="Align Center"
+                >
+                  <AlignCenter className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={editor?.isActive({ textAlign: "right" }) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().setTextAlign("right").run()}
+                  title="Align Right"
+                >
+                  <AlignRight className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={editor?.isActive({ textAlign: "justify" }) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().setTextAlign("justify").run()}
+                  title="Justify"
+                >
+                  <AlignJustify className="w-4 h-4" />
+                </Button>
+
+                <Separator orientation="vertical" className="h-6 mx-1" />
+
+                {/* Lists */}
+                <Button
+                  variant={editor?.isActive("bulletList") ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                  title="Bullet List"
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={editor?.isActive("orderedList") ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+                  title="Numbered List"
+                >
+                  <ListOrdered className="w-4 h-4" />
+                </Button>
+
+                <Separator orientation="vertical" className="h-6 mx-1" />
+
+                {/* Insert Elements */}
+                <Button variant="outline" size="sm" onClick={addLink} title="Insert Link">
+                  <Link2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addImage}
+                  title="Insert Image"
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ImageIcon className="w-4 h-4" />
+                  )}
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  style={{ display: "none" }}
+                />
+                <Button variant="outline" size="sm" onClick={addTable} title="Insert Table">
+                  <TableIcon className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editor?.chain().focus().setHorizontalRule().run()}
+                  title="Insert Horizontal Rule"
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowVariableDialog(true)}
+                  title="Insert Variable"
+                  className="bg-yellow-50 hover:bg-yellow-100"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Variable
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Editor */}
           <div className="flex-1 overflow-auto bg-gray-100 p-4">
             <div className="max-w-4xl mx-auto bg-white shadow-sm rounded">
-              <EditorContent editor={editor} />
+              {isLoading ? (
+                <div className="min-h-[500px] p-8 space-y-4">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <div className="pt-8">
+                    <Skeleton className="h-6 w-1/2 mb-4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                </div>
+              ) : (
+                <EditorContent editor={editor} />
+              )}
             </div>
           </div>
         </div>
@@ -862,9 +933,13 @@ export default function DocumentTemplateBuilder({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={!title.trim()}>
-              <Save className="w-4 h-4 mr-2" />
-              Save Template
+            <Button onClick={handleSave} disabled={!title.trim() || isLoading}>
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              {isLoading ? "Loading..." : "Save Template"}
             </Button>
           </div>
         </div>

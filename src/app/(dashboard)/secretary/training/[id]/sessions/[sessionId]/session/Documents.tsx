@@ -95,8 +95,6 @@ export default function Documents() {
   console.log(sessionId);
   const { data: session, isLoading: sessionLoading } = useGetSessionByIdQuery({ id: sessionId });
   const [updateSession, { isLoading: updating }] = useUpdateSessionMutation();
-  const [createSurvey, { isLoading: creatingSurvey }] = useCreateSurveyQuestionMutation();
-  const [deleteSurvey] = useDeleteSurveyQuestionMutation();
   const [createDocumentTemplate, { isLoading: creatingTemplate }] =
     useCreateDocumentTemplateMutation();
   const [updateDocumentTemplate, { isLoading: updatingTemplate }] =
@@ -105,9 +103,6 @@ export default function Documents() {
     useGetDocumentsTemplatesBySessionIdQuery({
       sessionId,
     });
-  const { data: surveysData, isLoading: surveysLoading } = useGetSurveysBySessionQuery({
-    sessionId,
-  });
 
   const [selectedDocuments, setSelectedDocuments] = useState<SelectedDocuments>({
     before: (session?.data?.required_document_before || []).map((value) => ({
@@ -148,11 +143,16 @@ export default function Documents() {
   const [selectedCategory, setSelectedCategory] = React.useState<"before" | "during" | "after">(
     "before"
   );
-  const [editingTemplateId, setEditingTemplateId] = React.useState<string | null>(null);
-  const { data: editingTemplateData, isLoading: editingTemplateLoading } =
-    useGetDocumentTemplateByIdQuery(editingTemplateId ? { id: editingTemplateId } : { id: "" }, {
-      skip: !editingTemplateId,
-    });
+  const [editingTemplate, setEditingTemplate] = React.useState<{
+    id: string | null;
+    title?: string;
+    content?: any;
+    variables?: string[];
+  }>({ id: null });
+
+  // Use lazy query to fetch template data only when needed
+  const [getTemplateById, { data: editingTemplateData, isLoading: editingTemplateLoading }] =
+    useLazyGetDocumentTemplateByIdQuery();
 
   const handleDocumentToggle = (category: "before" | "during" | "after", documentValue: string) => {
     setSelectedDocuments((prev) => ({
@@ -178,44 +178,33 @@ export default function Documents() {
     }
   };
 
-  const handleCreateSurvey = async (title: string, questions: any[]) => {
-    try {
-      await createSurvey({
-        title,
-        id_session: sessionId,
-        categories: selectedCategory,
-        questions,
-      }).unwrap();
-      toast.success("Questionnaire créé avec succès");
-      setSurveyBuilderOpen(false);
-    } catch (error) {
-      toast.error("Erreur lors de la création du questionnaire");
-      console.error(error);
-    }
-  };
-
-  const handleDeleteSurvey = async (surveyId: string) => {
-    try {
-      await deleteSurvey({ id: surveyId }).unwrap();
-      toast.success("Questionnaire supprimé avec succès");
-    } catch (error) {
-      toast.error("Erreur lors de la suppression du questionnaire");
-      console.error(error);
-    }
-  };
-
-  const openSurveyBuilder = (category: "before" | "during" | "after") => {
-    setSelectedCategory(category);
-    setSurveyBuilderOpen(true);
-  };
-
-  const openDocumentTemplateBuilder = (
+  const openDocumentTemplateBuilder = async (
     category: "before" | "during" | "after",
     templateId?: string
   ) => {
     setSelectedCategory(category);
-    setEditingTemplateId(templateId || null);
-    setDocumentTemplateBuilderOpen(true);
+
+    if (templateId) {
+      // Set editing state first
+      setEditingTemplate({ id: templateId });
+
+      try {
+        // Fetch template data
+        const result = await getTemplateById({ id: templateId }).unwrap();
+        console.log("Fetched template:", result);
+
+        // Open dialog after data is fetched
+        setDocumentTemplateBuilderOpen(true);
+      } catch (error) {
+        toast.error("Erreur lors du chargement du modèle");
+        console.error(error);
+        setEditingTemplate({ id: null });
+      }
+    } else {
+      // For new template, open immediately
+      setEditingTemplate({ id: null });
+      setDocumentTemplateBuilderOpen(true);
+    }
   };
 
   const handleCreateDocumentTemplate = async (template: {
@@ -226,9 +215,9 @@ export default function Documents() {
     type: "before" | "during" | "after";
   }) => {
     try {
-      if (editingTemplateId) {
+      if (editingTemplate.id) {
         await updateDocumentTemplate({
-          id: editingTemplateId,
+          id: editingTemplate.id,
           title: template.title,
           content: template.content,
           variables: template.variables,
@@ -246,7 +235,7 @@ export default function Documents() {
           "Modèle de document sauvegardé avec succès ! Vous pouvez continuer à éditer."
         );
       }
-      setEditingTemplateId(null);
+      setEditingTemplate({ id: null });
       // Keep the dialog open to allow continued editing
     } catch (error) {
       toast.error("Erreur lors de la sauvegarde du modèle");
@@ -254,7 +243,10 @@ export default function Documents() {
     }
   };
 
-  const surveys = surveysData?.data?.surveys || [];
+  const handleDialogClose = () => {
+    setDocumentTemplateBuilderOpen(false);
+    setEditingTemplate({ id: null });
+  };
 
   if (sessionLoading) {
     return (
@@ -334,7 +326,6 @@ export default function Documents() {
     );
   }
 
-  console.log(JSON.stringify(session));
   return (
     <div className="space-y-6">
       <div>
@@ -461,55 +452,6 @@ export default function Documents() {
                     ))}
                   </div>
                 </div>
-
-                {/* Surveys Section */}
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-sm font-medium">Questionnaires</h4>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openSurveyBuilder("before")}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Ajouter un questionnaire
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {surveys
-                      .filter((survey) => survey.categories === "before")
-                      .map((survey) => (
-                        <div
-                          key={survey.id}
-                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <FileText className="w-4 h-4 text-blue-600" />
-                            <div>
-                              <p className="text-sm font-medium">{survey.title}</p>
-                              <p className="text-xs text-gray-500">
-                                {survey.questions?.length || 0} question(s)
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteSurvey(survey.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    {surveys.filter((survey) => survey.categories === "before").length === 0 && (
-                      <p className="text-sm text-gray-500 text-center py-4">
-                        Aucun questionnaire créé pour cette catégorie
-                      </p>
-                    )}
-                  </div>
-                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -627,55 +569,6 @@ export default function Documents() {
                         )}
                       </div>
                     ))}
-                  </div>
-                </div>
-
-                {/* Surveys Section */}
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-sm font-medium">Questionnaires</h4>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openSurveyBuilder("during")}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Ajouter un questionnaire
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {surveys
-                      .filter((survey) => survey.categories === "during")
-                      .map((survey) => (
-                        <div
-                          key={survey.id}
-                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <FileText className="w-4 h-4 text-blue-600" />
-                            <div>
-                              <p className="text-sm font-medium">{survey.title}</p>
-                              <p className="text-xs text-gray-500">
-                                {survey.questions?.length || 0} question(s)
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteSurvey(survey.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    {surveys.filter((survey) => survey.categories === "during").length === 0 && (
-                      <p className="text-sm text-gray-500 text-center py-4">
-                        Aucun questionnaire créé pour cette catégorie
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
@@ -797,55 +690,6 @@ export default function Documents() {
                     ))}
                   </div>
                 </div>
-
-                {/* Surveys Section */}
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-sm font-medium">Questionnaires</h4>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openSurveyBuilder("after")}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Ajouter un questionnaire
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {surveys
-                      .filter((survey) => survey.categories === "after")
-                      .map((survey) => (
-                        <div
-                          key={survey.id}
-                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <FileText className="w-4 h-4 text-blue-600" />
-                            <div>
-                              <p className="text-sm font-medium">{survey.title}</p>
-                              <p className="text-xs text-gray-500">
-                                {survey.questions?.length || 0} question(s)
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteSurvey(survey.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    {surveys.filter((survey) => survey.categories === "after").length === 0 && (
-                      <p className="text-sm text-gray-500 text-center py-4">
-                        Aucun questionnaire créé pour cette catégorie
-                      </p>
-                    )}
-                  </div>
-                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -874,27 +718,17 @@ export default function Documents() {
         </div>
       </div>
 
-      {/* Survey Question Builder */}
-      <SurveyQuestionBuilder
-        open={surveyBuilderOpen}
-        onOpenChange={setSurveyBuilderOpen}
-        sessionId={sessionId}
-        category={selectedCategory}
-        onSuccess={handleCreateSurvey}
-      />
-
       {/* Document Template Builder */}
       <DocumentTemplateBuilder
         open={documentTemplateBuilderOpen}
-        onOpenChange={(open) => {
-          setDocumentTemplateBuilderOpen(open);
-          if (!open) setEditingTemplateId(null);
-        }}
+        onOpenChange={handleDialogClose}
         onSave={handleCreateDocumentTemplate}
         sessionId={sessionId}
         type={selectedCategory}
-        initialContent={editingTemplateData?.content}
-        initialTitle={editingTemplateData?.title}
+        templateData={editingTemplateData} // Pass the actual data from the response
+        isLoading={editingTemplateLoading}
+        isEditing={!!editingTemplate.id}
+        templates={templatesData?.data || []}
       />
     </div>
   );
