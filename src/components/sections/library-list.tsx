@@ -11,13 +11,13 @@ import { useAuth } from "@/hooks/use-auth";
 export function LibraryList() {
   const { data, isLoading } = useGetAllBooksInLibraryQuery();
   const router = useRouter();
-  const isAuthenticated = useAuth(); // Use the improved useAuth hook for server-side validation
+  // const isAuthenticated = useAuth(); // Use the improved useAuth hook for server-side validation
   if (isLoading) return <TrainingListSkeleton />;
-  if (!isAuthenticated) {
-    toast("Vous devez créer un compte pour accéder à cette fonctionnalité");
-    router.push("/signin");
-    return;
-  }
+  // if (!isAuthenticated) {
+  //   toast("Vous devez créer un compte pour accéder à cette fonctionnalité");
+  //   router.push("/signin");
+  //   return;
+  // }
 
   // console.log("data: ", data);
 

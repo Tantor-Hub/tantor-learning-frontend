@@ -99,8 +99,7 @@ export const authApi = createApi({
     }),
     verifyPasswordLess: builder.mutation<
       {
-        statusCode: number;
-        status?: string;
+        status: number;
         message: string;
         data: {
           auth_token: string;

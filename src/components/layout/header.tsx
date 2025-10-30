@@ -15,9 +15,8 @@ import {
   DropdownMenuLabel,
 } from "../ui/dropdown-menu";
 import { useSelector } from "react-redux";
-import { selectCurrentUser, selectIsAuthenticated } from "@/features/auth/auth-slice";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { useLogout } from "@/hooks/use-logout";
-import { getValidAuthTokens, getAuthStateCookie } from "@/lib/cookies";
 import { useAuth } from "@/hooks/use-auth";
 
 const publicLinks = [

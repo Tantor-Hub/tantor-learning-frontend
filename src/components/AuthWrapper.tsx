@@ -1,10 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { getValidAuthTokens } from "@/lib/cookies";
-import { useGetAuthDataQuery } from "@/store/authApi";
-import { selectIsAuthenticated } from "@/features/auth/auth-slice";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type Props = {
   children?: React.ReactNode;
@@ -13,31 +11,35 @@ type Props = {
 export const AuthWrapper = ({ children }: Props) => {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { user } = useSelector((state: any) => state.auth);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   const { token } = getValidAuthTokens();
 
-  // this query will only execute if the token is valid and the user is not already in the redux store
-  const { error, isLoading } = useGetAuthDataQuery(
-    { token: token || "" },
-    {
-      // The useGetAuthDataQuery hook will not execute the query at all if these values are falsy
-      skip: !!user || !token,
-    }
-  );
-
-  // if the user doesnt have a valid token, redirect to login page
   useEffect(() => {
-    if (!token) {
-      router.push("/signin");
-      // will explain this in a moment
-      dispatch({ type: "auth/clearCredentials" });
-    }
+    // Simulate auth check delay for better UX
+    const timer = setTimeout(() => {
+      if (!token) {
+        router.push("/signin");
+        dispatch({ type: "auth/clearCredentials" });
+      }
+      setCheckingAuth(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [token, router, dispatch]);
 
-  // optional: show a loading indicator while the query is loading
-  if (isLoading) {
-    return <div>Loading...</div>;
+  // Show loading while checking authentication
+  if (checkingAuth) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-lg">Checking authentication...</div>
+      </div>
+    );
+  }
+
+  // Don't render children if no token (will redirect)
+  if (!token) {
+    return null;
   }
 
   return <>{children}</>;

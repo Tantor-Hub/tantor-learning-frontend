@@ -15,8 +15,9 @@ import { setCredentials } from "@/features/auth/auth-slice";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-
 import { Loader2 } from "lucide-react";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
 
 const RESEND_COOLDOWN = 60; // 60 secondes
 
@@ -25,6 +26,7 @@ export function VerifyAccountForm() {
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const email = searchParams.get("email") as string;
+  const currentUser = useSelector(selectCurrentUser);
   const [resendCode, { isLoading: isResending }] = useResendCodeMutation();
   const [verifyAccount, { isLoading }] = useVerifyPasswordLessMutation();
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
@@ -99,23 +101,24 @@ export function VerifyAccountForm() {
         email: email,
         otp: String(pin),
       }).unwrap();
-
-      // Stocker les credentials dans Redux
+      console.log("Verify response:", response);
       dispatch(
         setCredentials({
           token: response.data.auth_token,
           refreshToken: response.data.refresh_token,
-          expiresIn: 86400,
+          expiresIn: 3600,
           user: response.data.user,
         })
       );
+
       toast.dismiss(toastRef.current);
       toastRef.current = null;
 
+      // router.replace(`/${currentUser?.role}`);
+      router.replace("/");
       toast.success(response.message);
 
       // Navigation vers la page d'accueil
-      // router.replace("/");
     } catch (error: any) {
       if (toastRef.current) {
         toast.dismiss(toastRef.current);

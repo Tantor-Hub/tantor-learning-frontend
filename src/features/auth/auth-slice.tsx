@@ -2,15 +2,7 @@ import { authApi } from "@/lib/apis/auth-api";
 import { usersApi } from "@/lib/apis/users-api";
 import { IUser, UserRole } from "@/types/user";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import {
-  setAuthCookie,
-  removeAuthCookie,
-  setAuthStateCookie,
-  clearAllAuthCookies,
-  setRefreshTokenCookie,
-  getAuthStateCookie,
-} from "@/lib/cookies";
-import { tokenStorage } from "@/features/token-storage";
+import { setAuthState, clearAllAuthCookies, getAuthState } from "@/lib/cookies";
 
 export interface AuthState {
   token: string | null;
@@ -32,58 +24,55 @@ const initialState: AuthState = {
   error: null,
 };
 
-// Helper to persist auth state to cookies - using flat cookie storage
+// Helper to persist auth state to cookies and localStorage
 const persistAuthState = (state: AuthState) => {
   if (typeof window !== "undefined") {
-    // Store auth state in flat cookies
-    setAuthStateCookie("token", state.token || "");
-    setAuthStateCookie("refreshToken", state.refreshToken || "");
-    setAuthStateCookie("expiresAt", state.expiresAt?.toString() || "");
-    setAuthStateCookie("isAuthenticated", state.isAuthenticated.toString());
-    setAuthStateCookie("user", state.user ? JSON.stringify(state.user) : "");
-
-    // Also store tokens in dedicated cookies for API calls
-    if (state.token) {
-      setAuthCookie(state.token, "token");
+    // Store tokens and auth state in flat cookies
+    if (state.token && state.refreshToken && state.expiresAt) {
+      setAuthState({
+        token: state.token,
+        refreshToken: state.refreshToken,
+        expiresAt: state.expiresAt,
+        isAuthenticated: state.isAuthenticated,
+      });
     }
-    if (state.refreshToken) {
-      setRefreshTokenCookie(state.refreshToken);
+
+    // Store user data in localStorage
+    if (state.user) {
+      localStorage.setItem("user", JSON.stringify(state.user));
+    } else {
+      localStorage.removeItem("user");
     }
   }
 };
 
-// Helper to load auth state from cookies
-const loadAuthState = (): Partial<AuthState> => {
+// Helper to load initial state from cookies and localStorage
+const getInitialState = (): AuthState => {
   if (typeof window !== "undefined") {
     try {
-      const token = getAuthStateCookie("token");
-      const refreshToken = getAuthStateCookie("refreshToken");
-      const expiresAtStr = getAuthStateCookie("expiresAt");
-      const isAuthenticatedStr = getAuthStateCookie("isAuthenticated");
-      const userStr = getAuthStateCookie("user");
+      // Load auth state from cookies
+      const authState = getAuthState();
 
-      const expiresAt = expiresAtStr ? parseInt(expiresAtStr) : null;
-      const isAuthenticated = isAuthenticatedStr === "true";
+      // Load user data from localStorage
+      const userStr = localStorage.getItem("user");
       const user = userStr ? JSON.parse(userStr) : null;
 
       return {
-        token: token || null,
-        refreshToken: refreshToken || null,
-        expiresAt,
-        isAuthenticated: token && refreshToken ? true : false,
+        ...initialState,
+        token: authState.token,
+        refreshToken: authState.refreshToken,
+        expiresAt: authState.expiresAt,
+        isAuthenticated: Boolean(authState.isAuthenticated) && !!authState.token,
         user,
       };
     } catch (e) {
-      console.error("Failed to parse auth state from cookies", e);
+      console.error("Failed to load auth state from storage", e);
+      // Clear invalid state
+      clearAllAuthCookies();
+      localStorage.removeItem("user");
     }
   }
-  return {};
-};
-
-// Get initial state with merged localStorage data if available
-const getInitialState = (): AuthState => {
-  const persistedState = loadAuthState();
-  return { ...initialState, ...persistedState };
+  return initialState;
 };
 
 export const authSlice = createSlice({
@@ -96,7 +85,7 @@ export const authSlice = createSlice({
         token: string;
         refreshToken: string;
         expiresIn: number;
-        user?: any;
+        user?: IUser;
       }>
     ) => {
       const { token, refreshToken, expiresIn, user } = action.payload;
@@ -105,20 +94,6 @@ export const authSlice = createSlice({
       state.expiresAt = Date.now() + expiresIn * 1000;
       state.isAuthenticated = true;
       if (user) state.user = user;
-
-      // Save tokens to cookies via tokenStorage
-      tokenStorage.save({ accessToken: token, refreshToken });
-
-      // Save individual auth state to flat cookies
-      setAuthStateCookie("token", token);
-      setAuthStateCookie("refreshToken", refreshToken);
-      setAuthStateCookie("expiresAt", state.expiresAt.toString());
-      setAuthStateCookie("isAuthenticated", "true");
-      if (user) setAuthStateCookie("user", JSON.stringify(user));
-
-      // Also store tokens in dedicated cookies for API calls
-      setAuthCookie(token, "token");
-      setRefreshTokenCookie(refreshToken);
 
       persistAuthState(state);
     },
@@ -130,15 +105,10 @@ export const authSlice = createSlice({
       state.user = null;
       state.error = null;
 
-      // Clear all auth cookies
+      // Clear all storage
       clearAllAuthCookies();
-
-      // Clear tokens from cookies
-      tokenStorage.clear();
-
-      // Clear localStorage as well
       if (typeof window !== "undefined") {
-        localStorage.removeItem("authState");
+        localStorage.removeItem("user");
       }
     },
     updateUser: (state, action: PayloadAction<any>) => {
@@ -150,10 +120,6 @@ export const authSlice = createSlice({
     },
     setAuthError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
-    },
-    // Handle token refresh attempt
-    refreshTokenStart: (state) => {
-      state.isLoading = true;
     },
     refreshTokenSuccess: (
       state,
@@ -172,85 +138,21 @@ export const authSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    // Add session initialization reducer
-    initializeSession: (state, action: PayloadAction<Partial<AuthState>>) => {
-      const { token, refreshToken, expiresAt, isAuthenticated, user } = action.payload;
-
-      if (token) state.token = token;
-      if (refreshToken) state.refreshToken = refreshToken;
-      if (expiresAt) state.expiresAt = expiresAt;
-      if (isAuthenticated !== undefined) state.isAuthenticated = isAuthenticated;
-      if (user) state.user = user;
-
-      // Persist the initialized session
-      persistAuthState(state);
-    },
   },
-  // Handle auth API responses automatically
   extraReducers: (builder) => {
     builder
-      // Auth API matchers
-      .addMatcher(authApi.endpoints.loginPasswordLess.matchPending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addMatcher(authApi.endpoints.loginPasswordLess.matchFulfilled, (state) => {
-        state.isLoading = false;
-      })
-      .addMatcher(authApi.endpoints.loginPasswordLess.matchRejected, (state, { error }) => {
-        state.isLoading = false;
-        state.error = error.message || "Passwordless login failed";
-      })
-
-      .addMatcher(authApi.endpoints.registerPasswordLess.matchPending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addMatcher(authApi.endpoints.registerPasswordLess.matchFulfilled, (state) => {
-        state.isLoading = false;
-      })
-      .addMatcher(authApi.endpoints.registerPasswordLess.matchRejected, (state, { error }) => {
-        state.isLoading = false;
-        state.error = error.message || "Passwordless register failed";
-      })
-
-      .addMatcher(authApi.endpoints.verifyPasswordLess.matchPending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
       .addMatcher(authApi.endpoints.verifyPasswordLess.matchFulfilled, (state, { payload }) => {
         state.token = payload.data.auth_token;
         state.refreshToken = payload.data.refresh_token;
-        state.expiresAt = Date.now() + 3600 * 1000; // Default 1 hour, since expires_in not in response
+        state.expiresAt = Date.now() + 3600 * 1000;
         state.isAuthenticated = true;
         state.isLoading = false;
 
-        // Set user from payload.data.user
         if (payload.data.user) {
           state.user = payload.data.user;
         }
 
         persistAuthState(state);
-      })
-      .addMatcher(authApi.endpoints.verifyPasswordLess.matchRejected, (state, { error }) => {
-        state.isLoading = false;
-        state.error = error.message || "Passwordless verify failed";
-      })
-
-      .addMatcher(authApi.endpoints.verify.matchFulfilled, (state, { payload }) => {
-        if (payload.auth_token) {
-          state.token = payload.auth_token;
-          state.refreshToken = payload.refresh_token;
-          state.expiresAt = Date.now() + payload.expires_in * 1000;
-          state.isAuthenticated = true;
-
-          persistAuthState(state);
-        }
-      })
-
-      .addMatcher(authApi.endpoints.refreshToken.matchPending, (state) => {
-        state.isLoading = true;
-        state.error = null;
       })
       .addMatcher(authApi.endpoints.refreshToken.matchFulfilled, (state, { payload }) => {
         state.token = payload.auth_token;
@@ -259,33 +161,6 @@ export const authSlice = createSlice({
         state.isLoading = false;
 
         persistAuthState(state);
-      })
-      .addMatcher(authApi.endpoints.refreshToken.matchRejected, (state, { error }) => {
-        state.isLoading = false;
-        state.error = error.message || "Token refresh failed";
-        // Don't clear credentials here - that decision should be made at a higher level
-      })
-
-      .addMatcher(authApi.endpoints.authWithGoogle.matchPending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addMatcher(authApi.endpoints.authWithGoogle.matchFulfilled, (state, { payload }) => {
-        state.token = payload.auth_token;
-        state.refreshToken = payload.refresh_token;
-        state.expiresAt = Date.now() + payload.expires_in * 1000;
-        state.isAuthenticated = true;
-        state.isLoading = false;
-
-        persistAuthState(state);
-      })
-      .addMatcher(authApi.endpoints.authWithGoogle.matchRejected, (state, { error }) => {
-        state.isLoading = false;
-        state.error = error.message || "Google auth failed";
-      })
-
-      .addMatcher(authApi.endpoints.logout.matchPending, (state) => {
-        state.isLoading = true;
       })
       .addMatcher(authApi.endpoints.logout.matchFulfilled, (state) => {
         state.token = null;
@@ -296,20 +171,13 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.error = null;
 
-        // Clear all auth cookies
         clearAllAuthCookies();
-
-        // Clear tokens from cookies
-        tokenStorage.clear();
-
-        // Clear localStorage as well
         if (typeof window !== "undefined") {
-          localStorage.removeItem("authState");
+          localStorage.removeItem("user");
         }
       })
-
       .addMatcher(authApi.endpoints.logout.matchRejected, (state) => {
-        // Even if the logout API fails, we should clear local state
+        // Clear state even if API call fails
         state.token = null;
         state.refreshToken = null;
         state.expiresAt = null;
@@ -318,19 +186,11 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.error = null;
 
-        // Clear all auth cookies
         clearAllAuthCookies();
-
-        // Clear tokens from cookies
-        tokenStorage.clear();
-
-        // Clear localStorage as well
         if (typeof window !== "undefined") {
-          localStorage.removeItem("authState");
+          localStorage.removeItem("user");
         }
       })
-
-      // User API matchers (for profile updates)
       .addMatcher(usersApi.endpoints.updateUserProfile.matchFulfilled, (state, { payload }) => {
         if (payload && state.user) {
           state.user = {
@@ -363,10 +223,8 @@ export const {
   updateUser,
   setAuthLoading,
   setAuthError,
-  refreshTokenStart,
   refreshTokenSuccess,
   refreshTokenFailure,
-  initializeSession,
 } = authSlice.actions;
 
 // Selectors
@@ -378,7 +236,6 @@ export const selectTokenExpiration = (state: { auth: AuthState }) => state.auth.
 export const selectIsTokenExpired = (state: { auth: AuthState }) => {
   const expiresAt = state.auth.expiresAt;
   if (!expiresAt) return true;
-  // Consider token expired 30 seconds before actual expiration to avoid edge cases
   return Date.now() > expiresAt - 30000;
 };
 export const selectAuthLoading = (state: { auth: AuthState }) => state.auth.isLoading;

@@ -1,93 +1,97 @@
 import { getCookie, setCookie, deleteCookie } from "cookies-next";
 
-// helpers to get cookies
-const getAuthCookie = (name: string) => {
-  const cookie = getCookie(name);
-
-  if (!cookie) return undefined;
-
-  return Buffer.from(cookie as string, "base64").toString("ascii");
-};
-
-export const getValidAuthTokens = () => {
-  const token = getAuthCookie("token");
-  const refreshToken = getAuthCookie("refreshToken");
-
-  if (!token) return { token: undefined, refreshToken: undefined };
-
-  // For simplicity, we'll assume tokens are valid if they exist
-  // In a real app, you might want to check expiration
-  return {
-    token,
-    refreshToken,
-  };
-};
-
-export const setAuthCookie = (token: string, name: string) => {
-  const toBase64 = Buffer.from(token).toString("base64");
-
-  setCookie(name, toBase64, {
+// Helper to set flat cookies (no base64 encoding for simple values)
+export const setAuthCookie = (name: string, value: string) => {
+  setCookie(name, value, {
     maxAge: 30 * 24 * 60 * 60, // 30 days
     path: "/",
-    // more security options here
     // sameSite: 'strict',
-    // httpOnly: true,
-    // secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === "production",
   });
-};
-
-export const setRefreshTokenCookie = (refreshToken: string) => {
-  const toBase64 = Buffer.from(refreshToken).toString("base64");
-
-  setCookie("refreshToken", toBase64, {
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-    path: "/",
-    // more security options here
-    // sameSite: 'strict',
-    // httpOnly: true,
-    // secure: process.env.NODE_ENV === 'production',
-  });
-};
-
-export const getRefreshToken = () => {
-  return getAuthCookie("refreshToken");
 };
 
 export const removeAuthCookie = (name: string) => {
   deleteCookie(name);
 };
 
-export const removeRefreshTokenCookie = () => {
-  deleteCookie("refreshToken");
+export const getAuthCookie = (name: string): string | null => {
+  try {
+    const cookie = getCookie(name);
+    return cookie ? String(cookie) : null;
+  } catch (error) {
+    console.error(`Error getting cookie ${name}:`, error);
+    return null;
+  }
 };
 
-// Flat cookie storage for auth state
-export const setAuthStateCookie = (key: string, value: string) => {
-  const toBase64 = Buffer.from(value).toString("base64");
+// Get valid auth tokens from cookies with expiration check
+export const getValidAuthTokens = () => {
+  const token = getAuthCookie("token");
+  const refreshToken = getAuthCookie("refreshToken");
+  const expiresAtStr = getAuthCookie("expiresAt");
 
-  setCookie(key, toBase64, {
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-    path: "/",
-  });
+  // Check if token is expired
+  const expiresAt = expiresAtStr ? parseInt(expiresAtStr) : null;
+  const isTokenValid = token && expiresAt && Date.now() < expiresAt;
+
+  return {
+    token: isTokenValid ? token : undefined,
+    refreshToken: isTokenValid ? refreshToken : undefined,
+    isExpired: !isTokenValid,
+  };
 };
 
-export const getAuthStateCookie = (key: string) => {
-  return getAuthCookie(key);
+// Get complete auth state from cookies
+export const getAuthState = () => {
+  const token = getAuthCookie("token");
+  const refreshToken = getAuthCookie("refreshToken");
+  const isAuthenticatedStr = getAuthCookie("isAuthenticated");
+  const expiresAtStr = getAuthCookie("expiresAt");
+
+  const isAuthenticated = isAuthenticatedStr === "true";
+  const expiresAt = expiresAtStr ? parseInt(expiresAtStr) : null;
+
+  // Validate token expiration
+  const isTokenValid = token && expiresAt && Date.now() < expiresAt;
+
+  return {
+    token: isTokenValid ? token : null,
+    refreshToken: isTokenValid ? refreshToken : null,
+    isAuthenticated: isTokenValid && isAuthenticated,
+    expiresAt,
+    isTokenValid,
+  };
 };
 
-export const removeAuthStateCookie = (key: string) => {
-  deleteCookie(key);
+// Set complete auth state in flat cookies
+export const setAuthState = (state: {
+  token: string;
+  refreshToken: string;
+  expiresAt: number;
+  isAuthenticated: boolean;
+}) => {
+  setAuthCookie("token", state.token);
+  setAuthCookie("refreshToken", state.refreshToken);
+  setAuthCookie("expiresAt", state.expiresAt.toString());
+  setAuthCookie("isAuthenticated", state.isAuthenticated.toString());
 };
 
+// Clear all auth cookies
 export const clearAllAuthCookies = () => {
-  // Remove token cookies
   removeAuthCookie("token");
-  removeRefreshTokenCookie();
+  removeAuthCookie("refreshToken");
+  removeAuthCookie("expiresAt");
+  removeAuthCookie("isAuthenticated");
+};
 
-  // Remove auth state cookies
-  removeAuthStateCookie("token");
-  removeAuthStateCookie("refreshToken");
-  removeAuthStateCookie("expiresAt");
-  removeAuthStateCookie("isAuthenticated");
-  removeAuthStateCookie("user");
+// Helper to check if user is authenticated
+export const isAuthenticated = (): boolean => {
+  const authState = getAuthState();
+  return authState.isAuthenticated === true && authState.isTokenValid === true;
+};
+
+// Helper to get token for API calls
+export const getAuthToken = (): string | null => {
+  const { token } = getValidAuthTokens();
+  return token || null;
 };
