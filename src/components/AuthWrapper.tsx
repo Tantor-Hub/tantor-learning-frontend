@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { getValidAuthTokens } from "@/lib/cookies";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 type Props = {
   children?: React.ReactNode;
@@ -32,7 +33,9 @@ export const AuthWrapper = ({ children }: Props) => {
   if (checkingAuth) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="text-lg">Checking authentication...</div>
+        <div className="text-lg">
+          <Loader2 className="animate-spin text-primary size-16" />
+        </div>
       </div>
     );
   }

@@ -4,8 +4,8 @@ import { AuthWrapper } from "@/components/AuthWrapper";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    // <AuthWrapper>
-    <DashboardShell>{children}</DashboardShell>
-    // </AuthWrapper>
+    <AuthWrapper>
+      <DashboardShell>{children}</DashboardShell>
+    </AuthWrapper>
   );
 }

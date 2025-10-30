@@ -8,10 +8,14 @@ import { DuringTab } from "./during";
 import { useSelectedSession } from "@/hooks/use-selected-session";
 import { useSessionAlert } from "@/hooks/use-session-alert";
 import { SessionAlert } from "@/components/shared/session-alert";
+import { useGetDocumentsTemplatesBySessionIdQuery } from "@/lib/apis/documents";
 
 export default function Page() {
   const selectedSessionId = useSelectedSession();
   const { shouldShowAlert, isLoading: alertLoading } = useSessionAlert();
+  const { data: templatesData } = useGetDocumentsTemplatesBySessionIdQuery({
+    sessionId: selectedSessionId || "",
+  });
 
   if (!selectedSessionId) {
     return null;
@@ -46,13 +50,118 @@ export default function Page() {
               </TabsList>
 
               <TabsContent value="before">
-                <BeforeTab sessionId={String(selectedSessionId)} />
+                <Tabs defaultValue="televerser">
+                  <TabsList className="flex bg-white border">
+                    <TabsTrigger value="televerser">Document a televerser</TabsTrigger>
+                    <TabsTrigger value="remplir">Document à remplir</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="remplir">
+                    <div className="space-y-4">
+                      {templatesData?.data
+                        ?.filter((template) => template.type === "before")
+                        .map((template) => (
+                          <div
+                            key={template.id}
+                            className="p-4 border rounded-lg bg-white shadow-sm"
+                          >
+                            <h3 className="font-medium mb-2">{template.title}</h3>
+                            <p className="text-sm text-gray-600 mb-4">
+                              {template.variables?.length || 0} variable(s) à remplir
+                            </p>
+                            <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                              Remplir le document
+                            </button>
+                          </div>
+                        ))}
+                      {(!templatesData?.data ||
+                        templatesData.data.filter((template) => template.type === "before")
+                          .length === 0) && (
+                        <p className="text-center text-gray-500 py-8">
+                          Aucun document à remplir pour cette période
+                        </p>
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="televerser">
+                    <BeforeTab sessionId={String(selectedSessionId)} />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
               <TabsContent value="during">
-                <DuringTab sessionId={String(selectedSessionId)} />
+                <Tabs defaultValue="televerser">
+                  <TabsList className="flex bg-white border">
+                    <TabsTrigger value="televerser">Document a televerser</TabsTrigger>
+                    <TabsTrigger value="remplir">Document à remplir</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="remplir">
+                    <div className="space-y-4">
+                      {templatesData?.data
+                        ?.filter((template) => template.type === "during")
+                        .map((template) => (
+                          <div
+                            key={template.id}
+                            className="p-4 border rounded-lg bg-white shadow-sm"
+                          >
+                            <h3 className="font-medium mb-2">{template.title}</h3>
+                            <p className="text-sm text-gray-600 mb-4">
+                              {template.variables?.length || 0} variable(s) à remplir
+                            </p>
+                            <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                              Remplir le document
+                            </button>
+                          </div>
+                        ))}
+                      {(!templatesData?.data ||
+                        templatesData.data.filter((template) => template.type === "during")
+                          .length === 0) && (
+                        <p className="text-center text-gray-500 py-8">
+                          Aucun document à remplir pour cette période
+                        </p>
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="televerser">
+                    <DuringTab sessionId={String(selectedSessionId)} />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
               <TabsContent value="after">
-                <AfterTab sessionId={String(selectedSessionId)} />
+                <Tabs defaultValue="televerser">
+                  <TabsList className="flex bg-white border">
+                    <TabsTrigger value="televerser">Document a televerser</TabsTrigger>
+                    <TabsTrigger value="remplir">Document à remplir</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="remplir">
+                    <div className="space-y-4">
+                      {templatesData?.data
+                        ?.filter((template) => template.type === "after")
+                        .map((template) => (
+                          <div
+                            key={template.id}
+                            className="p-4 border rounded-lg bg-white shadow-sm"
+                          >
+                            <h3 className="font-medium mb-2">{template.title}</h3>
+                            <p className="text-sm text-gray-600 mb-4">
+                              {template.variables?.length || 0} variable(s) à remplir
+                            </p>
+                            <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                              Remplir le document
+                            </button>
+                          </div>
+                        ))}
+                      {(!templatesData?.data ||
+                        templatesData.data.filter((template) => template.type === "after")
+                          .length === 0) && (
+                        <p className="text-center text-gray-500 py-8">
+                          Aucun document à remplir pour cette période
+                        </p>
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="televerser">
+                    <AfterTab sessionId={String(selectedSessionId)} />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </div>
           </Tabs>
