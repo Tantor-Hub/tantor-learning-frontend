@@ -1,5 +1,7 @@
 "use client";
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
@@ -16,13 +18,16 @@ import toast from "react-hot-toast";
 
 export default function Page() {
   const selectedSessionId = useSelectedSession();
+  const currentUser = useSelector(selectCurrentUser);
   const { shouldShowAlert, isLoading: alertLoading } = useSessionAlert();
   const [getTemplateById, { data: templateData, isLoading: templateLoading }] =
     useLazyGetDocumentTemplateByIdQuery();
   const [studentTemplateOpen, setStudentTemplateOpen] = useState(false);
+  const [currentTemplateId, setCurrentTemplateId] = useState("");
 
   const handleFillDocument = async (templateId: string) => {
     try {
+      setCurrentTemplateId(templateId);
       await getTemplateById({ id: templateId }).unwrap();
       setStudentTemplateOpen(true);
     } catch (error) {
@@ -125,9 +130,9 @@ export default function Page() {
       <StudentTemplate
         open={studentTemplateOpen}
         onOpenChange={setStudentTemplateOpen}
-        templateData={templateData}
-        isLoading={templateLoading}
+        templateId={currentTemplateId}
         sessionId={String(selectedSessionId)}
+        userId={currentUser?.id || ""}
       />
     </div>
   );

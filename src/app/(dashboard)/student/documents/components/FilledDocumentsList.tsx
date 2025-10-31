@@ -1,5 +1,6 @@
 import React from "react";
 import { useGetDocumentsTemplatesBySessionIdQuery } from "@/lib/apis/documents";
+import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 
 interface FilledDocumentsListProps {
@@ -9,11 +10,22 @@ interface FilledDocumentsListProps {
 }
 
 export function FilledDocumentsList({ sessionId, type, onFillDocument }: FilledDocumentsListProps) {
-  const { data: templatesData } = useGetDocumentsTemplatesBySessionIdQuery({
+  const { data: templatesData, isLoading } = useGetDocumentsTemplatesBySessionIdQuery({
     sessionId,
   });
 
   const filteredTemplates = templatesData?.data?.filter((template) => template.type === type) || [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement en cours...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (filteredTemplates.length === 0) {
     return (
@@ -32,12 +44,14 @@ export function FilledDocumentsList({ sessionId, type, onFillDocument }: FilledD
           <p className="text-sm text-gray-600 mb-4">
             {template.variables?.length || 0} variable(s) à remplir
           </p>
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-            onClick={() => onFillDocument(template.id)}
+          <Button
+            onClick={() => {
+              onFillDocument(template.id);
+              toast.success("Document ouvert pour remplissage");
+            }}
           >
             Remplir le document
-          </button>
+          </Button>
         </div>
       ))}
     </div>

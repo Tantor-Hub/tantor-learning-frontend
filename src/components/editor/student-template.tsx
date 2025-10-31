@@ -98,7 +98,7 @@ const EditableVariable = Node.create({
         value,
         class: "variable-input",
         style:
-          "background-color: #fef3c7; padding: 4px 8px; border-radius: 4px; border: 1px solid #d97706; font-weight: 500; color: #92400e; min-width: 150px; font-size: 14px;",
+          "background-color: #fef3c7; padding: 4px 8px; border-radius: 4px; border: 1px solid #d97706; font-weight: normal; color: #92400e; min-width: 150px; font-size: 14px;",
         "data-variable": name,
       },
       "",
