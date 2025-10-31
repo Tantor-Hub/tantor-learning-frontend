@@ -42,3 +42,39 @@ export interface CreateDocumentTemplateResponse {
   data: DocumentTemplate;
   message: string;
 }
+
+export interface DocumentInstance {
+  id: string;
+  templateId: string;
+  userId: string;
+  filledContent: TipTapDocument;
+  variableValues: Record<string, string>;
+  createdAt: string;
+  updatedAt: string;
+  template: DocumentTemplate;
+}
+
+export interface CreateDocumentInstanceRequest {
+  templateId: string;
+  variableValues: Record<string, string>;
+}
+
+export interface CreateDocumentInstanceResponse {
+  data: DocumentInstance;
+  message: string;
+}
+
+export interface GetDocumentInstancesByTemplateResponse {
+  status: number;
+  message: string;
+  data: DocumentInstance[];
+}
+
+export interface UpdateDocumentInstanceRequest {
+  variableValues: Record<string, string>;
+}
+
+export interface UpdateDocumentInstanceResponse {
+  data: DocumentInstance;
+  message: string;
+}

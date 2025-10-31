@@ -4,12 +4,17 @@ import {
   CreateDocumentTemplateRequest,
   CreateDocumentTemplateResponse,
   DocumentTemplateType,
+  CreateDocumentInstanceRequest,
+  CreateDocumentInstanceResponse,
+  GetDocumentInstancesByTemplateResponse,
+  UpdateDocumentInstanceRequest,
+  UpdateDocumentInstanceResponse,
 } from "@/types/documents";
 
 export const documentsApi = createApi({
   reducerPath: "documentsApi",
   baseQuery: enhancedBaseQuery,
-  tagTypes: ["DocumentTemplates", "StudentEvaluations"],
+  tagTypes: ["DocumentTemplates", "StudentEvaluations", "DocumentInstances"],
   endpoints: (builder) => ({
     createDocumentTemplate: builder.mutation<
       CreateDocumentTemplateResponse,
@@ -63,6 +68,38 @@ export const documentsApi = createApi({
       }),
       invalidatesTags: ["DocumentTemplates"],
     }),
+    createDocumentInstance: builder.mutation<
+      CreateDocumentInstanceResponse,
+      CreateDocumentInstanceRequest
+    >({
+      query: (instanceData) => ({
+        url: "documents/instances",
+        method: "POST",
+        body: instanceData,
+      }),
+      invalidatesTags: ["DocumentInstances"],
+    }),
+    getDocumentInstancesByTemplateId: builder.query<
+      GetDocumentInstancesByTemplateResponse,
+      { templateId: string }
+    >({
+      query: ({ templateId }) => ({
+        url: `documents/instances/by-template/${templateId}`,
+        method: "GET",
+      }),
+      providesTags: ["DocumentInstances"],
+    }),
+    updateDocumentInstance: builder.mutation<
+      UpdateDocumentInstanceResponse,
+      { id: string; data: UpdateDocumentInstanceRequest }
+    >({
+      query: ({ id, data }) => ({
+        url: `documents/instances/${id}`,
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: ["DocumentInstances"],
+    }),
   }),
 });
 
@@ -73,4 +110,7 @@ export const {
   useGetDocumentTemplateByIdQuery,
   useLazyGetDocumentTemplateByIdQuery,
   useUpdateDocumentTemplateMutation,
+  useCreateDocumentInstanceMutation,
+  useGetDocumentInstancesByTemplateIdQuery,
+  useUpdateDocumentInstanceMutation,
 } = documentsApi;

@@ -24,7 +24,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-hot-toast";
 import { Save, X, Loader2, Download } from "lucide-react";
 import { Extension, Node } from "@tiptap/core";
-import { useCreateDocumentInstanceMutation } from "@/lib/apis/documents";
+import {
+  useCreateDocumentInstanceMutation,
+  useGetDocumentInstancesByTemplateIdQuery,
+  useUpdateDocumentInstanceMutation,
+} from "@/lib/apis/documents";
 
 // --- Font Size Extension ---
 const FontSize = Extension.create({
@@ -126,6 +130,17 @@ export default function StudentTemplate({
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [createDocumentInstance, { isLoading: isCreating }] = useCreateDocumentInstanceMutation();
+  const [updateDocumentInstance, { isLoading: isUpdating }] = useUpdateDocumentInstanceMutation();
+  const [isSaved, setIsSaved] = useState(false);
+  const [savedDocument, setSavedDocument] = useState<any>(null);
+
+  const { data: instancesData } = useGetDocumentInstancesByTemplateIdQuery(
+    { templateId: templateData?.data?.id || "" },
+    { skip: !templateData?.data?.id }
+  );
+
+  const existingInstance = instancesData?.data?.[0];
+  const hasExistingInstance = !!existingInstance;
 
   const editor = useEditor({
     extensions: [
@@ -178,6 +193,14 @@ export default function StudentTemplate({
     else setTitle("");
   }, [templateData]);
 
+  useEffect(() => {
+    if (hasExistingInstance && existingInstance?.variableValues) {
+      setVariableValues(existingInstance.variableValues);
+    } else {
+      setVariableValues({});
+    }
+  }, [hasExistingInstance, existingInstance]);
+
   const convertVariablesToEditable = useCallback(
     (jsonContent: any) => {
       const traverse = (node: any): any => {
@@ -200,35 +223,55 @@ export default function StudentTemplate({
     if (!editor) return;
     if (open && templateData?.data) {
       try {
-        if (templateData.data.content) {
+        if (isSaved && savedDocument?.filledContent) {
+          editor.commands.setContent(savedDocument.filledContent);
+          editor.setEditable(false);
+        } else if (hasExistingInstance && existingInstance?.filledContent) {
+          editor.commands.setContent(existingInstance.filledContent);
+          editor.setEditable(false);
+          setIsSaved(true);
+          setSavedDocument(existingInstance);
+        } else if (templateData.data.content) {
           const content = convertVariablesToEditable(templateData.data.content);
           editor.commands.setContent(content);
+          editor.setEditable(true);
         } else editor.commands.clearContent();
       } catch (error) {
         console.error("Failed to load template content:", error);
         editor.commands.clearContent();
       }
     }
-  }, [open, editor, templateData, convertVariablesToEditable]);
+  }, [
+    open,
+    editor,
+    templateData,
+    convertVariablesToEditable,
+    isSaved,
+    savedDocument,
+    hasExistingInstance,
+    existingInstance,
+  ]);
 
   const handleSave = useCallback(async () => {
     try {
-      await createDocumentInstance({
+      const result = await createDocumentInstance({
         templateId: templateData?.data?.id,
         variableValues,
       }).unwrap();
+      setSavedDocument(result.data);
+      setIsSaved(true);
       toast.success("Document sauvegardé avec succès!");
-      onOpenChange(false);
     } catch (error) {
       console.error("Error saving document instance:", error);
       toast.error("Erreur lors de la sauvegarde du document");
     }
-  }, [createDocumentInstance, templateData?.data?.id, variableValues, onOpenChange]);
+  }, [createDocumentInstance, templateData?.data?.id, variableValues]);
 
   const handleDownloadPDF = useCallback(async () => {
     if (!editor) return;
     try {
-      const filledContent = editor.getHTML();
+      const filledContent =
+        isSaved && savedDocument?.filledContent ? savedDocument.filledContent : editor.getHTML();
       const tempDiv = document.createElement("div");
       tempDiv.innerHTML = filledContent;
       tempDiv.style.fontFamily = "Arial, sans-serif";
@@ -261,7 +304,7 @@ export default function StudentTemplate({
       console.error("Error downloading PDF:", error);
       toast.error("Erreur lors du téléchargement du PDF");
     }
-  }, [editor, title]);
+  }, [editor, title, isSaved, savedDocument]);
 
   const handleVariableChange = useCallback((variableName: string, value: string) => {
     setVariableValues((prev) => ({ ...prev, [variableName]: value }));
@@ -314,24 +357,28 @@ export default function StudentTemplate({
         <div className="flex items-center justify-between gap-4 px-8 py-5 border-t bg-white">
           <div className="text-sm text-gray-600 flex items-center gap-2">
             <div className="w-3 h-3 bg-amber-400 rounded-full"></div>
-            Remplissez les champs en surbrillance pour compléter le document
+            {isSaved
+              ? "Document sauvegardé. Vous pouvez maintenant le télécharger."
+              : "Remplissez les champs en surbrillance pour compléter le document"}
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Annuler
+              {isSaved ? "Fermer" : "Annuler"}
             </Button>
             <Button variant="outline" onClick={handleDownloadPDF}>
               <Download className="w-4 h-4 mr-2" />
               Télécharger PDF
             </Button>
-            <Button onClick={handleSave} disabled={isLoading || isCreating}>
-              {isLoading || isCreating ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4 mr-2" />
-              )}
-              Sauvegarder
-            </Button>
+            {!isSaved && (
+              <Button onClick={handleSave} disabled={isLoading || isCreating}>
+                {isLoading || isCreating ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                {hasExistingInstance ? "Modifier" : "Enregistrer"}
+              </Button>
+            )}
           </div>
         </div>
       </div>

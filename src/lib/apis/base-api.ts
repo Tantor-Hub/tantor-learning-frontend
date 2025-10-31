@@ -10,7 +10,6 @@ export const baseQuery = fetchBaseQuery({
 
     // Get token from cookies
     const { token } = getValidAuthTokens();
-
     if (token) {
       headers.set("x-connexion-tantor", `Bearer ${token}`);
     }

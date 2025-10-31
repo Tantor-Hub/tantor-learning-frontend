@@ -1,21 +1,35 @@
 "use client";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
-import { AfterTab } from "./after";
-import { BeforeTab } from "./before";
-import { DuringTab } from "./during";
+import { AfterTab } from "./tabs/after";
+import { BeforeTab } from "./tabs/before";
+import { DuringTab } from "./tabs/during";
+import { FilledDocumentsList } from "./components/FilledDocumentsList";
 import { useSelectedSession } from "@/hooks/use-selected-session";
 import { useSessionAlert } from "@/hooks/use-session-alert";
 import { SessionAlert } from "@/components/shared/session-alert";
-import { useGetDocumentsTemplatesBySessionIdQuery } from "@/lib/apis/documents";
+import { useLazyGetDocumentTemplateByIdQuery } from "@/lib/apis/documents";
+import StudentTemplate from "./student-template";
+import toast from "react-hot-toast";
 
 export default function Page() {
   const selectedSessionId = useSelectedSession();
   const { shouldShowAlert, isLoading: alertLoading } = useSessionAlert();
-  const { data: templatesData } = useGetDocumentsTemplatesBySessionIdQuery({
-    sessionId: selectedSessionId || "",
-  });
+  const [getTemplateById, { data: templateData, isLoading: templateLoading }] =
+    useLazyGetDocumentTemplateByIdQuery();
+  const [studentTemplateOpen, setStudentTemplateOpen] = useState(false);
+
+  const handleFillDocument = async (templateId: string) => {
+    try {
+      await getTemplateById({ id: templateId }).unwrap();
+      setStudentTemplateOpen(true);
+    } catch (error) {
+      console.error("Failed to load template:", error);
+      toast.error("Erreur lors du chargement du modèle");
+    }
+  };
 
   if (!selectedSessionId) {
     return null;
@@ -56,31 +70,11 @@ export default function Page() {
                     <TabsTrigger value="remplir">Document à remplir</TabsTrigger>
                   </TabsList>
                   <TabsContent value="remplir">
-                    <div className="space-y-4">
-                      {templatesData?.data
-                        ?.filter((template) => template.type === "before")
-                        .map((template) => (
-                          <div
-                            key={template.id}
-                            className="p-4 border rounded-lg bg-white shadow-sm"
-                          >
-                            <h3 className="font-medium mb-2">{template.title}</h3>
-                            <p className="text-sm text-gray-600 mb-4">
-                              {template.variables?.length || 0} variable(s) à remplir
-                            </p>
-                            <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                              Remplir le document
-                            </button>
-                          </div>
-                        ))}
-                      {(!templatesData?.data ||
-                        templatesData.data.filter((template) => template.type === "before")
-                          .length === 0) && (
-                        <p className="text-center text-gray-500 py-8">
-                          Aucun document à remplir pour cette période
-                        </p>
-                      )}
-                    </div>
+                    <FilledDocumentsList
+                      sessionId={String(selectedSessionId)}
+                      type="before"
+                      onFillDocument={handleFillDocument}
+                    />
                   </TabsContent>
                   <TabsContent value="televerser">
                     <BeforeTab sessionId={String(selectedSessionId)} />
@@ -94,31 +88,11 @@ export default function Page() {
                     <TabsTrigger value="remplir">Document à remplir</TabsTrigger>
                   </TabsList>
                   <TabsContent value="remplir">
-                    <div className="space-y-4">
-                      {templatesData?.data
-                        ?.filter((template) => template.type === "during")
-                        .map((template) => (
-                          <div
-                            key={template.id}
-                            className="p-4 border rounded-lg bg-white shadow-sm"
-                          >
-                            <h3 className="font-medium mb-2">{template.title}</h3>
-                            <p className="text-sm text-gray-600 mb-4">
-                              {template.variables?.length || 0} variable(s) à remplir
-                            </p>
-                            <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                              Remplir le document
-                            </button>
-                          </div>
-                        ))}
-                      {(!templatesData?.data ||
-                        templatesData.data.filter((template) => template.type === "during")
-                          .length === 0) && (
-                        <p className="text-center text-gray-500 py-8">
-                          Aucun document à remplir pour cette période
-                        </p>
-                      )}
-                    </div>
+                    <FilledDocumentsList
+                      sessionId={String(selectedSessionId)}
+                      type="during"
+                      onFillDocument={handleFillDocument}
+                    />
                   </TabsContent>
                   <TabsContent value="televerser">
                     <DuringTab sessionId={String(selectedSessionId)} />
@@ -132,31 +106,11 @@ export default function Page() {
                     <TabsTrigger value="remplir">Document à remplir</TabsTrigger>
                   </TabsList>
                   <TabsContent value="remplir">
-                    <div className="space-y-4">
-                      {templatesData?.data
-                        ?.filter((template) => template.type === "after")
-                        .map((template) => (
-                          <div
-                            key={template.id}
-                            className="p-4 border rounded-lg bg-white shadow-sm"
-                          >
-                            <h3 className="font-medium mb-2">{template.title}</h3>
-                            <p className="text-sm text-gray-600 mb-4">
-                              {template.variables?.length || 0} variable(s) à remplir
-                            </p>
-                            <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                              Remplir le document
-                            </button>
-                          </div>
-                        ))}
-                      {(!templatesData?.data ||
-                        templatesData.data.filter((template) => template.type === "after")
-                          .length === 0) && (
-                        <p className="text-center text-gray-500 py-8">
-                          Aucun document à remplir pour cette période
-                        </p>
-                      )}
-                    </div>
+                    <FilledDocumentsList
+                      sessionId={String(selectedSessionId)}
+                      type="after"
+                      onFillDocument={handleFillDocument}
+                    />
                   </TabsContent>
                   <TabsContent value="televerser">
                     <AfterTab sessionId={String(selectedSessionId)} />
@@ -167,6 +121,14 @@ export default function Page() {
           </Tabs>
         </>
       )}
+
+      <StudentTemplate
+        open={studentTemplateOpen}
+        onOpenChange={setStudentTemplateOpen}
+        templateData={templateData}
+        isLoading={templateLoading}
+        sessionId={String(selectedSessionId)}
+      />
     </div>
   );
 }

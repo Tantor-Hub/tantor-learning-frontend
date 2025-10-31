@@ -11,11 +11,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Download, Trash2, Ellipsis, Upload, Edit, FileCheck } from "lucide-react";
+import { Download, Trash2, Ellipsis, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,9 +32,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useListStudentDocBySessionIdQuery } from "@/lib/apis/student/document-api";
-import { useGetTrainingSessionByIdQuery } from "@/lib/apis/training-sessions";
-import { Loading } from "@/components/shared/loading";
 import { Skeleton } from "@/components/ui/skeleton";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
@@ -43,38 +39,33 @@ import { selectCurrentUser, selectToken } from "@/features/auth/auth-slice";
 
 type ActionType = "download" | "view" | "edit" | "share" | "delete";
 
-type DocumentType =
-  | "CARTE_IDENTITE"
-  | "CONTRAT_OU_CONVENTION"
-  | "JUSTIFICATIF_DOMICILE"
-  | "ANALYSE_BESOIN"
-  | "FORMULAIRE_HANDICAP"
-  | "PROGRAMME"
-  | "CONDITIONS_VENTE"
-  | "REGLEMENT_INTERIEUR"
-  | "CGV"
-  | "FICHE_CONTROLE_INITIALE";
+interface DocumentTableProps {
+  sessionId: string;
+  group: "before" | "during" | "after";
+  documentTypes: Record<string, string>;
+  requiredDocuments: string[];
+  documents: any[];
+  isLoading: boolean;
+  onRefetch: () => void;
+  apiEndpoint: string;
+}
 
-export function BeforeTab({ sessionId }: { sessionId: string }) {
+export function DocumentTable({
+  sessionId,
+  group,
+  documentTypes,
+  requiredDocuments,
+  documents,
+  isLoading,
+  onRefetch,
+  apiEndpoint,
+}: DocumentTableProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedType, setSelectedType] = useState<DocumentType>("CARTE_IDENTITE");
+  const [selectedType, setSelectedType] = useState<string>(Object.keys(documentTypes)[0]);
   const [isUploading, setIsUploading] = useState(false);
   const currentUser = useSelector(selectCurrentUser);
   const token = useSelector(selectToken);
-
-  // Get session data to show required documents
-  const { data: sessionData } = useGetTrainingSessionByIdQuery({ id: sessionId });
-
-  const {
-    data: documents,
-    isLoading,
-    refetch,
-  } = useListStudentDocBySessionIdQuery({
-    id_session: sessionId,
-    group: "before",
-    id_student: currentUser?.id || "",
-  });
 
   if (isLoading) {
     return (
@@ -109,7 +100,7 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
     );
   }
 
-  const documentList = documents?.data?.list || [];
+  const documentList = documents || [];
 
   const handleAction = (action: ActionType, documentId: number, documentName: string): void => {
     console.log(`Action: ${action} on document: ${documentName}`);
@@ -133,7 +124,7 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
 
   const handleAddDocument = () => {
     setSelectedFile(null);
-    setSelectedType("CARTE_IDENTITE");
+    setSelectedType(Object.keys(documentTypes)[0]);
     setIsDialogOpen(true);
   };
 
@@ -143,12 +134,12 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
     }
   };
 
-  const handleTypeChange = (value: DocumentType) => {
+  const handleTypeChange = (value: string) => {
     setSelectedType(value);
   };
 
   const handleSubmit = async () => {
-    toast.loading("Envoie en cours...");
+    toast.loading("Envoi en cours...");
     if (!selectedFile) {
       toast.error("Veuillez sélectionner un fichier");
       return;
@@ -162,29 +153,25 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
     formData.append("description", selectedFile.name);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/sessions/session/document/before`,
-        {
-          method: "PUT",
-          body: formData,
-          headers: {
-            "x-connexion-tantor": `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}${apiEndpoint}`, {
+        method: "PUT",
+        body: formData,
+        headers: {
+          "x-connexion-tantor": `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
         toast.error("Échec de l'upload du document");
-        // throw new Error(errorData.message || "Upload failed");
+      } else {
+        toast.dismiss();
+        toast.success(`Document ${selectedFile.name} uploadé avec succès!`);
+        await onRefetch();
+        setIsDialogOpen(false);
+        setSelectedFile(null);
+        setSelectedType(Object.keys(documentTypes)[0]);
       }
-
-      toast.dismiss();
-      toast.success(`Document ${selectedFile.name} uploadé avec succès!`);
-      await refetch();
-      setIsDialogOpen(false);
-      setSelectedFile(null);
-      setSelectedType("CARTE_IDENTITE");
     } catch (error) {
       toast.dismiss();
       console.error("Error uploading document:", error);
@@ -202,7 +189,7 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
   const handleCancel = () => {
     setIsDialogOpen(false);
     setSelectedFile(null);
-    setSelectedType("CARTE_IDENTITE");
+    setSelectedType(Object.keys(documentTypes)[0]);
   };
 
   const getFileExtension = (url: string) => {
@@ -215,26 +202,8 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
   };
 
   const translateDocumentKey = (key: string) => {
-    const translations: Record<string, string> = {
-      CARTE_IDENTITE: "Carte d'identité",
-      CONTRAT_OU_CONVENTION: "Contrat ou convention",
-      JUSTIFICATIF_DOMICILE: "Justificatif de domicile",
-      ANALYSE_BESOIN: "Analyse de besoin",
-      FORMULAIRE_HANDICAP: "Formulaire handicap",
-      PROGRAMME: "Programme",
-      CONDITIONS_VENTE: "Conditions de vente",
-      REGLEMENT_INTERIEUR: "Règlement intérieur",
-      CGV: "Conditions générales de vente",
-      FICHE_CONTROLE_INITIALE: "Fiche contrôle initiale",
-      QUESTIONNAIRE_SATISFACTION: "Questionnaire de satisfaction",
-      PAIEMENT: "Paiement",
-      DOCUMENTS_FINANCEUR: "Documents financeur",
-      FICHE_CONTROLE_FINAL: "Fiche contrôle final",
-    };
-    return translations[key] || key;
+    return documentTypes[key] || key;
   };
-
-  const requiredDocuments = sessionData?.data?.required_document_before || [];
 
   return (
     <div className="mx-auto">
@@ -312,10 +281,6 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
                             </DropdownMenuItem>
                           </>
                         )}
-                        <DropdownMenuItem>
-                          <FileCheck className="mr-2 h-4 w-4" />
-                          Compléter
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -366,10 +331,6 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
                         <Trash2 className="mr-2 h-4 w-4" />
                         Supprimer
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <FileCheck className="mr-2 h-4 w-4" />
-                        Compléter
-                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -412,16 +373,11 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
                   <SelectValue placeholder="Sélectionner le type de document" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CARTE_IDENTITE">Carte d'identité</SelectItem>
-                  <SelectItem value="CONTRAT_OU_CONVENTION">Contrat ou convention</SelectItem>
-                  <SelectItem value="JUSTIFICATIF_DOMICILE">Justificatif de domicile</SelectItem>
-                  <SelectItem value="ANALYSE_BESOIN">Analyse de besoin</SelectItem>
-                  <SelectItem value="FORMULAIRE_HANDICAP">Formulaire handicap</SelectItem>
-                  <SelectItem value="PROGRAMME">Programme</SelectItem>
-                  <SelectItem value="CONDITIONS_VENTE">Conditions de vente</SelectItem>
-                  <SelectItem value="REGLEMENT_INTERIEUR">Règlement intérieur</SelectItem>
-                  <SelectItem value="CGV">Conditions générales de vente</SelectItem>
-                  <SelectItem value="FICHE_CONTROLE_INITIALE">Fiche contrôle initiale</SelectItem>
+                  {Object.entries(documentTypes).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
