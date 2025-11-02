@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   Accordion,
   AccordionContent,
@@ -13,23 +14,50 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   useGetSessionByIdQuery,
   useUpdateSessionMutation,
   useCreateSurveyQuestionMutation,
   useGetSurveysBySessionQuery,
   useDeleteSurveyQuestionMutation,
 } from "@/lib/apis/secretary/session-secretary-api";
+import {
+  useCreateDocumentTemplateMutation,
+  useGetDocumentTemplatesQuery,
+  useGetDocumentsTemplatesBySessionIdQuery,
+  useGetDocumentTemplateByIdQuery,
+  useLazyGetDocumentTemplateByIdQuery,
+  useUpdateDocumentTemplateMutation,
+} from "@/lib/apis/documents";
 
 import { toast } from "react-hot-toast";
-import { Loader2, Save, Plus, FileText, Trash2 } from "lucide-react";
+import { Loader2, Save, Plus, FileText, Trash2, FileDown, Edit } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SurveyQuestionBuilder } from "./components/survey-question-builder";
 import { Badge } from "@/components/ui/badge";
+import DocumentTemplateBuilder from "./components/document-template-builder";
+
+interface Placeholder {
+  key: string;
+  label: string;
+  value: string;
+}
+
+interface SelectedDocument {
+  value: string;
+  placeholders: Placeholder[];
+}
 
 interface SelectedDocuments {
-  before: string[];
-  during: string[];
-  after: string[];
+  before: SelectedDocument[];
+  during: SelectedDocument[];
+  after: SelectedDocument[];
 }
 
 const DOCUMENT_CATEGORIES = {
@@ -67,39 +95,71 @@ export default function Documents() {
   console.log(sessionId);
   const { data: session, isLoading: sessionLoading } = useGetSessionByIdQuery({ id: sessionId });
   const [updateSession, { isLoading: updating }] = useUpdateSessionMutation();
-  const [createSurvey, { isLoading: creatingSurvey }] = useCreateSurveyQuestionMutation();
-  const [deleteSurvey] = useDeleteSurveyQuestionMutation();
-  const { data: surveysData, isLoading: surveysLoading } = useGetSurveysBySessionQuery({
-    sessionId,
-  });
+  const [createDocumentTemplate, { isLoading: creatingTemplate }] =
+    useCreateDocumentTemplateMutation();
+  const [updateDocumentTemplate, { isLoading: updatingTemplate }] =
+    useUpdateDocumentTemplateMutation();
+  const { data: templatesData, isLoading: templatesLoading } =
+    useGetDocumentsTemplatesBySessionIdQuery({
+      sessionId,
+    });
 
   const [selectedDocuments, setSelectedDocuments] = useState<SelectedDocuments>({
-    before: session?.data?.required_document_before || [],
-    during: session?.data?.required_document_during || [],
-    after: session?.data?.required_document_after || [],
+    before: (session?.data?.required_document_before || []).map((value) => ({
+      value,
+      placeholders: [],
+    })),
+    during: (session?.data?.required_document_during || []).map((value) => ({
+      value,
+      placeholders: [],
+    })),
+    after: (session?.data?.required_document_after || []).map((value) => ({
+      value,
+      placeholders: [],
+    })),
   });
 
   React.useEffect(() => {
     if (session?.data) {
       setSelectedDocuments({
-        before: session.data.required_document_before || [],
-        during: session.data.required_document_during || [],
-        after: session.data.required_document_after || [],
+        before: (session.data.required_document_before || []).map((value) => ({
+          value,
+          placeholders: [],
+        })),
+        during: (session.data.required_document_during || []).map((value) => ({
+          value,
+          placeholders: [],
+        })),
+        after: (session.data.required_document_after || []).map((value) => ({
+          value,
+          placeholders: [],
+        })),
       });
     }
   }, [session]);
 
   const [surveyBuilderOpen, setSurveyBuilderOpen] = React.useState(false);
+  const [documentTemplateBuilderOpen, setDocumentTemplateBuilderOpen] = React.useState(false);
   const [selectedCategory, setSelectedCategory] = React.useState<"before" | "during" | "after">(
     "before"
   );
+  const [editingTemplate, setEditingTemplate] = React.useState<{
+    id: string | null;
+    title?: string;
+    content?: any;
+    variables?: string[];
+  }>({ id: null });
+
+  // Use lazy query to fetch template data only when needed
+  const [getTemplateById, { data: editingTemplateData, isLoading: editingTemplateLoading }] =
+    useLazyGetDocumentTemplateByIdQuery();
 
   const handleDocumentToggle = (category: "before" | "during" | "after", documentValue: string) => {
     setSelectedDocuments((prev) => ({
       ...prev,
-      [category]: prev[category].includes(documentValue)
-        ? prev[category].filter((doc) => doc !== documentValue)
-        : [...prev[category], documentValue],
+      [category]: prev[category].some((doc) => doc.value === documentValue)
+        ? prev[category].filter((doc) => doc.value !== documentValue)
+        : [...prev[category], { value: documentValue, placeholders: [] }],
     }));
   };
 
@@ -107,9 +167,9 @@ export default function Documents() {
     try {
       await updateSession({
         id: sessionId,
-        required_document_before: selectedDocuments.before,
-        required_document_during: selectedDocuments.during,
-        required_document_after: selectedDocuments.after,
+        required_document_before: selectedDocuments.before.map((doc) => doc.value),
+        required_document_during: selectedDocuments.during.map((doc) => doc.value),
+        required_document_after: selectedDocuments.after.map((doc) => doc.value),
       }).unwrap();
       toast.success("Documents requis mis à jour avec succès");
     } catch (error) {
@@ -118,38 +178,75 @@ export default function Documents() {
     }
   };
 
-  const handleCreateSurvey = async (title: string, questions: any[]) => {
-    try {
-      await createSurvey({
-        title,
-        id_session: sessionId,
-        categories: selectedCategory,
-        questions,
-      }).unwrap();
-      toast.success("Questionnaire créé avec succès");
-      setSurveyBuilderOpen(false);
-    } catch (error) {
-      toast.error("Erreur lors de la création du questionnaire");
-      console.error(error);
-    }
-  };
-
-  const handleDeleteSurvey = async (surveyId: string) => {
-    try {
-      await deleteSurvey({ id: surveyId }).unwrap();
-      toast.success("Questionnaire supprimé avec succès");
-    } catch (error) {
-      toast.error("Erreur lors de la suppression du questionnaire");
-      console.error(error);
-    }
-  };
-
-  const openSurveyBuilder = (category: "before" | "during" | "after") => {
+  const openDocumentTemplateBuilder = async (
+    category: "before" | "during" | "after",
+    templateId?: string
+  ) => {
     setSelectedCategory(category);
-    setSurveyBuilderOpen(true);
+
+    if (templateId) {
+      // Set editing state first
+      setEditingTemplate({ id: templateId });
+
+      try {
+        // Fetch template data
+        const result = await getTemplateById({ id: templateId }).unwrap();
+        console.log("Fetched template:", result);
+
+        // Open dialog after data is fetched
+        setDocumentTemplateBuilderOpen(true);
+      } catch (error) {
+        toast.error("Erreur lors du chargement du modèle");
+        console.error(error);
+        setEditingTemplate({ id: null });
+      }
+    } else {
+      // For new template, open immediately
+      setEditingTemplate({ id: null });
+      setDocumentTemplateBuilderOpen(true);
+    }
   };
 
-  const surveys = surveysData?.data?.surveys || [];
+  const handleCreateDocumentTemplate = async (template: {
+    title: string;
+    content: any;
+    variables: string[];
+    sessionId: string;
+    type: "before" | "during" | "after";
+  }) => {
+    try {
+      if (editingTemplate.id) {
+        await updateDocumentTemplate({
+          id: editingTemplate.id,
+          title: template.title,
+          content: template.content,
+          variables: template.variables,
+        }).unwrap();
+        toast.success("Modèle de document mis à jour avec succès !");
+      } else {
+        await createDocumentTemplate({
+          title: template.title,
+          content: template.content,
+          sessionId: template.sessionId,
+          type: template.type,
+          variables: template.variables,
+        }).unwrap();
+        toast.success(
+          "Modèle de document sauvegardé avec succès ! Vous pouvez continuer à éditer."
+        );
+      }
+      setEditingTemplate({ id: null });
+      // Keep the dialog open to allow continued editing
+    } catch (error) {
+      toast.error("Erreur lors de la sauvegarde du modèle");
+      console.error(error);
+    }
+  };
+
+  const handleDialogClose = () => {
+    setDocumentTemplateBuilderOpen(false);
+    setEditingTemplate({ id: null });
+  };
 
   if (sessionLoading) {
     return (
@@ -229,7 +326,6 @@ export default function Documents() {
     );
   }
 
-  console.log(JSON.stringify(session));
   return (
     <div className="space-y-6">
       <div>
@@ -246,7 +342,61 @@ export default function Documents() {
               <div className="space-y-4">
                 {/* Documents Section */}
                 <div>
-                  <h4 className="text-sm font-medium mb-3">Documents requis</h4>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-sm font-medium">Documents requis</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openDocumentTemplateBuilder("before")}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Créer un modèle
+                    </Button>
+                  </div>
+
+                  {/* Document Templates Section */}
+                  <div className="mb-4">
+                    <h5 className="text-sm font-medium mb-2">Modèles de documents créés</h5>
+                    <div className="space-y-2">
+                      {templatesData?.data
+                        ?.filter((template) => template.type === "before")
+                        .map((template) => (
+                          <div
+                            key={template.id}
+                            className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <FileText className="w-4 h-4 text-green-600" />
+                              <div>
+                                <p className="text-sm font-medium">{template.title}</p>
+                                <p className="text-xs text-gray-500">
+                                  {template.variables?.length || 0} variable(s)
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openDocumentTemplateBuilder("before", template.id)}
+                                title="Edit template"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      {(!templatesData?.data ||
+                        templatesData.data.filter((template) => template.type === "before")
+                          .length === 0) && (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          Aucun modèle créé pour cette catégorie
+                        </p>
+                      )}
+                    </div>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {DOCUMENT_CATEGORIES.before.map((document) => (
                       <div
@@ -255,7 +405,9 @@ export default function Documents() {
                       >
                         <Checkbox
                           id={document.value}
-                          checked={selectedDocuments.before.includes(document.value)}
+                          checked={selectedDocuments.before.some(
+                            (doc) => doc.value === document.value
+                          )}
                           onCheckedChange={() => handleDocumentToggle("before", document.value)}
                         />
                         <Label
@@ -264,57 +416,40 @@ export default function Documents() {
                         >
                           {document.label}
                         </Label>
+                        {selectedDocuments.before.some((doc) => doc.value === document.value) && (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <FileDown className="w-4 h-4 mr-2" />
+                                Configurer
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>
+                                  Configurer les placeholders pour {document.label}
+                                </DialogTitle>
+                              </DialogHeader>
+                              <PlaceholderConfigurator
+                                document={
+                                  selectedDocuments.before.find(
+                                    (doc) => doc.value === document.value
+                                  )!
+                                }
+                                onUpdate={(placeholders) => {
+                                  setSelectedDocuments((prev) => ({
+                                    ...prev,
+                                    before: prev.before.map((doc) =>
+                                      doc.value === document.value ? { ...doc, placeholders } : doc
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                        )}
                       </div>
                     ))}
-                  </div>
-                </div>
-
-                {/* Surveys Section */}
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-sm font-medium">Questionnaires</h4>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openSurveyBuilder("before")}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Ajouter un questionnaire
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {surveys
-                      .filter((survey) => survey.categories === "before")
-                      .map((survey) => (
-                        <div
-                          key={survey.id}
-                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <FileText className="w-4 h-4 text-blue-600" />
-                            <div>
-                              <p className="text-sm font-medium">{survey.title}</p>
-                              <p className="text-xs text-gray-500">
-                                {survey.questions?.length || 0} question(s)
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteSurvey(survey.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    {surveys.filter((survey) => survey.categories === "before").length === 0 && (
-                      <p className="text-sm text-gray-500 text-center py-4">
-                        Aucun questionnaire créé pour cette catégorie
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
@@ -327,7 +462,60 @@ export default function Documents() {
               <div className="space-y-4">
                 {/* Documents Section */}
                 <div>
-                  <h4 className="text-sm font-medium mb-3">Documents requis</h4>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-sm font-medium">Documents requis</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openDocumentTemplateBuilder("during")}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Créer un modèle
+                    </Button>
+                  </div>
+
+                  {/* Document Templates Section */}
+                  <div className="mb-4">
+                    <h5 className="text-sm font-medium mb-2">Modèles de documents créés</h5>
+                    <div className="space-y-2">
+                      {templatesData?.data
+                        ?.filter((template) => template.type === "during")
+                        .map((template) => (
+                          <div
+                            key={template.id}
+                            className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <FileText className="w-4 h-4 text-green-600" />
+                              <div>
+                                <p className="text-sm font-medium">{template.title}</p>
+                                <p className="text-xs text-gray-500">
+                                  {template.variables?.length || 0} variable(s)
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openDocumentTemplateBuilder("during", template.id)}
+                              title="Edit template"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      {(!templatesData?.data ||
+                        templatesData.data.filter((template) => template.type === "during")
+                          .length === 0) && (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          Aucun modèle créé pour cette catégorie
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {DOCUMENT_CATEGORIES.during.map((document) => (
                       <div
@@ -336,7 +524,9 @@ export default function Documents() {
                       >
                         <Checkbox
                           id={document.value}
-                          checked={selectedDocuments.during.includes(document.value)}
+                          checked={selectedDocuments.during.some(
+                            (doc) => doc.value === document.value
+                          )}
                           onCheckedChange={() => handleDocumentToggle("during", document.value)}
                         />
                         <Label
@@ -345,57 +535,40 @@ export default function Documents() {
                         >
                           {document.label}
                         </Label>
+                        {selectedDocuments.during.some((doc) => doc.value === document.value) && (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <FileDown className="w-4 h-4 mr-2" />
+                                Configurer
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>
+                                  Configurer les placeholders pour {document.label}
+                                </DialogTitle>
+                              </DialogHeader>
+                              <PlaceholderConfigurator
+                                document={
+                                  selectedDocuments.during.find(
+                                    (doc) => doc.value === document.value
+                                  )!
+                                }
+                                onUpdate={(placeholders) => {
+                                  setSelectedDocuments((prev) => ({
+                                    ...prev,
+                                    during: prev.during.map((doc) =>
+                                      doc.value === document.value ? { ...doc, placeholders } : doc
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                        )}
                       </div>
                     ))}
-                  </div>
-                </div>
-
-                {/* Surveys Section */}
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-sm font-medium">Questionnaires</h4>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openSurveyBuilder("during")}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Ajouter un questionnaire
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {surveys
-                      .filter((survey) => survey.categories === "during")
-                      .map((survey) => (
-                        <div
-                          key={survey.id}
-                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <FileText className="w-4 h-4 text-blue-600" />
-                            <div>
-                              <p className="text-sm font-medium">{survey.title}</p>
-                              <p className="text-xs text-gray-500">
-                                {survey.questions?.length || 0} question(s)
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteSurvey(survey.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    {surveys.filter((survey) => survey.categories === "during").length === 0 && (
-                      <p className="text-sm text-gray-500 text-center py-4">
-                        Aucun questionnaire créé pour cette catégorie
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
@@ -408,7 +581,60 @@ export default function Documents() {
               <div className="space-y-4">
                 {/* Documents Section */}
                 <div>
-                  <h4 className="text-sm font-medium mb-3">Documents requis</h4>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-sm font-medium">Documents requis</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openDocumentTemplateBuilder("after")}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Créer un modèle
+                    </Button>
+                  </div>
+
+                  {/* Document Templates Section */}
+                  <div className="mb-4">
+                    <h5 className="text-sm font-medium mb-2">Modèles de documents créés</h5>
+                    <div className="space-y-2">
+                      {templatesData?.data
+                        ?.filter((template) => template.type === "after")
+                        .map((template) => (
+                          <div
+                            key={template.id}
+                            className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <FileText className="w-4 h-4 text-green-600" />
+                              <div>
+                                <p className="text-sm font-medium">{template.title}</p>
+                                <p className="text-xs text-gray-500">
+                                  {template.variables?.length || 0} variable(s)
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openDocumentTemplateBuilder("after", template.id)}
+                              title="Edit template"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      {(!templatesData?.data ||
+                        templatesData.data.filter((template) => template.type === "after")
+                          .length === 0) && (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          Aucun modèle créé pour cette catégorie
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {DOCUMENT_CATEGORIES.after.map((document) => (
                       <div
@@ -417,7 +643,9 @@ export default function Documents() {
                       >
                         <Checkbox
                           id={document.value}
-                          checked={selectedDocuments.after.includes(document.value)}
+                          checked={selectedDocuments.after.some(
+                            (doc) => doc.value === document.value
+                          )}
                           onCheckedChange={() => handleDocumentToggle("after", document.value)}
                         />
                         <Label
@@ -426,57 +654,40 @@ export default function Documents() {
                         >
                           {document.label}
                         </Label>
+                        {selectedDocuments.after.some((doc) => doc.value === document.value) && (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <FileDown className="w-4 h-4 mr-2" />
+                                Configurer
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>
+                                  Configurer les placeholders pour {document.label}
+                                </DialogTitle>
+                              </DialogHeader>
+                              <PlaceholderConfigurator
+                                document={
+                                  selectedDocuments.after.find(
+                                    (doc) => doc.value === document.value
+                                  )!
+                                }
+                                onUpdate={(placeholders) => {
+                                  setSelectedDocuments((prev) => ({
+                                    ...prev,
+                                    after: prev.after.map((doc) =>
+                                      doc.value === document.value ? { ...doc, placeholders } : doc
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                        )}
                       </div>
                     ))}
-                  </div>
-                </div>
-
-                {/* Surveys Section */}
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-sm font-medium">Questionnaires</h4>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openSurveyBuilder("after")}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Ajouter un questionnaire
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {surveys
-                      .filter((survey) => survey.categories === "after")
-                      .map((survey) => (
-                        <div
-                          key={survey.id}
-                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <FileText className="w-4 h-4 text-blue-600" />
-                            <div>
-                              <p className="text-sm font-medium">{survey.title}</p>
-                              <p className="text-xs text-gray-500">
-                                {survey.questions?.length || 0} question(s)
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteSurvey(survey.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    {surveys.filter((survey) => survey.categories === "after").length === 0 && (
-                      <p className="text-sm text-gray-500 text-center py-4">
-                        Aucun questionnaire créé pour cette catégorie
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
@@ -507,14 +718,87 @@ export default function Documents() {
         </div>
       </div>
 
-      {/* Survey Question Builder */}
-      <SurveyQuestionBuilder
-        open={surveyBuilderOpen}
-        onOpenChange={setSurveyBuilderOpen}
+      {/* Document Template Builder */}
+      <DocumentTemplateBuilder
+        open={documentTemplateBuilderOpen}
+        onOpenChange={handleDialogClose}
+        onSave={handleCreateDocumentTemplate}
         sessionId={sessionId}
-        category={selectedCategory}
-        onSuccess={handleCreateSurvey}
+        type={selectedCategory}
+        templateData={editingTemplateData} // Pass the actual data from the response
+        isLoading={editingTemplateLoading}
+        isEditing={!!editingTemplate.id}
+        templates={templatesData?.data || []}
       />
+    </div>
+  );
+}
+
+interface PlaceholderConfiguratorProps {
+  document: SelectedDocument;
+  onUpdate: (placeholders: Placeholder[]) => void;
+}
+
+function PlaceholderConfigurator({ document, onUpdate }: PlaceholderConfiguratorProps) {
+  const [placeholders, setPlaceholders] = useState<Placeholder[]>(document.placeholders);
+
+  const addPlaceholder = () => {
+    setPlaceholders([...placeholders, { key: "", label: "", value: "" }]);
+  };
+
+  const updatePlaceholder = (index: number, field: keyof Placeholder, value: string) => {
+    const updated = placeholders.map((p, i) => (i === index ? { ...p, [field]: value } : p));
+    setPlaceholders(updated);
+    onUpdate(updated);
+  };
+
+  const removePlaceholder = (index: number) => {
+    const updated = placeholders.filter((_, i) => i !== index);
+    setPlaceholders(updated);
+    onUpdate(updated);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h4 className="text-sm font-medium">Placeholders</h4>
+        <Button type="button" variant="outline" size="sm" onClick={addPlaceholder}>
+          <Plus className="w-4 h-4 mr-2" />
+          Ajouter
+        </Button>
+      </div>
+      <div className="space-y-2">
+        {placeholders.map((placeholder, index) => (
+          <div key={index} className="flex items-center space-x-2">
+            <Input
+              placeholder="Clé (ex: {{nom}})"
+              value={placeholder.key}
+              onChange={(e) => updatePlaceholder(index, "key", e.target.value)}
+              className="flex-1"
+            />
+            <Input
+              placeholder="Label"
+              value={placeholder.label}
+              onChange={(e) => updatePlaceholder(index, "label", e.target.value)}
+              className="flex-1"
+            />
+            <Input
+              placeholder="Valeur par défaut"
+              value={placeholder.value}
+              onChange={(e) => updatePlaceholder(index, "value", e.target.value)}
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => removePlaceholder(index)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

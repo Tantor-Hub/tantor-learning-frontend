@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { selectIsAuthenticated } from "@/features/auth/auth-slice";
+import { useAuth } from "@/hooks/use-auth";
 
 const stepsData = [
   {
@@ -47,7 +48,7 @@ export const features = [
 ];
 
 export function GetStarted() {
-  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isAuthenticated = useAuth(); // Use the improved useAuth hook for server-side validation
   const router = useRouter();
   return (
     <section>

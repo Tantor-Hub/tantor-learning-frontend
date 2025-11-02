@@ -1,21 +1,19 @@
 import { fetchBaseQuery, createApi } from "@reduxjs/toolkit/query/react";
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query";
-import { tokenStorage } from "@/features/token-storage";
 import { getValidAuthTokens } from "@/lib/cookies";
 
 // Base query with authentication
 export const baseQuery = fetchBaseQuery({
   baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
-  // credentials: 'include',
   prepareHeaders: (headers) => {
     headers.set("Content-Type", "application/json");
 
     // Get token from cookies
     const { token } = getValidAuthTokens();
-
     if (token) {
       headers.set("x-connexion-tantor", `Bearer ${token}`);
     }
+
     return headers;
   },
 });
@@ -25,52 +23,19 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
   api,
   extraOptions
 ) => {
-  // Check if we should refresh the token before making the request
-  if (tokenStorage.shouldRefreshToken() && !tokenStorage.isRefreshTokenExpired()) {
-    const tokens = tokenStorage.get();
-    if (tokens?.refreshToken) {
-      try {
-        const refreshResult = await baseQuery(
-          {
-            url: "users/user/refresh",
-            method: "PUT",
-            body: { refresh_token: tokens.refreshToken },
-          },
-          api,
-          extraOptions
-        );
-
-        if (refreshResult.data) {
-          const newTokens = refreshResult.data as {
-            token: string;
-            refreshToken?: string;
-          };
-
-          // Update tokens in storage
-          tokenStorage.save({
-            accessToken: newTokens.token,
-            refreshToken: newTokens.refreshToken || tokens.refreshToken,
-          });
-        }
-      } catch (error) {
-        console.error("Token refresh failed:", error);
-      }
-    }
-  }
-
   let result = await baseQuery(args, api, extraOptions);
 
   if (result.error && result.error.status === 401) {
     // Token expired, try to refresh
-    const tokens = tokenStorage.get();
+    const { refreshToken } = getValidAuthTokens();
 
-    if (tokens?.refreshToken && !tokenStorage.isRefreshTokenExpired()) {
+    if (refreshToken) {
       try {
         const refreshResult = await baseQuery(
           {
-            url: "auth/refresh",
+            url: "users/auth/refresh",
             method: "POST",
-            body: { refreshToken: tokens.refreshToken },
+            body: { refreshToken },
           },
           api,
           extraOptions
@@ -78,32 +43,36 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 
         if (refreshResult.data) {
           const newTokens = refreshResult.data as {
-            token: string;
-            refreshToken?: string;
+            auth_token: string;
+            refresh_token?: string;
           };
 
-          // Update tokens
-          tokenStorage.save({
-            accessToken: newTokens.token,
-            refreshToken: newTokens.refreshToken || tokens.refreshToken,
+          // Update Redux state which will update cookies
+          api.dispatch({
+            type: "auth/refreshTokenSuccess",
+            payload: {
+              token: newTokens.auth_token,
+              refreshToken: newTokens.refresh_token || refreshToken,
+              expiresIn: 3600,
+            },
           });
 
           // Retry the original request
           result = await baseQuery(args, api, extraOptions);
         } else {
           // Refresh failed, logout user
-          tokenStorage.clear();
-          // window.location.href = "/signin";
+          api.dispatch({ type: "auth/clearCredentials" });
+          window.location.href = "/signin";
         }
       } catch (error) {
         // Refresh failed, logout user
-        tokenStorage.clear();
-        // window.location.href = "/signin";
+        api.dispatch({ type: "auth/clearCredentials" });
+        window.location.href = "/signin";
       }
     } else {
       // No valid refresh token, logout user
-      tokenStorage.clear();
-      // window.location.href = "/signin";
+      api.dispatch({ type: "auth/clearCredentials" });
+      window.location.href = "/signin";
     }
   }
 

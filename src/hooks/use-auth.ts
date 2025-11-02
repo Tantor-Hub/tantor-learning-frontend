@@ -1,47 +1,53 @@
 import { clearCredentials } from "@/features/auth/auth-slice";
 import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { selectIsAuthenticated } from "@/features/auth/auth-slice";
+import { getAuthState } from "@/lib/cookies";
 
 function useAuth() {
-  const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const dispatch = useDispatch();
+  const reduxIsAuthenticated = useSelector(selectIsAuthenticated);
+  const [isAuthenticated, setIsAuthenticated] = useState(reduxIsAuthenticated);
 
   useEffect(() => {
-    const checkAuthStatus = async () => {
+    const checkAuthStatus = () => {
       try {
-        // Get token inside useEffect to ensure it's fresh
-        const token = localStorage.getItem("authState.token");
+        // Get auth state from cookies
+        const authState = getAuthState();
+        const token = authState.token;
+        const isAuthFromCookie = authState.isAuthenticated;
+        const expiresAt = authState.expiresAt;
 
-        if (!token) {
+        // Check if token exists and is not expired
+        const isTokenValid = token && expiresAt && Date.now() < expiresAt;
+
+        if (!isTokenValid || !isAuthFromCookie) {
           setIsAuthenticated(false);
+          if (reduxIsAuthenticated) {
+            dispatch(clearCredentials());
+          }
           return;
         }
 
-        const response = await fetch(`${baseURL}/users/user/me`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "x-connexion-tantor": `Bearer ${token}`,
-          },
-        });
+        setIsAuthenticated(true);
 
-        const data = await response.json();
-
-        // Return true only if status is 200 and token is valid
-        // Return false for 401 (expired token) or any other error
-        setIsAuthenticated(data.status === 200 && data.data?.isTokenValid === true);
+        // If Redux state doesn't match cookie state, update Redux
+        if (!reduxIsAuthenticated && isTokenValid && isAuthFromCookie) {
+          // The store initialization will handle this
+        }
       } catch (error) {
         console.error("Auth check failed:", error);
         setIsAuthenticated(false);
-        clearCredentials();
+        if (reduxIsAuthenticated) {
+          dispatch(clearCredentials());
+        }
       }
     };
 
-    if (baseURL) {
-      checkAuthStatus();
-    }
-  }, [baseURL]);
+    checkAuthStatus();
+  }, [reduxIsAuthenticated, dispatch]);
 
-  return isAuthenticated; // Returns only boolean
+  return isAuthenticated;
 }
 
 export { useAuth };

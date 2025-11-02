@@ -99,8 +99,7 @@ export const authApi = createApi({
     }),
     verifyPasswordLess: builder.mutation<
       {
-        statusCode: number;
-        status?: string;
+        status: number;
         message: string;
         data: {
           auth_token: string;
@@ -146,9 +145,9 @@ export const authApi = createApi({
     }),
     refreshToken: builder.mutation<TokenResponse, RefreshRequest>({
       query: (data) => ({
-        url: "users/user/refresh",
-        method: "PUT",
-        body: data,
+        url: "users/auth/refresh",
+        method: "POST",
+        body: { refreshToken: data.refresh_token },
       }),
     }),
     logout: builder.mutation<void, void>({

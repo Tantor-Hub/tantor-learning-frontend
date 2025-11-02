@@ -14,6 +14,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Ellipsis } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Loading } from "@/components/shared/loading";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -156,9 +162,21 @@ export default function AllUsersTab({ title, description }: AllUsersTabProps) {
                         )}
                       </TableCell>
                       <TableCell className="flex items-center justify-center">
-                        <Badge variant="secondary">
-                          <Ellipsis />
-                        </Badge>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <Ellipsis className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => alert("Suspendre le compte")}>
+                              Suspendre le compte
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => alert("Voir le profil")}>
+                              Voir le profil
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   );

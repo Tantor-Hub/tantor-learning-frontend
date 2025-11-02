@@ -1,9 +1,8 @@
 import {
   setAuthCookie,
-  setRefreshTokenCookie,
   getValidAuthTokens,
   removeAuthCookie,
-  removeRefreshTokenCookie,
+  clearAllAuthCookies,
 } from "@/lib/cookies";
 
 interface TokenData {
@@ -23,9 +22,9 @@ export const tokenStorage = {
       refreshTokenExpiration: now + 48 * 60 * 60 * 1000, // 48 hours
     };
 
-    // Store tokens in cookies
-    setAuthCookie(tokens.accessToken, "auth_token");
-    setRefreshTokenCookie(tokens.refreshToken);
+    // Store tokens in cookies using the correct function names
+    setAuthCookie("token", tokens.accessToken);
+    setAuthCookie("refreshToken", tokens.refreshToken);
 
     // Store expiration times in localStorage for expiration checks
     if (typeof window !== "undefined") {
@@ -63,8 +62,8 @@ export const tokenStorage = {
   },
 
   clear: () => {
-    removeAuthCookie("auth_token");
-    removeRefreshTokenCookie();
+    // Use clearAllAuthCookies to remove all auth cookies at once
+    clearAllAuthCookies();
 
     if (typeof window !== "undefined") {
       localStorage.removeItem("token_expirations");

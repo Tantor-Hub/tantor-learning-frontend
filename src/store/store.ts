@@ -1,5 +1,5 @@
 import { authApi } from "@/lib/apis/auth-api";
-import { configureStore, combineReducers, Middleware, MiddlewareAPI } from "@reduxjs/toolkit";
+import { configureStore, combineReducers, Middleware } from "@reduxjs/toolkit";
 import { createListenerMiddleware } from "@reduxjs/toolkit";
 import authReducer, {
   clearCredentials,
@@ -9,6 +9,8 @@ import authReducer, {
   setCredentials,
 } from "../features/auth/auth-slice";
 import dashboardReducer from "@/features/dashboard/dashboard-slice";
+import documentReducer from "@/features/document/document-slice";
+import { getAuthState } from "@/lib/cookies";
 
 let isRefreshing = false;
 let refreshPromise: Promise<any> | null = null;
@@ -19,7 +21,6 @@ const listenerMiddleware = createListenerMiddleware();
 // Set up the listener logic
 listenerMiddleware.startListening({
   predicate: (action, currentState) => {
-    // Skip auth-related endpoints and non-authenticated states
     if (
       action.type.includes("authApi") ||
       action.type.includes("forgotPassword") ||
@@ -29,7 +30,6 @@ listenerMiddleware.startListening({
       return false;
     }
 
-    // Check if action is an API call and if token is expired
     const isApiCall =
       action.type.endsWith("/executeQuery") || action.type.endsWith("/executeMutation");
     return isApiCall && selectIsTokenExpired(currentState as any);
@@ -42,12 +42,9 @@ listenerMiddleware.startListening({
       return;
     }
 
-    // Don't refresh if already refreshing
     if (isRefreshing) {
-      // Wait for the existing refresh to complete before continuing
       try {
         await refreshPromise;
-        // Then retry the original action
         dispatch(action);
       } catch {
         // If refresh failed, we've already logged out
@@ -57,14 +54,11 @@ listenerMiddleware.startListening({
 
     try {
       isRefreshing = true;
-      // Create a single promise for all concurrent requests to wait on
       refreshPromise = dispatch(
         authApi.endpoints.refreshToken.initiate({ refresh_token: refreshToken })
       ).unwrap();
 
       await refreshPromise;
-
-      // Re-dispatch the original action with fresh token
       dispatch(action);
     } catch (error) {
       console.error("Token refresh failed:", error);
@@ -76,11 +70,11 @@ listenerMiddleware.startListening({
   },
 });
 
-// Simple localStorage middleware for auth state persistence with proper TypeScript types
-const localStorageMiddleware: Middleware = (store: MiddlewareAPI) => (next) => (action) => {
+// Simple localStorage middleware for user data persistence
+const userPersistenceMiddleware: Middleware = (store) => (next) => (action) => {
   const result = next(action);
 
-  // Save auth state to localStorage when it changes
+  // Save user data to localStorage when it changes
   if (
     typeof action === "object" &&
     action !== null &&
@@ -89,19 +83,14 @@ const localStorageMiddleware: Middleware = (store: MiddlewareAPI) => (next) => (
     (action.type.startsWith("auth/") || action.type.includes("authApi/executeMutation"))
   ) {
     const state = store.getState();
-    const authState = state.auth;
+    const user = state.auth.user;
 
     if (typeof window !== "undefined") {
-      localStorage.setItem(
-        "authState",
-        JSON.stringify({
-          token: authState.token,
-          refreshToken: authState.refreshToken,
-          expiresAt: authState.expiresAt,
-          isAuthenticated: authState.isAuthenticated,
-          user: authState.user,
-        })
-      );
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      } else {
+        localStorage.removeItem("user");
+      }
     }
   }
 
@@ -112,6 +101,7 @@ const localStorageMiddleware: Middleware = (store: MiddlewareAPI) => (next) => (
 const rootReducer = combineReducers({
   auth: authReducer,
   dashboard: dashboardReducer,
+  document: documentReducer,
   ...apiReducers,
 });
 
@@ -121,34 +111,32 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
       .prepend(listenerMiddleware.middleware)
-      .concat(...apiMiddlewares, localStorageMiddleware),
+      .concat(...apiMiddlewares, userPersistenceMiddleware),
   devTools: process.env.NODE_ENV !== "production",
 });
 
-// Load auth state from localStorage on app initialization
+// Load initial auth state from cookies and localStorage
 if (typeof window !== "undefined") {
-  const savedAuthState = localStorage.getItem("authState");
-  if (savedAuthState) {
+  const authState = getAuthState();
+  const userStr = localStorage.getItem("user");
+
+  if (authState.token && authState.refreshToken) {
     try {
-      const parsedState = JSON.parse(savedAuthState);
-      // Restore state if there's a token, even if it might be expired
-      // The middleware will handle token refresh if needed
-      if (parsedState.token && parsedState.refreshToken) {
-        store.dispatch(
-          setCredentials({
-            token: parsedState.token,
-            refreshToken: parsedState.refreshToken,
-            expiresIn: parsedState.expiresAt ? (parsedState.expiresAt - Date.now()) / 1000 : 3600, // Default to 1 hour if expiresAt is missing
-            user: parsedState.user,
-          })
-        );
-      } else {
-        // Clear invalid state
-        localStorage.removeItem("authState");
-      }
+      const user = userStr ? JSON.parse(userStr) : null;
+      const expiresIn = authState.expiresAt ? (authState.expiresAt - Date.now()) / 1000 : 3600;
+
+      store.dispatch(
+        setCredentials({
+          token: authState.token,
+          refreshToken: authState.refreshToken,
+          expiresIn,
+          user,
+        })
+      );
     } catch (e) {
-      console.error("Failed to parse auth state from localStorage", e);
-      localStorage.removeItem("authState");
+      console.error("Failed to parse auth state from storage", e);
+      // Clear invalid state
+      localStorage.removeItem("user");
     }
   }
 }

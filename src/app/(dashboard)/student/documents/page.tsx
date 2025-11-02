@@ -1,17 +1,40 @@
 "use client";
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
-import { AfterTab } from "./after";
-import { BeforeTab } from "./before";
-import { DuringTab } from "./during";
+import { AfterTab } from "./tabs/after";
+import { BeforeTab } from "./tabs/before";
+import { DuringTab } from "./tabs/during";
+import { FilledDocumentsList } from "./components/FilledDocumentsList";
 import { useSelectedSession } from "@/hooks/use-selected-session";
 import { useSessionAlert } from "@/hooks/use-session-alert";
 import { SessionAlert } from "@/components/shared/session-alert";
+import { useLazyGetDocumentTemplateByIdQuery } from "@/lib/apis/documents";
+import StudentTemplate from "./student-template";
+import toast from "react-hot-toast";
 
 export default function Page() {
   const selectedSessionId = useSelectedSession();
+  const currentUser = useSelector(selectCurrentUser);
   const { shouldShowAlert, isLoading: alertLoading } = useSessionAlert();
+  const [getTemplateById, { data: templateData, isLoading: templateLoading }] =
+    useLazyGetDocumentTemplateByIdQuery();
+  const [studentTemplateOpen, setStudentTemplateOpen] = useState(false);
+  const [currentTemplateId, setCurrentTemplateId] = useState("");
+
+  const handleFillDocument = async (templateId: string) => {
+    try {
+      setCurrentTemplateId(templateId);
+      await getTemplateById({ id: templateId }).unwrap();
+      setStudentTemplateOpen(true);
+    } catch (error) {
+      console.error("Failed to load template:", error);
+      toast.error("Erreur lors du chargement du modèle");
+    }
+  };
 
   if (!selectedSessionId) {
     return null;
@@ -46,18 +69,71 @@ export default function Page() {
               </TabsList>
 
               <TabsContent value="before">
-                <BeforeTab sessionId={String(selectedSessionId)} />
+                <Tabs defaultValue="televerser">
+                  <TabsList className="flex bg-white border">
+                    <TabsTrigger value="televerser">Document a televerser</TabsTrigger>
+                    <TabsTrigger value="remplir">Document à remplir</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="remplir">
+                    <FilledDocumentsList
+                      sessionId={String(selectedSessionId)}
+                      type="before"
+                      onFillDocument={handleFillDocument}
+                    />
+                  </TabsContent>
+                  <TabsContent value="televerser">
+                    <BeforeTab sessionId={String(selectedSessionId)} />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
               <TabsContent value="during">
-                <DuringTab sessionId={String(selectedSessionId)} />
+                <Tabs defaultValue="televerser">
+                  <TabsList className="flex bg-white border">
+                    <TabsTrigger value="televerser">Document a televerser</TabsTrigger>
+                    <TabsTrigger value="remplir">Document à remplir</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="remplir">
+                    <FilledDocumentsList
+                      sessionId={String(selectedSessionId)}
+                      type="during"
+                      onFillDocument={handleFillDocument}
+                    />
+                  </TabsContent>
+                  <TabsContent value="televerser">
+                    <DuringTab sessionId={String(selectedSessionId)} />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
               <TabsContent value="after">
-                <AfterTab sessionId={String(selectedSessionId)} />
+                <Tabs defaultValue="televerser">
+                  <TabsList className="flex bg-white border">
+                    <TabsTrigger value="televerser">Document a televerser</TabsTrigger>
+                    <TabsTrigger value="remplir">Document à remplir</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="remplir">
+                    <FilledDocumentsList
+                      sessionId={String(selectedSessionId)}
+                      type="after"
+                      onFillDocument={handleFillDocument}
+                    />
+                  </TabsContent>
+                  <TabsContent value="televerser">
+                    <AfterTab sessionId={String(selectedSessionId)} />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </div>
           </Tabs>
         </>
       )}
+
+      <StudentTemplate
+        open={studentTemplateOpen}
+        onOpenChange={setStudentTemplateOpen}
+        templateId={currentTemplateId}
+        sessionId={String(selectedSessionId)}
+        userId={currentUser?.id || ""}
+      />
     </div>
   );
 }

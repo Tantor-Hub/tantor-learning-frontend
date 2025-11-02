@@ -17,7 +17,7 @@ import {
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { useLogout } from "@/hooks/use-logout";
-import { getValidAuthTokens, getAuthStateCookie } from "@/lib/cookies";
+import { useAuth } from "@/hooks/use-auth";
 
 const publicLinks = [
   { href: "/trainings", label: "Formation" },
@@ -176,8 +176,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const isAuthenticatedCookie = getAuthStateCookie("isAuthenticated");
-  const isAuthenticated = isAuthenticatedCookie === "true";
+  const isAuthenticated = useAuth(); // Use the improved useAuth hook
 
   useEffect(() => {
     setMounted(true);

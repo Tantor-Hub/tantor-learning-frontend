@@ -4,16 +4,33 @@ export interface ICoursesAPIResponse {
   data: {
     length: number;
     rows: Array<{
-      id: number;
+      id: string;
       title: string;
       description: string;
-      createdBy: number;
+      is_published: boolean;
+      id_session: string;
+      ponderation: number;
+      createdBy: string;
+      createdAt: string;
+      updatedAt: string;
       CreatedBy: {
-        id: number;
+        id: string;
         firstName: string;
         lastName: string;
-        email: string;
       };
+      trainingSession: {
+        id: string;
+        title: string;
+        nb_places: number;
+        available_places: number;
+        begining_date: string;
+        ending_date: string;
+      };
+      formateurs: Array<{
+        id: string;
+        firstName: string;
+        lastName: string;
+      }>;
     }>;
   };
 }

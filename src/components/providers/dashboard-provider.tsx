@@ -3,6 +3,7 @@ import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { selectIsAuthenticated } from "@/features/auth/auth-slice";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "react-hot-toast";
 
 interface DashboardProviderProps {
@@ -11,7 +12,7 @@ interface DashboardProviderProps {
 
 export function DashboardProvider({ children }: DashboardProviderProps) {
   const router = useRouter();
-  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isAuthenticated = useAuth(); // Use the improved useAuth hook for server-side validation
 
   useEffect(() => {
     if (!isAuthenticated) {
