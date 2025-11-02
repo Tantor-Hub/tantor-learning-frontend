@@ -104,6 +104,31 @@ export const AdminApi = createApi({
       }),
       invalidatesTags: ["Admin"],
     }),
+    getUserProfile: builder.query<
+      {
+        status: number;
+        message: string;
+        data: {
+          id: string;
+          email: string;
+          firstName: string;
+          lastName: string;
+          avatar: string;
+          role: string;
+          phone: string;
+          address: string;
+          city: string;
+          country: string;
+          dateBirth: string;
+          createdAt: string;
+          updatedAt: string;
+        };
+      },
+      { userId: string }
+    >({
+      query: (request) => `users/admin/user/${request.userId}/profile`,
+      providesTags: ["Admin"],
+    }),
   }),
 });
 
@@ -114,4 +139,5 @@ export const {
   useListSubscribersQuery,
   useGetDailyLoginsQuery,
   useToggleVerificationMutation,
+  useGetUserProfileQuery,
 } = AdminApi;

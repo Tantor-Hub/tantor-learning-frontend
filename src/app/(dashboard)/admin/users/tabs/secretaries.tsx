@@ -3,6 +3,7 @@ import { useChangeUserRoleMutation } from "@/lib/apis/users-api";
 import { useToggleVerificationMutation } from "@/lib/apis/admin/user-api";
 import { UserRole } from "@/types/user";
 import { useState } from "react";
+import UserProfileModal from "@/components/user-profile-modal";
 import {
   Table,
   TableBody,
@@ -39,6 +40,8 @@ export default function SecretariesTab({ title, description }: SecretariesTabPro
   const [changeUserRole, { isLoading: isChangingRole }] = useChangeUserRoleMutation();
   const [toggleVerification, { isLoading: isToggling }] = useToggleVerificationMutation();
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -125,6 +128,11 @@ export default function SecretariesTab({ title, description }: SecretariesTabPro
     }
   };
 
+  const handleViewProfile = (userId: string) => {
+    setSelectedUserId(userId);
+    setIsProfileModalOpen(true);
+  };
+
   return (
     <div className="bg-white border flex flex-col rounded-md gap-10 p-5 md:p-10">
       <div className="flex flex-col gap-2.5">
@@ -201,7 +209,7 @@ export default function SecretariesTab({ title, description }: SecretariesTabPro
                             >
                               {user.is_verified ? "Suspendre le compte" : "Restaurer le compte"}
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => alert("Voir le profil")}>
+                            <DropdownMenuItem onClick={() => handleViewProfile(user.id.toString())}>
                               Voir le profil
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -217,6 +225,14 @@ export default function SecretariesTab({ title, description }: SecretariesTabPro
           )}
         </div>
       </div>
+      <UserProfileModal
+        userId={selectedUserId}
+        isOpen={isProfileModalOpen}
+        onClose={() => {
+          setIsProfileModalOpen(false);
+          setSelectedUserId(null);
+        }}
+      />
     </div>
   );
 }
