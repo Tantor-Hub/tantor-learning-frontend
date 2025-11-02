@@ -49,26 +49,36 @@ export function CourseTab() {
   }
 
   return (
-    <Table>
-      <TableCaption>Liste de toute les Matières disponibles</TableCaption>
-      <TableHeader className="border">
-        <TableRow>
-          <TableHead>Titre</TableHead>
-          <TableHead>Description</TableHead>
-          <TableHead>Créateur</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody className="border">
-        {data.data.rows.map((item) => (
-          <TableRow key={item.id}>
-            <TableCell className="font-medium">{item.title}</TableCell>
-            <TableCell>{item.description}</TableCell>
-            <TableCell>
-              {item.CreatedBy.firstName} {item.CreatedBy.lastName}
-            </TableCell>
+    <div className="overflow-x-auto">
+      <Table>
+        <TableCaption>Liste de toute les Matières disponibles</TableCaption>
+        <TableHeader className="border">
+          <TableRow>
+            <TableHead>Titre</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Créateur</TableHead>
+            <TableHead>Formateurs</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody className="border">
+          {data.data.rows.map((item) => (
+            <TableRow key={item.id}>
+              <TableCell className="font-medium">{item.title}</TableCell>
+              <TableCell>{item.description}</TableCell>
+              <TableCell>
+                {item.CreatedBy.firstName} {item.CreatedBy.lastName}
+              </TableCell>
+              <TableCell>
+                {item.formateurs && item.formateurs.length > 0
+                  ? item.formateurs
+                      .map((formateur) => `${formateur.firstName} ${formateur.lastName}`)
+                      .join(", ")
+                  : "Aucun"}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
