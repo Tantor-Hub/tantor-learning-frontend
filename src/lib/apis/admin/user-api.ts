@@ -50,6 +50,19 @@ export interface SubscribersResponse {
   };
 }
 
+export interface DailyLoginsResponse {
+  status: number;
+  message: string;
+  data: {
+    dailyLogins: {
+      date: string;
+      count: number;
+    }[];
+    period: string;
+    totalLogins: number;
+  };
+}
+
 export const AdminApi = createApi({
   reducerPath: "adminApi",
   baseQuery,
@@ -80,6 +93,17 @@ export const AdminApi = createApi({
       query: () => "cms/admin/newsletter/subscribers",
       providesTags: ["Admin"],
     }),
+    getDailyLogins: builder.query<DailyLoginsResponse, void>({
+      query: () => "users/admin/daily-logins",
+      providesTags: ["Admin"],
+    }),
+    toggleVerification: builder.mutation<{ status: number; message: string }, { userId: string }>({
+      query: (request) => ({
+        url: `users/admin/user/${request.userId}/toggle-verification`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Admin"],
+    }),
   }),
 });
 
@@ -88,4 +112,6 @@ export const {
   useAddMutation,
   useListUserByGroupQuery,
   useListSubscribersQuery,
+  useGetDailyLoginsQuery,
+  useToggleVerificationMutation,
 } = AdminApi;

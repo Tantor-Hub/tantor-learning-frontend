@@ -1,5 +1,6 @@
 import { useListUserByRoleQuery } from "@/lib/apis/users-api";
 import { useChangeUserRoleMutation } from "@/lib/apis/users-api";
+import { useToggleVerificationMutation } from "@/lib/apis/admin/user-api";
 import { UserRole } from "@/types/user";
 import { useState } from "react";
 import {
@@ -31,6 +32,7 @@ interface AllUsersTabProps {
 export default function AllUsersTab({ title, description }: AllUsersTabProps) {
   const { data: apiData, isLoading, isError, refetch } = useListUserByRoleQuery({ role: "all" });
   const [changeUserRole, { isLoading: isChangingRole }] = useChangeUserRoleMutation();
+  const [toggleVerification, { isLoading: isToggling }] = useToggleVerificationMutation();
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
 
   if (isLoading) {
@@ -48,6 +50,7 @@ export default function AllUsersTab({ title, description }: AllUsersTabProps) {
                   <TableHead>Nom</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Rôle</TableHead>
+                  <TableHead>Statut</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -62,6 +65,9 @@ export default function AllUsersTab({ title, description }: AllUsersTabProps) {
                     </TableCell>
                     <TableCell>
                       <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-16" />
                     </TableCell>
                     <TableCell className="flex items-center justify-center">
                       <Skeleton className="h-6 w-6" />
@@ -104,6 +110,16 @@ export default function AllUsersTab({ title, description }: AllUsersTabProps) {
     }
   };
 
+  const handleToggleVerification = async (userId: string) => {
+    try {
+      await toggleVerification({ userId }).unwrap();
+      refetch();
+      alert("Statut mis à jour avec succès");
+    } catch (error) {
+      alert("Erreur lors de la mise à jour du statut");
+    }
+  };
+
   return (
     <div className="bg-white border flex flex-col rounded-md gap-10 p-5 md:p-10">
       <div className="flex flex-col gap-2.5">
@@ -120,6 +136,7 @@ export default function AllUsersTab({ title, description }: AllUsersTabProps) {
                   <TableHead>Nom</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Rôle</TableHead>
+                  <TableHead>Statut</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -161,6 +178,11 @@ export default function AllUsersTab({ title, description }: AllUsersTabProps) {
                           </span>
                         )}
                       </TableCell>
+                      <TableCell>
+                        <Badge variant={user.is_verified ? "default" : "destructive"}>
+                          {user.is_verified ? "Active" : "Suspendu"}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="flex items-center justify-center">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -169,8 +191,10 @@ export default function AllUsersTab({ title, description }: AllUsersTabProps) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => alert("Suspendre le compte")}>
-                              Suspendre le compte
+                            <DropdownMenuItem
+                              onClick={() => handleToggleVerification(user.id.toString())}
+                            >
+                              {user.is_verified ? "Suspendre le compte" : "Restaurer le compte"}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => alert("Voir le profil")}>
                               Voir le profil

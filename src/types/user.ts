@@ -17,7 +17,7 @@ export interface IUser {
   identityNumber?: number | null;
   dateBirth?: Date | null;
   role: UserRole;
-  isVerified: boolean;
+  is_verified: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }

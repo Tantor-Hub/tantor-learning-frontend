@@ -86,7 +86,7 @@ export function SignUpForm() {
       const response = await emailSignup({
         firstName: values.firstName,
         lastName: values.lastName,
-        email: values.email,
+        email: values.email.toLowerCase(),
       }).unwrap();
       toast.success(response.message);
       router.push(`/verify?email=${encodeURIComponent(values.email)}`);

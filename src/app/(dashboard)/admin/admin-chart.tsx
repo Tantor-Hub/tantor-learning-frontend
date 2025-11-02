@@ -11,18 +11,31 @@ import {
 } from "recharts";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
-const chartData = [
-  { day: "lun", connexion: 80 },
-  { day: "mar", connexion: 110 },
-  { day: "mer", connexion: 130 },
-  { day: "jeu", connexion: 135 },
-  { day: "ven", connexion: 160 },
-  { day: "sam", connexion: 95 },
-  { day: "dim", connexion: 145 },
-];
+import { useGetDailyLoginsQuery } from "@/lib/apis/admin/user-api";
+import { useMemo } from "react";
 
 export function AdminChart() {
+  const { data: dailyLoginsData, isLoading } = useGetDailyLoginsQuery();
+
+  const chartData = useMemo(() => {
+    if (!dailyLoginsData?.data?.dailyLogins) return [];
+
+    return dailyLoginsData.data.dailyLogins.map((item) => ({
+      day: new Date(item.date).toLocaleDateString("fr-FR", { weekday: "short" }),
+      connexion: item.count,
+    }));
+  }, [dailyLoginsData]);
+
+  if (isLoading) {
+    return (
+      <Card className="text-sm">
+        <CardContent className="flex items-center justify-center h-40 md:h-80">
+          <div className="text-gray-500">Chargement...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="text-sm">
       <CardHeader>

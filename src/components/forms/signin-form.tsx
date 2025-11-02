@@ -80,7 +80,7 @@ export function SignInForm() {
   const handleSubmit = async (values: SignInFormValues) => {
     try {
       const response = await signin({
-        email: values.email,
+        email: values.email.toLowerCase(),
       }).unwrap();
       toast.success(response.message);
       router.push(`/verify?email=${encodeURIComponent(values.email)}`);
