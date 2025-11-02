@@ -3,70 +3,44 @@ import { createApi, enhancedBaseQuery } from "./base-api";
 
 // User related types
 export interface UserProfile {
-  id: number;
+  id: string;
   firstName: string;
   lastName: string;
-  nick_name: string;
   email: string;
   phone?: string;
   avatar?: string | null;
-  adresse_physique?: string | null;
-  pays_residance?: string | null;
-  ville_residance?: string | null;
+  address?: string | null;
+  country?: string | null;
+  city?: string | null;
+  dateBirth?: string;
   num_piece_identite?: string | null;
   createdAt: string;
-  roles: {
-    id: number;
-    role: string;
-    description: string;
-    HasRoles: {
-      id: number;
-      UserId: number;
-      RoleId: number;
-      status: number;
-      createdAt: string;
-      updatedAt: string;
-    };
-  }[];
 }
 
 export interface ProfileUpdateResponse {
-  // username: string;
+  id: string;
   firstName: string;
   lastName: string;
-  nick_name: string;
-  id: string;
   email: string;
-  phone: string;
-  // avatar?: string | null;
-  adresse_physique?: string | null;
-  pays_residance?: string | null;
-  ville_residance?: string | null;
+  phone?: string;
+  avatar?: string | null;
+  address?: string | null;
+  country?: string | null;
+  city?: string | null;
+  dateBirth?: string;
   num_piece_identite?: string | null;
   createdAt: string;
-  roles?: {
-    id: number;
-    role: string;
-    description: string;
-    HasRoles: {
-      id: number;
-      UserId: number;
-      RoleId: number;
-      status: number;
-      createdAt: string;
-      updatedAt: string;
-    };
-  }[];
-  // Add other user properties as needed
 }
 
 export interface ProfileUpdateRequest {
-  avatar?: string;
-  adresse_physique?: string;
-  pays_residance?: string;
-  num_piece_identite?: string;
-  ville_residance?: string;
+  firstName?: string;
+  lastName?: string;
   phone?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  dateBirth?: string;
+  num_piece_identite?: string;
 }
 
 export interface User {
@@ -115,7 +89,7 @@ export const usersApi = createApi({
     updateUserProfile: builder.mutation<ProfileUpdateResponse, ProfileUpdateRequest>({
       query: (userData) => ({
         url: "users/user/update",
-        method: "PUT",
+        method: "PATCH",
         body: userData,
       }),
       invalidatesTags: ["User"],

@@ -29,6 +29,7 @@ import { useState, useEffect } from "react";
 import { useUpdateUserProfileMutation } from "@/lib/apis/users-api";
 import { useSelector } from "react-redux";
 import { selectToken } from "@/features/auth/auth-slice";
+import { IUser } from "@/types/user";
 // Schema de validation sans la photo
 const profileFormSchema = z.object({
   phone: z
@@ -57,8 +58,8 @@ const profileFormSchema = z.object({
     .optional(),
   identityNumber: z
     .string()
-    .refine((val) => !val || val.length >= 2, {
-      message: "Le numéro d'identité doit contenir au moins 2 caractères",
+    .refine((val) => !val || (val.length >= 2 && /^[0-9]+$/.test(val)), {
+      message: "Le numéro d'identité doit contenir au moins 2 chiffres",
     })
     .optional(),
 });
@@ -71,7 +72,7 @@ type UserProfileData = {
   address?: string;
   city?: string;
   country?: string;
-  identityNumber?: string;
+  identityNumber?: number | null;
   avatarURL?: string;
 };
 
@@ -198,6 +199,7 @@ export function UpdateProfile({
   firstName = "",
   lastName = "",
   email = "",
+  onProfileUpdate,
 }: {
   address?: string;
   country?: string;
@@ -208,6 +210,7 @@ export function UpdateProfile({
   firstName?: string;
   lastName?: string;
   email?: string;
+  onProfileUpdate?: () => void;
 }) {
   const [updateProfile, { isLoading }] = useUpdateUserProfileMutation();
   const [hasChanges, setHasChanges] = useState(false);
@@ -261,7 +264,7 @@ export function UpdateProfile({
     address,
     city,
     country,
-    identityNumber,
+    identityNumber: identityNumber ? parseInt(identityNumber.toString(), 10) : null,
     avatarURL,
   };
 
@@ -285,7 +288,7 @@ export function UpdateProfile({
       }, 100);
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/user/update`, {
-        method: "PUT",
+        method: "PATCH",
         body: formData,
         headers: {
           "x-connexion-tantor": `Bearer ${token}`,
@@ -301,6 +304,11 @@ export function UpdateProfile({
       }
 
       toast.success("Vous avez changé votre photo avec succès!");
+
+      // Refetch profile data to update avatar
+      if (onProfileUpdate) {
+        onProfileUpdate();
+      }
 
       // Réinitialiser les états de la photo
       setSelectedPhoto(null);
@@ -341,10 +349,12 @@ export function UpdateProfile({
       );
 
       await updateProfile({
-        ...(filteredValues.address && { adresse_physique: filteredValues.address }),
-        ...(filteredValues.country && { pays_residance: filteredValues.country }),
-        ...(filteredValues.identityNumber && { num_piece_identite: filteredValues.identityNumber }),
-        ...(filteredValues.city && { ville_residance: filteredValues.city }),
+        ...(filteredValues.address && { address: filteredValues.address }),
+        ...(filteredValues.country && { country: filteredValues.country }),
+        ...(filteredValues.identityNumber && {
+          num_piece_identite: filteredValues.identityNumber.toString(),
+        }),
+        ...(filteredValues.city && { city: filteredValues.city }),
         ...(filteredValues.phone && { phone: filteredValues.phone }),
         // Note: We don't include avatar here to avoid sending null
       }).unwrap();

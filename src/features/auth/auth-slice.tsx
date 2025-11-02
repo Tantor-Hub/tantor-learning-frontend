@@ -198,18 +198,16 @@ export const authSlice = createSlice({
             firstName: payload.firstName || state.user.firstName,
             lastName: payload.lastName || state.user.lastName,
             email: payload.email || state.user.email,
-            avatar: state.user.avatar,
-            address: payload.adresse_physique || state.user.address,
-            country: payload.pays_residance || state.user.country,
-            city: payload.ville_residance || state.user.city,
-            identityNumber: payload.num_piece_identite
-              ? parseInt(payload.num_piece_identite)
-              : state.user.identityNumber,
-            createdAt: new Date(payload.createdAt),
-            role:
-              payload.roles && payload.roles.length > 0
-                ? (payload.roles[0].role as UserRole)
-                : state.user.role,
+            avatar: payload.avatar || state.user.avatar,
+            address: payload.address || state.user.address,
+            country: payload.country || state.user.country,
+            city: payload.city || state.user.city,
+            dateBirth: payload.dateBirth || state.user.dateBirth,
+            // identityNumber: payload.num_piece_identite
+            //   ? parseInt(payload.num_piece_identite)
+            //   : state.user?.identityNumber,
+            createdAt: payload.createdAt,
+            role: state.user.role,
           };
           persistAuthState(state);
         }

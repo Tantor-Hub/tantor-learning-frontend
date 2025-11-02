@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { UpdateProfile } from "./update-profile";
 
 export function ProfilePage() {
-  const { data, isLoading, isError } = useGetUserProfileQuery();
+  const { data, isLoading, isError, refetch } = useGetUserProfileQuery();
   const [userData, setUserData] = useState<UserProfile | null>(null);
 
   // Vérifier et mettre à jour les données utilisateur quand elles sont chargées
@@ -39,15 +39,16 @@ export function ProfilePage() {
           <div className="flex flex-col gap-4">
             <p className="text-sm text-gray-500">{userData.email || "Email non disponible"}</p>
             <UpdateProfile
-              address={userData?.adresse_physique || ""}
-              country={userData?.pays_residance || ""}
+              address={userData?.address || ""}
+              country={userData?.country || ""}
               identityNumber={userData?.num_piece_identite || ""}
               phone={userData?.phone}
-              city={userData?.ville_residance?.toString()}
+              city={userData?.city?.toString()}
               avatarURL={userData.avatar || ""}
               firstName={userData.firstName}
               lastName={userData.lastName}
               email={userData.email}
+              onProfileUpdate={refetch}
             />
           </div>
         </div>
@@ -71,15 +72,15 @@ export function ProfilePage() {
             <h3 className="font-semibold">Adresse</h3>
             <p className="flex items-center gap-2 p-2 font-light">
               <Home className="h-5 w-5 font-extralight" />
-              Addresse : {userData.adresse_physique || "Non spécifiée"}
+              Addresse : {userData.address || "Non spécifiée"}
             </p>
             <p className="flex items-center gap-2 p-2 font-light">
               <MapPin className="h-5 w-5 font-extralight" />
-              Ville : {userData.ville_residance || "Non spécifiée"}
+              Ville : {userData.city || "Non spécifiée"}
             </p>
             <p className="flex items-center gap-2 p-2 font-light">
               <MapPin className="h-5 w-5 font-extralight" />
-              Pays : {userData.pays_residance || "Non spécifié"}
+              Pays : {userData.country || "Non spécifié"}
             </p>
           </div>
 

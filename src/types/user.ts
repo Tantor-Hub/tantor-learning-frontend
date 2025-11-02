@@ -14,10 +14,10 @@ export interface IUser {
   address?: string | null;
   country?: string | null;
   city?: string | null;
-  identityNumber?: number | null;
-  dateBirth?: Date | null;
+  num_piece_identite?: number | null;
+  dateBirth?: string | null;
   role: UserRole;
   is_verified: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: string;
+  updatedAt?: string;
 }
