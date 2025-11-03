@@ -1,4 +1,4 @@
-import { TabsView } from "./tab-view";
+import { CourseTab } from "./course-tab";
 
 export default function Page() {
   return (
@@ -7,7 +7,13 @@ export default function Page() {
       <p className="mb-8 font-light">
         Liste de toutes les matières disponibles dans la plateforme.
       </p>
-      <TabsView />
+      <div className="overflow-x-auto my-4 rounded-md bg-white">
+        <div>
+          <div className="min-w-[1000px]">
+            <CourseTab />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

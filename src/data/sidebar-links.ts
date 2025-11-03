@@ -60,7 +60,7 @@ const navigationMenus: NavigationMenus = {
       icon: MessageCircleMore,
     },
     {
-      title: "Mes Documents",
+      title: "Documents",
       url: "student/documents",
       icon: ChartColumn,
     },
@@ -93,7 +93,7 @@ const navigationMenus: NavigationMenus = {
       icon: Users,
     },
     {
-      title: "Mes Documents",
+      title: "Documents",
       url: "admin/documents",
       icon: BarChart2,
     },
@@ -131,7 +131,7 @@ const navigationMenus: NavigationMenus = {
       icon: MessageCircleMore,
     },
     {
-      title: "Mes Documents",
+      title: "Documents",
       url: "instructor/documents",
       icon: BarChart2,
     },

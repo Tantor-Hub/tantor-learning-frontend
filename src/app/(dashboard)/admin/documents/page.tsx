@@ -1,37 +1,52 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import Image from "next/image";
-import { BookOpen, Download, ArrowDownToLine, Funnel, ChevronDown, Search } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { documentFilter, documentsData } from "../../instructor/data";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Search } from "lucide-react";
+
 import { InternData, StudentTable } from "./components/student-table";
+import { Catalogue } from "./components/catalogue";
 import { useState } from "react";
 import { useGetAllUserInSessionsAdminQuery } from "@/lib/apis/user-in-session";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StudentTableSkeleton } from "@/components/skeletons/student-table-skeleton";
 
 export default function Page() {
   const { data, isLoading, error } = useGetAllUserInSessionsAdminQuery();
   const [searchTerm, setSearchTerm] = useState("");
 
   if (isLoading) {
-    return <div className="p-8">Loading users in sessions...</div>;
+    return (
+      <Tabs defaultValue="informations-eleves" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="informations-eleves">Informations élèves</TabsTrigger>
+          <TabsTrigger value="catalogues">Catalogues</TabsTrigger>
+        </TabsList>
+        <TabsContent value="informations-eleves">
+          <div>
+            <div className="flex flex-col sm:flex-row gap-5 md:gap-10 mb-5">
+              <div className="flex items-center w-full rounded-md relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search size={20} />
+                </div>
+                <Input
+                  type="search"
+                  placeholder="Rechercher un utilisateur..."
+                  className="pl-10 pr-4 py-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled
+                />
+              </div>
+            </div>
+            <div className="w-full overflow-x-auto">
+              <div className="">
+                <StudentTableSkeleton />
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+        <TabsContent value="catalogues">
+          <Catalogue />
+        </TabsContent>
+      </Tabs>
+    );
   }
 
   if (error) {
@@ -90,54 +105,48 @@ export default function Page() {
       String(item.Statut).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const downloadCSV = (dataToDownload: InternData[]) => {
-    if (dataToDownload.length === 0) return;
-
-    const headers = Object.keys(dataToDownload[0]);
-    const csvContent = [
-      headers.join(","),
-      ...dataToDownload.map((row) =>
-        headers.map((header) => JSON.stringify(row[header] || "")).join(",")
-      ),
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", "users-in-sessions.csv");
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row gap-5 md:gap-10 mb-5">
-        <div className="flex items-center w-full rounded-md relative flex-1">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search size={20} />
+    <Tabs defaultValue="informations-eleves" className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="informations-eleves">Informations élèves</TabsTrigger>
+        <TabsTrigger value="catalogues">Catalogues</TabsTrigger>
+        {/* <TabsTrigger value="mentions-legales">Mentions légales</TabsTrigger> */}
+      </TabsList>
+      <TabsContent value="informations-eleves">
+        <div>
+          <div className="flex flex-col sm:flex-row gap-5 md:gap-10 mb-5">
+            <div className="flex items-center w-full rounded-md relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search size={20} />
+              </div>
+              <Input
+                type="search"
+                placeholder="Rechercher un utilisateur..."
+                className="pl-10 pr-4 py-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
-          <Input
-            type="search"
-            placeholder="Rechercher un utilisateur..."
-            className="pl-10 pr-4 py-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <div className="w-full overflow-x-auto">
+            <div className="">
+              <StudentTable
+                data={filteredInternData}
+                title="INFORMATIONS COMPLETES DES ELEVES"
+                baseData={baseData}
+              />
+            </div>
+          </div>
         </div>
-      </div>
-      <div className="mt-8 w-full overflow-x-auto">
-        <div className="">
-          <StudentTable
-            data={filteredInternData}
-            title="INFORMATIONS COMPLETES DES ELEVES"
-            baseData={baseData}
-          />
+      </TabsContent>
+      {/* <TabsContent value="mentions-legales">
+        <div>
+          <p>Mentions légales content goes here.</p>
         </div>
-      </div>
-    </div>
+      </TabsContent> */}
+      <TabsContent value="catalogues">
+        <Catalogue />
+      </TabsContent>
+    </Tabs>
   );
 }
