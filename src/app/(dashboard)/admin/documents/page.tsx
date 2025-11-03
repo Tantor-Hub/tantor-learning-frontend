@@ -23,39 +23,96 @@ import { documentFilter, documentsData } from "../../instructor/data";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { InternData, StudentTable } from "./components/student-table";
-
-const internData: InternData[] = [
-  {
-    "Numéro du stagiaire": "24041998DOE",
-    prénom: "Jean",
-    nom: "Doe",
-    email: "jean.doe@email.com",
-    Téléphone: "0601020304",
-    "Date de naissance": "1998-04-24",
-    Adresse: "15 rue de Lyon, Paris",
-  },
-  {
-    "Numéro du stagiaire": "24041998DOE",
-    prénom: "Jean",
-    nom: "Doe",
-    email: "jean.doe@email.com",
-    Téléphone: "0601020304",
-    "Date de naissance": "1998-04-24",
-    Adresse: "15 rue de Lyon, Paris",
-  },
-  {
-    "Numéro du stagiaire": "24041998DOE",
-    prénom: "Jean",
-    nom: "Doe",
-    email: "jean.doe@email.com",
-    Téléphone: "0601020304",
-    "Date de naissance": "1998-04-24",
-    Adresse: "15 rue de Lyon, Paris",
-  },
-  // You can add more data rows here
-];
+import { useState } from "react";
+import { useGetAllUserInSessionsAdminQuery } from "@/lib/apis/user-in-session";
 
 export default function Page() {
+  const { data, isLoading, error } = useGetAllUserInSessionsAdminQuery();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  if (isLoading) {
+    return <div className="p-8">Loading users in sessions...</div>;
+  }
+
+  if (error) {
+    return <div className="p-8 text-red-500">Error fetching users: {JSON.stringify(error)}</div>;
+  }
+
+  const baseData = (data?.data || []).map((userInSession) => {
+    const user = userInSession.user;
+    const session = userInSession.trainingSession;
+    const trainings = session.trainings;
+
+    return {
+      id: userInSession.id,
+      status: userInSession.status,
+      // User details
+      user_id: user.id,
+      user_firstName: user.firstName,
+      user_lastName: user.lastName,
+      user_email: user.email,
+      user_phone: user.phone || "-",
+      user_dateBirth: user.dateBirth || "-",
+      user_address: user.address || "-",
+      user_country: user.country || "-",
+      user_city: user.city || "-",
+      user_is_verified: user.is_verified ? "Oui" : "Non",
+      user_avatar: user.avatar || null,
+      // Session details
+      session_title: session.title,
+      // Training details
+      training_title: trainings?.title || "-",
+    };
+  });
+
+  const internData: InternData[] = baseData.map((item) => ({
+    "Nom complet": `${item.user_firstName} ${item.user_lastName}`,
+    Email: item.user_email,
+    Adresse: item.user_address,
+    Pays: item.user_country,
+    Ville: item.user_city,
+    "Date de naissance": item.user_dateBirth,
+    Formation: item.training_title,
+    Session: item.session_title,
+    Statut: item.status,
+  }));
+
+  const filteredInternData: InternData[] = internData.filter(
+    (item) =>
+      String(item["Nom complet"]).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(item.Email).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(item.Adresse).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(item.Pays).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(item.Ville).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(item["Date de naissance"]).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(item.Formation).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(item.Session).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(item.Statut).toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const downloadCSV = (dataToDownload: InternData[]) => {
+    if (dataToDownload.length === 0) return;
+
+    const headers = Object.keys(dataToDownload[0]);
+    const csvContent = [
+      headers.join(","),
+      ...dataToDownload.map((row) =>
+        headers.map((header) => JSON.stringify(row[header] || "")).join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "users-in-sessions.csv");
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row gap-5 md:gap-10 mb-5">
@@ -65,106 +122,20 @@ export default function Page() {
           </div>
           <Input
             type="search"
-            placeholder="Rechercher Un document..."
+            placeholder="Rechercher un utilisateur..."
             className="pl-10 pr-4 py-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex-1 flex gap-2 items-center px-2.5 py-1.5 min-w-28 rounded-md border border-primary text-primary shadow-md">
-            <Funnel size={20} />
-            <span>Filtres</span>
-            <ChevronDown />
-          </div>
-          <Button>
-            {" "}
-            <ArrowDownToLine />
-            Telecharger
-          </Button>
-        </div>
       </div>
-      <div className="border p-8 flex flex-col items-end gap-7 rounded-md shadow-md">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 md:gap-10 w-full">
-          {documentFilter.map((filter, i) => (
-            <div key={i} className="flex flex-col gap-[7px]">
-              <span className="font-semibold">{filter.label}</span>
-              <Select>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={filter.value} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="most-recent">{filter.value}</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
-        </div>
-        <Button className="bg-transparent border border-[#cbd9e7] text-[#ACACAC]">
-          <Image src="/icons/close.svg" height={20} width={20} alt="close icon" />
-          Renitialiser les filtres
-        </Button>
-      </div>
-
-      <div className="mt-10 w-full overflow-x-auto">
+      <div className="mt-8 w-full overflow-x-auto">
         <div className="">
-          <StudentTable data={internData} title="IDENTIFICATION STAGIAIRE" />
-          <StudentTable data={internData} title="IDENTIFICATION DE FORMATION" />
-          <StudentTable data={internData} title="CONFORMITE DU DOSSIER" />
-          <StudentTable data={internData} title="CONFORMITE DE LA FORMATION" />
-          <StudentTable data={internData} title="FINANCE" />
-          <StudentTable data={internData} title="CONFORMITE POST-FORMATION" />
-        </div>
-      </div>
-      <div>
-        <div className="overflow-x-auto p-8 shadow-md my-5 border border-border rounded-md">
-          <h2 className="text-primary text-xl font-semibold mb-3">
-            Tous les documents administratifs
-          </h2>
-          <p className="mb-8 font-light">Liste de tous vos documents administratifs disponibles</p>
-          <div>
-            <div className="min-w-[1000px]">
-              <Table>
-                <TableHeader>
-                  <TableRow className="grid grid-cols-7 text-sm font-medium text-gray-500 px-4 py-2 rounded-t-lg bg-gray-100 mb-1">
-                    <TableHead className="col-span-2">Noms</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Signature</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Catégorie</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {documentsData.length <= 1 ? (
-                    <p className="text-center text-gray-500 mt-4">Aucun document</p>
-                  ) : (
-                    documentsData.map((doc, i) => (
-                      <TableRow
-                        key={i}
-                        className="grid grid-cols-7 items-center px-4 py-3 border-b text-sm text-gray-800 hover:bg-gray-50 transition shadow-sm bg-white mb-1"
-                      >
-                        <TableCell className="col-span-2">{doc.title}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{doc.type}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {" "}
-                          <Checkbox id="terms" />
-                        </TableCell>
-                        <TableCell>{"date" in doc ? doc.date : "-"}</TableCell>
-                        <TableCell>{"category" in doc ? doc.category : "-"}</TableCell>
-                        <TableCell className="flex items-center gap-3 text-blue-600">
-                          <BookOpen size={16} />
-                          <Download size={16} />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+          <StudentTable
+            data={filteredInternData}
+            title="INFORMATIONS COMPLETES DES ELEVES"
+            baseData={baseData}
+          />
         </div>
       </div>
     </div>

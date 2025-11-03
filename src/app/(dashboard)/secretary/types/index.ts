@@ -10,8 +10,8 @@ export interface SecDocData {
   date: string;
   action: string;
   sessionTitle: string;
-  nbPlaces: number;
-  availablePlaces: number;
+  nbPlaces: number | undefined;
+  availablePlaces: number | undefined;
 }
 
 export interface SecDocsData {

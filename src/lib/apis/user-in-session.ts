@@ -112,6 +112,17 @@ export const userInSessionApi = createApi({
       }),
       providesTags: ["UserInSession"],
     }),
+
+    // admin access
+
+    // Get all users in sessions (Admin access only)
+    getAllUserInSessionsAdmin: builder.query<ApiResponse<UserInSession[]>, void>({
+      query: () => ({
+        url: "/userinsession/admin",
+        method: "GET",
+      }),
+      providesTags: ["UserInSession"],
+    }),
   }),
 });
 
@@ -126,4 +137,5 @@ export const {
   useGetUserInSessionsByStatusQuery,
   useUpdateUserInSessionMutation,
   useGetUserSessionsByUserQuery,
+  useGetAllUserInSessionsAdminQuery,
 } = userInSessionApi;

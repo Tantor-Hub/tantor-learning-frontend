@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, Home, MapPin, Calendar, IdCard } from "lucide-react";
+import { Mail, Phone, Home, MapPin, Calendar } from "lucide-react";
 import { useGetUserProfileQuery, UserProfile } from "@/lib/apis/users-api";
 import { Loading } from "../shared/loading";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -41,7 +41,6 @@ export function ProfilePage() {
             <UpdateProfile
               address={userData?.address || ""}
               country={userData?.country || ""}
-              identityNumber={userData?.num_piece_identite || ""}
               phone={userData?.phone}
               city={userData?.city?.toString()}
               avatarURL={userData.avatar || ""}
@@ -87,10 +86,6 @@ export function ProfilePage() {
           {/* Other Details Section */}
           <div>
             <h3 className="font-semibold">Autres Détails</h3>
-            <p className="flex items-center gap-2 p-2 font-light">
-              <IdCard className="h-5 w-5 font-extralight" />
-              Pièce d'identité : {userData.num_piece_identite || "Non spécifiée"}
-            </p>
             <p className="flex items-center gap-2 p-2 font-light">
               <Calendar className="h-5 w-5 font-extralight" />
               Ajouté le{" "}

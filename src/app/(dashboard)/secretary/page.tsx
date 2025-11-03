@@ -72,11 +72,17 @@ export default function Page() {
                         <div>
                           <div className="font-medium">{item.trainingSession.title}</div>
                           <div className="text-xs text-muted-foreground">
-                            {new Date(item.trainingSession.begining_date).toLocaleDateString(
-                              "fr-FR"
-                            )}{" "}
+                            {item.trainingSession.begining_date
+                              ? new Date(item.trainingSession.begining_date).toLocaleDateString(
+                                  "fr-FR"
+                                )
+                              : "-"}{" "}
                             -{" "}
-                            {new Date(item.trainingSession.ending_date).toLocaleDateString("fr-FR")}
+                            {item.trainingSession.ending_date
+                              ? new Date(item.trainingSession.ending_date).toLocaleDateString(
+                                  "fr-FR"
+                                )
+                              : "-"}
                           </div>
                         </div>
                       </td>

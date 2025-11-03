@@ -56,12 +56,6 @@ const profileFormSchema = z.object({
       message: "Le pays doit contenir au moins 2 caractères",
     })
     .optional(),
-  identityNumber: z
-    .string()
-    .refine((val) => !val || (val.length >= 2 && /^[0-9]+$/.test(val)), {
-      message: "Le numéro d'identité doit contenir au moins 2 chiffres",
-    })
-    .optional(),
 });
 
 type UserProfileData = {
@@ -72,7 +66,6 @@ type UserProfileData = {
   address?: string;
   city?: string;
   country?: string;
-  identityNumber?: number | null;
   avatarURL?: string;
 };
 
@@ -105,7 +98,6 @@ function ProfileCompletionBar({
       { label: "Adresse", value: formValues.address || userData.address },
       { label: "Ville", value: formValues.city || userData.city },
       { label: "Pays", value: formValues.country || userData.country },
-      { label: "Pièce d'identité", value: formValues.identityNumber || userData.identityNumber },
       { label: "Photo de profil", value: userData.avatarURL },
     ];
 
@@ -192,7 +184,6 @@ function ProfileCompletionBar({
 export function UpdateProfile({
   address,
   country,
-  identityNumber,
   phone,
   city,
   avatarURL,
@@ -203,7 +194,6 @@ export function UpdateProfile({
 }: {
   address?: string;
   country?: string;
-  identityNumber?: string;
   phone?: string;
   city?: string;
   avatarURL?: string;
@@ -227,7 +217,6 @@ export function UpdateProfile({
     defaultValues: {
       address: address || "",
       country: country || "",
-      identityNumber: identityNumber || "",
       phone: phone || "",
       city: city || "",
     },
@@ -242,7 +231,6 @@ export function UpdateProfile({
     const originalValues = {
       address: address || "",
       country: country || "",
-      identityNumber: identityNumber || "",
       phone: phone || "",
       city: city || "",
     };
@@ -254,7 +242,7 @@ export function UpdateProfile({
     });
 
     setHasChanges(hasFormChanges);
-  }, [watchedFields, address, country, identityNumber, phone, city, form]);
+  }, [watchedFields, address, country, phone, city, form]);
 
   const userData: UserProfileData = {
     firstName,
@@ -264,7 +252,6 @@ export function UpdateProfile({
     address,
     city,
     country,
-    identityNumber: identityNumber ? parseInt(identityNumber.toString(), 10) : null,
     avatarURL,
   };
 
@@ -351,9 +338,6 @@ export function UpdateProfile({
       await updateProfile({
         ...(filteredValues.address && { address: filteredValues.address }),
         ...(filteredValues.country && { country: filteredValues.country }),
-        ...(filteredValues.identityNumber && {
-          num_piece_identite: filteredValues.identityNumber.toString(),
-        }),
         ...(filteredValues.city && { city: filteredValues.city }),
         ...(filteredValues.phone && { phone: filteredValues.phone }),
         // Note: We don't include avatar here to avoid sending null
@@ -375,7 +359,6 @@ export function UpdateProfile({
     form.reset({
       address: address || "",
       country: country || "",
-      identityNumber: identityNumber || "",
       phone: phone || "",
       city: city || "",
     });
@@ -577,27 +560,6 @@ export function UpdateProfile({
                         placeholder="France"
                         {...field}
                         className={country ? "border-green-200 bg-green-50" : ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="identityNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Pièce d'identité
-                      {identityNumber && <span className="text-green-600 ml-1">✓</span>}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="1234567890123"
-                        {...field}
-                        className={identityNumber ? "border-green-200 bg-green-50" : ""}
                       />
                     </FormControl>
                     <FormMessage />

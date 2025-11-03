@@ -5,18 +5,27 @@ export type UserInSessionStatus = "refusedpayment" | "notpaid" | "pending" | "in
 export interface TrainingSession {
   id: string;
   title: string;
-  nb_places: number;
-  available_places: number;
-  begining_date: string;
-  ending_date: string;
+  trainings?: {
+    title: string;
+  };
+  nb_places?: number;
+  available_places?: number;
+  begining_date?: string;
+  ending_date?: string;
 }
 
 export interface User {
   id: string;
+  avatar?: string | null;
+  email: string;
+  phone?: string | null;
+  is_verified: boolean;
   firstName: string;
   lastName: string;
-  email: string;
-  phone: string | null;
+  address?: string | null;
+  country?: string | null;
+  city?: string | null;
+  dateBirth?: string | null;
 }
 
 export interface UserInSession {
