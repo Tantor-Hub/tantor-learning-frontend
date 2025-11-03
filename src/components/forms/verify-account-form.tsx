@@ -101,7 +101,6 @@ export function VerifyAccountForm() {
         email: email,
         otp: String(pin),
       }).unwrap();
-      console.log("Verify response:", response);
       dispatch(
         setCredentials({
           token: response.data.auth_token,

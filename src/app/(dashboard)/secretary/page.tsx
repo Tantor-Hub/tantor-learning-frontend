@@ -4,16 +4,44 @@ import { SecScheduleCard } from "./components/sec-schedule-card";
 import { useListEventsQuery } from "@/lib/apis/common/planning";
 import { useGetAllUserInSessionsQuery } from "@/lib/apis/user-in-session";
 import { UserInSession } from "@/types/user-in-session";
+import { useGetCatalogueFormationForSecretaryQuery } from "@/lib/apis/catalogue-formation";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 export default function Page() {
   const { data: eventsData, isLoading: eventsLoading } = useListEventsQuery();
   const { data: planningData, isLoading: planningLoading } = useGetAllUserInSessionsQuery();
+  const {
+    data: catalogueData,
+    isLoading: isCatalogueLoading,
+    error: catalogueError,
+  } = useGetCatalogueFormationForSecretaryQuery();
 
   const todayEvents = (eventsData?.data || []).filter((event: any) => {
     const eventDate = new Date(event.begining_date).toDateString();
     const today = new Date().toDateString();
     return eventDate === today;
   });
+
+  const handleDownloadGuide = (): void => {
+    if (isCatalogueLoading) {
+      toast("Chargement en cours...");
+      return;
+    }
+
+    if (catalogueError) {
+      toast.error("Erreur lors du chargement du guide");
+      return;
+    }
+
+    if (catalogueData?.data?.piece_jointe) {
+      window.open(catalogueData.data.piece_jointe, "_blank");
+      toast.success("Guide ouvert dans un nouvel onglet");
+    } else {
+      toast.error("Guide non disponible");
+    }
+  };
 
   return (
     <>
@@ -49,8 +77,18 @@ export default function Page() {
       </div>
       <div className="w-full my-5">
         <div className="flex flex-col gap-4 p-4 rounded border">
-          <h3 className="text-xl font-semibold">Inscriptions</h3>
-          <p className="text-xs font-light">Inscriptions aux sessions de formation</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <div>
+              <h3 className="text-xl font-semibold">Inscriptions</h3>
+              <p className="text-xs font-light">Inscriptions aux sessions de formation</p>
+            </div>
+            {catalogueData?.data?.piece_jointe && (
+              <Button onClick={handleDownloadGuide} className="flex items-center gap-2">
+                <Download className="w-4 h-4" />
+                Télécharger le guide d'aide
+              </Button>
+            )}
+          </div>
           {planningLoading ? (
             <div className="text-center">Chargement du planning...</div>
           ) : planningData?.data && planningData.data.length > 0 ? (

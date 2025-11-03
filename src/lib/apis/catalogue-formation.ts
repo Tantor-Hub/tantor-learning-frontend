@@ -64,6 +64,42 @@ export const catalogueFormationApi = createApi({
       }),
       invalidatesTags: ["CatalogueFormation"],
     }),
+
+    // Get catalogue formation for students
+    getCatalogueFormationForStudent: builder.query<
+      { status: number; message: string; data: CatalogueFormation },
+      void
+    >({
+      query: () => ({
+        url: "catalogueformation/student",
+        method: "GET",
+      }),
+      providesTags: ["CatalogueFormation"],
+    }),
+
+    // Get catalogue formation for instructors
+    getCatalogueFormationForInstructor: builder.query<
+      { status: number; message: string; data: CatalogueFormation },
+      void
+    >({
+      query: () => ({
+        url: "catalogueformation/instructor",
+        method: "GET",
+      }),
+      providesTags: ["CatalogueFormation"],
+    }),
+
+    // Get catalogue formation for secretaries
+    getCatalogueFormationForSecretary: builder.query<
+      { status: number; message: string; data: CatalogueFormation },
+      void
+    >({
+      query: () => ({
+        url: "catalogueformation/secretary",
+        method: "GET",
+      }),
+      providesTags: ["CatalogueFormation"],
+    }),
   }),
 });
 
@@ -73,4 +109,7 @@ export const {
   useGetCatalogueFormationQuery,
   useUpdateCatalogueFormationMutation,
   useDeleteCatalogueFormationMutation,
+  useGetCatalogueFormationForStudentQuery,
+  useGetCatalogueFormationForInstructorQuery,
+  useGetCatalogueFormationForSecretaryQuery,
 } = catalogueFormationApi;

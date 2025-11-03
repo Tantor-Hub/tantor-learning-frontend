@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Download, File, AlertCircle } from "lucide-react";
+import { useGetCatalogueFormationForStudentQuery } from "@/lib/apis/catalogue-formation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -26,6 +27,13 @@ export default function Page() {
   const currentUser = useSelector(selectCurrentUser);
   const [contactForm, { isLoading }] = useContactFormAPIMutation();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const {
+    data: catalogueData,
+    isLoading: isCatalogueLoading,
+    error: catalogueError,
+  } = useGetCatalogueFormationForStudentQuery();
+
   const form = useForm<ContactUsFormValues>({
     resolver: zodResolver(contactUsFormSchema),
     defaultValues: {
@@ -50,8 +58,22 @@ export default function Page() {
   };
 
   const handleDownloadGuide = (): void => {
-    // Logique pour télécharger le guide
-    // console.log("Téléchargement du guide d'aide");
+    if (isCatalogueLoading) {
+      toast("Chargement en cours...");
+      return;
+    }
+
+    if (catalogueError) {
+      toast.error("Erreur lors du chargement du guide");
+      return;
+    }
+
+    if (catalogueData?.data?.piece_jointe) {
+      window.open(catalogueData.data.piece_jointe, "_blank");
+      toast.success("Guide ouvert dans un nouvel onglet");
+    } else {
+      toast.error("Guide non disponible");
+    }
   };
 
   // Form submission handler
@@ -93,7 +115,7 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="rounded-lg border overflow-hidden">
+      <div className="rounded border overflow-hidden">
         <div className="bg-ring text-secondary-foreground px-6 py-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <Button
@@ -104,7 +126,7 @@ export default function Page() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
             </Button>
-            <h1 className="text-xl text-white">Nouvelle requête de support</h1>
+            {/* <h1 className="text-xl text-white">Nouvelle requête de support</h1> */}
           </div>
         </div>
 
@@ -158,52 +180,6 @@ export default function Page() {
                 )}
               />
 
-              {/* <FormField
-                control={form.control}
-                name="file"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 transition-colors hover:border-[#0466C8] hover:bg-blue-50/50">
-                      <FormLabel className="flex flex-col items-center gap-2 cursor-pointer text-center">
-                        <File className="w-8 h-8 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-700">
-                          Joindre un fichier (optionnel)
-                        </span>
-                         <span className="text-xs text-gray-500">PNG, JPG, PDF jusqu'à 10MB</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="file"
-                          accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
-                          onChange={handleFileChange}
-                          className="hidden"
-                        />
-                      </FormControl>
-                      {selectedFile && (
-                        <div className="mt-3 p-3 bg-blue-50 rounded-md flex items-center justify-between">
-                          <span className="text-sm text-blue-700 font-medium">
-                            {selectedFile.name}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedFile(null);
-                              form.setValue("file", null);
-                            }}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            Supprimer
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
-
               <div className="flex flex-col sm:flex-row gap-4 justify-end pt-6 border-t">
                 <Button
                   type="button"
@@ -234,20 +210,6 @@ export default function Page() {
           </Form>
         </div>
       </div>
-
-      {/* <div className="bg-secondary text-secondary-foreground rounded-lg p-6 border">
-        <h3 className="font-semibold mb-3">Besoin d'aide immédiate ?</h3>
-        <div className="grid sm:grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="font-medium">Questions fréquentes</p>
-            <p className="text-ring text-sm">Consultez notre FAQ pour des réponses rapides</p>
-          </div>
-          <div>
-            <p className="font-medium">Chat en direct</p>
-            <p className="text-ring text-sm">Disponible du lundi au vendredi, 9h-18h</p>
-          </div>
-        </div>
-      </div> */}
     </section>
   );
 }

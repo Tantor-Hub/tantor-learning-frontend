@@ -105,12 +105,12 @@ export function NavUser() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuGroup>
+              {/* <DropdownMenuGroup>
                 <DropdownMenuItem onClick={() => router.push(`/${role}/notifications`)}>
                   <Bell className="mr-2 h-4 w-4" />
                   Notifications
                 </DropdownMenuItem>
-              </DropdownMenuGroup>
+              </DropdownMenuGroup> */}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogoutClick}>
                 <LogOut className="mr-2 h-4 w-4" />
