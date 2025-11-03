@@ -99,7 +99,7 @@ const EditableVariable = Node.create({
   renderHTML({ node, HTMLAttributes }) {
     const value = node.attrs.value || "";
     const name = node.attrs.name || "";
-    const displayText = value || `{{${name}}}`;
+    const placeholder = `{{${name}}}`;
 
     return [
       "span",
@@ -115,7 +115,7 @@ const EditableVariable = Node.create({
         {
           class: "variable-field",
           contenteditable: "true",
-          "data-placeholder": `{{${name}}}`,
+          "data-placeholder": placeholder,
           style: `
             display: inline-block;
             min-width: 100px;
@@ -134,9 +134,10 @@ const EditableVariable = Node.create({
             -moz-user-select: text;
             -ms-user-select: text;
             user-select: text;
+            position: relative;
           `,
         },
-        displayText,
+        value || "",
       ],
     ];
   },
@@ -300,7 +301,7 @@ export default function StudentTemplate({
         return true;
       },
     },
-    editable: true,
+    editable: false,
   });
 
   // Set client side flag
@@ -312,41 +313,102 @@ export default function StudentTemplate({
   useEffect(() => {
     if (open && templateId && isClient) {
       console.log("🔄 Loading template with ID:", templateId);
+      console.log("🔄 Resetting content loaded state");
       setIsContentLoaded(false);
+      setVariableValues({}); // Reset variable values
+      setExistingInstance(null); // Reset existing instance
       getDocumentTemplate({ id: templateId });
+    } else if (!open) {
+      // Reset state when modal closes
+      setIsContentLoaded(false);
+      setVariableValues({});
+      setExistingInstance(null);
     }
   }, [open, templateId, getDocumentTemplate, isClient]);
 
   // Check for existing instance when instances data loads
   useEffect(() => {
-    if (instancesData?.data && userId) {
-      console.log("📋 Checking for existing instances:", instancesData.data);
-      const userInstance = instancesData.data.find((instance) => instance.userId === userId);
-      if (userInstance) {
-        console.log("✅ Found existing instance:", userInstance);
-        setExistingInstance(userInstance);
-        setVariableValues(userInstance.variableValues || {});
-      } else {
-        console.log("❌ No existing instance found for user");
+    // Only check if we have instances data (array might be empty) or if loading is complete
+    if (!instancesLoading && userId) {
+      if (instancesData?.data) {
+        console.log("📋 Checking for existing instances:", instancesData.data);
+        const userInstance = instancesData.data.find((instance) => instance.userId === userId);
+        if (userInstance) {
+          console.log("✅ Found existing instance:", userInstance);
+          console.log("📝 Instance ID:", userInstance.id);
+          setExistingInstance(userInstance);
+          const savedValues = userInstance.variableValues || {};
+          console.log("📝 Loading saved variable values:", savedValues);
+          console.log("📊 Variable keys:", Object.keys(savedValues));
+          console.log("📊 Variable values:", Object.values(savedValues));
+          setVariableValues(savedValues);
+
+          // Force a small delay to ensure state update is processed
+          setTimeout(() => {
+            console.log("🔄 Variable values state should now be updated");
+          }, 100);
+        } else {
+          console.log("❌ No existing instance found for user");
+          console.log(
+            "📋 Available instances:",
+            instancesData.data.map((i) => ({ id: i.id, userId: i.userId }))
+          );
+          setExistingInstance(null);
+          setVariableValues({});
+        }
+      } else if (instancesData === undefined || instancesData.data === undefined) {
+        // Instances query completed but no data found (empty array or undefined)
+        console.log("⚠️  Instances query completed but no data found");
         setExistingInstance(null);
         setVariableValues({});
       }
+    } else if (instancesLoading) {
+      console.log("⏳ Instances are still loading...");
     }
-  }, [instancesData, userId]);
+  }, [instancesData, userId, instancesLoading]);
 
   // Load content into editor when template data is available
+  // Wait for instances to load first if they're still loading (to get saved values)
   useEffect(() => {
-    if (!editor || !templateData?.data || !isClient) return;
+    if (!editor || !templateData?.data || !isClient || isContentLoaded) return;
+
+    // If instances are still loading, wait for them first
+    if (instancesLoading) {
+      console.log("⏳ Waiting for instances to finish loading before loading content...");
+      return;
+    }
 
     console.log("📄 Template data received:", templateData.data);
     console.log("🎯 Current variable values:", variableValues);
+    console.log("📊 Instances loading:", instancesLoading);
+    console.log("📊 Instances data:", instancesData?.data);
 
     const loadContent = async () => {
+      // Get the latest variableValues from instances data if available
+      // This ensures we use saved values if they exist
+      let finalVariableValues = variableValues;
+      if (instancesData?.data && userId) {
+        const userInstance = instancesData.data.find((instance) => instance.userId === userId);
+        if (userInstance && userInstance.variableValues) {
+          console.log("🔄 Using variable values from instance:", userInstance.variableValues);
+          finalVariableValues = userInstance.variableValues;
+          // Update state if we found values (this will trigger the DOM update effect too)
+          if (
+            Object.keys(userInstance.variableValues).length > 0 &&
+            JSON.stringify(userInstance.variableValues) !== JSON.stringify(variableValues)
+          ) {
+            console.log("📝 Updating variableValues state from instance");
+            setVariableValues(userInstance.variableValues);
+            // Use the instance values directly for content loading
+            finalVariableValues = userInstance.variableValues;
+          }
+        }
+      }
       try {
         if (templateData.data.content) {
-          console.log("🔄 Converting template content...");
+          console.log("🔄 Converting template content with values:", finalVariableValues);
 
-          const convertContent = (content: any): any => {
+          const convertContent = (content: any, values: Record<string, string>): any => {
             if (!content) return null;
 
             const traverse = (node: any): any => {
@@ -355,7 +417,8 @@ export default function StudentTemplate({
               // Convert variable nodes to editable variables
               if (node.type === "variable" && node.attrs?.name) {
                 const variableName = node.attrs.name;
-                const variableValue = variableValues[variableName] || "";
+                // Use values parameter (which is finalVariableValues)
+                const variableValue = values[variableName] || "";
 
                 console.log(`🔄 Converting variable: ${variableName} = "${variableValue}"`);
 
@@ -389,7 +452,7 @@ export default function StudentTemplate({
             return content;
           };
 
-          const convertedContent = convertContent(templateData.data.content);
+          const convertedContent = convertContent(templateData.data.content, finalVariableValues);
           console.log("✅ Converted content:", convertedContent);
 
           if (convertedContent) {
@@ -423,7 +486,8 @@ export default function StudentTemplate({
     };
 
     loadContent();
-  }, [editor, templateData, isClient, variableValues]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor, templateData?.data, isClient, instancesLoading, instancesData, userId]);
 
   // Event handlers for variable fields
   const updateVariableField = useCallback((variableName: string, value: string) => {
@@ -434,21 +498,93 @@ export default function StudentTemplate({
     }));
   }, []);
 
-  // Set up event listeners for variable fields
+  // Set up event listeners for variable fields and placeholder behavior
   useEffect(() => {
     if (!editor || !isContentLoaded || !isClient) return;
 
     console.log("🎯 Setting up event listeners for variable fields");
 
+    // Add CSS for placeholder effect
+    const styleId = "variable-field-placeholder-styles";
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.id = styleId;
+      style.textContent = `
+        .variable-field-wrapper {
+          position: relative;
+        }
+        .variable-field {
+          min-height: 1.2em;
+        }
+        .variable-field[data-show-placeholder="true"]:not(:focus)::before {
+          content: attr(data-placeholder);
+          color: #a8a29e;
+          font-style: italic;
+          pointer-events: none;
+          display: inline-block;
+          opacity: 0.7;
+        }
+        .variable-field[data-show-placeholder="true"]:not(:focus):empty::before,
+        .variable-field[data-show-placeholder="true"]:not(:focus):has(br:only-child)::before {
+          content: attr(data-placeholder);
+          color: #a8a29e;
+          font-style: italic;
+          pointer-events: none;
+          display: inline-block;
+          opacity: 0.7;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    const updatePlaceholder = (target: HTMLElement) => {
+      const text = target.textContent || "";
+      const hasValue = text.trim().length > 0;
+      if (!hasValue && document.activeElement !== target) {
+        // Show placeholder when empty and not focused
+        target.setAttribute("data-show-placeholder", "true");
+      } else {
+        target.removeAttribute("data-show-placeholder");
+      }
+    };
+
     const handleInput = (event: Event) => {
       const target = event.target as HTMLElement;
       if (target && target.classList.contains("variable-field")) {
+        // Save scroll position and current selection before any updates
+        const scrollContainer = editor.view.dom.closest(".overflow-auto") || window;
+        const scrollTop =
+          scrollContainer === window ? window.scrollY : (scrollContainer as HTMLElement).scrollTop;
+        const scrollLeft =
+          scrollContainer === window ? window.scrollX : (scrollContainer as HTMLElement).scrollLeft;
+
+        // Save cursor position
+        const selection = window.getSelection();
+        let savedRange: Range | null = null;
+        if (selection && selection.rangeCount !== undefined && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          savedRange = range.cloneRange();
+        }
+
         const wrapper = target.closest("[data-variable]");
         const variableName = wrapper?.getAttribute("data-variable");
 
         if (variableName) {
           const newValue = target.textContent || "";
-          updateVariableField(variableName, newValue);
+
+          // Use requestAnimationFrame to batch the state update and avoid scroll jumps
+          requestAnimationFrame(() => {
+            updateVariableField(variableName, newValue);
+          });
+
+          // Clean up empty content to ensure placeholder shows
+          // Remove any <br> tags if content is empty
+          if (!newValue.trim()) {
+            target.innerHTML = "";
+            target.setAttribute("data-empty", "true");
+          } else {
+            target.removeAttribute("data-empty");
+          }
 
           // Update styling based on whether field has value
           const hasValue = newValue.trim().length > 0;
@@ -456,6 +592,35 @@ export default function StudentTemplate({
           target.style.borderBottomColor = hasValue ? "#d97706" : "#f59e0b";
           target.style.color = hasValue ? "#78716c" : "#a8a29e";
           target.style.fontStyle = hasValue ? "normal" : "italic";
+
+          updatePlaceholder(target);
+
+          // Restore scroll position and focus after a brief delay
+          requestAnimationFrame(() => {
+            // Restore scroll
+            if (scrollContainer === window) {
+              window.scrollTo(scrollLeft, scrollTop);
+            } else {
+              (scrollContainer as HTMLElement).scrollTop = scrollTop;
+              (scrollContainer as HTMLElement).scrollLeft = scrollLeft;
+            }
+
+            // Restore focus and cursor position
+            target.focus();
+            if (savedRange && selection) {
+              try {
+                selection.removeAllRanges();
+                selection.addRange(savedRange);
+              } catch (e) {
+                // If range is invalid, just focus the element
+                const range = document.createRange();
+                range.selectNodeContents(target);
+                range.collapse(false); // Move to end
+                selection.removeAllRanges();
+                selection.addRange(range);
+              }
+            }
+          });
         }
       }
     };
@@ -463,9 +628,46 @@ export default function StudentTemplate({
     const handleFocus = (event: Event) => {
       const target = event.target as HTMLElement;
       if (target && target.classList.contains("variable-field")) {
+        // Save scroll position before focus changes
+        const scrollContainer = editor.view.dom.closest(".overflow-auto") || window;
+        const scrollTop =
+          scrollContainer === window ? window.scrollY : (scrollContainer as HTMLElement).scrollTop;
+        const scrollLeft =
+          scrollContainer === window ? window.scrollX : (scrollContainer as HTMLElement).scrollLeft;
+
         target.style.borderBottomColor = "#ea580c";
         target.style.boxShadow = "0 1px 0 0 rgba(234, 88, 12, 0.3)";
         target.style.backgroundColor = "#fef3c7";
+        // Clear placeholder on focus
+        target.removeAttribute("data-show-placeholder");
+        // If empty, select all to make typing easier
+        if (!target.textContent?.trim()) {
+          requestAnimationFrame(() => {
+            const range = document.createRange();
+            range.selectNodeContents(target);
+            const selection = window.getSelection();
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+
+            // Restore scroll position after selection
+            if (scrollContainer === window) {
+              window.scrollTo(scrollLeft, scrollTop);
+            } else {
+              (scrollContainer as HTMLElement).scrollTop = scrollTop;
+              (scrollContainer as HTMLElement).scrollLeft = scrollLeft;
+            }
+          });
+        } else {
+          // Maintain scroll position even when not empty
+          requestAnimationFrame(() => {
+            if (scrollContainer === window) {
+              window.scrollTo(scrollLeft, scrollTop);
+            } else {
+              (scrollContainer as HTMLElement).scrollTop = scrollTop;
+              (scrollContainer as HTMLElement).scrollLeft = scrollLeft;
+            }
+          });
+        }
       }
     };
 
@@ -476,6 +678,7 @@ export default function StudentTemplate({
         target.style.borderBottomColor = hasValue ? "#d97706" : "#f59e0b";
         target.style.boxShadow = "none";
         target.style.backgroundColor = hasValue ? "#fef3c7" : "#fef9e7";
+        updatePlaceholder(target);
       }
     };
 
@@ -485,7 +688,34 @@ export default function StudentTemplate({
       if (!target.classList.contains("variable-field") && !target.closest(".variable-field")) {
         event.preventDefault();
         event.stopPropagation();
+        return;
       }
+      // If clicking on a variable field wrapper, focus the inner field
+      if (target.classList.contains("variable-field-wrapper")) {
+        const field = target.querySelector(".variable-field") as HTMLElement;
+        if (field) {
+          field.focus();
+        }
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    // Initialize placeholders for all variable fields
+    const initializePlaceholders = () => {
+      const fields = editor.view.dom.querySelectorAll(".variable-field");
+      fields.forEach((field) => {
+        const fieldEl = field as HTMLElement;
+        // Clean up empty content to ensure placeholder shows
+        const text = fieldEl.textContent || "";
+        if (!text.trim()) {
+          fieldEl.innerHTML = "";
+          fieldEl.setAttribute("data-empty", "true");
+        } else {
+          fieldEl.removeAttribute("data-empty");
+        }
+        updatePlaceholder(fieldEl);
+      });
     };
 
     const editorElement = editor.view.dom;
@@ -493,6 +723,9 @@ export default function StudentTemplate({
     editorElement.addEventListener("focus", handleFocus, true);
     editorElement.addEventListener("blur", handleBlur, true);
     editorElement.addEventListener("click", handleClick, true);
+
+    // Initialize placeholders after a short delay to ensure DOM is ready
+    setTimeout(initializePlaceholders, 100);
 
     return () => {
       editorElement.removeEventListener("input", handleInput);
@@ -502,17 +735,136 @@ export default function StudentTemplate({
     };
   }, [editor, updateVariableField, isContentLoaded, isClient]);
 
+  // Update variable fields in DOM when variableValues change (for existing instances)
+  useEffect(() => {
+    if (!editor || !isContentLoaded || !isClient) return;
+
+    // Use a small delay to ensure DOM is fully ready
+    const timeoutId = setTimeout(() => {
+      console.log("🔄 Updating variable fields with values:", variableValues);
+      console.log("📊 Number of variables to populate:", Object.keys(variableValues).length);
+
+      // Helper to update placeholder state
+      const updatePlaceholderForField = (target: HTMLElement) => {
+        const text = target.textContent || "";
+        const hasValue = text.trim().length > 0;
+        if (!hasValue && document.activeElement !== target) {
+          // Show placeholder when empty and not focused
+          target.setAttribute("data-show-placeholder", "true");
+        } else {
+          target.removeAttribute("data-show-placeholder");
+        }
+      };
+
+      // Find all variable fields and update them with saved values
+      const variableFields = editor.view.dom.querySelectorAll(".variable-field");
+      console.log("🔍 Found variable fields:", variableFields.length);
+
+      let hasUpdates = false;
+
+      variableFields.forEach((field) => {
+        const fieldEl = field as HTMLElement;
+        const wrapper = fieldEl.closest("[data-variable]") as HTMLElement;
+        if (wrapper) {
+          const variableName = wrapper.getAttribute("data-variable");
+          console.log(
+            `🔍 Checking variable: ${variableName}, has value: ${variableName && variableValues.hasOwnProperty(variableName)}`
+          );
+
+          if (variableName && variableValues.hasOwnProperty(variableName)) {
+            const savedValue = variableValues[variableName] || "";
+            const currentValue = fieldEl.textContent?.trim() || "";
+
+            console.log(
+              `📝 Variable ${variableName}: saved="${savedValue}", current="${currentValue}"`
+            );
+
+            // Update if the value is different (including empty string case)
+            if (savedValue !== currentValue) {
+              fieldEl.textContent = savedValue;
+              hasUpdates = true;
+
+              // Update styling
+              const hasValue = savedValue.trim().length > 0;
+              fieldEl.style.backgroundColor = hasValue ? "#fef3c7" : "#fef9e7";
+              fieldEl.style.borderBottomColor = hasValue ? "#d97706" : "#f59e0b";
+              fieldEl.style.color = hasValue ? "#78716c" : "#a8a29e";
+              fieldEl.style.fontStyle = hasValue ? "normal" : "italic";
+
+              // Clean up empty content
+              if (!savedValue.trim()) {
+                fieldEl.innerHTML = "";
+                fieldEl.setAttribute("data-empty", "true");
+              } else {
+                fieldEl.removeAttribute("data-empty");
+              }
+
+              // Update placeholder state
+              updatePlaceholderForField(fieldEl);
+
+              console.log(`✅ Updated variable ${variableName} with value: "${savedValue}"`);
+            } else {
+              console.log(`⏭️  Variable ${variableName} already has correct value, skipping`);
+            }
+          }
+        }
+      });
+
+      if (hasUpdates) {
+        console.log("✅ All variable fields updated from existing instance");
+      } else {
+        console.log("⚠️  No variable fields were updated");
+      }
+    }, 200); // Small delay to ensure DOM is ready
+
+    return () => clearTimeout(timeoutId);
+  }, [variableValues, editor, isContentLoaded, isClient]);
+
   // Save or Update document instance
   const handleSave = useCallback(async () => {
     if (!editor) return;
 
+    // Ensure instances have finished loading before saving
+    // This is important to correctly determine if we should create or update
+    if (instancesLoading) {
+      console.log("⏳ Waiting for instances to finish loading...");
+      toast.loading("Vérification de l'instance existante...", { id: "checking-instance" });
+
+      // Wait a reasonable time for instances to load (usually very fast)
+      // The instances query should complete quickly, so we wait up to 2 seconds
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      toast.dismiss("checking-instance");
+
+      // Note: instancesLoading might still be true, but we'll do a final check below
+      if (instancesLoading) {
+        console.warn("⚠️  Instances still loading after wait, proceeding with available data");
+      }
+    }
+
+    // Double-check for existing instance if we don't have one set but instances are loaded
+    let instanceToUse = existingInstance;
+    if (!instanceToUse && !instancesLoading && instancesData?.data) {
+      const userInstance = instancesData.data.find((instance) => instance.userId === userId);
+      if (userInstance) {
+        console.log("🔍 Found instance on second check:", userInstance.id);
+        instanceToUse = userInstance;
+        setExistingInstance(userInstance);
+      }
+    }
+
     console.log("💾 Saving document with variables:", variableValues);
+    console.log(
+      "📋 Existing instance check:",
+      instanceToUse ? `Found ID: ${instanceToUse.id}` : "No instance found - will create new"
+    );
 
     try {
-      if (existingInstance) {
+      if (instanceToUse) {
         // Update existing instance
+        console.log("🔄 Updating existing instance:", instanceToUse.id);
         const result = await updateDocumentInstance({
-          id: existingInstance.id,
+          id: instanceToUse.id,
           data: { variableValues },
         }).unwrap();
 
@@ -521,6 +873,7 @@ export default function StudentTemplate({
         console.log("✅ Document updated successfully");
       } else {
         // Create new instance
+        console.log("➕ Creating new instance for template:", templateId);
         const result = await createDocumentInstance({
           templateId,
           variableValues,
@@ -541,48 +894,351 @@ export default function StudentTemplate({
     templateId,
     updateDocumentInstance,
     createDocumentInstance,
+    instancesLoading,
+    instancesData,
+    userId,
   ]);
+
+  // Helper function to convert modern CSS colors to rgb/hex for html2canvas compatibility
+  const convertColorToSupportedFormat = useCallback((color: string): string => {
+    if (!color || color === "transparent") return "transparent";
+
+    // If already in a supported format (hex, rgb, rgba), return as is
+    if (/^#([0-9A-F]{3}|[0-9A-F]{6})$/i.test(color)) return color;
+    if (/^rgba?\(/.test(color)) return color;
+    if (/^hsla?\(/.test(color)) return color;
+
+    // Create a temporary element to convert modern color formats
+    const tempEl = document.createElement("div");
+    tempEl.style.color = color;
+    document.body.appendChild(tempEl);
+
+    try {
+      const computedStyle = window.getComputedStyle(tempEl);
+      const rgbColor = computedStyle.color;
+      document.body.removeChild(tempEl);
+
+      // Convert rgb() to hex if needed, or return rgb format
+      return rgbColor;
+    } catch (e) {
+      document.body.removeChild(tempEl);
+      // Fallback to black if conversion fails
+      return "#000000";
+    }
+  }, []);
+
+  // Helper function to sanitize all styles in an element tree
+  const sanitizeStylesForPDF = useCallback(
+    (element: HTMLElement) => {
+      // Convert element's own styles
+      if (element.style.color) {
+        element.style.color = convertColorToSupportedFormat(element.style.color);
+      }
+      if (element.style.backgroundColor) {
+        element.style.backgroundColor = convertColorToSupportedFormat(
+          element.style.backgroundColor
+        );
+      }
+      if (element.style.borderColor) {
+        element.style.borderColor = convertColorToSupportedFormat(element.style.borderColor);
+      }
+      if (element.style.borderTopColor) {
+        element.style.borderTopColor = convertColorToSupportedFormat(element.style.borderTopColor);
+      }
+      if (element.style.borderRightColor) {
+        element.style.borderRightColor = convertColorToSupportedFormat(
+          element.style.borderRightColor
+        );
+      }
+      if (element.style.borderBottomColor) {
+        element.style.borderBottomColor = convertColorToSupportedFormat(
+          element.style.borderBottomColor
+        );
+      }
+      if (element.style.borderLeftColor) {
+        element.style.borderLeftColor = convertColorToSupportedFormat(
+          element.style.borderLeftColor
+        );
+      }
+      if (element.style.outlineColor) {
+        element.style.outlineColor = convertColorToSupportedFormat(element.style.outlineColor);
+      }
+
+      // Recursively sanitize all child elements
+      const allElements = element.querySelectorAll("*");
+      allElements.forEach((el) => {
+        if (el instanceof HTMLElement) {
+          sanitizeStylesForPDF(el);
+        }
+      });
+    },
+    [convertColorToSupportedFormat]
+  );
 
   // Download PDF
   const handleDownloadPDF = useCallback(async () => {
-    if (!editor) return;
+    if (!editor) {
+      toast.error("L'éditeur n'est pas prêt");
+      return;
+    }
 
     try {
+      console.log("📥 Starting PDF download...");
+      console.log("📝 Current variable values:", variableValues);
+
+      // Get the current HTML content from the editor
       const filledContent = editor.getHTML();
+      console.log("📄 Editor HTML length:", filledContent.length);
+
+      // Create a temporary div to manipulate the content
       const tempDiv = document.createElement("div");
       tempDiv.innerHTML = filledContent;
       tempDiv.style.fontFamily = "Arial, sans-serif";
       tempDiv.style.fontSize = "12px";
       tempDiv.style.lineHeight = "1.5";
       tempDiv.style.padding = "20px";
+      tempDiv.style.width = "210mm"; // A4 width
+      tempDiv.style.color = "#000000";
+      tempDiv.style.backgroundColor = "#ffffff";
 
       // Replace variable fields with plain text for PDF
-      const variableFields = tempDiv.querySelectorAll(".variable-field");
-      variableFields.forEach((field) => {
-        const value = field.textContent || "";
+      // First, find all variable field wrappers
+      const variableWrappers = tempDiv.querySelectorAll(".variable-field-wrapper");
+      console.log("🔍 Found variable wrappers:", variableWrappers.length);
+
+      variableWrappers.forEach((wrapper) => {
+        const variableField = wrapper.querySelector(".variable-field");
+        if (variableField) {
+          // Get the actual text content (this should be the filled value, not placeholder)
+          let value = variableField.textContent || "";
+
+          // If empty, try to get from variableValues state using the variable name
+          if (!value.trim()) {
+            const variableName = wrapper.getAttribute("data-variable");
+            if (variableName && variableValues[variableName]) {
+              value = variableValues[variableName];
+              console.log(`📝 Using value from state for ${variableName}: "${value}"`);
+            }
+          }
+
+          // Remove placeholder styling if present
+          value = value.replace(/^\{\{[^}]+\}\}$/, ""); // Remove {{variableName}} placeholder text
+
+          // Create a replacement span with the actual value
+          const span = document.createElement("span");
+          span.textContent = value || ""; // Use empty string if no value
+          span.style.color = "#000000";
+          span.style.fontWeight = "normal";
+          span.style.fontStyle = "normal";
+          span.style.backgroundColor = "transparent";
+          span.style.border = "none";
+          span.style.padding = "0";
+          span.style.margin = "0";
+
+          // Replace the wrapper with just the text
+          wrapper.parentNode?.replaceChild(span, wrapper);
+          console.log(`✅ Replaced variable field with value: "${value}"`);
+        }
+      });
+
+      // Also handle any remaining variable fields that might not be in wrappers
+      const remainingFields = tempDiv.querySelectorAll(".variable-field");
+      remainingFields.forEach((field) => {
+        let value = field.textContent || "";
+        const wrapper = field.closest("[data-variable]");
+        if (wrapper) {
+          const variableName = wrapper.getAttribute("data-variable");
+          if (!value.trim() && variableName && variableValues[variableName]) {
+            value = variableValues[variableName];
+          }
+        }
+
+        value = value.replace(/^\{\{[^}]+\}\}$/, "");
+
         const span = document.createElement("span");
-        span.textContent = value;
-        span.style.color = "#374151";
-        span.style.fontWeight = "400";
+        span.textContent = value || "";
+        span.style.color = "#000000";
+        span.style.fontWeight = "normal";
+        span.style.fontStyle = "normal";
         field.parentNode?.replaceChild(span, field);
       });
 
+      // Clean up any placeholder styles or empty elements
+      const placeholderElements = tempDiv.querySelectorAll("[data-show-placeholder]");
+      placeholderElements.forEach((elem) => {
+        elem.removeAttribute("data-show-placeholder");
+        if (!elem.textContent?.trim()) {
+          elem.textContent = "";
+        }
+      });
+
+      // Sanitize all color styles to convert modern CSS colors (oklch, lab, lch) to rgb/hex
+      console.log("🎨 Sanitizing colors for PDF compatibility...");
+
+      // Attach tempDiv to DOM temporarily so getComputedStyle works
+      tempDiv.style.position = "absolute";
+      tempDiv.style.left = "-9999px";
+      tempDiv.style.top = "0";
+      tempDiv.style.width = "210mm";
+      document.body.appendChild(tempDiv);
+
+      // Process ALL elements and convert ALL color properties
+      const allElements = tempDiv.querySelectorAll("*");
+      const rootElement = tempDiv;
+      const allElementsToProcess = [rootElement, ...Array.from(allElements)];
+
+      console.log(`🔍 Processing ${allElementsToProcess.length} elements for color conversion...`);
+
+      allElementsToProcess.forEach((el) => {
+        if (el instanceof HTMLElement) {
+          try {
+            const computedStyle = window.getComputedStyle(el);
+
+            // List of all color-related CSS properties
+            const colorProperties = [
+              "color",
+              "backgroundColor",
+              "borderColor",
+              "borderTopColor",
+              "borderRightColor",
+              "borderBottomColor",
+              "borderLeftColor",
+              "outlineColor",
+              "textDecorationColor",
+              "columnRuleColor",
+              "caretColor",
+            ];
+
+            // Process each color property
+            colorProperties.forEach((prop) => {
+              try {
+                const value = computedStyle.getPropertyValue(prop);
+                if (
+                  value &&
+                  value.trim() &&
+                  value !== "transparent" &&
+                  value !== "rgba(0, 0, 0, 0)"
+                ) {
+                  // Check if it contains unsupported color formats
+                  const lowerValue = value.toLowerCase();
+                  if (
+                    lowerValue.includes("oklch") ||
+                    lowerValue.includes("lch(") ||
+                    lowerValue.includes("lab(") ||
+                    lowerValue.includes("color-mix")
+                  ) {
+                    // Create a test element to force browser conversion
+                    const testEl = document.createElement("div");
+                    testEl.style.setProperty(prop, value, "important");
+                    testEl.style.position = "absolute";
+                    testEl.style.visibility = "hidden";
+                    testEl.style.pointerEvents = "none";
+                    document.body.appendChild(testEl);
+
+                    try {
+                      const convertedStyle = window.getComputedStyle(testEl);
+                      const converted = convertedStyle.getPropertyValue(prop);
+
+                      if (converted && converted.trim()) {
+                        const lowerConverted = converted.toLowerCase();
+                        // Check if conversion was successful (no oklch/lch/lab in result)
+                        if (
+                          !lowerConverted.includes("oklch") &&
+                          !lowerConverted.includes("lch(") &&
+                          !lowerConverted.includes("lab(")
+                        ) {
+                          el.style.setProperty(prop, converted, "important");
+                          console.log(
+                            `✅ Converted ${prop}: ${value.substring(0, 50)} → ${converted.substring(0, 50)}`
+                          );
+                        } else {
+                          // Still has problematic format, use fallback
+                          if (prop === "color") {
+                            el.style.setProperty(prop, "#000000", "important");
+                          } else if (prop.includes("background")) {
+                            el.style.setProperty(prop, "#ffffff", "important");
+                          } else {
+                            el.style.setProperty(prop, "transparent", "important");
+                          }
+                          console.log(`⚠️ Fallback for ${prop} (conversion failed)`);
+                        }
+                      } else {
+                        // No conversion value, use fallback
+                        if (prop === "color") {
+                          el.style.setProperty(prop, "#000000", "important");
+                        } else {
+                          el.style.setProperty(prop, "transparent", "important");
+                        }
+                      }
+                    } finally {
+                      document.body.removeChild(testEl);
+                    }
+                  } else {
+                    // Already safe format, set it inline to override any stylesheet values
+                    el.style.setProperty(prop, value, "important");
+                  }
+                }
+              } catch (e) {
+                console.warn(`⚠️ Error processing ${prop}:`, e);
+              }
+            });
+          } catch (e) {
+            console.warn(`⚠️ Error processing element:`, e);
+          }
+        }
+      });
+
+      // Remove all stylesheets from tempDiv's document (if any)
+      // Also remove any style tags that might contain oklch
+      const styleTags = tempDiv.querySelectorAll("style");
+      styleTags.forEach((style) => {
+        const content = style.textContent || "";
+        if (content.includes("oklch") || content.includes("lch(") || content.includes("lab(")) {
+          style.remove();
+          console.log("🗑️ Removed style tag with unsupported colors");
+        }
+      });
+
+      // Remove tempDiv from DOM
+      document.body.removeChild(tempDiv);
+
+      // Final pass: remove any inline styles that still contain oklch
+      sanitizeStylesForPDF(tempDiv);
+
+      console.log("✅ Content processed for PDF");
+
       // Generate PDF using html2pdf
+      const marginTuple: [number, number, number, number] = [10, 10, 10, 10];
       const options = {
-        margin: 10,
-        filename: `${title}_${new Date().toISOString().split("T")[0]}.pdf`,
+        margin: marginTuple,
+        filename: `${title || "document"}_${new Date().toISOString().split("T")[0]}.pdf`,
         image: { type: "jpeg" as const, quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          logging: false,
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait" as const,
+          compress: true,
+        },
       };
 
+      toast.loading("Génération du PDF en cours...", { id: "pdf-generation" });
+
       await html2pdf().set(options).from(tempDiv).save();
+
+      toast.dismiss("pdf-generation");
       toast.success("PDF téléchargé avec succès");
+      console.log("✅ PDF downloaded successfully");
     } catch (error) {
-      console.error("Error downloading PDF:", error);
+      console.error("❌ Error downloading PDF:", error);
       toast.error("Erreur lors du téléchargement du PDF");
     }
-  }, [editor, title]);
+  }, [editor, title, variableValues, sanitizeStylesForPDF]);
 
   // Debug logging
   useEffect(() => {
