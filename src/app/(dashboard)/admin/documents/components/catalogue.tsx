@@ -60,6 +60,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import toast from "react-hot-toast";
 
 function UploadDialog() {
   const [file, setFile] = useState<File | null>(null);
@@ -86,12 +87,12 @@ function UploadDialog() {
         piece_jointe: file,
       }).unwrap();
 
-      alert("Module de formation ajouté avec succès");
+      toast.success("Module de formation ajouté avec succès");
       setFile(null);
       setDescription("");
       setUploadProgress(0);
     } catch (error) {
-      alert("Erreur lors de l'ajout du module");
+      toast.error("Erreur lors de l'ajout du module");
     } finally {
       setIsUploading(false);
     }
@@ -205,7 +206,7 @@ function GuideUploadDialog({ onSuccess }: { onSuccess: () => void }) {
 
       xhr.addEventListener("load", () => {
         if (xhr.status === 200 || xhr.status === 201) {
-          alert("Guide de formation ajouté avec succès");
+          toast.success("Guide de formation ajouté avec succès");
           setFile(null);
           setTitle("");
           setDescription("");
@@ -214,13 +215,13 @@ function GuideUploadDialog({ onSuccess }: { onSuccess: () => void }) {
           // Refetch the catalogue data to show the new item
           onSuccess();
         } else {
-          alert("Erreur lors de l'ajout du guide");
+          toast.error("Erreur lors de l'ajout du guide");
         }
         setIsUploading(false);
       });
 
       xhr.addEventListener("error", () => {
-        alert("Erreur lors de l'ajout du guide");
+        toast.error("Erreur lors de l'ajout du guide");
         setIsUploading(false);
       });
 
@@ -228,7 +229,7 @@ function GuideUploadDialog({ onSuccess }: { onSuccess: () => void }) {
       xhr.setRequestHeader("x-connexion-tantor", `Bearer ${token}`);
       xhr.send(formData);
     } catch (error) {
-      alert("Erreur lors de l'ajout du guide");
+      toast.error("Erreur lors de l'ajout du guide");
       setIsUploading(false);
     }
   };
@@ -356,10 +357,10 @@ function EditModuleDialog({ module, onClose }: { module: any; onClose: () => voi
         description: description.trim(),
         piece_jointe: file || undefined,
       }).unwrap();
-      alert("Module mis à jour avec succès");
+      toast.success("Module mis à jour avec succès");
       onClose();
     } catch (error) {
-      alert("Erreur lors de la mise à jour du module");
+      toast.error("Erreur lors de la mise à jour du module");
     }
   };
 
@@ -446,12 +447,12 @@ function EditCatalogueDialog({
           piece_jointe: file as any,
         },
       }).unwrap();
-      alert("Guide mis à jour avec succès");
+      toast.success("Guide mis à jour avec succès");
       onClose();
       // Refetch the catalogue data to show the updated item
       onSuccess();
     } catch (error) {
-      alert("Erreur lors de la mise à jour du guide");
+      toast.error("Erreur lors de la mise à jour du guide");
     }
   };
 
@@ -560,6 +561,7 @@ export function Catalogue() {
   const [editingModule, setEditingModule] = useState<any>(null);
   const [editingCatalogue, setEditingCatalogue] = useState<any>(null);
   const [deleteCatalogueId, setDeleteCatalogueId] = useState<string | null>(null);
+  const [deleteModuleId, setDeleteModuleId] = useState<string | null>(null);
   const [deleteCatalogue, { isLoading: deleteLoading }] = useDeleteCatalogueFormationMutation();
 
   if (modulesError || cataloguesError) {
@@ -579,12 +581,33 @@ export function Catalogue() {
   const handleDeleteCatalogue = async (id: string) => {
     try {
       await deleteCatalogue(id).unwrap();
-      alert("Guide supprimé avec succès");
+      toast.success("Guide supprimé avec succès");
       setDeleteCatalogueId(null);
       // Refetch the catalogue data to remove the deleted item
       refetchCatalogues();
     } catch (error) {
-      alert("Erreur lors de la suppression du guide");
+      toast.error("Erreur lors de la suppression du guide");
+    }
+  };
+
+  const handleDeleteModule = async (id: string) => {
+    try {
+      // Since there's no delete mutation, we'll use fetch directly
+      const { token } = getValidAuthTokens();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/moduledeformation/${id}`, {
+        method: "DELETE",
+        headers: {
+          "x-connexion-tantor": `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to delete");
+      toast.success("Module supprimé avec succès");
+      setDeleteModuleId(null);
+      // Refetch modules data
+      // Assuming there's a refetch for modules, but since it's not provided, we'll use window.location.reload or similar
+      window.location.reload();
+    } catch (error) {
+      toast.error("Erreur lors de la suppression du module");
     }
   };
 
@@ -631,9 +654,26 @@ export function Catalogue() {
                                 <Download className="mr-2 h-4 w-4" />
                                 Télécharger
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setEditingModule(module)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Modifier
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Modifier
+                                  </DropdownMenuItem>
+                                </DialogTrigger>
+                                {editingModule && editingModule.id === module.id && (
+                                  <EditModuleDialog
+                                    module={editingModule}
+                                    onClose={() => setEditingModule(null)}
+                                  />
+                                )}
+                              </Dialog>
+                              <DropdownMenuItem
+                                onClick={() => setDeleteModuleId(module.id)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Supprimer
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -714,13 +754,35 @@ export function Catalogue() {
                                   />
                                 )}
                               </Dialog>
-                              <DropdownMenuItem
-                                onClick={() => setDeleteCatalogueId(catalogue.id)}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Supprimer
-                              </DropdownMenuItem>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem
+                                    onSelect={(e) => e.preventDefault()}
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Supprimer
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Cette action ne peut pas être annulée. Cela supprimera
+                                      définitivement le guide de formation.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteCatalogue(catalogue.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Supprimer
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -737,6 +799,28 @@ export function Catalogue() {
           </div>
         </div>
       )}
+
+      {/* Delete Module Alert Dialog */}
+      <AlertDialog open={!!deleteModuleId} onOpenChange={() => setDeleteModuleId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action ne peut pas être annulée. Cela supprimera définitivement le module de
+              formation.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteModuleId && handleDeleteModule(deleteModuleId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

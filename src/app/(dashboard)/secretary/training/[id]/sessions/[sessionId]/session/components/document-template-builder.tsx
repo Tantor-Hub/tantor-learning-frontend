@@ -928,7 +928,7 @@ export default function DocumentTemplateBuilder({
         // Use XMLHttpRequest to upload the image
         const xhr = new XMLHttpRequest();
 
-        xhr.open("POST", `${process.env.NEXT_PUBLIC_BASE_URL}uploads/image`, true);
+        xhr.open("POST", `${process.env.NEXT_PUBLIC_BASE_URL}/uploads/image`, true);
 
         // Set authorization header
         xhr.setRequestHeader("x-connexion-tantor", `Bearer ${decodeURIComponent(token)}`);
