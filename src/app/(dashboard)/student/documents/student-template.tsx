@@ -164,6 +164,14 @@ export default function StudentTemplate({
   const [isClient, setIsClient] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
 
+  // PDF Crop settings (used for PDF generation)
+  const [cropSettings, setCropSettings] = useState({
+    offsetX: -140, // Default to -140px for better left content capture
+    offsetY: 0,
+    width: 0,
+    height: 0,
+  });
+
   // API calls
   const [
     getDocumentTemplate,
@@ -975,6 +983,211 @@ export default function StudentTemplate({
     [convertColorToSupportedFormat]
   );
 
+  // Calculate crop settings for PDF generation
+  const calculateCropSettings = useCallback(() => {
+    if (!editor) {
+      toast.error("L'éditeur n'est pas prêt");
+      return null;
+    }
+
+    try {
+      // First, ensure all variable values are updated in the editor DOM
+      const variableFields = editor.view.dom.querySelectorAll(".variable-field");
+      variableFields.forEach((field) => {
+        const fieldEl = field as HTMLElement;
+        const wrapper = fieldEl.closest(".variable-field-wrapper") as HTMLElement;
+        if (wrapper) {
+          const variableName = wrapper.getAttribute("data-variable");
+          if (variableName && variableValues[variableName]) {
+            const currentValue = fieldEl.textContent?.trim() || "";
+            const stateValue = variableValues[variableName];
+            if (currentValue !== stateValue) {
+              fieldEl.textContent = stateValue;
+            }
+          }
+        }
+      });
+
+      // Get the editor's DOM element
+      const editorElement = editor.view.dom;
+      let editorContent = editorElement as HTMLElement;
+
+      if (editorElement.classList.contains("ProseMirror")) {
+        editorContent = editorElement;
+      } else {
+        const proseMirror = editorElement.querySelector(".ProseMirror") as HTMLElement;
+        if (proseMirror) {
+          editorContent = proseMirror;
+        }
+      }
+
+      if (!editorContent || !editorContent.innerHTML.trim()) {
+        toast.error("Le contenu de l'éditeur est vide");
+        return null;
+      }
+
+      // Clone the editor content
+      const tempDiv = editorContent.cloneNode(true) as HTMLElement;
+
+      // Apply base styles
+      const originalStyles = window.getComputedStyle(editorContent);
+      const styleProps = [
+        "fontFamily",
+        "fontSize",
+        "fontWeight",
+        "fontStyle",
+        "lineHeight",
+        "color",
+        "backgroundColor",
+        "textAlign",
+        "textDecoration",
+        "margin",
+        "padding",
+        "border",
+        "display",
+      ];
+
+      styleProps.forEach((prop) => {
+        const value = originalStyles.getPropertyValue(prop);
+        if (value) {
+          tempDiv.style.setProperty(prop, value);
+        }
+      });
+
+      tempDiv.style.fontFamily = "Arial, sans-serif";
+      tempDiv.style.fontSize = "12px";
+      tempDiv.style.lineHeight = "1.5";
+      tempDiv.style.padding = "20px";
+      tempDiv.style.width = "fit-content";
+      tempDiv.style.minWidth = "794px";
+      tempDiv.style.maxWidth = "none";
+      tempDiv.style.color = "#000000";
+      tempDiv.style.backgroundColor = "#ffffff";
+      tempDiv.style.position = "relative";
+      tempDiv.style.display = "block";
+      tempDiv.style.boxSizing = "border-box";
+      tempDiv.style.overflow = "visible";
+      tempDiv.style.wordWrap = "break-word";
+      tempDiv.style.whiteSpace = "normal";
+
+      // Process tables
+      const tables = tempDiv.querySelectorAll("table");
+      tables.forEach((table) => {
+        const tableEl = table as HTMLElement;
+        tableEl.style.width = "auto";
+        tableEl.style.maxWidth = "none";
+        tableEl.style.minWidth = "100%";
+        tableEl.style.tableLayout = "auto";
+      });
+
+      // Replace variable fields with plain text
+      const variableWrappers = tempDiv.querySelectorAll(".variable-field-wrapper");
+      variableWrappers.forEach((wrapper) => {
+        const wrapperEl = wrapper as HTMLElement;
+        const variableField = wrapperEl.querySelector(".variable-field") as HTMLElement;
+
+        if (variableField) {
+          let value = variableField.textContent?.trim() || "";
+          if (!value) {
+            const variableName = wrapperEl.getAttribute("data-variable");
+            if (variableName && variableValues[variableName]) {
+              value = variableValues[variableName];
+            }
+          }
+          value = value.replace(/^\{\{[^}]+\}\}$/, "").trim();
+          const textNode = document.createTextNode(value || "");
+          if (wrapperEl.parentNode) {
+            wrapperEl.parentNode.replaceChild(textNode, wrapperEl);
+          }
+        }
+      });
+
+      const remainingFields = tempDiv.querySelectorAll(".variable-field");
+      remainingFields.forEach((field) => {
+        const fieldEl = field as HTMLElement;
+        let value = fieldEl.textContent?.trim() || "";
+        const wrapper = fieldEl.closest("[data-variable]") as HTMLElement;
+        if (wrapper) {
+          const variableName = wrapper.getAttribute("data-variable");
+          if (!value && variableName && variableValues[variableName]) {
+            value = variableValues[variableName];
+          }
+        }
+        value = value.replace(/^\{\{[^}]+\}\}$/, "").trim();
+        const textNode = document.createTextNode(value || "");
+        if (fieldEl.parentNode) {
+          fieldEl.parentNode.replaceChild(textNode, fieldEl);
+        }
+      });
+
+      // Attach to DOM temporarily to calculate dimensions
+      tempDiv.style.position = "absolute";
+      tempDiv.style.left = "-9999px";
+      tempDiv.style.top = "0";
+      document.body.appendChild(tempDiv);
+
+      // Calculate dimensions
+      void tempDiv.offsetWidth;
+      void tempDiv.scrollWidth;
+      void tempDiv.scrollHeight;
+
+      const boundingRect = tempDiv.getBoundingClientRect();
+      const allContentElementsForBounds = tempDiv.querySelectorAll("*");
+      let maxRight = boundingRect.right;
+      let maxBottom = boundingRect.bottom;
+      let minLeft = boundingRect.left;
+      let minTop = boundingRect.top;
+
+      allContentElementsForBounds.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.left < minLeft) minLeft = rect.left;
+        if (rect.right > maxRight) maxRight = rect.right;
+        if (rect.top < minTop) minTop = rect.top;
+        if (rect.bottom > maxBottom) maxBottom = rect.bottom;
+      });
+
+      const contentLeftOffset = Math.min(0, minLeft - boundingRect.left);
+      const contentTopOffset = Math.min(0, minTop - boundingRect.top);
+      const contentRightExtent = Math.max(
+        tempDiv.scrollWidth,
+        tempDiv.offsetWidth,
+        maxRight - boundingRect.left
+      );
+      const contentBottomExtent = Math.max(
+        tempDiv.scrollHeight,
+        tempDiv.offsetHeight,
+        maxBottom - boundingRect.top
+      );
+
+      const calculatedWidth = Math.max(contentRightExtent - contentLeftOffset, 794) + 160;
+
+      const calculatedHeight = Math.max(contentBottomExtent - contentTopOffset, 1123) + 160;
+
+      const calculatedOffsetX = contentLeftOffset - 80;
+      const calculatedOffsetY = contentTopOffset - 80;
+
+      // Set initial crop settings
+      setCropSettings({
+        offsetX: -140, // Default to -140px for better left content capture
+        offsetY: calculatedOffsetY,
+        width: calculatedWidth,
+        height: calculatedHeight,
+      });
+
+      // Remove from DOM
+      document.body.removeChild(tempDiv);
+    } catch (error) {
+      console.error("Error calculating crop settings:", error);
+      // Use defaults if calculation fails
+      setCropSettings({
+        offsetX: -140,
+        offsetY: -80,
+        width: 954, // 794 + 160
+        height: 1283, // 1123 + 160
+      });
+    }
+  }, [editor, variableValues]);
+
   // Download PDF
   const handleDownloadPDF = useCallback(async () => {
     if (!editor) {
@@ -983,23 +1196,146 @@ export default function StudentTemplate({
     }
 
     try {
+      // Calculate crop settings if not already calculated
+      if (cropSettings.width === 0 || cropSettings.height === 0) {
+        calculateCropSettings();
+        // Wait a bit for state to update
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+
       console.log("📥 Starting PDF download...");
       console.log("📝 Current variable values:", variableValues);
 
-      // Get the current HTML content from the editor
-      const filledContent = editor.getHTML();
-      console.log("📄 Editor HTML length:", filledContent.length);
+      // First, ensure all variable values are updated in the editor DOM
+      // This ensures the HTML we extract has the latest values
+      const variableFields = editor.view.dom.querySelectorAll(".variable-field");
+      variableFields.forEach((field) => {
+        const fieldEl = field as HTMLElement;
+        const wrapper = fieldEl.closest(".variable-field-wrapper") as HTMLElement;
+        if (wrapper) {
+          const variableName = wrapper.getAttribute("data-variable");
+          if (variableName && variableValues[variableName]) {
+            // Update the text content if it's different
+            const currentValue = fieldEl.textContent?.trim() || "";
+            const stateValue = variableValues[variableName];
+            if (currentValue !== stateValue) {
+              fieldEl.textContent = stateValue;
+              console.log(`🔄 Updated variable ${variableName} in DOM: "${stateValue}"`);
+            }
+          }
+        }
+      });
 
-      // Create a temporary div to manipulate the content
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = filledContent;
+      // Get the editor's DOM element - it might be the ProseMirror element itself or contain it
+      const editorElement = editor.view.dom;
+      let editorContent = editorElement as HTMLElement;
+
+      // Check if it's the ProseMirror element or if it contains one
+      if (editorElement.classList.contains("ProseMirror")) {
+        editorContent = editorElement;
+      } else {
+        const proseMirror = editorElement.querySelector(".ProseMirror") as HTMLElement;
+        if (proseMirror) {
+          editorContent = proseMirror;
+        }
+      }
+
+      if (!editorContent || !editorContent.innerHTML.trim()) {
+        console.error("❌ Editor content is empty or not found");
+        console.log("Editor DOM:", editorElement);
+        console.log("Editor HTML:", editor.getHTML());
+        toast.error("Le contenu de l'éditeur est vide");
+        return;
+      }
+
+      // Clone the editor content to avoid modifying the original
+      const tempDiv = editorContent.cloneNode(true) as HTMLElement;
+
+      // Copy computed styles from the original to ensure all styles are preserved
+      const originalStyles = window.getComputedStyle(editorContent);
+      const styleProps = [
+        "fontFamily",
+        "fontSize",
+        "fontWeight",
+        "fontStyle",
+        "lineHeight",
+        "color",
+        "backgroundColor",
+        "textAlign",
+        "textDecoration",
+        "margin",
+        "padding",
+        "border",
+        "display",
+      ];
+
+      styleProps.forEach((prop) => {
+        const value = originalStyles.getPropertyValue(prop);
+        if (value) {
+          tempDiv.style.setProperty(prop, value);
+        }
+      });
+
+      // Apply base styles to ensure content is visible and properly sized
       tempDiv.style.fontFamily = "Arial, sans-serif";
       tempDiv.style.fontSize = "12px";
       tempDiv.style.lineHeight = "1.5";
       tempDiv.style.padding = "20px";
-      tempDiv.style.width = "210mm"; // A4 width
+      // Remove all width constraints - let content determine its natural width
+      tempDiv.style.width = "fit-content";
+      tempDiv.style.minWidth = "794px"; // Minimum A4 width
+      tempDiv.style.maxWidth = "none"; // No maximum width constraint
       tempDiv.style.color = "#000000";
       tempDiv.style.backgroundColor = "#ffffff";
+      tempDiv.style.position = "fixed";
+      tempDiv.style.left = "0";
+      tempDiv.style.top = "0";
+      tempDiv.style.zIndex = "9999";
+      tempDiv.style.visibility = "visible";
+      tempDiv.style.display = "block";
+      tempDiv.style.boxSizing = "border-box";
+      tempDiv.style.overflow = "visible";
+      tempDiv.style.wordWrap = "break-word";
+      tempDiv.style.whiteSpace = "normal";
+
+      // Ensure tables don't get constrained
+      const tables = tempDiv.querySelectorAll("table");
+      tables.forEach((table) => {
+        const tableEl = table as HTMLElement;
+        tableEl.style.width = "auto";
+        tableEl.style.maxWidth = "none";
+        tableEl.style.minWidth = "100%";
+        tableEl.style.tableLayout = "auto";
+      });
+
+      // Ensure all content elements are visible
+      const allContentElements = tempDiv.querySelectorAll(
+        "p, h1, h2, h3, h4, h5, h6, ul, ol, li, table, tr, td, th, blockquote, pre, code, div, span"
+      );
+      allContentElements.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        if (htmlEl.style.display === "none") {
+          htmlEl.style.display = "";
+        }
+        if (htmlEl.style.visibility === "hidden") {
+          htmlEl.style.visibility = "visible";
+        }
+        // Ensure text color is set
+        if (!htmlEl.style.color || htmlEl.style.color === "transparent") {
+          htmlEl.style.color = "#000000";
+        }
+        // Remove any positioning that might hide content
+        if (htmlEl.style.position === "absolute" && htmlEl.style.left === "-9999px") {
+          htmlEl.style.position = "relative";
+          htmlEl.style.left = "auto";
+        }
+      });
+
+      // Attach to DOM immediately so we can query elements and images can load
+      document.body.appendChild(tempDiv);
+
+      // Force a reflow to ensure dimensions are calculated
+      void tempDiv.offsetHeight;
 
       // Replace variable fields with plain text for PDF
       // First, find all variable field wrappers
@@ -1007,85 +1343,138 @@ export default function StudentTemplate({
       console.log("🔍 Found variable wrappers:", variableWrappers.length);
 
       variableWrappers.forEach((wrapper) => {
-        const variableField = wrapper.querySelector(".variable-field");
+        const wrapperEl = wrapper as HTMLElement;
+        const variableField = wrapperEl.querySelector(".variable-field") as HTMLElement;
+
         if (variableField) {
           // Get the actual text content (this should be the filled value, not placeholder)
-          let value = variableField.textContent || "";
+          let value = variableField.textContent?.trim() || "";
 
           // If empty, try to get from variableValues state using the variable name
-          if (!value.trim()) {
-            const variableName = wrapper.getAttribute("data-variable");
+          if (!value) {
+            const variableName = wrapperEl.getAttribute("data-variable");
             if (variableName && variableValues[variableName]) {
               value = variableValues[variableName];
               console.log(`📝 Using value from state for ${variableName}: "${value}"`);
             }
           }
 
-          // Remove placeholder styling if present
-          value = value.replace(/^\{\{[^}]+\}\}$/, ""); // Remove {{variableName}} placeholder text
+          // Remove placeholder text patterns
+          value = value.replace(/^\{\{[^}]+\}\}$/, "").trim();
 
-          // Create a replacement span with the actual value
-          const span = document.createElement("span");
-          span.textContent = value || ""; // Use empty string if no value
-          span.style.color = "#000000";
-          span.style.fontWeight = "normal";
-          span.style.fontStyle = "normal";
-          span.style.backgroundColor = "transparent";
-          span.style.border = "none";
-          span.style.padding = "0";
-          span.style.margin = "0";
+          // Create a replacement text node or span with the actual value
+          const textNode = document.createTextNode(value || "");
 
           // Replace the wrapper with just the text
-          wrapper.parentNode?.replaceChild(span, wrapper);
-          console.log(`✅ Replaced variable field with value: "${value}"`);
+          if (wrapperEl.parentNode) {
+            wrapperEl.parentNode.replaceChild(textNode, wrapperEl);
+            console.log(`✅ Replaced variable field with value: "${value}"`);
+          }
         }
       });
 
       // Also handle any remaining variable fields that might not be in wrappers
       const remainingFields = tempDiv.querySelectorAll(".variable-field");
       remainingFields.forEach((field) => {
-        let value = field.textContent || "";
-        const wrapper = field.closest("[data-variable]");
+        const fieldEl = field as HTMLElement;
+        let value = fieldEl.textContent?.trim() || "";
+        const wrapper = fieldEl.closest("[data-variable]") as HTMLElement;
+
         if (wrapper) {
           const variableName = wrapper.getAttribute("data-variable");
-          if (!value.trim() && variableName && variableValues[variableName]) {
+          if (!value && variableName && variableValues[variableName]) {
             value = variableValues[variableName];
           }
         }
 
-        value = value.replace(/^\{\{[^}]+\}\}$/, "");
+        value = value.replace(/^\{\{[^}]+\}\}$/, "").trim();
 
-        const span = document.createElement("span");
-        span.textContent = value || "";
-        span.style.color = "#000000";
-        span.style.fontWeight = "normal";
-        span.style.fontStyle = "normal";
-        field.parentNode?.replaceChild(span, field);
+        const textNode = document.createTextNode(value || "");
+        if (fieldEl.parentNode) {
+          fieldEl.parentNode.replaceChild(textNode, fieldEl);
+        }
       });
 
       // Clean up any placeholder styles or empty elements
       const placeholderElements = tempDiv.querySelectorAll("[data-show-placeholder]");
       placeholderElements.forEach((elem) => {
         elem.removeAttribute("data-show-placeholder");
-        if (!elem.textContent?.trim()) {
-          elem.textContent = "";
+      });
+
+      // Ensure all images are properly loaded and visible
+      const images = tempDiv.querySelectorAll("img");
+      console.log(`🖼️ Found ${images.length} images`);
+
+      // Wait for all images to load before generating PDF
+      const imagePromises = Array.from(images).map((img) => {
+        return new Promise<void>((resolve) => {
+          const imgElement = img as HTMLImageElement;
+
+          // If image is already loaded, resolve immediately
+          if (imgElement.complete && imgElement.naturalWidth > 0) {
+            resolve();
+            return;
+          }
+
+          // Set crossOrigin for CORS images
+          if (imgElement.src && !imgElement.src.startsWith("data:")) {
+            imgElement.crossOrigin = "anonymous";
+          }
+
+          // Wait for image to load
+          const handleLoad = () => {
+            resolve();
+            imgElement.removeEventListener("load", handleLoad);
+            imgElement.removeEventListener("error", handleError);
+          };
+
+          const handleError = () => {
+            console.warn("⚠️ Image failed to load:", imgElement.src);
+            resolve(); // Continue even if image fails
+            imgElement.removeEventListener("load", handleLoad);
+            imgElement.removeEventListener("error", handleError);
+          };
+
+          imgElement.addEventListener("load", handleLoad);
+          imgElement.addEventListener("error", handleError);
+
+          // Timeout after 5 seconds
+          setTimeout(() => {
+            resolve();
+            imgElement.removeEventListener("load", handleLoad);
+            imgElement.removeEventListener("error", handleError);
+          }, 5000);
+        });
+      });
+
+      // Wait for all images to load
+      await Promise.all(imagePromises);
+      console.log("✅ All images loaded or timed out");
+
+      // Ensure images have proper styling for PDF
+      images.forEach((img) => {
+        const imgElement = img as HTMLImageElement;
+        imgElement.style.maxWidth = "100%";
+        imgElement.style.height = "auto";
+        imgElement.style.display = "block";
+        // Ensure image has dimensions
+        if (!imgElement.width && !imgElement.style.width) {
+          if (imgElement.naturalWidth > 0) {
+            imgElement.style.width = `${imgElement.naturalWidth}px`;
+          }
+        }
+        if (!imgElement.height && !imgElement.style.height && imgElement.naturalHeight > 0) {
+          imgElement.style.height = `${imgElement.naturalHeight}px`;
         }
       });
 
       // Sanitize all color styles to convert modern CSS colors (oklch, lab, lch) to rgb/hex
       console.log("🎨 Sanitizing colors for PDF compatibility...");
 
-      // Attach tempDiv to DOM temporarily so getComputedStyle works
-      tempDiv.style.position = "absolute";
-      tempDiv.style.left = "-9999px";
-      tempDiv.style.top = "0";
-      tempDiv.style.width = "210mm";
-      document.body.appendChild(tempDiv);
-
       // Process ALL elements and convert ALL color properties
-      const allElements = tempDiv.querySelectorAll("*");
+      const allElementsForColor = tempDiv.querySelectorAll("*");
       const rootElement = tempDiv;
-      const allElementsToProcess = [rootElement, ...Array.from(allElements)];
+      const allElementsToProcess = [rootElement, ...Array.from(allElementsForColor)];
 
       console.log(`🔍 Processing ${allElementsToProcess.length} elements for color conversion...`);
 
@@ -1199,13 +1588,115 @@ export default function StudentTemplate({
         }
       });
 
-      // Remove tempDiv from DOM
-      document.body.removeChild(tempDiv);
-
       // Final pass: remove any inline styles that still contain oklch
       sanitizeStylesForPDF(tempDiv);
 
       console.log("✅ Content processed for PDF");
+      console.log("📋 Final HTML length:", tempDiv.innerHTML.length);
+      console.log("📋 Final text content preview:", tempDiv.textContent?.substring(0, 200));
+      console.log("📏 Element dimensions:", {
+        width: tempDiv.offsetWidth,
+        height: tempDiv.offsetHeight,
+        scrollWidth: tempDiv.scrollWidth,
+        scrollHeight: tempDiv.scrollHeight,
+      });
+
+      // Wait a bit for any final rendering and force layout recalculation
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Force multiple layout recalculations to ensure accurate dimensions
+      void tempDiv.offsetWidth;
+      void tempDiv.scrollWidth;
+      void tempDiv.scrollHeight;
+      void tempDiv.clientWidth;
+      void tempDiv.clientHeight;
+
+      // Get bounding box of all content including any overflow
+      const boundingRect = tempDiv.getBoundingClientRect();
+      const allContentElementsForBounds = tempDiv.querySelectorAll("*");
+      let maxRight = boundingRect.right;
+      let maxBottom = boundingRect.bottom;
+      let minLeft = boundingRect.left;
+      let minTop = boundingRect.top;
+
+      // Find the leftmost, rightmost, topmost, and bottommost elements
+      allContentElementsForBounds.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.left < minLeft) minLeft = rect.left;
+        if (rect.right > maxRight) maxRight = rect.right;
+        if (rect.top < minTop) minTop = rect.top;
+        if (rect.bottom > maxBottom) maxBottom = rect.bottom;
+      });
+
+      // Calculate the actual content bounds including any negative positions
+      // Account for padding and ensure we start from the leftmost content
+      const contentLeftOffset = Math.min(0, minLeft - boundingRect.left); // Account for negative positions
+      const contentTopOffset = Math.min(0, minTop - boundingRect.top);
+      const contentRightExtent = Math.max(
+        tempDiv.scrollWidth,
+        tempDiv.offsetWidth,
+        maxRight - boundingRect.left
+      );
+      const contentBottomExtent = Math.max(
+        tempDiv.scrollHeight,
+        tempDiv.offsetHeight,
+        maxBottom - boundingRect.top
+      );
+
+      // Calculate default values if crop settings not set
+      const defaultWidth =
+        Math.max(
+          contentRightExtent - contentLeftOffset,
+          794 // Minimum A4 width
+        ) + 160; // Add 160px buffer (80px on each side) for safety
+
+      const defaultHeight =
+        Math.max(
+          contentBottomExtent - contentTopOffset,
+          1123 // Minimum A4 height
+        ) + 160; // Add 160px buffer (80px on each side) for safety
+
+      const defaultOffsetX = contentLeftOffset - 80;
+      const defaultOffsetY = contentTopOffset - 80;
+
+      // Use crop settings if available, otherwise use calculated defaults
+      const captureOffsetX =
+        cropSettings.width > 0 && cropSettings.height > 0 ? cropSettings.offsetX : -140; // Default to -140px
+      const captureOffsetY =
+        cropSettings.width > 0 && cropSettings.height > 0 ? cropSettings.offsetY : defaultOffsetY;
+      const contentWidth =
+        cropSettings.width > 0 && cropSettings.height > 0 ? cropSettings.width : defaultWidth;
+      const contentHeight =
+        cropSettings.width > 0 && cropSettings.height > 0 ? cropSettings.height : defaultHeight;
+
+      console.log("📐 Calculated dimensions for PDF:", {
+        contentWidth,
+        contentHeight,
+        captureOffsetX,
+        captureOffsetY,
+        scrollWidth: tempDiv.scrollWidth,
+        scrollHeight: tempDiv.scrollHeight,
+        offsetWidth: tempDiv.offsetWidth,
+        offsetHeight: tempDiv.offsetHeight,
+        boundingRect: {
+          left: boundingRect.left,
+          top: boundingRect.top,
+          width: boundingRect.width,
+          height: boundingRect.height,
+          right: boundingRect.right,
+          bottom: boundingRect.bottom,
+        },
+        contentBounds: {
+          left: minLeft,
+          top: minTop,
+          right: maxRight,
+          bottom: maxBottom,
+        },
+        contentLeftOffset,
+        contentTopOffset,
+        contentRightExtent,
+        contentBottomExtent,
+      });
 
       // Generate PDF using html2pdf
       const marginTuple: [number, number, number, number] = [10, 10, 10, 10];
@@ -1216,8 +1707,29 @@ export default function StudentTemplate({
         html2canvas: {
           scale: 2,
           useCORS: true,
+          allowTaint: true,
           letterRendering: true,
-          logging: false,
+          logging: false, // Disable logging for production
+          backgroundColor: "#ffffff",
+          // Use calculated dimensions to capture all content
+          windowWidth: contentWidth,
+          windowHeight: contentHeight,
+          width: contentWidth,
+          height: contentHeight,
+          // Capture from the leftmost/topmost point to ensure no content is cut off
+          x: captureOffsetX,
+          y: captureOffsetY,
+          // Additional options to ensure full capture
+          removeContainer: false,
+          imageTimeout: 15000,
+          // Ensure we don't clip content
+          scrollX: 0,
+          scrollY: 0,
+          // Ensure we capture the entire element including any overflow
+          ignoreElements: (_element: Element) => {
+            // Don't ignore any elements - capture everything
+            return false;
+          },
         },
         jsPDF: {
           unit: "mm",
@@ -1229,7 +1741,13 @@ export default function StudentTemplate({
 
       toast.loading("Génération du PDF en cours...", { id: "pdf-generation" });
 
+      // Generate PDF - tempDiv is still in DOM
       await html2pdf().set(options).from(tempDiv).save();
+
+      // Clean up: remove tempDiv from DOM after PDF generation
+      if (tempDiv.parentNode) {
+        document.body.removeChild(tempDiv);
+      }
 
       toast.dismiss("pdf-generation");
       toast.success("PDF téléchargé avec succès");
@@ -1238,7 +1756,7 @@ export default function StudentTemplate({
       console.error("❌ Error downloading PDF:", error);
       toast.error("Erreur lors du téléchargement du PDF");
     }
-  }, [editor, title, variableValues, sanitizeStylesForPDF]);
+  }, [editor, title, variableValues, sanitizeStylesForPDF, cropSettings]);
 
   // Debug logging
   useEffect(() => {
@@ -1363,7 +1881,7 @@ export default function StudentTemplate({
             </Button>
             <Button
               variant="outline"
-              onClick={handleDownloadPDF}
+              onClick={() => handleDownloadPDF()}
               disabled={!isContentLoaded || !editor}
             >
               <Download className="w-4 h-4 mr-2" />
