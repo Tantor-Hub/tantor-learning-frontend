@@ -1,4 +1,9 @@
+"use client";
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
+import { useSelectedSession } from "@/hooks/use-selected-session";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyle } from "@tiptap/extension-text-style";
@@ -20,7 +25,7 @@ import { HorizontalRule } from "@tiptap/extension-horizontal-rule";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Save, X, Loader2, Download } from "lucide-react";
+import { Save, X, Loader2, Download, ArrowLeft } from "lucide-react";
 import { Extension, Node } from "@tiptap/core";
 import {
   useCreateDocumentInstanceMutation,
@@ -144,21 +149,14 @@ const EditableVariable = Node.create({
   },
 });
 
-interface StudentTemplateProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  templateId: string;
-  sessionId: string;
-  userId: string;
-}
+export default function DocumentTemplatePage() {
+  const params = useParams();
+  const router = useRouter();
+  const templateId = params.templateId as string;
+  const sessionId = useSelectedSession();
+  const currentUser = useSelector(selectCurrentUser);
+  const userId = currentUser?.id || "";
 
-export default function StudentTemplate({
-  open,
-  onOpenChange,
-  templateId,
-  sessionId,
-  userId,
-}: StudentTemplateProps) {
   const [variableValues, setVariableValues] = useState<Record<string, string>>({});
   const [existingInstance, setExistingInstance] = useState<DocumentInstance | null>(null);
   const [isContentLoaded, setIsContentLoaded] = useState(false);
@@ -180,13 +178,20 @@ export default function StudentTemplate({
     { data: templateData, isLoading: templateLoading, error: templateError },
   ] = useLazyGetDocumentTemplateByIdQuery();
   const { data: instancesData, isLoading: instancesLoading } =
-    useGetDocumentInstancesByTemplateIdQuery({ templateId }, { skip: !templateId || !open });
+    useGetDocumentInstancesByTemplateIdQuery({ templateId }, { skip: !templateId || !sessionId });
   const [createDocumentInstance, { isLoading: isCreating }] = useCreateDocumentInstanceMutation();
   const [updateDocumentInstance, { isLoading: isUpdating }] = useUpdateDocumentInstanceMutation();
 
   const isSaving = isCreating || isUpdating;
 
   const title = templateData?.data?.title || "";
+
+  // Redirect if no templateId or sessionId
+  useEffect(() => {
+    if (!templateId || !sessionId) {
+      router.push("/student/documents");
+    }
+  }, [templateId, sessionId, router]);
 
   // Initialize editor only on client side
   const editor = useEditor({
@@ -321,7 +326,7 @@ export default function StudentTemplate({
 
   // Load template when component opens
   useEffect(() => {
-    if (open && templateId && isClient) {
+    if (templateId && sessionId && isClient) {
       console.log("🔄 Loading template with ID:", templateId);
       console.log("🔄 Resetting content loaded state");
       setIsContentLoaded(false);
@@ -329,14 +334,8 @@ export default function StudentTemplate({
       setExistingInstance(null); // Reset existing instance
       setIsPublished(false); // Reset published state
       getDocumentTemplate({ id: templateId });
-    } else if (!open) {
-      // Reset state when modal closes
-      setIsContentLoaded(false);
-      setVariableValues({});
-      setExistingInstance(null);
-      setIsPublished(false);
     }
-  }, [open, templateId, getDocumentTemplate, isClient]);
+  }, [templateId, sessionId, getDocumentTemplate, isClient]);
 
   // Check for existing instance when instances data loads
   useEffect(() => {
@@ -1034,607 +1033,19 @@ export default function StudentTemplate({
       });
 
       // Get the editor's DOM element
-      const editorElement = editor.view.dom;
-      let editorContent = editorElement as HTMLElement;
+      const editorDom = editor.view.dom;
 
-      if (editorElement.classList.contains("ProseMirror")) {
-        editorContent = editorElement;
-      } else {
-        const proseMirror = editorElement.querySelector(".ProseMirror") as HTMLElement;
-        if (proseMirror) {
-          editorContent = proseMirror;
-        }
-      }
+      // Create a temporary div to clone the content for measurement
+      const tempDiv = editorDom.cloneNode(true) as HTMLElement;
 
-      if (!editorContent || !editorContent.innerHTML.trim()) {
-        toast.error("Le contenu de l'éditeur est vide");
-        return null;
-      }
-
-      // Clone the editor content
-      const tempDiv = editorContent.cloneNode(true) as HTMLElement;
-
-      // Apply base styles
-      const originalStyles = window.getComputedStyle(editorContent);
-      const styleProps = [
-        "fontFamily",
-        "fontSize",
-        "fontWeight",
-        "fontStyle",
-        "lineHeight",
-        "color",
-        "backgroundColor",
-        "textAlign",
-        "textDecoration",
-        "margin",
-        "padding",
-        "border",
-        "display",
-      ];
-
-      styleProps.forEach((prop) => {
-        const value = originalStyles.getPropertyValue(prop);
-        if (value) {
-          tempDiv.style.setProperty(prop, value);
-        }
-      });
-
-      tempDiv.style.fontFamily = "Arial, sans-serif";
-      tempDiv.style.fontSize = "12px";
-      tempDiv.style.lineHeight = "1.5";
-      tempDiv.style.padding = "20px";
-      tempDiv.style.width = "fit-content";
-      tempDiv.style.minWidth = "794px";
-      tempDiv.style.maxWidth = "none";
-      tempDiv.style.color = "#000000";
-      tempDiv.style.backgroundColor = "#ffffff";
-      tempDiv.style.position = "relative";
-      tempDiv.style.display = "block";
-      tempDiv.style.boxSizing = "border-box";
-      tempDiv.style.overflow = "visible";
-      tempDiv.style.wordWrap = "break-word";
-      tempDiv.style.whiteSpace = "normal";
-
-      // Process tables
-      const tables = tempDiv.querySelectorAll("table");
-      tables.forEach((table) => {
-        const tableEl = table as HTMLElement;
-        tableEl.style.width = "auto";
-        tableEl.style.maxWidth = "none";
-        tableEl.style.minWidth = "100%";
-        tableEl.style.tableLayout = "auto";
-      });
-
-      // Replace variable fields with plain text
-      const variableWrappers = tempDiv.querySelectorAll(".variable-field-wrapper");
-      variableWrappers.forEach((wrapper) => {
-        const wrapperEl = wrapper as HTMLElement;
-        const variableField = wrapperEl.querySelector(".variable-field") as HTMLElement;
-
-        if (variableField) {
-          let value = variableField.textContent?.trim() || "";
-          if (!value) {
-            const variableName = wrapperEl.getAttribute("data-variable");
-            if (variableName && variableValues[variableName]) {
-              value = variableValues[variableName];
-            }
-          }
-          value = value.replace(/^\{\{[^}]+\}\}$/, "").trim();
-          const textNode = document.createTextNode(value || "");
-          if (wrapperEl.parentNode) {
-            wrapperEl.parentNode.replaceChild(textNode, wrapperEl);
-          }
-        }
-      });
-
-      const remainingFields = tempDiv.querySelectorAll(".variable-field");
-      remainingFields.forEach((field) => {
-        const fieldEl = field as HTMLElement;
-        let value = fieldEl.textContent?.trim() || "";
-        const wrapper = fieldEl.closest("[data-variable]") as HTMLElement;
-        if (wrapper) {
-          const variableName = wrapper.getAttribute("data-variable");
-          if (!value && variableName && variableValues[variableName]) {
-            value = variableValues[variableName];
-          }
-        }
-        value = value.replace(/^\{\{[^}]+\}\}$/, "").trim();
-        const textNode = document.createTextNode(value || "");
-        if (fieldEl.parentNode) {
-          fieldEl.parentNode.replaceChild(textNode, fieldEl);
-        }
-      });
-
-      // Attach to DOM temporarily to calculate dimensions
-      tempDiv.style.position = "absolute";
-      tempDiv.style.left = "-9999px";
-      tempDiv.style.top = "0";
+      // Append to body to get accurate measurements
       document.body.appendChild(tempDiv);
 
-      // Calculate dimensions
-      void tempDiv.offsetWidth;
-      void tempDiv.scrollWidth;
-      void tempDiv.scrollHeight;
+      // Force a reflow to ensure accurate measurements
+      tempDiv.offsetHeight;
 
-      const boundingRect = tempDiv.getBoundingClientRect();
-      const allContentElementsForBounds = tempDiv.querySelectorAll("*");
-      let maxRight = boundingRect.right;
-      let maxBottom = boundingRect.bottom;
-      let minLeft = boundingRect.left;
-      let minTop = boundingRect.top;
-
-      allContentElementsForBounds.forEach((el) => {
-        const rect = el.getBoundingClientRect();
-        if (rect.left < minLeft) minLeft = rect.left;
-        if (rect.right > maxRight) maxRight = rect.right;
-        if (rect.top < minTop) minTop = rect.top;
-        if (rect.bottom > maxBottom) maxBottom = rect.bottom;
-      });
-
-      const contentLeftOffset = Math.min(0, minLeft - boundingRect.left);
-      const contentTopOffset = Math.min(0, minTop - boundingRect.top);
-      const contentRightExtent = Math.max(
-        tempDiv.scrollWidth,
-        tempDiv.offsetWidth,
-        maxRight - boundingRect.left
-      );
-      const contentBottomExtent = Math.max(
-        tempDiv.scrollHeight,
-        tempDiv.offsetHeight,
-        maxBottom - boundingRect.top
-      );
-
-      const calculatedWidth = Math.max(contentRightExtent - contentLeftOffset, 794) + 160;
-
-      const calculatedHeight = Math.max(contentBottomExtent - contentTopOffset, 1123) + 160;
-
-      const calculatedOffsetX = contentLeftOffset - 80;
-      const calculatedOffsetY = contentTopOffset - 80;
-
-      // Set initial crop settings
-      setCropSettings({
-        offsetX: -140, // Default to -140px for better left content capture
-        offsetY: calculatedOffsetY,
-        width: calculatedWidth,
-        height: calculatedHeight,
-      });
-
-      // Remove from DOM
-      document.body.removeChild(tempDiv);
-    } catch (error) {
-      console.error("Error calculating crop settings:", error);
-      // Use defaults if calculation fails
-      setCropSettings({
-        offsetX: -140,
-        offsetY: -80,
-        width: 954, // 794 + 160
-        height: 1283, // 1123 + 160
-      });
-    }
-  }, [editor, variableValues]);
-
-  // Download PDF
-  const handleDownloadPDF = useCallback(async () => {
-    if (!editor) {
-      toast.error("L'éditeur n'est pas prêt");
-      return;
-    }
-
-    try {
-      // Calculate crop settings if not already calculated
-      if (cropSettings.width === 0 || cropSettings.height === 0) {
-        calculateCropSettings();
-        // Wait a bit for state to update
-        await new Promise((resolve) => setTimeout(resolve, 200));
-      }
-
-      console.log("📥 Starting PDF download...");
-      console.log("📝 Current variable values:", variableValues);
-
-      // First, ensure all variable values are updated in the editor DOM
-      // This ensures the HTML we extract has the latest values
-      const variableFields = editor.view.dom.querySelectorAll(".variable-field");
-      variableFields.forEach((field) => {
-        const fieldEl = field as HTMLElement;
-        const wrapper = fieldEl.closest(".variable-field-wrapper") as HTMLElement;
-        if (wrapper) {
-          const variableName = wrapper.getAttribute("data-variable");
-          if (variableName && variableValues[variableName]) {
-            // Update the text content if it's different
-            const currentValue = fieldEl.textContent?.trim() || "";
-            const stateValue = variableValues[variableName];
-            if (currentValue !== stateValue) {
-              fieldEl.textContent = stateValue;
-              console.log(`🔄 Updated variable ${variableName} in DOM: "${stateValue}"`);
-            }
-          }
-        }
-      });
-
-      // Get the editor's DOM element - it might be the ProseMirror element itself or contain it
-      const editorElement = editor.view.dom;
-      let editorContent = editorElement as HTMLElement;
-
-      // Check if it's the ProseMirror element or if it contains one
-      if (editorElement.classList.contains("ProseMirror")) {
-        editorContent = editorElement;
-      } else {
-        const proseMirror = editorElement.querySelector(".ProseMirror") as HTMLElement;
-        if (proseMirror) {
-          editorContent = proseMirror;
-        }
-      }
-
-      if (!editorContent || !editorContent.innerHTML.trim()) {
-        console.error("❌ Editor content is empty or not found");
-        console.log("Editor DOM:", editorElement);
-        console.log("Editor HTML:", editor.getHTML());
-        toast.error("Le contenu de l'éditeur est vide");
-        return;
-      }
-
-      // Clone the editor content to avoid modifying the original
-      const tempDiv = editorContent.cloneNode(true) as HTMLElement;
-
-      // Copy computed styles from the original to ensure all styles are preserved
-      const originalStyles = window.getComputedStyle(editorContent);
-      const styleProps = [
-        "fontFamily",
-        "fontSize",
-        "fontWeight",
-        "fontStyle",
-        "lineHeight",
-        "color",
-        "backgroundColor",
-        "textAlign",
-        "textDecoration",
-        "margin",
-        "padding",
-        "border",
-        "display",
-      ];
-
-      styleProps.forEach((prop) => {
-        const value = originalStyles.getPropertyValue(prop);
-        if (value) {
-          tempDiv.style.setProperty(prop, value);
-        }
-      });
-
-      // Apply base styles to ensure content is visible and properly sized
-      tempDiv.style.fontFamily = "Arial, sans-serif";
-      tempDiv.style.fontSize = "12px";
-      tempDiv.style.lineHeight = "1.5";
-      tempDiv.style.padding = "20px";
-      // Remove all width constraints - let content determine its natural width
-      tempDiv.style.width = "fit-content";
-      tempDiv.style.minWidth = "794px"; // Minimum A4 width
-      tempDiv.style.maxWidth = "none"; // No maximum width constraint
-      tempDiv.style.color = "#000000";
-      tempDiv.style.backgroundColor = "#ffffff";
-      tempDiv.style.position = "fixed";
-      tempDiv.style.left = "0";
-      tempDiv.style.top = "0";
-      tempDiv.style.zIndex = "9999";
-      tempDiv.style.visibility = "visible";
-      tempDiv.style.display = "block";
-      tempDiv.style.boxSizing = "border-box";
-      tempDiv.style.overflow = "visible";
-      tempDiv.style.wordWrap = "break-word";
-      tempDiv.style.whiteSpace = "normal";
-
-      // Ensure tables don't get constrained
-      const tables = tempDiv.querySelectorAll("table");
-      tables.forEach((table) => {
-        const tableEl = table as HTMLElement;
-        tableEl.style.width = "auto";
-        tableEl.style.maxWidth = "none";
-        tableEl.style.minWidth = "100%";
-        tableEl.style.tableLayout = "auto";
-      });
-
-      // Ensure all content elements are visible
-      const allContentElements = tempDiv.querySelectorAll(
-        "p, h1, h2, h3, h4, h5, h6, ul, ol, li, table, tr, td, th, blockquote, pre, code, div, span"
-      );
-      allContentElements.forEach((el) => {
-        const htmlEl = el as HTMLElement;
-        if (htmlEl.style.display === "none") {
-          htmlEl.style.display = "";
-        }
-        if (htmlEl.style.visibility === "hidden") {
-          htmlEl.style.visibility = "visible";
-        }
-        // Ensure text color is set
-        if (!htmlEl.style.color || htmlEl.style.color === "transparent") {
-          htmlEl.style.color = "#000000";
-        }
-        // Remove any positioning that might hide content
-        if (htmlEl.style.position === "absolute" && htmlEl.style.left === "-9999px") {
-          htmlEl.style.position = "relative";
-          htmlEl.style.left = "auto";
-        }
-      });
-
-      // Attach to DOM immediately so we can query elements and images can load
-      document.body.appendChild(tempDiv);
-
-      // Force a reflow to ensure dimensions are calculated
-      void tempDiv.offsetHeight;
-
-      // Replace variable fields with plain text for PDF
-      // First, find all variable field wrappers
-      const variableWrappers = tempDiv.querySelectorAll(".variable-field-wrapper");
-      console.log("🔍 Found variable wrappers:", variableWrappers.length);
-
-      variableWrappers.forEach((wrapper) => {
-        const wrapperEl = wrapper as HTMLElement;
-        const variableField = wrapperEl.querySelector(".variable-field") as HTMLElement;
-
-        if (variableField) {
-          // Get the actual text content (this should be the filled value, not placeholder)
-          let value = variableField.textContent?.trim() || "";
-
-          // If empty, try to get from variableValues state using the variable name
-          if (!value) {
-            const variableName = wrapperEl.getAttribute("data-variable");
-            if (variableName && variableValues[variableName]) {
-              value = variableValues[variableName];
-              console.log(`📝 Using value from state for ${variableName}: "${value}"`);
-            }
-          }
-
-          // Remove placeholder text patterns
-          value = value.replace(/^\{\{[^}]+\}\}$/, "").trim();
-
-          // Create a replacement text node or span with the actual value
-          const textNode = document.createTextNode(value || "");
-
-          // Replace the wrapper with just the text
-          if (wrapperEl.parentNode) {
-            wrapperEl.parentNode.replaceChild(textNode, wrapperEl);
-            console.log(`✅ Replaced variable field with value: "${value}"`);
-          }
-        }
-      });
-
-      // Also handle any remaining variable fields that might not be in wrappers
-      const remainingFields = tempDiv.querySelectorAll(".variable-field");
-      remainingFields.forEach((field) => {
-        const fieldEl = field as HTMLElement;
-        let value = fieldEl.textContent?.trim() || "";
-        const wrapper = fieldEl.closest("[data-variable]") as HTMLElement;
-
-        if (wrapper) {
-          const variableName = wrapper.getAttribute("data-variable");
-          if (!value && variableName && variableValues[variableName]) {
-            value = variableValues[variableName];
-          }
-        }
-
-        value = value.replace(/^\{\{[^}]+\}\}$/, "").trim();
-
-        const textNode = document.createTextNode(value || "");
-        if (fieldEl.parentNode) {
-          fieldEl.parentNode.replaceChild(textNode, fieldEl);
-        }
-      });
-
-      // Clean up any placeholder styles or empty elements
-      const placeholderElements = tempDiv.querySelectorAll("[data-show-placeholder]");
-      placeholderElements.forEach((elem) => {
-        elem.removeAttribute("data-show-placeholder");
-      });
-
-      // Ensure all images are properly loaded and visible
-      const images = tempDiv.querySelectorAll("img");
-      console.log(`🖼️ Found ${images.length} images`);
-
-      // Wait for all images to load before generating PDF
-      const imagePromises = Array.from(images).map((img) => {
-        return new Promise<void>((resolve) => {
-          const imgElement = img as HTMLImageElement;
-
-          // If image is already loaded, resolve immediately
-          if (imgElement.complete && imgElement.naturalWidth > 0) {
-            resolve();
-            return;
-          }
-
-          // Set crossOrigin for CORS images
-          if (imgElement.src && !imgElement.src.startsWith("data:")) {
-            imgElement.crossOrigin = "anonymous";
-          }
-
-          // Wait for image to load
-          const handleLoad = () => {
-            resolve();
-            imgElement.removeEventListener("load", handleLoad);
-            imgElement.removeEventListener("error", handleError);
-          };
-
-          const handleError = () => {
-            console.warn("⚠️ Image failed to load:", imgElement.src);
-            resolve(); // Continue even if image fails
-            imgElement.removeEventListener("load", handleLoad);
-            imgElement.removeEventListener("error", handleError);
-          };
-
-          imgElement.addEventListener("load", handleLoad);
-          imgElement.addEventListener("error", handleError);
-
-          // Timeout after 5 seconds
-          setTimeout(() => {
-            resolve();
-            imgElement.removeEventListener("load", handleLoad);
-            imgElement.removeEventListener("error", handleError);
-          }, 5000);
-        });
-      });
-
-      // Wait for all images to load
-      await Promise.all(imagePromises);
-      console.log("✅ All images loaded or timed out");
-
-      // Ensure images have proper styling for PDF
-      images.forEach((img) => {
-        const imgElement = img as HTMLImageElement;
-        imgElement.style.maxWidth = "100%";
-        imgElement.style.height = "auto";
-        imgElement.style.display = "block";
-        // Ensure image has dimensions
-        if (!imgElement.width && !imgElement.style.width) {
-          if (imgElement.naturalWidth > 0) {
-            imgElement.style.width = `${imgElement.naturalWidth}px`;
-          }
-        }
-        if (!imgElement.height && !imgElement.style.height && imgElement.naturalHeight > 0) {
-          imgElement.style.height = `${imgElement.naturalHeight}px`;
-        }
-      });
-
-      // Sanitize all color styles to convert modern CSS colors (oklch, lab, lch) to rgb/hex
-      console.log("🎨 Sanitizing colors for PDF compatibility...");
-
-      // Process ALL elements and convert ALL color properties
-      const allElementsForColor = tempDiv.querySelectorAll("*");
-      const rootElement = tempDiv;
-      const allElementsToProcess = [rootElement, ...Array.from(allElementsForColor)];
-
-      console.log(`🔍 Processing ${allElementsToProcess.length} elements for color conversion...`);
-
-      allElementsToProcess.forEach((el) => {
-        if (el instanceof HTMLElement) {
-          try {
-            const computedStyle = window.getComputedStyle(el);
-
-            // List of all color-related CSS properties
-            const colorProperties = [
-              "color",
-              "backgroundColor",
-              "borderColor",
-              "borderTopColor",
-              "borderRightColor",
-              "borderBottomColor",
-              "borderLeftColor",
-              "outlineColor",
-              "textDecorationColor",
-              "columnRuleColor",
-              "caretColor",
-            ];
-
-            // Process each color property
-            colorProperties.forEach((prop) => {
-              try {
-                const value = computedStyle.getPropertyValue(prop);
-                if (
-                  value &&
-                  value.trim() &&
-                  value !== "transparent" &&
-                  value !== "rgba(0, 0, 0, 0)"
-                ) {
-                  // Check if it contains unsupported color formats
-                  const lowerValue = value.toLowerCase();
-                  if (
-                    lowerValue.includes("oklch") ||
-                    lowerValue.includes("lch(") ||
-                    lowerValue.includes("lab(") ||
-                    lowerValue.includes("color-mix")
-                  ) {
-                    // Create a test element to force browser conversion
-                    const testEl = document.createElement("div");
-                    testEl.style.setProperty(prop, value, "important");
-                    testEl.style.position = "absolute";
-                    testEl.style.visibility = "hidden";
-                    testEl.style.pointerEvents = "none";
-                    document.body.appendChild(testEl);
-
-                    try {
-                      const convertedStyle = window.getComputedStyle(testEl);
-                      const converted = convertedStyle.getPropertyValue(prop);
-
-                      if (converted && converted.trim()) {
-                        const lowerConverted = converted.toLowerCase();
-                        // Check if conversion was successful (no oklch/lch/lab in result)
-                        if (
-                          !lowerConverted.includes("oklch") &&
-                          !lowerConverted.includes("lch(") &&
-                          !lowerConverted.includes("lab(")
-                        ) {
-                          el.style.setProperty(prop, converted, "important");
-                          console.log(
-                            `✅ Converted ${prop}: ${value.substring(0, 50)} → ${converted.substring(0, 50)}`
-                          );
-                        } else {
-                          // Still has problematic format, use fallback
-                          if (prop === "color") {
-                            el.style.setProperty(prop, "#000000", "important");
-                          } else if (prop.includes("background")) {
-                            el.style.setProperty(prop, "#ffffff", "important");
-                          } else {
-                            el.style.setProperty(prop, "transparent", "important");
-                          }
-                          console.log(`⚠️ Fallback for ${prop} (conversion failed)`);
-                        }
-                      } else {
-                        // No conversion value, use fallback
-                        if (prop === "color") {
-                          el.style.setProperty(prop, "#000000", "important");
-                        } else {
-                          el.style.setProperty(prop, "transparent", "important");
-                        }
-                      }
-                    } finally {
-                      document.body.removeChild(testEl);
-                    }
-                  } else {
-                    // Already safe format, set it inline to override any stylesheet values
-                    el.style.setProperty(prop, value, "important");
-                  }
-                }
-              } catch (e) {
-                console.warn(`⚠️ Error processing ${prop}:`, e);
-              }
-            });
-          } catch (e) {
-            console.warn(`⚠️ Error processing element:`, e);
-          }
-        }
-      });
-
-      // Remove all stylesheets from tempDiv's document (if any)
-      // Also remove any style tags that might contain oklch
-      const styleTags = tempDiv.querySelectorAll("style");
-      styleTags.forEach((style) => {
-        const content = style.textContent || "";
-        if (content.includes("oklch") || content.includes("lch(") || content.includes("lab(")) {
-          style.remove();
-          console.log("🗑️ Removed style tag with unsupported colors");
-        }
-      });
-
-      // Final pass: remove any inline styles that still contain oklch
+      // Apply sanitized styles to the temp div
       sanitizeStylesForPDF(tempDiv);
-
-      console.log("✅ Content processed for PDF");
-      console.log("📋 Final HTML length:", tempDiv.innerHTML.length);
-      console.log("📋 Final text content preview:", tempDiv.textContent?.substring(0, 200));
-      console.log("📏 Element dimensions:", {
-        width: tempDiv.offsetWidth,
-        height: tempDiv.offsetHeight,
-        scrollWidth: tempDiv.scrollWidth,
-        scrollHeight: tempDiv.scrollHeight,
-      });
-
-      // Wait a bit for any final rendering and force layout recalculation
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Force multiple layout recalculations to ensure accurate dimensions
-      void tempDiv.offsetWidth;
-      void tempDiv.scrollWidth;
-      void tempDiv.scrollHeight;
-      void tempDiv.clientWidth;
-      void tempDiv.clientHeight;
 
       // Get bounding box of all content including any overflow
       const boundingRect = tempDiv.getBoundingClientRect();
@@ -1723,6 +1134,69 @@ export default function StudentTemplate({
         contentBottomExtent,
       });
 
+      // Clean up temp div
+      document.body.removeChild(tempDiv);
+
+      // Return the calculated settings
+      return {
+        offsetX: captureOffsetX,
+        offsetY: captureOffsetY,
+        width: contentWidth,
+        height: contentHeight,
+      };
+    } catch (error) {
+      console.error("Error calculating crop settings:", error);
+      // Fallback to default settings
+      return {
+        offsetX: -140,
+        offsetY: 0,
+        width: 794, // A4 width in px at 96dpi
+        height: 1123, // A4 height in px at 96dpi
+      };
+    }
+  }, [editor, variableValues, sanitizeStylesForPDF, cropSettings]);
+
+  const handleDownloadPDF = useCallback(async () => {
+    if (!editor || !isContentLoaded) {
+      toast.error("Le contenu n'est pas prêt pour le téléchargement");
+      return;
+    }
+
+    try {
+      // Calculate crop settings before generating PDF
+      const calculatedCropSettings = calculateCropSettings();
+      if (!calculatedCropSettings) {
+        toast.error("Impossible de calculer les dimensions du PDF");
+        return;
+      }
+
+      setCropSettings(calculatedCropSettings);
+
+      // Get the editor's DOM element
+      const editorDom = editor.view.dom;
+
+      // Create a temporary div to clone the content for PDF generation
+      const tempDiv = editorDom.cloneNode(true) as HTMLElement;
+
+      // Set styles for PDF generation
+      tempDiv.style.padding = "20px";
+      tempDiv.style.backgroundColor = "#ffffff";
+      tempDiv.style.width = "auto";
+      tempDiv.style.maxWidth = "none";
+      tempDiv.style.boxSizing = "border-box";
+
+      // Append to body to get accurate measurements and rendering
+      document.body.appendChild(tempDiv);
+
+      // Force a reflow
+      tempDiv.offsetHeight;
+
+      // Apply sanitized styles to ensure compatibility
+      sanitizeStylesForPDF(tempDiv);
+
+      // Use the calculated crop settings
+      const { offsetX, offsetY, width, height } = calculatedCropSettings;
+
       // Generate PDF using html2pdf
       const marginTuple: [number, number, number, number] = [10, 10, 10, 10];
       const options = {
@@ -1737,13 +1211,13 @@ export default function StudentTemplate({
           logging: false, // Disable logging for production
           backgroundColor: "#ffffff",
           // Use calculated dimensions to capture all content
-          windowWidth: contentWidth,
-          windowHeight: contentHeight,
-          width: contentWidth,
-          height: contentHeight,
+          windowWidth: width,
+          windowHeight: height,
+          width: width,
+          height: height,
           // Capture from the leftmost/topmost point to ensure no content is cut off
-          x: captureOffsetX,
-          y: captureOffsetY,
+          x: offsetX,
+          y: offsetY,
           // Additional options to ensure full capture
           removeContainer: false,
           imageTimeout: 15000,
@@ -1781,28 +1255,34 @@ export default function StudentTemplate({
       console.error("❌ Error downloading PDF:", error);
       toast.error("Erreur lors du téléchargement du PDF");
     }
-  }, [editor, title, variableValues, sanitizeStylesForPDF, cropSettings]);
+  }, [
+    editor,
+    title,
+    variableValues,
+    sanitizeStylesForPDF,
+    cropSettings,
+    isContentLoaded,
+    calculateCropSettings,
+  ]);
 
   // Debug logging
   useEffect(() => {
-    if (open) {
-      console.log("=== DEBUG INFO ===");
-      console.log("Open:", open);
-      console.log("Template ID:", templateId);
-      console.log("Template loading:", templateLoading);
-      console.log("Template data:", templateData);
-      console.log("Template error:", templateError);
-      console.log("Instances loading:", instancesLoading);
-      console.log("Instances data:", instancesData);
-      console.log("Is client:", isClient);
-      console.log("Is content loaded:", isContentLoaded);
-      console.log("Editor exists:", !!editor);
-      console.log("Variable values:", variableValues);
-      console.log("===================");
-    }
+    console.log("=== DEBUG INFO ===");
+    console.log("Template ID:", templateId);
+    console.log("Session ID:", sessionId);
+    console.log("Template loading:", templateLoading);
+    console.log("Template data:", templateData);
+    console.log("Template error:", templateError);
+    console.log("Instances loading:", instancesLoading);
+    console.log("Instances data:", instancesData);
+    console.log("Is client:", isClient);
+    console.log("Is content loaded:", isContentLoaded);
+    console.log("Editor exists:", !!editor);
+    console.log("Variable values:", variableValues);
+    console.log("===================");
   }, [
-    open,
     templateId,
+    sessionId,
     templateLoading,
     templateData,
     templateError,
@@ -1814,84 +1294,86 @@ export default function StudentTemplate({
     variableValues,
   ]);
 
-  if (!isClient || !open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm flex items-center justify-center">
-      <div className="relative bg-white w-[95vw] h-[95vh] max-w-[1600px] rounded-lg shadow-xl border border-gray-200 flex flex-col overflow-hidden mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between px-8 py-5 border-b bg-white shadow-sm">
-          <h2 className="text-2xl font-bold">
-            {templateLoading ? "Chargement..." : `Remplir le document : ${title}`}
-          </h2>
-          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-
-        {/* Main Document Area */}
-        <div className="flex-1 overflow-auto px-12 py-8 bg-gray-100">
-          <div className="mx-auto bg-white shadow-md rounded-lg border border-gray-300 w-full max-w-[1000px] min-h-[700px]">
-            {templateLoading || instancesLoading ? (
-              <div className="min-h-[600px] p-8 space-y-6 w-full">
-                <Skeleton className="h-10 w-1/2" />
-                <Skeleton className="h-6 w-full" />
-                <Skeleton className="h-6 w-5/6" />
-                <Skeleton className="h-6 w-4/5" />
-                <div className="space-y-3 mt-8">
-                  <Skeleton className="h-8 w-3/4" />
-                  <Skeleton className="h-5 w-full" />
-                  <Skeleton className="h-5 w-full" />
-                  <Skeleton className="h-5 w-2/3" />
-                  <Skeleton className="h-5 w-4/5" />
-                </div>
-              </div>
-            ) : templateError ? (
-              <div className="min-h-[600px] flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-red-600 text-lg mb-2">Erreur lors du chargement du modèle</p>
-                  <p className="text-gray-600 text-sm mb-4">{"Erreur inconnue"}</p>
-                  <Button
-                    variant="outline"
-                    onClick={() => getDocumentTemplate({ id: templateId })}
-                    className="mt-4"
-                  >
-                    Réessayer
-                  </Button>
-                </div>
-              </div>
-            ) : !templateData?.data ? (
-              <div className="min-h-[600px] flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-gray-600 text-lg mb-2">Aucune donnée de modèle disponible</p>
-                  <p className="text-gray-500 text-sm">
-                    Template ID: {templateId}
-                    <br />
-                    Vérifiez que le template existe et que vous y avez accès.
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() => getDocumentTemplate({ id: templateId })}
-                    className="mt-4"
-                  >
-                    Réessayer le chargement
-                  </Button>
-                </div>
-              </div>
-            ) : editor ? (
-              <EditorContent editor={editor} ref={editorRef} />
-            ) : (
-              <div className="min-h-[600px] flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-gray-600 text-lg">Initialisation de l'éditeur...</p>
-                </div>
-              </div>
-            )}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => router.push("/student/documents")}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-2xl font-bold">
+              {templateLoading ? "Chargement..." : `Remplir le document : ${title}`}
+            </h1>
           </div>
         </div>
+      </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between gap-4 px-8 py-5 border-t bg-white">
+      {/* Main Document Area */}
+      <div className="flex-1 overflow-auto px-6 py-8">
+        <div className="mx-auto bg-white shadow-md rounded-lg border border-gray-300 w-full max-w-[1000px] min-h-[700px]">
+          {templateLoading || instancesLoading ? (
+            <div className="min-h-[600px] p-8 space-y-6 w-full">
+              <Skeleton className="h-10 w-1/2" />
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-5/6" />
+              <Skeleton className="h-6 w-4/5" />
+              <div className="space-y-3 mt-8">
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-2/3" />
+                <Skeleton className="h-5 w-4/5" />
+              </div>
+            </div>
+          ) : templateError ? (
+            <div className="min-h-[600px] flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-red-600 text-lg mb-2">Erreur lors du chargement du modèle</p>
+                <p className="text-gray-600 text-sm mb-4">{"Erreur inconnue"}</p>
+                <Button
+                  variant="outline"
+                  onClick={() => getDocumentTemplate({ id: templateId })}
+                  className="mt-4"
+                >
+                  Réessayer
+                </Button>
+              </div>
+            </div>
+          ) : !templateData?.data ? (
+            <div className="min-h-[600px] flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-gray-600 text-lg mb-2">Aucune donnée de modèle disponible</p>
+                <p className="text-gray-500 text-sm">
+                  Template ID: {templateId}
+                  <br />
+                  Vérifiez que le template existe et que vous y avez accès.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => getDocumentTemplate({ id: templateId })}
+                  className="mt-4"
+                >
+                  Réessayer le chargement
+                </Button>
+              </div>
+            </div>
+          ) : editor ? (
+            <EditorContent editor={editor} ref={editorRef} />
+          ) : (
+            <div className="min-h-[600px] flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-gray-600 text-lg">Initialisation de l'éditeur...</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="bg-white border-t border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between gap-4">
           <div className="text-sm text-gray-600 flex items-center gap-2">
             <div
               className={`w-3 h-3 rounded-full ${existingInstance ? "bg-green-500" : "bg-amber-400"}`}
@@ -1942,9 +1424,6 @@ export default function StudentTemplate({
             )}
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Fermer
-            </Button>
             <Button
               variant="outline"
               onClick={() => handleDownloadPDF()}

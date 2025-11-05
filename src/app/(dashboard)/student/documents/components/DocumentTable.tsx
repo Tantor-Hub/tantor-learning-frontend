@@ -34,8 +34,11 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import toast from "react-hot-toast";
-import { useSelector } from "react-redux";
-import { selectCurrentUser, selectToken } from "@/features/auth/auth-slice";
+import {
+  useDeleteSessionDocumentMutation,
+  useCreateSessionDocumentMutation,
+} from "@/lib/apis/session-document";
+import { getAuthToken } from "@/lib/cookies";
 
 type ActionType = "download" | "view" | "edit" | "share" | "delete";
 
@@ -64,8 +67,9 @@ export function DocumentTable({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedType, setSelectedType] = useState<string>(Object.keys(documentTypes)[0]);
   const [isUploading, setIsUploading] = useState(false);
-  const currentUser = useSelector(selectCurrentUser);
-  const token = useSelector(selectToken);
+  const token = getAuthToken();
+  const [deleteSessionDocument] = useDeleteSessionDocumentMutation();
+  const [createSessionDocument] = useCreateSessionDocumentMutation();
 
   if (isLoading) {
     return (
@@ -102,7 +106,11 @@ export function DocumentTable({
 
   const documentList = documents || [];
 
-  const handleAction = (action: ActionType, documentId: number, documentName: string): void => {
+  const handleAction = async (
+    action: ActionType,
+    documentId: string,
+    documentName: string
+  ): Promise<void> => {
     console.log(`Action: ${action} on document: ${documentName}`);
 
     switch (action) {
@@ -114,7 +122,14 @@ export function DocumentTable({
         break;
       case "delete":
         if (confirm(`Êtes-vous sûr de vouloir supprimer ${documentName} ?`)) {
-          console.log(`Deleting document with ID: ${documentId}`);
+          try {
+            await deleteSessionDocument(documentId).unwrap();
+            toast.success("Document supprimé avec succès");
+            onRefetch();
+          } catch (error) {
+            console.error("Error deleting document:", error);
+            toast.error("Échec de la suppression du document");
+          }
         }
         break;
       default:
@@ -122,9 +137,9 @@ export function DocumentTable({
     }
   };
 
-  const handleAddDocument = () => {
+  const handleAddDocument = (documentType: string) => {
     setSelectedFile(null);
-    setSelectedType(Object.keys(documentTypes)[0]);
+    setSelectedType(documentType);
     setIsDialogOpen(true);
   };
 
@@ -134,54 +149,30 @@ export function DocumentTable({
     }
   };
 
-  const handleTypeChange = (value: string) => {
-    setSelectedType(value);
-  };
-
   const handleSubmit = async () => {
-    toast.loading("Envoi en cours...");
     if (!selectedFile) {
       toast.error("Veuillez sélectionner un fichier");
       return;
     }
     setIsUploading(true);
 
-    const formData = new FormData();
-    formData.append("piece_jointe", selectedFile);
-    formData.append("id_session", String(sessionId));
-    formData.append("key_document", selectedType);
-    formData.append("description", selectedFile.name);
-
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}${apiEndpoint}`, {
-        method: "PUT",
-        body: formData,
-        headers: {
-          "x-connexion-tantor": `Bearer ${token}`,
-        },
-      });
+      await createSessionDocument({
+        type: selectedType,
+        id_session: String(sessionId),
+        categories: group,
+        piece_jointe: selectedFile,
+      }).unwrap();
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        toast.error("Échec de l'upload du document");
-      } else {
-        toast.dismiss();
-        toast.success(`Document ${selectedFile.name} uploadé avec succès!`);
-        await onRefetch();
-        setIsDialogOpen(false);
-        setSelectedFile(null);
-        setSelectedType(Object.keys(documentTypes)[0]);
-      }
+      toast.success(`Document ${selectedFile.name} uploadé avec succès!`);
+      onRefetch();
+      setIsDialogOpen(false);
+      setSelectedFile(null);
+      setSelectedType(Object.keys(documentTypes)[0]);
     } catch (error) {
-      toast.dismiss();
       console.error("Error uploading document:", error);
-      if (error instanceof Error) {
-        toast.error(`Erreur: ${error.message}`);
-      } else {
-        toast.error(`Échec de l'upload du document`);
-      }
+      toast.error("Échec de l'upload du document");
     } finally {
-      toast.dismiss();
       setIsUploading(false);
     }
   };
@@ -221,7 +212,7 @@ export function DocumentTable({
         <TableBody>
           {requiredDocuments.length > 0 ? (
             requiredDocuments.map((requiredDoc, index) => {
-              const submittedDoc = documentList.find((doc) => doc.key_document === requiredDoc);
+              const submittedDoc = documentList.find((doc) => doc.type === requiredDoc);
               return (
                 <TableRow key={index}>
                   <TableCell>
@@ -234,7 +225,9 @@ export function DocumentTable({
                     />
                   </TableCell>
                   <TableCell className="font-medium">
-                    {submittedDoc ? submittedDoc.document : translateDocumentKey(requiredDoc)}
+                    {submittedDoc
+                      ? documentTypes[submittedDoc.type] || submittedDoc.type
+                      : translateDocumentKey(requiredDoc)}
                   </TableCell>
                   <TableCell>
                     {submittedDoc ? (
@@ -256,7 +249,7 @@ export function DocumentTable({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={handleAddDocument}>
+                        <DropdownMenuItem onClick={() => handleAddDocument(requiredDoc)}>
                           <Upload className="mr-2 h-4 w-4" />
                           Uploader
                         </DropdownMenuItem>
@@ -264,7 +257,11 @@ export function DocumentTable({
                           <>
                             <DropdownMenuItem
                               onClick={() =>
-                                handleAction("download", submittedDoc.id, submittedDoc.document)
+                                handleAction(
+                                  "download",
+                                  submittedDoc.id,
+                                  documentTypes[submittedDoc.type] || submittedDoc.type
+                                )
                               }
                             >
                               <Download className="mr-2 h-4 w-4" />
@@ -272,7 +269,11 @@ export function DocumentTable({
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
-                                handleAction("delete", submittedDoc.id, submittedDoc.document)
+                                handleAction(
+                                  "delete",
+                                  submittedDoc.id,
+                                  documentTypes[submittedDoc.type] || submittedDoc.type
+                                )
                               }
                               className="text-red-600 focus:text-red-600"
                             >
@@ -299,12 +300,14 @@ export function DocumentTable({
                     title="Document soumis"
                   />
                 </TableCell>
-                <TableCell className="font-medium">{document.document}</TableCell>
+                <TableCell className="font-medium">
+                  {documentTypes[document.type] || document.type}
+                </TableCell>
                 <TableCell>
                   <Badge variant={"outline"}>{getFileExtension(document.piece_jointe)}</Badge>
                 </TableCell>
                 <TableCell>{formatDate(document.createdAt)}</TableCell>
-                <TableCell>{translateDocumentKey(document.key_document)}</TableCell>
+                <TableCell>{documentTypes[document.type] || document.type}</TableCell>
                 <TableCell className="text-center">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -314,18 +317,30 @@ export function DocumentTable({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={handleAddDocument}>
+                      <DropdownMenuItem onClick={() => handleAddDocument(document.type)}>
                         <Upload className="mr-2 h-4 w-4" />
                         Uploader
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleAction("download", document.id, document.document)}
+                        onClick={() =>
+                          handleAction(
+                            "download",
+                            document.id,
+                            documentTypes[document.type] || document.type
+                          )
+                        }
                       >
                         <Download className="mr-2 h-4 w-4" />
                         Télécharger
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleAction("delete", document.id, document.document)}
+                        onClick={() =>
+                          handleAction(
+                            "delete",
+                            document.id,
+                            documentTypes[document.type] || document.type
+                          )
+                        }
                         className="text-red-600 focus:text-red-600"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
@@ -368,18 +383,12 @@ export function DocumentTable({
             </div>
             <div className="grid gap-2">
               <Label htmlFor="document-type">Type de document</Label>
-              <Select value={selectedType} onValueChange={handleTypeChange} disabled={isUploading}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner le type de document" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(documentTypes).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="document-type"
+                value={documentTypes[selectedType] || selectedType}
+                disabled
+                className="bg-gray-100"
+              />
             </div>
           </div>
           <DialogFooter>

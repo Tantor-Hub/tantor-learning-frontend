@@ -1,5 +1,5 @@
 import React from "react";
-import { useListStudentDocBySessionIdQuery } from "@/lib/apis/student/document-api";
+import { useGetStudentSessionDocumentsBySessionIdQuery } from "@/lib/apis/session-document";
 import { useGetTrainingSessionByIdQuery } from "@/lib/apis/training-sessions";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
@@ -20,14 +20,13 @@ export function DuringTab({ sessionId }: { sessionId: string }) {
     data: documents,
     isLoading,
     refetch,
-  } = useListStudentDocBySessionIdQuery({
-    id_session: sessionId,
-    group: "during",
-    id_student: currentUser?.id || "",
+  } = useGetStudentSessionDocumentsBySessionIdQuery({
+    sessionId,
+    category: "during",
   });
 
   const requiredDocuments = sessionData?.data?.required_document_during || [];
-  const documentList = documents?.data?.list || [];
+  const documentList = documents?.data || [];
 
   return (
     <DocumentTable

@@ -37,6 +37,7 @@ import { paymentMethodOPCOApi } from "./payment-method-OPCO";
 import { uploadApi } from "./upload-api";
 import { documentsApi } from "./documents";
 import { catalogueFormationApi } from "./catalogue-formation";
+import { sessionDocumentApi } from "./session-document";
 
 // Export all API slices for easy access
 export {
@@ -78,6 +79,7 @@ export {
   paymentMethodOPCOApi,
   uploadApi,
   catalogueFormationApi,
+  sessionDocumentApi,
 };
 
 // Combine all reducers for easy store setup
@@ -120,6 +122,7 @@ export const apiReducers = {
   [paymentMethodOPCOApi.reducerPath]: paymentMethodOPCOApi.reducer,
   [uploadApi.reducerPath]: uploadApi.reducer,
   [catalogueFormationApi.reducerPath]: catalogueFormationApi.reducer,
+  [sessionDocumentApi.reducerPath]: sessionDocumentApi.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -162,4 +165,5 @@ export const apiMiddlewares = [
   paymentMethodOPCOApi.middleware,
   uploadApi.middleware,
   catalogueFormationApi.middleware,
+  sessionDocumentApi.middleware,
 ];

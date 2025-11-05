@@ -1,5 +1,5 @@
 import React from "react";
-import { useListDocumentsByStudentSessionIdQuery } from "@/lib/apis/common/document-api";
+import { useGetStudentSessionDocumentsBySessionIdQuery } from "@/lib/apis/session-document";
 import { useGetTrainingSessionByIdQuery } from "@/lib/apis/training-sessions";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
@@ -19,19 +19,13 @@ export function AfterTab({ sessionId }: { sessionId: string }) {
     data: documents,
     isLoading,
     refetch,
-  } = useListDocumentsByStudentSessionIdQuery(
-    {
-      id_session: sessionId?.toString() || "",
-      group: "after",
-      id_student: currentUser?.id.toString() || "",
-    },
-    {
-      skip: !sessionId || !currentUser?.id,
-    }
-  );
+  } = useGetStudentSessionDocumentsBySessionIdQuery({
+    sessionId,
+    category: "after",
+  });
 
   const requiredDocuments = sessionData?.data?.required_document_after || [];
-  const documentList = documents?.data?.list || [];
+  const documentList = documents?.data || [];
 
   return (
     <DocumentTable

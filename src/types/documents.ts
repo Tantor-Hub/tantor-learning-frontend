@@ -49,6 +49,9 @@ export interface DocumentInstance {
   userId: string;
   filledContent: TipTapDocument;
   variableValues: Record<string, string>;
+  is_published: boolean;
+  status: "pending" | "validated" | "rejected";
+  comment?: string;
   createdAt: string;
   updatedAt: string;
   template: DocumentTemplate;
@@ -57,6 +60,7 @@ export interface DocumentInstance {
 export interface CreateDocumentInstanceRequest {
   templateId: string;
   variableValues: Record<string, string>;
+  is_published?: boolean;
 }
 
 export interface CreateDocumentInstanceResponse {
@@ -72,6 +76,7 @@ export interface GetDocumentInstancesByTemplateResponse {
 
 export interface UpdateDocumentInstanceRequest {
   variableValues: Record<string, string>;
+  is_published?: boolean;
 }
 
 export interface UpdateDocumentInstanceResponse {

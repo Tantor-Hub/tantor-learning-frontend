@@ -1,5 +1,5 @@
 import React from "react";
-import { useListStudentDocBySessionIdQuery } from "@/lib/apis/student/document-api";
+import { useGetStudentSessionDocumentsBySessionIdQuery } from "@/lib/apis/session-document";
 import { useGetTrainingSessionByIdQuery } from "@/lib/apis/training-sessions";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
@@ -25,14 +25,13 @@ export function BeforeTab({ sessionId }: { sessionId: string }) {
     data: documents,
     isLoading,
     refetch,
-  } = useListStudentDocBySessionIdQuery({
-    id_session: sessionId,
-    group: "before",
-    id_student: currentUser?.id || "",
+  } = useGetStudentSessionDocumentsBySessionIdQuery({
+    sessionId,
+    category: "before",
   });
 
   const requiredDocuments = sessionData?.data?.required_document_before || [];
-  const documentList = documents?.data?.list || [];
+  const documentList = documents?.data || [];
 
   return (
     <DocumentTable
