@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { setCredentials, clearCredentials } from "@/features/auth/auth-slice";
 import { tokenStorage } from "@/features/token-storage";
+import { getAuthToken } from "@/lib/cookies";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch();
@@ -13,7 +14,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check tokens on app initialization
     const checkTokens = () => {
-      const tokens = tokenStorage.get();
+      const tokens = getAuthToken();
 
       if (!tokens) {
         return;
@@ -27,17 +28,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      if (tokens.accessToken && tokens.refreshToken) {
-        const now = Date.now();
-        // Set credentials in Redux if tokens exist
-        dispatch(
-          setCredentials({
-            token: tokens.accessToken,
-            refreshToken: tokens.refreshToken,
-            expiresIn: now + 22 * 60 * 60 * 1000,
-          })
-        );
-      }
+      // if (tokens.accessToken && tokens.refreshToken) {
+      //   const now = Date.now();
+      //   // Set credentials in Redux if tokens exist
+      //   dispatch(
+      //     setCredentials({
+      //       token: tokens.accessToken,
+      //       refreshToken: tokens.refreshToken,
+      //       expiresIn: now + 22 * 60 * 60 * 1000,
+      //     })
+      //   );
+      // }
     };
 
     checkTokens();

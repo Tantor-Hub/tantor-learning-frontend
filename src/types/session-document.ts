@@ -6,10 +6,11 @@ export interface SessionDocument {
   categories: "before" | "during" | "after";
   piece_jointe: string;
   status: string;
+  comment?: string;
   student?: {
-    uuid: string;
-    fs_name: string;
-    ls_name: string;
+    id: string;
+    firstName: string;
+    lastName: string;
     email: string;
   };
   trainingSession?: {
@@ -35,4 +36,10 @@ export interface CreateSessionDocumentRequest {
 
 export interface UpdateSessionDocumentRequest {
   status: "pending" | "rejected" | "validated";
+  comment?: string;
+}
+
+export interface UpdateSessionDocumentSecretaryRequest {
+  status?: "pending" | "rejected" | "validated";
+  comment?: string;
 }

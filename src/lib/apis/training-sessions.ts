@@ -3,6 +3,7 @@ import type {
   TrainingSession,
   ApiResponse,
   UpdateTrainingSessionRequest,
+  SimplifiedTrainingSession,
 } from "../../types/training-sessions";
 
 // Training Session API
@@ -39,6 +40,17 @@ export const trainingSessionApi = createApi({
       }),
       invalidatesTags: ["TrainingSession"],
     }),
+
+    // Get all training sessions (simplified)
+    getAllTrainingSessionsSimplified: builder.query<ApiResponse<SimplifiedTrainingSession[]>, void>(
+      {
+        query: () => ({
+          url: `/trainingssession/getall-simplified`,
+          method: "GET",
+        }),
+        providesTags: ["TrainingSession"],
+      }
+    ),
   }),
 });
 
@@ -46,4 +58,6 @@ export const {
   useGetTrainingSessionByIdQuery,
   useDeleteTrainingSessionMutation,
   useUpdateTrainingSessionMutation,
+  useGetAllTrainingSessionsSimplifiedQuery,
+  useLazyGetAllTrainingSessionsSimplifiedQuery,
 } = trainingSessionApi;

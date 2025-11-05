@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -9,52 +8,38 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Image from "next/image";
-import { useGetMySessionsQuery, useGetAllTrainingsQuery } from "@/lib/apis/student/training-api";
-import { AfterTab } from "./after";
+import { useLazyGetAllTrainingSessionsSimplifiedQuery } from "@/lib/apis/training-sessions";
 import { Loading } from "@/components/shared/loading";
-import { BeforeTab } from "./before";
-import { useListUserByGroupQuery } from "@/lib/apis/admin/user-api";
-import { DuringTab } from "./during";
-import { UserRole } from "@/types/user";
+import { PendingTab } from "./pending";
+import { ValidatedTab } from "./validated";
+import { RejectedTab } from "./rejected";
 
 export default function Page() {
-  const listSessions = useGetAllTrainingsQuery();
-  const students = useListUserByGroupQuery({ group: UserRole.STUDENT });
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  if (listSessions.isLoading || students.isLoading) return <Loading />;
+  const [isOpen, setIsOpen] = useState(false);
+  const [trigger, { data: sessionsData, isLoading, isError }] =
+    useLazyGetAllTrainingSessionsSimplifiedQuery();
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open && !sessionsData && !isLoading) {
+      trigger();
+    }
+  };
+
+  if (isError) {
+    return <div>Erreur lors du chargement des sessions.</div>;
+  }
+
+  const sessions = sessionsData?.data || [];
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row gap-5 md:gap-10 mb-5">
-        {/* <div className="flex items-center border px-2.5 w-full rounded-md bg-white">
-          <Image src="/icons/search.svg" height={20} width={20} alt="search icon" />
-          <Input
-            type="search"
-            className="text-[#ACACAC] border-none focus-visible:outline-none focus-visible:ring-0"
-            placeholder="Rechercher Un cours ..."
-          />
-        </div> */}
+      <div className="flex flex-col sm:flex-row gap-5 md:gap-10">
         <div className="flex justify-start mb-4">
           <Select
-            onValueChange={(value) => setSelectedUserId(value)}
-            value={selectedUserId || undefined}
-          >
-            <SelectTrigger className="min-w-[300px]">
-              <SelectValue placeholder="Sélectionner un(e) élève" />
-            </SelectTrigger>
-            <SelectContent>
-              {students.data?.data.list.map((student) => (
-                <SelectItem key={student.id} value={String(student.id)}>
-                  {`${student.firstName} ${student.lastName}` || "Inconnue"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex justify-start mb-4">
-          <Select
+            open={isOpen}
+            onOpenChange={handleOpenChange}
             onValueChange={(value) => setSelectedSession(value)}
             value={selectedSession || undefined}
           >
@@ -62,33 +47,44 @@ export default function Page() {
               <SelectValue placeholder="Sélectionner une session" />
             </SelectTrigger>
             <SelectContent>
-              {listSessions.data?.data.list.map((session) => (
-                <SelectItem key={session.id} value={String(session.id)}>
-                  {`${session.designation} - ${session.Formation.titre}` || "Session sans nom"}
+              {isLoading ? (
+                <SelectItem value="loading" disabled>
+                  <div className="flex items-center justify-center py-2">
+                    <Loading />
+                  </div>
                 </SelectItem>
-              ))}
+              ) : sessions.length === 0 ? (
+                <SelectItem value="empty" disabled>
+                  Aucune session disponible
+                </SelectItem>
+              ) : (
+                sessions.map((session) => (
+                  <SelectItem key={session.sessionId} value={session.sessionId}>
+                    {`${session.sessionTitle} - ${session.trainingTitle}`}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      <Tabs defaultValue="before">
+      <Tabs defaultValue="validated">
         <div className="overflow-x-auto">
           <TabsList className="flex min-w-[1000px] w-full bg-white border">
-            <TabsTrigger value="before">Avant La Formation</TabsTrigger>
-            <TabsTrigger value="during">Pendant La Formation</TabsTrigger>
-            <TabsTrigger value="after">Après La Formation</TabsTrigger>
+            <TabsTrigger value="validated">validé</TabsTrigger>
+            <TabsTrigger value="pending">En Attente</TabsTrigger>
+            <TabsTrigger value="rejected">Rejetée</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="before">
-            <BeforeTab sessionId={selectedSession} studentId={selectedUserId} />
+          <TabsContent value="validated">
+            <ValidatedTab sessionId={selectedSession} />
           </TabsContent>
-          <TabsContent value="during">
-            <DuringTab sessionId={selectedSession} studentId={selectedUserId} />
+          <TabsContent value="pending">
+            <PendingTab sessionId={selectedSession} />
           </TabsContent>
-          <TabsContent value="after">
-            <AfterTab sessionId={selectedSession} studentId={selectedUserId} />
-            {/* studentId={selectedUserId} */}
+          <TabsContent value="rejected">
+            <RejectedTab sessionId={selectedSession} />
           </TabsContent>
         </div>
       </Tabs>

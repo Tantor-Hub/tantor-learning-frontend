@@ -4,6 +4,7 @@ import {
   ApiResponse,
   CreateSessionDocumentRequest,
   UpdateSessionDocumentRequest,
+  UpdateSessionDocumentSecretaryRequest,
 } from "@/types/session-document";
 
 // Session Document API
@@ -95,6 +96,36 @@ export const sessionDocumentApi = createApi({
       }),
       invalidatesTags: (result, error, { id }) => [{ type: "SessionDocuments", id }],
     }),
+
+    // Get all session documents for secretary
+    getAllSessionDocumentsForSecretary: builder.query<
+      ApiResponse<SessionDocument[]>,
+      { status?: "pending" | "rejected" | "validated"; sessionId?: string }
+    >({
+      query: ({ status, sessionId }) => {
+        let url = "sessiondocument/secretary/getall";
+        const params = new URLSearchParams();
+        if (status) params.append("status", status);
+        if (sessionId) params.append("sessionId", sessionId);
+        const queryString = params.toString();
+        if (queryString) url += `?${queryString}`;
+        return url;
+      },
+      providesTags: ["SessionDocuments"],
+    }),
+
+    // Update session document by secretary (Secretary only)
+    updateSessionDocumentSecretary: builder.mutation<
+      ApiResponse<SessionDocument>,
+      { id: string; body: UpdateSessionDocumentSecretaryRequest }
+    >({
+      query: ({ id, body }) => ({
+        url: `sessiondocument/secretary/update/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["SessionDocuments"],
+    }),
   }),
 });
 
@@ -107,4 +138,6 @@ export const {
   useGetSessionDocumentsByStudentIdQuery,
   useGetStudentSessionDocumentsBySessionIdQuery,
   useUpdateSessionDocumentMutation,
+  useGetAllSessionDocumentsForSecretaryQuery,
+  useUpdateSessionDocumentSecretaryMutation,
 } = sessionDocumentApi;

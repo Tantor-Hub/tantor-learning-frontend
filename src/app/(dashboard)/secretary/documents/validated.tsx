@@ -14,42 +14,67 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Download, Trash2, Ellipsis } from "lucide-react";
-import { useListStudentDocBySessionIdQuery } from "@/lib/apis/student/document-api";
+import { Download, Ellipsis, X, RotateCcw } from "lucide-react";
+import {
+  useGetAllSessionDocumentsForSecretaryQuery,
+  useUpdateSessionDocumentSecretaryMutation,
+} from "@/lib/apis/session-document";
 import { Loading } from "@/components/shared/loading";
+import { toast } from "react-hot-toast";
 
-type ActionType = "download" | "view" | "edit" | "share" | "delete";
+type ActionType = "download" | "reject" | "reset";
 
-export function BeforeTab({
-  sessionId,
-  studentId,
-}: {
-  sessionId: number | any;
-  studentId: string | any;
-}) {
-  const { data: documents, isLoading } = useListStudentDocBySessionIdQuery({
-    id_session: sessionId,
-    group: "before",
-    id_student: studentId,
+export function ValidatedTab({ sessionId }: { sessionId: string | null }) {
+  const { data: documents, isLoading } = useGetAllSessionDocumentsForSecretaryQuery({
+    status: "validated",
+    ...(sessionId && { sessionId }),
   });
+
+  const [updateSessionDocumentSecretary] = useUpdateSessionDocumentSecretaryMutation();
 
   if (isLoading) return <Loading />;
 
-  const documentList = documents?.data?.list || [];
+  const documentList = documents?.data || [];
 
-  const handleAction = (action: ActionType, documentId: number, documentName: string): void => {
-    console.log(`Action: ${action} on document: ${documentName}`);
+  const handleReject = async (id: string) => {
+    const comment = prompt("Raison du rejet:");
+    if (comment) {
+      try {
+        await updateSessionDocumentSecretary({
+          id,
+          body: { status: "rejected", comment },
+        }).unwrap();
+        toast.success("Document rejeté avec succès");
+      } catch (error) {
+        console.error("Error rejecting document:", error);
+        toast.error("Erreur lors du rejet du document");
+      }
+    }
+  };
 
+  const handleResetToPending = async (id: string) => {
+    const comment = prompt("Commentaire (optionnel):");
+    try {
+      await updateSessionDocumentSecretary({
+        id,
+        body: {
+          status: "pending",
+          ...(comment && { comment }),
+        },
+      }).unwrap();
+      toast.success("Document remis en attente");
+    } catch (error) {
+      console.error("Error resetting document:", error);
+      toast.error("Erreur lors de la remise en attente");
+    }
+  };
+
+  const handleAction = (action: ActionType, documentId: string): void => {
     switch (action) {
       case "download":
         const documentToDownload = documentList.find((doc) => doc.id === documentId);
         if (documentToDownload) {
           window.open(documentToDownload.piece_jointe, "_blank");
-        }
-        break;
-      case "delete":
-        if (confirm(`Êtes-vous sûr de vouloir supprimer ${documentName} ?`)) {
-          console.log(`Deleting document with ID: ${documentId}`);
         }
         break;
       default:
@@ -91,7 +116,7 @@ export function BeforeTab({
       <Table className="border mt-4">
         <TableHeader>
           <TableRow>
-            <TableHead>Nom</TableHead>
+            <TableHead>Nom d'eleve</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Date d'ajout</TableHead>
             <TableHead>Type de document</TableHead>
@@ -102,12 +127,14 @@ export function BeforeTab({
           {documentList.length > 0 ? (
             documentList.map((document) => (
               <TableRow key={document.id}>
-                <TableCell className="font-medium">{document.document}</TableCell>
+                <TableCell className="font-medium">
+                  {document.student?.firstName} {document.student?.lastName}
+                </TableCell>
                 <TableCell>
                   <Badge variant={"outline"}>{getFileExtension(document.piece_jointe)}</Badge>
                 </TableCell>
                 <TableCell>{formatDate(document.createdAt)}</TableCell>
-                <TableCell>{translateDocumentKey(document.key_document)}</TableCell>
+                <TableCell>{translateDocumentKey(document.type)}</TableCell>
                 <TableCell className="text-center">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -117,19 +144,24 @@ export function BeforeTab({
                       </Badge>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => handleAction("download", document.id, document.document)}
-                      >
+                      <DropdownMenuItem onClick={() => handleAction("download", document.id)}>
                         <Download className="mr-2 h-4 w-4" />
                         Télécharger
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onClick={() => handleAction("delete", document.id, document.document)}
+                        onClick={() => handleReject(document.id)}
                         className="text-red-600 focus:text-red-600"
                       >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Supprimer
+                        <X className="mr-2 h-4 w-4" />
+                        Rejeter
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleResetToPending(document.id)}
+                        className="text-orange-600 focus:text-orange-600"
+                      >
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        Remettre en attente
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

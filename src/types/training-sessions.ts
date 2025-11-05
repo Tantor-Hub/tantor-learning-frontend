@@ -49,3 +49,10 @@ export interface ApiResponse<T> {
   message: string;
   data: T;
 }
+
+export interface SimplifiedTrainingSession {
+  sessionId: string;
+  sessionTitle: string;
+  trainingId: string;
+  trainingTitle: string;
+}
