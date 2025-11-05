@@ -1,5 +1,5 @@
 "use client";
-import { useGetModulesQuery, useUpdateModuleMutation } from "@/lib/apis/module-de-formation-api";
+import { useGetModulesQuery } from "@/lib/apis/module-de-formation-api";
 import { Download, Edit, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -338,9 +338,11 @@ function GuideUploadDialog({ onSuccess }: { onSuccess: () => void }) {
 }
 
 function EditModuleDialog({ module, onClose }: { module: any; onClose: () => void }) {
+  const { token } = getValidAuthTokens();
   const [description, setDescription] = useState(module.description);
   const [file, setFile] = useState<File | null>(null);
-  const [updateModule, { isLoading }] = useUpdateModuleMutation();
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -351,16 +353,46 @@ function EditModuleDialog({ module, onClose }: { module: any; onClose: () => voi
   const handleUpdate = async () => {
     if (!description.trim()) return;
 
+    setIsUploading(true);
+    setUploadProgress(0);
+
     try {
-      await updateModule({
-        id: module.id,
-        description: description.trim(),
-        piece_jointe: file || undefined,
-      }).unwrap();
-      toast.success("Module mis à jour avec succès");
-      onClose();
+      const formData = new FormData();
+      formData.append("description", description.trim());
+      if (file) {
+        formData.append("piece_jointe", file);
+      }
+
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          setUploadProgress(percentComplete);
+        }
+      });
+
+      xhr.addEventListener("load", () => {
+        if (xhr.status === 200 || xhr.status === 201) {
+          toast.success("Module mis à jour avec succès");
+          onClose();
+        } else {
+          toast.error("Erreur lors de la mise à jour du module");
+        }
+        setIsUploading(false);
+      });
+
+      xhr.addEventListener("error", () => {
+        toast.error("Erreur lors de la mise à jour du module");
+        setIsUploading(false);
+      });
+
+      xhr.open("PATCH", `${process.env.NEXT_PUBLIC_BASE_URL}/moduledeformation/${module.id}`);
+      xhr.setRequestHeader("x-connexion-tantor", `Bearer ${token}`);
+      xhr.send(formData);
     } catch (error) {
       toast.error("Erreur lors de la mise à jour du module");
+      setIsUploading(false);
     }
   };
 
@@ -381,7 +413,7 @@ function EditModuleDialog({ module, onClose }: { module: any; onClose: () => voi
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Entrez la description du module"
             className="col-span-3"
-            disabled={isLoading}
+            disabled={isUploading}
           />
         </div>
         <div className="grid grid-cols-4 items-center gap-4">
@@ -394,7 +426,7 @@ function EditModuleDialog({ module, onClose }: { module: any; onClose: () => voi
             accept=".pdf,.docx,.pptx"
             onChange={handleFileChange}
             className="col-span-3"
-            disabled={isLoading}
+            disabled={isUploading}
           />
         </div>
         {file && (
@@ -403,10 +435,19 @@ function EditModuleDialog({ module, onClose }: { module: any; onClose: () => voi
             <div className="col-span-3 text-sm truncate">{file.name}</div>
           </div>
         )}
+        {isUploading && (
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Progression</Label>
+            <div className="col-span-3">
+              <Progress value={uploadProgress} className="w-full" />
+              <p className="text-xs text-muted-foreground mt-1">{uploadProgress}% téléchargé</p>
+            </div>
+          </div>
+        )}
       </div>
       <DialogFooter>
-        <Button type="submit" onClick={handleUpdate} disabled={!description.trim() || isLoading}>
-          {isLoading ? "Mise à jour..." : "Mettre à jour"}
+        <Button type="submit" onClick={handleUpdate} disabled={!description.trim() || isUploading}>
+          {isUploading ? "Mise à jour..." : "Mettre à jour"}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -561,7 +602,6 @@ export function Catalogue() {
   const [editingModule, setEditingModule] = useState<any>(null);
   const [editingCatalogue, setEditingCatalogue] = useState<any>(null);
   const [deleteCatalogueId, setDeleteCatalogueId] = useState<string | null>(null);
-  const [deleteModuleId, setDeleteModuleId] = useState<string | null>(null);
   const [deleteCatalogue, { isLoading: deleteLoading }] = useDeleteCatalogueFormationMutation();
 
   if (modulesError || cataloguesError) {
@@ -587,27 +627,6 @@ export function Catalogue() {
       refetchCatalogues();
     } catch (error) {
       toast.error("Erreur lors de la suppression du guide");
-    }
-  };
-
-  const handleDeleteModule = async (id: string) => {
-    try {
-      // Since there's no delete mutation, we'll use fetch directly
-      const { token } = getValidAuthTokens();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/moduledeformation/${id}`, {
-        method: "DELETE",
-        headers: {
-          "x-connexion-tantor": `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to delete");
-      toast.success("Module supprimé avec succès");
-      setDeleteModuleId(null);
-      // Refetch modules data
-      // Assuming there's a refetch for modules, but since it's not provided, we'll use window.location.reload or similar
-      window.location.reload();
-    } catch (error) {
-      toast.error("Erreur lors de la suppression du module");
     }
   };
 
@@ -656,7 +675,10 @@ export function Catalogue() {
                               </DropdownMenuItem>
                               <Dialog>
                                 <DialogTrigger asChild>
-                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                  <DropdownMenuItem
+                                    onSelect={(e) => e.preventDefault()}
+                                    onClick={() => setEditingModule(module)}
+                                  >
                                     <Edit className="mr-2 h-4 w-4" />
                                     Modifier
                                   </DropdownMenuItem>
@@ -668,13 +690,6 @@ export function Catalogue() {
                                   />
                                 )}
                               </Dialog>
-                              <DropdownMenuItem
-                                onClick={() => setDeleteModuleId(module.id)}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Supprimer
-                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -799,28 +814,6 @@ export function Catalogue() {
           </div>
         </div>
       )}
-
-      {/* Delete Module Alert Dialog */}
-      <AlertDialog open={!!deleteModuleId} onOpenChange={() => setDeleteModuleId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action ne peut pas être annulée. Cela supprimera définitivement le module de
-              formation.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteModuleId && handleDeleteModule(deleteModuleId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
