@@ -756,10 +756,10 @@ export function Catalogue() {
                               </DropdownMenuItem>
                               <Dialog>
                                 <DialogTrigger asChild>
-                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                  {/* <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                     <Edit className="mr-2 h-4 w-4" />
-                                    Modifier
-                                  </DropdownMenuItem>
+                                    Modifier e
+                                  </DropdownMenuItem> */}
                                 </DialogTrigger>
                                 {editingCatalogue && editingCatalogue.id === catalogue.id && (
                                   <EditCatalogueDialog
