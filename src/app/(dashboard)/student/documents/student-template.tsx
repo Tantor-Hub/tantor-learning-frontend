@@ -165,6 +165,8 @@ export default function StudentTemplate({
   const [isClient, setIsClient] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [commentTop, setCommentTop] = useState<number | null>(null);
 
   // PDF Crop settings (used for PDF generation)
   const [cropSettings, setCropSettings] = useState({
@@ -834,6 +836,32 @@ export default function StudentTemplate({
 
     return () => clearTimeout(timeoutId);
   }, [variableValues, editor, isContentLoaded, isClient]);
+
+  // Position the secretary comment similar to Google Docs near the first editable field
+  useEffect(() => {
+    if (!cardRef.current) return;
+    if (!(existingInstance && existingInstance.comment)) {
+      setCommentTop(null);
+      return;
+    }
+
+    const computePosition = () => {
+      const container = cardRef.current as HTMLElement;
+      const anchor = (container.querySelector(".variable-field") ||
+        container.querySelector("[data-variable]") ||
+        container.querySelector("p, h1, h2, h3, h4, h5, h6")) as HTMLElement | null;
+
+      const containerRect = container.getBoundingClientRect();
+      const anchorRect = (anchor || container).getBoundingClientRect();
+
+      const top = Math.max(16, anchorRect.top - containerRect.top);
+      setCommentTop(top);
+    };
+
+    computePosition();
+    window.addEventListener("resize", computePosition);
+    return () => window.removeEventListener("resize", computePosition);
+  }, [existingInstance, isContentLoaded]);
 
   // Save or Update document instance
   const handleSave = useCallback(async () => {
@@ -1831,7 +1859,10 @@ export default function StudentTemplate({
 
         {/* Main Document Area */}
         <div className="flex-1 overflow-auto px-12 py-8 bg-gray-100">
-          <div className="mx-auto bg-white shadow-md rounded-lg border border-gray-300 w-full max-w-[1000px] min-h-[700px]">
+          <div
+            ref={cardRef}
+            className="relative mx-auto bg-white shadow-md rounded-lg border border-gray-300 w-full max-w-[1000px] min-h-[700px]"
+          >
             {templateLoading || instancesLoading ? (
               <div className="min-h-[600px] p-8 space-y-6 w-full">
                 <Skeleton className="h-10 w-1/2" />
@@ -1879,7 +1910,66 @@ export default function StudentTemplate({
                 </div>
               </div>
             ) : editor ? (
-              <EditorContent editor={editor} ref={editorRef} />
+              <>
+                <EditorContent editor={editor} ref={editorRef} />
+                {existingInstance &&
+                  existingInstance.comment &&
+                  (() => {
+                    const status = existingInstance.status;
+                    const styles =
+                      status === "validated"
+                        ? {
+                            box: "bg-green-50 border-green-200",
+                            header: "text-green-700",
+                            footer: "text-green-700 border-green-200",
+                            pointer: "border-r-green-200",
+                          }
+                        : status === "rejected"
+                          ? {
+                              box: "bg-red-50 border-red-200",
+                              header: "text-red-700",
+                              footer: "text-red-700 border-red-200",
+                              pointer: "border-r-red-200",
+                            }
+                          : {
+                              box: "bg-yellow-50 border-yellow-200",
+                              header: "text-yellow-700",
+                              footer: "text-yellow-700 border-yellow-200",
+                              pointer: "border-r-yellow-200",
+                            };
+                    const statusLabel =
+                      status === "validated"
+                        ? "Validé"
+                        : status === "rejected"
+                          ? "Rejeté"
+                          : "En attente";
+                    return (
+                      <div
+                        className="absolute left-full ml-4 z-30 w-80 max-w-[320px]"
+                        style={{ top: commentTop ?? 16 }}
+                      >
+                        <div className={`relative border rounded-lg shadow-lg ${styles.box}`}>
+                          <div className="p-3">
+                            <div className={`text-xs font-medium mb-1 ${styles.header}`}>
+                              Commentaire
+                            </div>
+                            <div className="text-sm text-gray-900 whitespace-pre-wrap leading-5">
+                              {existingInstance.comment}
+                            </div>
+                          </div>
+                          <div className={`border-t px-3 py-2 text-xs ${styles.footer}`}>
+                            Statut: {statusLabel}
+                          </div>
+                          {/* Small pointer */}
+                          <div
+                            className={`absolute -left-2 top-3 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent ${styles.pointer}`}
+                          />
+                          <div className="absolute -left-[7px] top-3 w-0 h-0 border-t-7 border-b-7 border-r-7 border-t-transparent border-b-transparent border-r-white" />
+                        </div>
+                      </div>
+                    );
+                  })()}
+              </>
             ) : (
               <div className="min-h-[600px] flex items-center justify-center">
                 <div className="text-center">
@@ -1928,14 +2018,6 @@ export default function StudentTemplate({
                             : "En attente"}
                       </span>
                     </div>
-                    {existingInstance.status === "rejected" && existingInstance.comment && (
-                      <div className="flex items-center gap-2">
-                        <span>Commentaire:</span>
-                        <span className="text-sm text-gray-600 italic">
-                          "{existingInstance.comment}"
-                        </span>
-                      </div>
-                    )}
                   </>
                 )}
               </div>
