@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Forward, Trash2, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ReplyMessageDialog } from "./dialog/reply-message-dialog";
+import { TransferMessageDialog } from "./dialog/transfer-message-dialog";
 import { useDeleteChatMutation, useRestoreChatMutation } from "@/lib/apis/common/chat-api";
 import toast from "react-hot-toast";
 
@@ -11,6 +12,7 @@ interface MessageActionsProps {
   senderId: string;
   subject: string;
   isDeleted?: boolean;
+  content?: string;
 }
 
 export function MessageActions({
@@ -18,6 +20,7 @@ export function MessageActions({
   senderId,
   subject,
   isDeleted = false,
+  content,
 }: MessageActionsProps) {
   const router = useRouter();
   const [deleteChat] = useDeleteChatMutation();
@@ -54,9 +57,11 @@ export function MessageActions({
           originalSubject={subject}
           recipientId={senderId}
         />
-        <Button variant={"outline"}>
-          <Forward /> Transférer
-        </Button>
+        <TransferMessageDialog
+          messageId={messageId}
+          originalSubject={subject}
+          originalContent={content || ""}
+        />
         {isDeleted ? (
           <Button variant={"outline"} onClick={handleRestore} className="flex items-center gap-2">
             <RotateCcw />

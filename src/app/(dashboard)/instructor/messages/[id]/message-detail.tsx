@@ -58,7 +58,7 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
         messageId={messageId}
         senderId={message.sender.id.toString()}
         subject={message.subject}
-        isDeleted={message.is_deletedto.includes(Number(currentUser?.id))}
+        isDeleted={message.is_deletedto?.includes(Number(currentUser?.id)) || false}
       />
 
       {/* Main message */}
