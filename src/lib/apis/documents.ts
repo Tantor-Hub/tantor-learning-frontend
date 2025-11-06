@@ -100,6 +100,66 @@ export const documentsApi = createApi({
       }),
       invalidatesTags: ["DocumentInstances"],
     }),
+
+    // Get a single document instance by ID
+    getDocumentInstanceById: builder.query<
+      { status: number; message: string; data: any },
+      { id: string }
+    >({
+      query: ({ id }) => ({
+        url: `documents/instances/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["DocumentInstances"],
+    }),
+
+    // Secretary: Get all document instances with optional filters
+    getAllDocumentInstancesForSecretary: builder.query<
+      { status: number; message: string; data: any[] },
+      { status?: "pending" | "validated" | "rejected"; sessionId?: string }
+    >({
+      query: ({ status, sessionId }) => {
+        let url = "documents/instances/secretary/all";
+        const params = new URLSearchParams();
+        if (sessionId) params.append("sessionId", sessionId);
+        if (status) params.append("status", status);
+        const qs = params.toString();
+        if (qs) url += `?${qs}`;
+        return {
+          url,
+          method: "GET",
+        };
+      },
+      providesTags: ["DocumentInstances"],
+    }),
+
+    // Secretary: Get a single document instance by ID
+    getSecretaryDocumentInstanceById: builder.query<
+      { status: number; message: string; data: any },
+      { id: string }
+    >({
+      query: ({ id }) => ({
+        url: `documents/instances/secretary/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["DocumentInstances"],
+    }),
+
+    // Secretary: Update document instance status/comment
+    updateDocumentInstanceSecretary: builder.mutation<
+      { status: number; message: string; data: any },
+      {
+        id: string;
+        body: { status?: "pending" | "validated" | "rejected"; comment?: string | null };
+      }
+    >({
+      query: ({ id, body }) => ({
+        url: `documents/instances/secretary/update/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["DocumentInstances"],
+    }),
   }),
 });
 
@@ -113,4 +173,9 @@ export const {
   useCreateDocumentInstanceMutation,
   useGetDocumentInstancesByTemplateIdQuery,
   useUpdateDocumentInstanceMutation,
+  useGetDocumentInstanceByIdQuery,
+  useGetAllDocumentInstancesForSecretaryQuery,
+  useGetSecretaryDocumentInstanceByIdQuery,
+  useLazyGetSecretaryDocumentInstanceByIdQuery,
+  useUpdateDocumentInstanceSecretaryMutation,
 } = documentsApi;
