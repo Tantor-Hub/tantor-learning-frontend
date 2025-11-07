@@ -302,9 +302,9 @@ export function BarVisual({ id_session }: BarVisualProps) {
             <div>
               <h4 className="text-lg font-medium text-gray-700 mb-4">Méthodes de paiement</h4>
               <div className="flex flex-wrap gap-2">
-                {session.payment_method.map((method, index) => (
+                {(session.payment_method ?? []).map((method, index) => (
                   <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded">
-                    {method.toUpperCase()}
+                    {typeof method === "string" ? method.toUpperCase() : ""}
                   </span>
                 ))}
               </div>
