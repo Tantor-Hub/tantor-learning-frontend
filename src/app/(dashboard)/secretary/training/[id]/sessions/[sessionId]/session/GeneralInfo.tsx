@@ -16,10 +16,8 @@ export default function GeneralInfo() {
   // Log the response for debugging
   React.useEffect(() => {
     if (sessionData) {
-      console.log("Session Data Response:", JSON.stringify(sessionData, null, 2));
     }
     if (error) {
-      console.error("Session Data Error:", JSON.stringify(error, null, 2));
     }
   }, [sessionData, error]);
 

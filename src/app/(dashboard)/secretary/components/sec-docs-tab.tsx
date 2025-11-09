@@ -29,7 +29,7 @@ const SecDocsTabs = () => {
       </div>
     );
   }
-  console.log(JSON.stringify(data));
+
   const processedData: SecDocsData = {
     refusedpayment:
       data?.data

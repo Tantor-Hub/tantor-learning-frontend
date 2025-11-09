@@ -81,7 +81,6 @@ export function NewEventForm({ onCancel }: NewEventFormProps) {
       // Convertir les dates en format ISO
       const startDate = new Date(data.startDate).toISOString();
       const endDate = new Date(data.endDate).toISOString();
-      console.log(startDate);
 
       await addEvent({
         titre: data.title,

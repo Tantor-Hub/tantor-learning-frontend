@@ -92,7 +92,7 @@ const DOCUMENT_CATEGORIES = {
 export default function Documents() {
   const params = useParams();
   const sessionId = params.sessionId as string;
-  console.log(sessionId);
+
   const { data: session, isLoading: sessionLoading } = useGetSessionByIdQuery({ id: sessionId });
   const [updateSession, { isLoading: updating }] = useUpdateSessionMutation();
   const [createDocumentTemplate, { isLoading: creatingTemplate }] =
@@ -191,7 +191,6 @@ export default function Documents() {
       try {
         // Fetch template data
         const result = await getTemplateById({ id: templateId }).unwrap();
-        console.log("Fetched template:", result);
 
         // Open dialog after data is fetched
         setDocumentTemplateBuilderOpen(true);

@@ -40,7 +40,7 @@ export default function Page() {
         subject: values.subject,
         content: values.message,
       }).unwrap();
-      // console.log(response);
+
       if (response.status === 201) {
         toast.success("Message envoyé", {
           id: toastId,

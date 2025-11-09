@@ -38,7 +38,6 @@ export const useQuizState = () => {
   };
 
   const handleStartQuizClick = (evaluation: IStudentEvaluation) => {
-    console.log("Start quiz clicked for evaluation:", evaluation);
     setSelectedEvaluation(evaluation);
     setShowQuizDialog(true);
   };

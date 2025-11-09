@@ -52,8 +52,6 @@ export default function Page() {
   // }
   // Show loader when data is loading
 
-  // console.log(JSON.stringify(listSessions.data?.data.list));
-
   return (
     <>
       {shouldShowAlert && <SessionAlert />}

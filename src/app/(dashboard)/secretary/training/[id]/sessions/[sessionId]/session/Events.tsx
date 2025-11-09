@@ -37,7 +37,6 @@ export default function Events() {
   const events = eventsData?.data || [];
 
   const handleCreateEvent = () => {
-    // console.log("handleCreateEvent called");
     setEditingEvent(null);
     setEventEditorOpen(true);
   };

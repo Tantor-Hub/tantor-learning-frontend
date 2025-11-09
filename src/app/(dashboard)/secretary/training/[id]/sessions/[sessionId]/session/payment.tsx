@@ -67,7 +67,6 @@ export default function Payment() {
   // Initialize form with existing data
   useEffect(() => {
     if (sessionData?.data) {
-      // console.log(JSON.stringify(sessionData.data));
       setSelectedMethods(sessionData.data.payment_method || []);
       setCpfLink(sessionData.data.cpf_link || "");
     }

@@ -51,7 +51,7 @@ export function CpfTab() {
   };
 
   if (cpfLoading) return <p>Chargement...</p>;
-  // console.log("session cpf", JSON.stringify(cpfData))
+
   const mappedMethods =
     cpfData?.data.map((item) => ({
       id: item.userId + item.sessionId, // Unique id

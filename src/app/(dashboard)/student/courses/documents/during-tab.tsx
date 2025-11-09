@@ -9,7 +9,6 @@ export function DuringTab({ id_session, id_student }: { id_session: number; id_s
     group: "during",
   });
   if (isLoading) return <Loading />;
-  console.log("during", JSON.stringify(data));
   return (
     <div>
       <p>During Tab</p>

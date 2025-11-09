@@ -306,8 +306,6 @@ export default function StudentTemplate({
           return false;
         }
 
-        // Prevent all other keyboard input outside variable fields
-        console.log(`Blocked key: ${event.key} outside variable field`);
         event.preventDefault();
         event.stopPropagation();
         return true;
@@ -324,8 +322,6 @@ export default function StudentTemplate({
   // Load template when component opens
   useEffect(() => {
     if (open && templateId && isClient) {
-      console.log("🔄 Loading template with ID:", templateId);
-      console.log("🔄 Resetting content loaded state");
       setIsContentLoaded(false);
       setVariableValues({}); // Reset variable values
       setExistingInstance(null); // Reset existing instance
@@ -345,42 +341,29 @@ export default function StudentTemplate({
     // Only check if we have instances data (array might be empty) or if loading is complete
     if (!instancesLoading && userId) {
       if (instancesData?.data) {
-        console.log("📋 Checking for existing instances:", instancesData.data);
         const userInstance = instancesData.data.find((instance) => instance.userId === userId);
         if (userInstance) {
-          console.log("✅ Found existing instance:", userInstance);
-          console.log("📝 Instance ID:", userInstance.id);
           setExistingInstance(userInstance);
           const savedValues = userInstance.variableValues || {};
-          console.log("📝 Loading saved variable values:", savedValues);
-          console.log("📊 Variable keys:", Object.keys(savedValues));
-          console.log("📊 Variable values:", Object.values(savedValues));
+
           setVariableValues(savedValues);
           setIsPublished(userInstance.is_published || false);
 
           // Force a small delay to ensure state update is processed
-          setTimeout(() => {
-            console.log("🔄 Variable values state should now be updated");
-          }, 100);
+          setTimeout(() => {}, 100);
         } else {
-          console.log("❌ No existing instance found for user");
-          console.log(
-            "📋 Available instances:",
-            instancesData.data.map((i) => ({ id: i.id, userId: i.userId }))
-          );
           setExistingInstance(null);
           setVariableValues({});
           setIsPublished(false);
         }
       } else if (instancesData === undefined || instancesData.data === undefined) {
         // Instances query completed but no data found (empty array or undefined)
-        console.log("⚠️  Instances query completed but no data found");
+
         setExistingInstance(null);
         setVariableValues({});
         setIsPublished(false);
       }
     } else if (instancesLoading) {
-      console.log("⏳ Instances are still loading...");
     }
   }, [instancesData, userId, instancesLoading]);
 
@@ -391,14 +374,8 @@ export default function StudentTemplate({
 
     // If instances are still loading, wait for them first
     if (instancesLoading) {
-      console.log("⏳ Waiting for instances to finish loading before loading content...");
       return;
     }
-
-    console.log("📄 Template data received:", templateData.data);
-    console.log("🎯 Current variable values:", variableValues);
-    console.log("📊 Instances loading:", instancesLoading);
-    console.log("📊 Instances data:", instancesData?.data);
 
     const loadContent = async () => {
       // Get the latest variableValues from instances data if available
@@ -407,14 +384,12 @@ export default function StudentTemplate({
       if (instancesData?.data && userId) {
         const userInstance = instancesData.data.find((instance) => instance.userId === userId);
         if (userInstance && userInstance.variableValues) {
-          console.log("🔄 Using variable values from instance:", userInstance.variableValues);
           finalVariableValues = userInstance.variableValues;
           // Update state if we found values (this will trigger the DOM update effect too)
           if (
             Object.keys(userInstance.variableValues).length > 0 &&
             JSON.stringify(userInstance.variableValues) !== JSON.stringify(variableValues)
           ) {
-            console.log("📝 Updating variableValues state from instance");
             setVariableValues(userInstance.variableValues);
             // Use the instance values directly for content loading
             finalVariableValues = userInstance.variableValues;
@@ -423,8 +398,6 @@ export default function StudentTemplate({
       }
       try {
         if (templateData.data.content) {
-          console.log("🔄 Converting template content with values:", finalVariableValues);
-
           const convertContent = (content: any, values: Record<string, string>): any => {
             if (!content) return null;
 
@@ -436,8 +409,6 @@ export default function StudentTemplate({
                 const variableName = node.attrs.name;
                 // Use values parameter (which is finalVariableValues)
                 const variableValue = values[variableName] || "";
-
-                console.log(`🔄 Converting variable: ${variableName} = "${variableValue}"`);
 
                 return {
                   type: "editableVariable",
@@ -470,17 +441,14 @@ export default function StudentTemplate({
           };
 
           const convertedContent = convertContent(templateData.data.content, finalVariableValues);
-          console.log("✅ Converted content:", convertedContent);
 
           if (convertedContent) {
             editor.commands.setContent(convertedContent);
             setIsContentLoaded(true);
-            console.log("✅ Content loaded successfully");
           } else {
             throw new Error("Failed to convert content");
           }
         } else {
-          console.log("⚠️ No structured content found, using fallback");
           editor.commands.setContent(`
             <div style="padding: 20px;">
               <h1>${templateData.data.title || "Document"}</h1>
@@ -508,7 +476,6 @@ export default function StudentTemplate({
 
   // Event handlers for variable fields
   const updateVariableField = useCallback((variableName: string, value: string) => {
-    console.log(`📝 Updating variable ${variableName}:`, value);
     setVariableValues((prev) => ({
       ...prev,
       [variableName]: value,
@@ -518,8 +485,6 @@ export default function StudentTemplate({
   // Set up event listeners for variable fields and placeholder behavior
   useEffect(() => {
     if (!editor || !isContentLoaded || !isClient) return;
-
-    console.log("🎯 Setting up event listeners for variable fields");
 
     // Add CSS for placeholder effect
     const styleId = "variable-field-placeholder-styles";
@@ -758,9 +723,6 @@ export default function StudentTemplate({
 
     // Use a small delay to ensure DOM is fully ready
     const timeoutId = setTimeout(() => {
-      console.log("🔄 Updating variable fields with values:", variableValues);
-      console.log("📊 Number of variables to populate:", Object.keys(variableValues).length);
-
       // Helper to update placeholder state
       const updatePlaceholderForField = (target: HTMLElement) => {
         const text = target.textContent || "";
@@ -775,7 +737,6 @@ export default function StudentTemplate({
 
       // Find all variable fields and update them with saved values
       const variableFields = editor.view.dom.querySelectorAll(".variable-field");
-      console.log("🔍 Found variable fields:", variableFields.length);
 
       let hasUpdates = false;
 
@@ -784,17 +745,10 @@ export default function StudentTemplate({
         const wrapper = fieldEl.closest("[data-variable]") as HTMLElement;
         if (wrapper) {
           const variableName = wrapper.getAttribute("data-variable");
-          console.log(
-            `🔍 Checking variable: ${variableName}, has value: ${variableName && variableValues.hasOwnProperty(variableName)}`
-          );
 
           if (variableName && variableValues.hasOwnProperty(variableName)) {
             const savedValue = variableValues[variableName] || "";
             const currentValue = fieldEl.textContent?.trim() || "";
-
-            console.log(
-              `📝 Variable ${variableName}: saved="${savedValue}", current="${currentValue}"`
-            );
 
             // Update if the value is different (including empty string case)
             if (savedValue !== currentValue) {
@@ -818,19 +772,14 @@ export default function StudentTemplate({
 
               // Update placeholder state
               updatePlaceholderForField(fieldEl);
-
-              console.log(`✅ Updated variable ${variableName} with value: "${savedValue}"`);
             } else {
-              console.log(`⏭️  Variable ${variableName} already has correct value, skipping`);
             }
           }
         }
       });
 
       if (hasUpdates) {
-        console.log("✅ All variable fields updated from existing instance");
       } else {
-        console.log("⚠️  No variable fields were updated");
       }
     }, 200); // Small delay to ensure DOM is ready
 
@@ -870,7 +819,6 @@ export default function StudentTemplate({
     // Ensure instances have finished loading before saving
     // This is important to correctly determine if we should create or update
     if (instancesLoading) {
-      console.log("⏳ Waiting for instances to finish loading...");
       toast.loading("Vérification de l'instance existante...", { id: "checking-instance" });
 
       // Wait a reasonable time for instances to load (usually very fast)
@@ -890,23 +838,16 @@ export default function StudentTemplate({
     if (!instanceToUse && !instancesLoading && instancesData?.data) {
       const userInstance = instancesData.data.find((instance) => instance.userId === userId);
       if (userInstance) {
-        console.log("🔍 Found instance on second check:", userInstance.id);
         instanceToUse = userInstance;
         setExistingInstance(userInstance);
         setIsPublished(userInstance.is_published || false);
       }
     }
 
-    console.log("💾 Saving document with variables:", variableValues);
-    console.log(
-      "📋 Existing instance check:",
-      instanceToUse ? `Found ID: ${instanceToUse.id}` : "No instance found - will create new"
-    );
-
     try {
       if (instanceToUse) {
         // Update existing instance
-        console.log("🔄 Updating existing instance:", instanceToUse.id);
+
         const result = await updateDocumentInstance({
           id: instanceToUse.id,
           data: { variableValues, is_published: isPublished },
@@ -917,10 +858,9 @@ export default function StudentTemplate({
           setIsPublished(result.data.is_published);
         }
         toast.success("Document modifié avec succès");
-        console.log("✅ Document updated successfully");
       } else {
         // Create new instance
-        console.log("➕ Creating new instance for template:", templateId);
+
         const result = await createDocumentInstance({
           templateId,
           variableValues,
@@ -932,7 +872,6 @@ export default function StudentTemplate({
           setIsPublished(result.data.is_published);
         }
         toast.success("Document sauvegardé avec succès");
-        console.log("✅ Document created successfully");
       }
     } catch (error: any) {
       console.error("❌ Error saving document instance:", error);
@@ -1256,9 +1195,6 @@ export default function StudentTemplate({
         await new Promise((resolve) => setTimeout(resolve, 200));
       }
 
-      console.log("📥 Starting PDF download...");
-      console.log("📝 Current variable values:", variableValues);
-
       // First, ensure all variable values are updated in the editor DOM
       // This ensures the HTML we extract has the latest values
       const variableFields = editor.view.dom.querySelectorAll(".variable-field");
@@ -1273,7 +1209,6 @@ export default function StudentTemplate({
             const stateValue = variableValues[variableName];
             if (currentValue !== stateValue) {
               fieldEl.textContent = stateValue;
-              console.log(`🔄 Updated variable ${variableName} in DOM: "${stateValue}"`);
             }
           }
         }
@@ -1294,9 +1229,6 @@ export default function StudentTemplate({
       }
 
       if (!editorContent || !editorContent.innerHTML.trim()) {
-        console.error("❌ Editor content is empty or not found");
-        console.log("Editor DOM:", editorElement);
-        console.log("Editor HTML:", editor.getHTML());
         toast.error("Le contenu de l'éditeur est vide");
         return;
       }
@@ -1393,7 +1325,6 @@ export default function StudentTemplate({
       // Replace variable fields with plain text for PDF
       // First, find all variable field wrappers
       const variableWrappers = tempDiv.querySelectorAll(".variable-field-wrapper");
-      console.log("🔍 Found variable wrappers:", variableWrappers.length);
 
       variableWrappers.forEach((wrapper) => {
         const wrapperEl = wrapper as HTMLElement;
@@ -1408,7 +1339,6 @@ export default function StudentTemplate({
             const variableName = wrapperEl.getAttribute("data-variable");
             if (variableName && variableValues[variableName]) {
               value = variableValues[variableName];
-              console.log(`📝 Using value from state for ${variableName}: "${value}"`);
             }
           }
 
@@ -1421,7 +1351,6 @@ export default function StudentTemplate({
           // Replace the wrapper with just the text
           if (wrapperEl.parentNode) {
             wrapperEl.parentNode.replaceChild(textNode, wrapperEl);
-            console.log(`✅ Replaced variable field with value: "${value}"`);
           }
         }
       });
@@ -1456,7 +1385,6 @@ export default function StudentTemplate({
 
       // Ensure all images are properly loaded and visible
       const images = tempDiv.querySelectorAll("img");
-      console.log(`🖼️ Found ${images.length} images`);
 
       // Wait for all images to load before generating PDF
       const imagePromises = Array.from(images).map((img) => {
@@ -1502,7 +1430,6 @@ export default function StudentTemplate({
 
       // Wait for all images to load
       await Promise.all(imagePromises);
-      console.log("✅ All images loaded or timed out");
 
       // Ensure images have proper styling for PDF
       images.forEach((img) => {
@@ -1522,14 +1449,11 @@ export default function StudentTemplate({
       });
 
       // Sanitize all color styles to convert modern CSS colors (oklch, lab, lch) to rgb/hex
-      console.log("🎨 Sanitizing colors for PDF compatibility...");
 
       // Process ALL elements and convert ALL color properties
       const allElementsForColor = tempDiv.querySelectorAll("*");
       const rootElement = tempDiv;
       const allElementsToProcess = [rootElement, ...Array.from(allElementsForColor)];
-
-      console.log(`🔍 Processing ${allElementsToProcess.length} elements for color conversion...`);
 
       allElementsToProcess.forEach((el) => {
         if (el instanceof HTMLElement) {
@@ -1590,9 +1514,6 @@ export default function StudentTemplate({
                           !lowerConverted.includes("lab(")
                         ) {
                           el.style.setProperty(prop, converted, "important");
-                          console.log(
-                            `✅ Converted ${prop}: ${value.substring(0, 50)} → ${converted.substring(0, 50)}`
-                          );
                         } else {
                           // Still has problematic format, use fallback
                           if (prop === "color") {
@@ -1602,7 +1523,6 @@ export default function StudentTemplate({
                           } else {
                             el.style.setProperty(prop, "transparent", "important");
                           }
-                          console.log(`⚠️ Fallback for ${prop} (conversion failed)`);
                         }
                       } else {
                         // No conversion value, use fallback
@@ -1637,22 +1557,11 @@ export default function StudentTemplate({
         const content = style.textContent || "";
         if (content.includes("oklch") || content.includes("lch(") || content.includes("lab(")) {
           style.remove();
-          console.log("🗑️ Removed style tag with unsupported colors");
         }
       });
 
       // Final pass: remove any inline styles that still contain oklch
       sanitizeStylesForPDF(tempDiv);
-
-      console.log("✅ Content processed for PDF");
-      console.log("📋 Final HTML length:", tempDiv.innerHTML.length);
-      console.log("📋 Final text content preview:", tempDiv.textContent?.substring(0, 200));
-      console.log("📏 Element dimensions:", {
-        width: tempDiv.offsetWidth,
-        height: tempDiv.offsetHeight,
-        scrollWidth: tempDiv.scrollWidth,
-        scrollHeight: tempDiv.scrollHeight,
-      });
 
       // Wait a bit for any final rendering and force layout recalculation
       await new Promise((resolve) => setTimeout(resolve, 300));
@@ -1722,35 +1631,6 @@ export default function StudentTemplate({
       const contentHeight =
         cropSettings.width > 0 && cropSettings.height > 0 ? cropSettings.height : defaultHeight;
 
-      console.log("📐 Calculated dimensions for PDF:", {
-        contentWidth,
-        contentHeight,
-        captureOffsetX,
-        captureOffsetY,
-        scrollWidth: tempDiv.scrollWidth,
-        scrollHeight: tempDiv.scrollHeight,
-        offsetWidth: tempDiv.offsetWidth,
-        offsetHeight: tempDiv.offsetHeight,
-        boundingRect: {
-          left: boundingRect.left,
-          top: boundingRect.top,
-          width: boundingRect.width,
-          height: boundingRect.height,
-          right: boundingRect.right,
-          bottom: boundingRect.bottom,
-        },
-        contentBounds: {
-          left: minLeft,
-          top: minTop,
-          right: maxRight,
-          bottom: maxBottom,
-        },
-        contentLeftOffset,
-        contentTopOffset,
-        contentRightExtent,
-        contentBottomExtent,
-      });
-
       // Generate PDF using html2pdf
       const marginTuple: [number, number, number, number] = [10, 10, 10, 10];
       const options = {
@@ -1804,9 +1684,7 @@ export default function StudentTemplate({
 
       toast.dismiss("pdf-generation");
       toast.success("PDF téléchargé avec succès");
-      console.log("✅ PDF downloaded successfully");
     } catch (error) {
-      console.error("❌ Error downloading PDF:", error);
       toast.error("Erreur lors du téléchargement du PDF");
     }
   }, [editor, title, variableValues, sanitizeStylesForPDF, cropSettings]);
@@ -1814,19 +1692,6 @@ export default function StudentTemplate({
   // Debug logging
   useEffect(() => {
     if (open) {
-      console.log("=== DEBUG INFO ===");
-      console.log("Open:", open);
-      console.log("Template ID:", templateId);
-      console.log("Template loading:", templateLoading);
-      console.log("Template data:", templateData);
-      console.log("Template error:", templateError);
-      console.log("Instances loading:", instancesLoading);
-      console.log("Instances data:", instancesData);
-      console.log("Is client:", isClient);
-      console.log("Is content loaded:", isContentLoaded);
-      console.log("Editor exists:", !!editor);
-      console.log("Variable values:", variableValues);
-      console.log("===================");
     }
   }, [
     open,

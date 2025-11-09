@@ -111,8 +111,6 @@ export function DocumentTable({
     documentId: string,
     documentName: string
   ): Promise<void> => {
-    console.log(`Action: ${action} on document: ${documentName}`);
-
     switch (action) {
       case "download":
         const documentToDownload = documentList.find((doc) => doc.id === documentId);

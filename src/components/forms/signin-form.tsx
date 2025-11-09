@@ -40,7 +40,6 @@ export function SignInForm() {
   // Handle Google authentication response
   useEffect(() => {
     const successParam = searchParams.get("success");
-    // console.log(successParam);
 
     if (successParam) {
       setLoadingGoogle(true);

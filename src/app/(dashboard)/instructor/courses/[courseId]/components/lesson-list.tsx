@@ -44,7 +44,6 @@ export function LessonList() {
         id_cours: courseId,
         ispublish: lessonData.ispublish,
       }).unwrap();
-      console.log(response);
 
       if (toastId) {
         toast.dismiss(toastId);

@@ -87,7 +87,6 @@ export default function NewUserForm({ onCancel }: NewEventFormProps) {
       };
 
       const p = await addUser(userData).unwrap();
-      console.log(p);
       toast.success("Utilisateur créé");
       form.reset();
     } catch (error) {

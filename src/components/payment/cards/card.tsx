@@ -23,7 +23,7 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
 
   useEffect(() => {
     setIsCreating(true);
-    // console.log("Fetching client secret for sessionId:", sessionId);
+
     fetch(`${BASE_URL}/paymentmethodcard/payment-intent`, {
       method: "POST",
       headers: {
@@ -35,8 +35,6 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
       }),
     })
       .then((res) => {
-        // console.log(res);
-        // console.log("Fetch response status:", res.status);
         if (!res.ok) {
           return res.json().then((err) => {
             throw new Error(err.data?.message || `HTTP error! status: ${res.status}`);
@@ -45,13 +43,12 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
         return res.json();
       })
       .then((data) => {
-        // console.log(data.data.clientSecret);
         setClientSecret(data.data.clientSecret);
-        // console.log("Received data:", data);
+
         if (!data.data.clientSecret) {
           throw new Error("No client secret received from server");
         }
-        // console.log("Client secret set:", data.data.clientSecret);
+
         setIsCreating(false);
       })
       .catch((error) => {
@@ -97,11 +94,9 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
     // if sucess
 
     if (error) {
-      // console.log(error);
       setErrorMessage(error.message);
       setLoading(false);
     } else if (paymentIntent && paymentIntent.status === "succeeded") {
-      // console.log("Payment succeeded:", paymentIntent);
       // Create the payment record on the backend
       try {
         await createPayment({

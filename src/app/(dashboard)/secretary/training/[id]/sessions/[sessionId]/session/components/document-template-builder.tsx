@@ -494,7 +494,6 @@ export default function DocumentTemplateBuilder({
         xhr.upload.onprogress = function (event) {
           if (event.lengthComputable) {
             // You can add progress tracking here if needed
-            console.log(`Upload progress: ${Math.round((event.loaded / event.total) * 100)}%`);
           }
         };
 

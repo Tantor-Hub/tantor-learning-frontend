@@ -19,8 +19,6 @@ export function LibraryList() {
   //   return;
   // }
 
-  // console.log("data: ", data);
-
   // Check if we have books data
   const books = data?.data?.rows || [];
   const hasNoBooks = books.length === 0;

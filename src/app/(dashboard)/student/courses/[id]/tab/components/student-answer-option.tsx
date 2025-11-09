@@ -107,9 +107,6 @@ export function StudentAnswerOption({
   };
 
   // Debug logging to check the state
-  console.log("Selected option:", selectedOption);
-  console.log("Current question options:", currentQuestion.options);
-  console.log("Is already answered:", isAlreadyAnswered);
 
   if (isLoadingExistingData || isLoadingExistingAnswer) {
     return (

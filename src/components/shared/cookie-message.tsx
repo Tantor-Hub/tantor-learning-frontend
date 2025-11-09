@@ -22,15 +22,12 @@ export function CookieMessage() {
     setShowCookieMessage(false);
 
     // Here you could also initialize your analytics or tracking scripts
-    // console.log("All cookies accepted");
   };
 
   const continueWithoutAccepting = () => {
     // Save rejection to localStorage so we don't keep asking
     localStorage.setItem("cookiesAccepted", "false");
     setShowCookieMessage(false);
-
-    // console.log("Cookies declined");
   };
 
   if (!showCookieMessage) {

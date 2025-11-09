@@ -209,7 +209,6 @@ export function SurveyQuestionBuilder({
 
     setErrors(newErrors);
     const isValid = Object.keys(newErrors).length === 0;
-    console.log("Validation result:", { newErrors, isValid });
     return isValid;
   }, [title, questions]);
 
@@ -235,15 +234,7 @@ export function SurveyQuestionBuilder({
   const hasErrors = Object.keys(errors).length > 0;
 
   // Debug: Log current state
-  React.useEffect(() => {
-    console.log("Debug - Current state:", {
-      title: title.trim(),
-      questionsCount: questions.length,
-      errors: Object.keys(errors),
-      hasErrors,
-      isSubmitting,
-    });
-  }, [title, questions.length, errors, hasErrors, isSubmitting]);
+  React.useEffect(() => {}, [title, questions.length, errors, hasErrors, isSubmitting]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

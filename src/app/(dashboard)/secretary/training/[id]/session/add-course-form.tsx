@@ -56,7 +56,6 @@ export function AddCourseForm({ onCancel, onSubmitSuccess }: CreateCourseFormPro
         ponderation: data.ponderation,
         id_session: selectedSessionId,
       }).unwrap();
-      console.log(response);
 
       toast.success("Cours créé avec succès");
 

@@ -9,7 +9,7 @@ export function BeforeTab({ id_session, id_student }: { id_session: number; id_s
     group: "before",
   });
   if (isLoading) return <Loading />;
-  console.log("before", JSON.stringify(data));
+
   return (
     <div>
       <p>Before Tab</p>

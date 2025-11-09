@@ -12,7 +12,7 @@ export function CourseList() {
   if (isLoading) {
     return <CourseListSkeleton />;
   }
-  console.log(JSON.stringify(courses));
+
   // if (error) {
   //   return (
   //     <div className="py-10">
@@ -26,7 +26,6 @@ export function CourseList() {
   // }
 
   if (error) {
-    console.log(error);
   }
   if (!courses?.data.rows.length) {
     return (

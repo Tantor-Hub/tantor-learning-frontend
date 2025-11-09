@@ -130,8 +130,6 @@ export default function CreateSurveyPage() {
         })),
       };
 
-      console.log("Submitting survey data:", JSON.stringify(surveyData, null, 2));
-
       // Validate required fields before submission
       if (!surveyData.title || surveyData.title.trim().length < 3) {
         toast.error("Survey title must be at least 3 characters long");
@@ -170,7 +168,7 @@ export default function CreateSurveyPage() {
       }
 
       const result = await createSurvey(surveyData).unwrap();
-      console.log("Survey created successfully:", result);
+
       toast.success("Survey created successfully!");
       router.push("/secretary/surveys");
     } catch (error: any) {

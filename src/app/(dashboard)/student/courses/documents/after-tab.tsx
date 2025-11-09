@@ -9,6 +9,5 @@ export function AfterTab({ id_session, id_student }: { id_session: number; id_st
     group: "after",
   });
   if (isLoading) return <Loading />;
-  console.log("after", JSON.stringify(data));
   return <div>After Tab</div>;
 }

@@ -16,7 +16,6 @@ export default function LessonMaterialsPage() {
     { skip: !lessonId }
   );
 
-  console.log(lessonId);
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -26,7 +25,7 @@ export default function LessonMaterialsPage() {
       </div>
     );
   }
-  console.log(JSON.stringify(data));
+
   if (error) {
     return (
       <div className="text-red-500 text-center py-8">

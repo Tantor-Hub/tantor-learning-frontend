@@ -42,7 +42,6 @@ export function middleware(request: NextRequest) {
   const authCookie = request.cookies.get("authState");
 
   if (!authCookie || !authCookie.value) {
-    console.log("No auth cookie found, redirecting to home");
     return NextResponse.redirect(new URL("/", request.url));
   }
 
@@ -55,7 +54,6 @@ export function middleware(request: NextRequest) {
 
     // Optional: Check if token is expired
     if (authState.expiresAt && Date.now() > authState.expiresAt) {
-      console.log("Token expired, redirecting to home");
       return NextResponse.redirect(new URL("/", request.url));
     }
   } catch (error) {
@@ -65,20 +63,15 @@ export function middleware(request: NextRequest) {
 
   // If we couldn't get the role, redirect to home
   if (!userRole) {
-    console.log("No user role found, redirecting to home");
     return NextResponse.redirect(new URL("/", request.url));
   }
 
   // Check if user's role matches the required role for this route
   if (userRole !== requiredRole) {
-    console.log(
-      `Role mismatch: user has ${userRole}, route requires ${requiredRole}, redirecting to home`
-    );
     return NextResponse.redirect(new URL("/", request.url));
   }
 
   // Role matches, allow access
-  console.log(`Access granted: user with ${userRole} role accessing ${requiredRole} route`);
   return NextResponse.next();
 }
 
