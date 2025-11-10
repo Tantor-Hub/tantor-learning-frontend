@@ -5,10 +5,14 @@ import {
   useListTrainingByIdQuery,
   useListSessionByTrainingIdQuery,
 } from "@/lib/apis/secretary/training-secretary-api";
+import {
+  useGetCatalogueFormationsByTrainingIdQuery,
+  useDeleteStudentCatalogueFormationMutation,
+} from "@/lib/apis/catalogue-formation";
 import { useRouter, useParams } from "next/navigation";
 import { Loading } from "@/components/shared/loading";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, MoreVertical } from "lucide-react";
+import { ArrowLeft, Plus, MoreVertical, Trash2, FileText, Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -20,6 +24,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ISession } from "@/types/secretary/training-secretary";
 import { EmptyState } from "@/components/shared/empty-state";
 import MinimalSessionForm from "../../MinimalSessionForm";
@@ -30,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import SessionTab from "../session/SessionTab";
+import { toast } from "react-hot-toast";
 
 const SessionList = ({ sessions }: { sessions: ISession[] }) => {
   return (
@@ -117,6 +124,86 @@ const TrainingSummary = ({ formation }: { formation: any }) => {
   );
 };
 
+// Catalogue Management Component
+const CatalogueManagement = ({ training }: { training: any }) => {
+  const { data: catalogueData, isLoading: catalogueLoading } =
+    useGetCatalogueFormationsByTrainingIdQuery(training.id);
+  const [deleteCatalogue, { isLoading: deleteLoading }] =
+    useDeleteStudentCatalogueFormationMutation();
+
+  const catalogue = catalogueData?.data?.[0]; // Assuming single student catalogue per training
+
+  const handleDelete = async () => {
+    try {
+      await deleteCatalogue().unwrap();
+      toast.success("Catalogue supprimé avec succès");
+    } catch (error) {
+      console.error("Error deleting catalogue:", error);
+      toast.error("Erreur lors de la suppression du catalogue");
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Catalogue de Formation</CardTitle>
+        <CardDescription>Gérez le catalogue de formation pour les étudiants</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {catalogueLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin" />
+          </div>
+        ) : catalogue ? (
+          <div className="space-y-4">
+            <div className="p-4 border rounded-lg">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="font-medium">{catalogue.title}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{catalogue.description}</p>
+                  {catalogue.piece_jointe && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <FileText className="w-4 h-4" />
+                      <span className="text-sm text-blue-600">{catalogue.piece_jointe}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  {/* {catalogue.piece_jointe && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(catalogue.piece_jointe!, '_blank')}
+                    >
+                      <FileText className="w-4 h-4" />
+                    </Button>
+                  )} */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDelete}
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            Aucun catalogue défini pour cette formation
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 const TrainingTabs = ({ formation, trainingId }: { formation: any; trainingId: string }) => {
   const { data, isLoading, refetch } = useListSessionByTrainingIdQuery({ trainingId: trainingId });
 
@@ -129,12 +216,17 @@ const TrainingTabs = ({ formation, trainingId }: { formation: any; trainingId: s
   };
 
   return (
-    <Tabs defaultValue="info" className="w-full">
-      <TabsList className="grid w-full grid-cols-3">
+    <Tabs defaultValue="catalogue" className="w-full">
+      <TabsList className="grid w-full grid-cols-4">
+        <TabsTrigger value="catalogue">Catalogue</TabsTrigger>
         <TabsTrigger value="info">Informations</TabsTrigger>
         <TabsTrigger value="sessions">Sessions ({sessions.length})</TabsTrigger>
         <TabsTrigger value="session">Session</TabsTrigger>
       </TabsList>
+
+      <TabsContent value="catalogue" className="space-y-4">
+        <CatalogueManagement training={formation} />
+      </TabsContent>
 
       <TabsContent value="info" className="space-y-4">
         <Card>

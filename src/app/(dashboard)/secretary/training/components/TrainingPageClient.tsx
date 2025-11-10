@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import {
-  useListTrainingQuery,
-  useListCategoryTrainingQuery,
-} from "@/lib/apis/secretary/training-secretary-api";
+import React, { useState } from "react";
+import { useListTrainingQuery } from "@/lib/apis/secretary/training-secretary-api";
 import { ITraining } from "@/types/secretary/training-secretary";
 import { useRouter } from "next/navigation";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BadgeEuro, Calendar, Clock, Users } from "lucide-react";
@@ -14,6 +12,21 @@ import TrainingForm from "../TrainingForm";
 import { CategoryFormation } from "../tabs/category";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+import { toast } from "react-hot-toast";
+import { Loader2, Upload, FileText, Edit, Trash2 } from "lucide-react";
+import { UserRole } from "@/types/user";
 
 const TrainingCard = ({
   training,
@@ -69,7 +82,6 @@ const TrainingCard = ({
 
 export default function TrainingPageClient() {
   const { data: formationsData, isLoading } = useListTrainingQuery();
-  const { data: categoriesData, isLoading: isLoadingCategories } = useListCategoryTrainingQuery();
   const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 

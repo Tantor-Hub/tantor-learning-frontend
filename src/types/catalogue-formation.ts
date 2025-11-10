@@ -5,6 +5,7 @@ export interface CatalogueFormation {
   type: UserRole;
   title: string;
   description: string;
+  id_training: string;
   piece_jointe: string | null;
   createdBy: string;
   createdAt: string;
@@ -18,15 +19,17 @@ export interface CatalogueFormation {
 }
 
 export interface CreateCatalogueFormationRequest {
-  type: IUser;
+  type: UserRole;
   title: string;
-  description: string;
-  piece_jointe: string;
+  id_training: string;
+  description?: string;
+  piece_jointe?: File;
 }
 
 export interface UpdateCatalogueFormationRequest {
   type?: UserRole;
   title?: string;
+  id_training?: string;
   description?: string;
-  piece_jointe?: string;
+  piece_jointe?: File;
 }

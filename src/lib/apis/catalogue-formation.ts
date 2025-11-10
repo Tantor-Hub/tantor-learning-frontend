@@ -1,4 +1,4 @@
-import { createApi, enhancedBaseQuery } from "./base-api";
+import { createApi, enhancedBaseQuery, fileUploadEnhancedBaseQuery } from "./base-api";
 import {
   CatalogueFormation,
   CreateCatalogueFormationRequest,
@@ -7,7 +7,7 @@ import {
 
 export const catalogueFormationApi = createApi({
   reducerPath: "catalogueFormationApi",
-  baseQuery: enhancedBaseQuery,
+  baseQuery: fileUploadEnhancedBaseQuery,
   tagTypes: ["CatalogueFormation"],
   endpoints: (builder) => ({
     // Get all catalogue formations (Secretary access)
@@ -100,6 +100,81 @@ export const catalogueFormationApi = createApi({
       }),
       providesTags: ["CatalogueFormation"],
     }),
+
+    // Get catalogue formations by training ID (Secretary only)
+    getCatalogueFormationsByTrainingId: builder.query<
+      { status: number; message: string; data: CatalogueFormation[] },
+      string
+    >({
+      query: (trainingId) => ({
+        url: `catalogueformation/secretary/training/${trainingId}`,
+        method: "GET",
+      }),
+      providesTags: ["CatalogueFormation"],
+    }),
+
+    getCatalogueFormationsByTrainingIdPublic: builder.query<
+      { status: number; message: string; data: CatalogueFormation[] },
+      string
+    >({
+      query: (trainingId) => ({
+        url: `catalogueformation/training/${trainingId}`,
+        method: "GET",
+      }),
+      providesTags: ["CatalogueFormation"],
+    }),
+
+    // Create a student type catalogue formation (Secretary only)
+    createStudentCatalogueFormation: builder.mutation<
+      CatalogueFormation,
+      { title: string; description?: string; id_training: string; piece_jointe?: File }
+    >({
+      query: ({ title, description, id_training, piece_jointe }) => {
+        const formData = new FormData();
+        formData.append("title", title);
+        formData.append("id_training", id_training);
+        if (description) formData.append("description", description);
+        if (piece_jointe) formData.append("document", piece_jointe);
+
+        return {
+          url: "catalogueformation/student",
+          method: "POST",
+          body: formData,
+          formData: true,
+        };
+      },
+      invalidatesTags: ["CatalogueFormation"],
+    }),
+
+    // Update student type catalogue formation (Secretary only)
+    updateStudentCatalogueFormation: builder.mutation<
+      CatalogueFormation,
+      { id: string; title: string; description?: string; piece_jointe?: File }
+    >({
+      query: ({ id, title, description, piece_jointe }) => {
+        const formData = new FormData();
+        formData.append("title", title);
+        if (description) formData.append("description", description);
+        if (piece_jointe) formData.append("document", piece_jointe);
+
+        return {
+          url: `catalogueformation/student/${id}`,
+          method: "PATCH",
+          body: formData,
+          formData: true,
+        };
+      },
+      invalidatesTags: ["CatalogueFormation"],
+    }),
+
+    // Delete student type catalogue formation (Secretary only)
+    deleteStudentCatalogueFormation: builder.mutation<void, void>({
+      query: () => ({
+        url: "catalogueformation/student",
+        method: "DELETE",
+      }),
+      invalidatesTags: ["CatalogueFormation"],
+    }),
   }),
 });
 
@@ -112,4 +187,9 @@ export const {
   useGetCatalogueFormationForStudentQuery,
   useGetCatalogueFormationForInstructorQuery,
   useGetCatalogueFormationForSecretaryQuery,
+  useGetCatalogueFormationsByTrainingIdQuery,
+  useGetCatalogueFormationsByTrainingIdPublicQuery,
+  useCreateStudentCatalogueFormationMutation,
+  useUpdateStudentCatalogueFormationMutation,
+  useDeleteStudentCatalogueFormationMutation,
 } = catalogueFormationApi;

@@ -35,15 +35,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  ArrowLeft,
-  Calendar as CalendarIcon,
-  Clock,
-  Users,
-  Plus,
-  Trash2,
-  Edit,
-} from "lucide-react";
+import { ArrowLeft, Calendar as CalendarIcon, Clock, Users, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "react-hot-toast";
@@ -54,6 +46,14 @@ import {
   IUpdateTrainingRequest,
   ITrainingType,
 } from "@/types/secretary/training-secretary";
+import {
+  useGetCatalogueFormationsByTrainingIdQuery,
+  useCreateStudentCatalogueFormationMutation,
+  useUpdateStudentCatalogueFormationMutation,
+  useDeleteStudentCatalogueFormationMutation,
+} from "@/lib/apis/catalogue-formation";
+import { CatalogueFormation } from "@/types/catalogue-formation";
+import { FileText, Edit, Trash2, Upload, Download } from "lucide-react";
 
 const SessionCard = ({
   session,
@@ -459,6 +459,26 @@ export default function SessionListClient() {
   const [deleteSession, { isLoading: isDeleting }] = useDeleteSessionMutation();
   const [deleteTraining] = useDeleteTrainingByIdMutation();
 
+  // Catalogue hooks
+  const { data: catalogueData, isLoading: catalogueLoading } =
+    useGetCatalogueFormationsByTrainingIdQuery(trainingId);
+  const [createCatalogue, { isLoading: createLoading }] =
+    useCreateStudentCatalogueFormationMutation();
+  const [updateCatalogue, { isLoading: updateLoading }] =
+    useUpdateStudentCatalogueFormationMutation();
+  const [deleteCatalogue, { isLoading: deleteLoading }] =
+    useDeleteStudentCatalogueFormationMutation();
+
+  const [isCatalogueDialogOpen, setIsCatalogueDialogOpen] = useState(false);
+  const [editingCatalogue, setEditingCatalogue] = useState<CatalogueFormation | null>(null);
+  const [catalogueForm, setCatalogueForm] = useState({
+    title: "",
+    description: "",
+    piece_jointe: null as File | null,
+  });
+
+  const catalogue = catalogueData?.data?.[0]; // Assuming single student catalogue per training
+
   const handleViewDetails = (session: ISession) => {
     router.push(`/secretary/training/${trainingId}/sessions/${session.id}`);
   };
@@ -497,6 +517,86 @@ export default function SessionListClient() {
       toast.error("Erreur lors de la suppression de la formation");
     }
   };
+
+  // Catalogue handlers
+  const handleCreateCatalogue = async () => {
+    if (!catalogueForm.title.trim()) {
+      toast.error("Le titre est requis");
+      return;
+    }
+
+    try {
+      await createCatalogue({
+        title: catalogueForm.title.trim(),
+        id_training: trainingId,
+        description: catalogueForm.description.trim() || undefined,
+        piece_jointe: catalogueForm.piece_jointe || undefined,
+      }).unwrap();
+      toast.success("Catalogue créé avec succès");
+      setIsCatalogueDialogOpen(false);
+      resetCatalogueForm();
+    } catch (error) {
+      console.error("Error creating catalogue:", error);
+      toast.error("Erreur lors de la création du catalogue");
+    }
+  };
+
+  const handleUpdateCatalogue = async () => {
+    if (!catalogueForm.title.trim()) {
+      toast.error("Le titre est requis");
+      return;
+    }
+
+    try {
+      await updateCatalogue({
+        title: catalogueForm.title.trim(),
+        description: catalogueForm.description.trim() || undefined,
+        piece_jointe: catalogueForm.piece_jointe || undefined,
+        id: editingCatalogue!.id,
+      }).unwrap();
+      toast.success("Catalogue mis à jour avec succès");
+      setEditingCatalogue(null);
+      resetCatalogueForm();
+    } catch (error) {
+      console.error("Error updating catalogue:", error);
+      toast.error("Erreur lors de la mise à jour du catalogue");
+    }
+  };
+
+  const handleDeleteCatalogue = async () => {
+    try {
+      await deleteCatalogue().unwrap();
+      toast.success("Catalogue supprimé avec succès");
+    } catch (error) {
+      console.error("Error deleting catalogue:", error);
+      toast.error("Erreur lors de la suppression du catalogue");
+    }
+  };
+
+  const resetCatalogueForm = () => {
+    setCatalogueForm({
+      title: "",
+      description: "",
+      piece_jointe: null,
+    });
+  };
+
+  const handleCatalogueFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setCatalogueForm({ ...catalogueForm, piece_jointe: file });
+  };
+
+  React.useEffect(() => {
+    if (editingCatalogue) {
+      setCatalogueForm({
+        title: editingCatalogue.title || "",
+        description: editingCatalogue.description || "",
+        piece_jointe: null,
+      });
+    } else {
+      resetCatalogueForm();
+    }
+  }, [editingCatalogue]);
 
   if (isLoading) {
     return (
@@ -580,6 +680,76 @@ export default function SessionListClient() {
             </div>
           </div>
 
+          {/* Catalogue Section */}
+          <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Catalogue de formation</h2>
+              {!catalogue && (
+                <Button onClick={() => setIsCatalogueDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Ajouter un catalogue
+                </Button>
+              )}
+            </div>
+
+            {catalogueLoading ? (
+              <div className="flex justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+              </div>
+            ) : catalogue ? (
+              <div className="space-y-4">
+                <div className="p-4 border rounded-lg bg-white">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-medium">{catalogue.title}</h3>
+                      <p className="text-sm text-gray-600 mt-1">{catalogue.description}</p>
+                      {catalogue.piece_jointe && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <FileText className="w-4 h-4" />
+                          <span className="text-sm text-blue-600">{catalogue.piece_jointe}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingCatalogue(catalogue)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      {catalogue.piece_jointe && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(catalogue.piece_jointe!, "_blank")}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDeleteCatalogue}
+                        disabled={deleteLoading}
+                      >
+                        {deleteLoading ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                Aucun catalogue défini pour cette formation
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-between items-start mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Sessions de formation</h1>
@@ -621,6 +791,90 @@ export default function SessionListClient() {
             ))}
           </div>
         )}
+
+        {/* Catalogue Dialog */}
+        <Dialog
+          open={isCatalogueDialogOpen || !!editingCatalogue}
+          onOpenChange={(open) => {
+            if (!open) {
+              setIsCatalogueDialogOpen(false);
+              setEditingCatalogue(null);
+              resetCatalogueForm();
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingCatalogue ? "Modifier le catalogue" : "Créer un catalogue"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="catalogue-title">Titre *</Label>
+                <Input
+                  id="catalogue-title"
+                  value={catalogueForm.title}
+                  onChange={(e) => setCatalogueForm({ ...catalogueForm, title: e.target.value })}
+                  placeholder="Titre du catalogue"
+                />
+              </div>
+              <div>
+                <Label htmlFor="catalogue-description">Description</Label>
+                <Textarea
+                  id="catalogue-description"
+                  value={catalogueForm.description}
+                  onChange={(e) =>
+                    setCatalogueForm({ ...catalogueForm, description: e.target.value })
+                  }
+                  placeholder="Description du catalogue"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="catalogue-file">Pièce jointe</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="catalogue-file"
+                    type="file"
+                    onChange={handleCatalogueFileChange}
+                    className="hidden"
+                  />
+                  <Label
+                    htmlFor="catalogue-file"
+                    className="flex items-center gap-2 cursor-pointer border rounded px-3 py-2 hover:bg-gray-50"
+                  >
+                    <Upload className="w-4 h-4" />
+                    {catalogueForm.piece_jointe
+                      ? catalogueForm.piece_jointe.name
+                      : "Choisir un fichier"}
+                  </Label>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsCatalogueDialogOpen(false);
+                    setEditingCatalogue(null);
+                    resetCatalogueForm();
+                  }}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={editingCatalogue ? handleUpdateCatalogue : handleCreateCatalogue}
+                  disabled={createLoading || updateLoading}
+                >
+                  {createLoading || updateLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  ) : null}
+                  {editingCatalogue ? "Mettre à jour" : "Créer"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
