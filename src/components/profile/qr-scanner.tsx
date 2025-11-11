@@ -144,7 +144,8 @@ export function QrScanner({ onScan, onError }: QrScannerProps) {
     return (
       <div className="flex flex-col items-center gap-4 p-4">
         <p className="text-red-600">
-          Camera permission denied. Please allow camera access to scan QR codes.
+          Permission de caméra refusée. Veuillez autoriser l'accès à la caméra pour scanner les
+          codes QR.
         </p>
       </div>
     );
@@ -153,7 +154,7 @@ export function QrScanner({ onScan, onError }: QrScannerProps) {
   if (hasPermission === null) {
     return (
       <div className="flex flex-col items-center gap-4 p-4">
-        <p>Requesting camera permission...</p>
+        <p>Demande de permission de caméra...</p>
       </div>
     );
   }
@@ -230,7 +231,7 @@ export function QrScanner({ onScan, onError }: QrScannerProps) {
         </div>
         {scanned && (
           <div className="p-4 bg-green-50 border border-green-200 rounded-md w-full max-w-md">
-            <p className="text-green-800 font-medium">QR Code scanné: {scanned}</p>
+            <p className="text-green-800 font-medium">Code QR scanné: {scanned}</p>
           </div>
         )}
       </div>

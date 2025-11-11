@@ -35,8 +35,8 @@ export function ProfilePage() {
   }, [data]);
 
   if (isLoading) return <Loading />;
-  if (isError) return <div>Error loading profile</div>;
-  if (!userData) return <div>No profile data found</div>;
+  if (isError) return <div>Erreur lors du chargement du profil</div>;
+  if (!userData) return <div>Aucune donnée de profil trouvée</div>;
   return (
     <div>
       <div className="flex flex-col md:flex-row items-start gap-5 md:gap-20 p-6 rounded-xl border justify-center">
