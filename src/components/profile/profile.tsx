@@ -18,6 +18,7 @@ import {
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { useJoinEventMutation } from "@/lib/apis/events";
+import { toast } from "react-hot-toast";
 
 export function ProfilePage() {
   const { data, isLoading, isError, refetch } = useGetUserProfileQuery();
@@ -71,33 +72,62 @@ export function ProfilePage() {
                     Scanner un QR Code
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-lg">
                   <DialogHeader>
                     <DialogTitle>Scanner un QR Code</DialogTitle>
                     <DialogDescription>
                       Placez le QR code devant la caméra pour le scanner.
                     </DialogDescription>
                   </DialogHeader>
-                  <QrScanner
-                    onScan={async (result) => {
-                      console.warn("QR Code scanned:", result);
-                      try {
-                        await joinEvent({ eventId: result }).unwrap();
-                        alert(`Événement rejoint avec succès! ID: ${result}`);
-                      } catch (error: any) {
-                        console.error("Error joining event:", error);
-                        alert(
-                          "Erreur lors de la participation à l'événement: " +
-                            (error?.data?.message || error.message)
-                        );
-                      }
-                      setIsQrDialogOpen(false);
-                    }}
-                    onError={(error) => {
-                      console.error("QR Scan error:", error);
-                      alert("Erreur lors du scan: " + error);
-                    }}
-                  />
+                  <div className="py-4">
+                    {isQrDialogOpen && (
+                      <QrScanner
+                        key="qr-scanner"
+                        onScan={async (result) => {
+                          console.warn("QR Code scanned:", result);
+                          const toastId = toast.loading("Enregistrement de la présence...");
+                          try {
+                            const response = await joinEvent({ eventId: result }).unwrap();
+                            // Succès - l'utilisateur a été ajouté
+                            toast.success("Votre présence a été enregistrée", { id: toastId });
+                            setIsQrDialogOpen(false);
+                          } catch (error: any) {
+                            console.error("Error joining event:", error);
+
+                            // Vérifier le code de statut HTTP
+                            const status = error?.status || error?.data?.status;
+                            const errorMessage = error?.data?.message || error?.message || "";
+
+                            // Cas où l'utilisateur a déjà scanné
+                            if (
+                              status === 409 ||
+                              status === 400 ||
+                              errorMessage.toLowerCase().includes("déjà") ||
+                              errorMessage.toLowerCase().includes("already") ||
+                              errorMessage.toLowerCase().includes("existe")
+                            ) {
+                              toast.error(
+                                "Vous avez déjà scanné ce QR code. Votre présence a déjà été enregistrée.",
+                                { id: toastId }
+                              );
+                            } else {
+                              // Autre erreur
+                              toast.error(
+                                "Erreur lors de l'enregistrement de la présence: " +
+                                  (errorMessage || "Une erreur inattendue s'est produite"),
+                                { id: toastId }
+                              );
+                            }
+                            setIsQrDialogOpen(false);
+                          }
+                        }}
+                        onError={(error) => {
+                          console.error("QR Scan error:", error);
+                          toast.error("Erreur lors du scan: " + error);
+                        }}
+                      />
+                    )}
+                  </div>
                 </DialogContent>
               </Dialog>
             )}
