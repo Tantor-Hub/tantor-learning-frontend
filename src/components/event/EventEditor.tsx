@@ -14,8 +14,14 @@ import { Calendar } from "@/components/ui/calendar";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Event, CreateEventRequest, UpdateEventRequest } from "@/types/events";
+import {
+  Event,
+  CreateEventRequest,
+  UpdateEventRequest,
+  CreateEventForLessonsRequest,
+} from "@/types/events";
 import { useGetCoursesBySessionQuery } from "@/lib/apis/events";
+import { useLazyGetLessonBySessionCourseIdSecretaryAccessQuery } from "@/lib/apis/lessons";
 import {
   Select,
   SelectContent,
@@ -24,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const eventFormSchema = z.object({
   title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
@@ -47,7 +54,11 @@ interface EventEditorProps {
   initialEvent?: Event;
   sessionId: string;
   onSave: (
-    data: CreateEventRequest | UpdateEventRequest | (CreateEventRequest & { courseId: string })
+    data:
+      | CreateEventRequest
+      | UpdateEventRequest
+      | (CreateEventRequest & { courseId: string })
+      | CreateEventForLessonsRequest
   ) => void;
   onCancel: () => void;
   isLoading?: boolean;
@@ -65,6 +76,9 @@ export function EventEditor({
   const [isEditing] = useState(!!initialEvent);
   const [courseSelectOpen, setCourseSelectOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<string | undefined>(undefined);
+  const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
+  const [triggerGetLessons, { data: lessonsData, isLoading: lessonsLoading }] =
+    useLazyGetLessonBySessionCourseIdSecretaryAccessQuery();
 
   const {
     register,
@@ -120,12 +134,25 @@ export function EventEditor({
         ending_hour: "",
       });
       setSelectedCourseId(undefined);
+      setSelectedLessonIds([]);
     }
   }, [initialEvent, reset]);
+
+  useEffect(() => {
+    if (selectedCourseId) {
+      triggerGetLessons(selectedCourseId);
+    } else {
+      setSelectedLessonIds([]);
+    }
+  }, [selectedCourseId, triggerGetLessons]);
 
   const onSubmit = (data: EventFormData) => {
     if (!selectedCourseId) {
       alert("Veuillez sélectionner une matière");
+      return;
+    }
+    if (selectedLessonIds.length === 0) {
+      alert("Veuillez sélectionner au moins une leçon");
       return;
     }
     const eventData = {
@@ -138,7 +165,14 @@ export function EventEditor({
     };
 
     if (!isEditing) {
-      onSave({ ...eventData, courseId: selectedCourseId! } as any);
+      onSave({
+        title: data.title,
+        description: data.description,
+        id_cible_lesson: selectedLessonIds,
+        begining_date: data.begining_date.toISOString(),
+        beginning_hour: data.beginning_hour,
+        ending_hour: data.ending_hour,
+      } as CreateEventForLessonsRequest);
     } else {
       onSave({ ...eventData, courseId: selectedCourseId! } as UpdateEventRequest);
     }
@@ -233,6 +267,47 @@ export function EventEditor({
             </Select>
           </div>
 
+          {/* Lessons Select */}
+          {selectedCourseId && (
+            <div>
+              <Label>
+                Sélectionner les leçons <span className="text-destructive">*</span>
+              </Label>
+              <div className="mt-2 space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
+                {lessonsLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-6 w-full" />
+                  </div>
+                ) : lessonsData && lessonsData.data.rows.length > 0 ? (
+                  lessonsData.data.rows.map((lesson: any) => (
+                    <div key={lesson.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`lesson-${lesson.id}`}
+                        checked={selectedLessonIds.includes(lesson.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedLessonIds((prev) => [...prev, lesson.id]);
+                          } else {
+                            setSelectedLessonIds((prev) => prev.filter((id) => id !== lesson.id));
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`lesson-${lesson.id}`} className="text-sm font-normal">
+                        {lesson.title}
+                      </Label>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-4">
+                    Aucune leçon disponible pour cette matière
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Date */}
           <div>
             <Label>
@@ -314,7 +389,12 @@ export function EventEditor({
             <Button type="button" variant="outline" onClick={handleCancel} disabled={isLoading}>
               Annuler
             </Button>
-            <Button type="submit" disabled={!isValid || isLoading || !selectedCourseId}>
+            <Button
+              type="submit"
+              disabled={
+                !isValid || isLoading || !selectedCourseId || selectedLessonIds.length === 0
+              }
+            >
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />

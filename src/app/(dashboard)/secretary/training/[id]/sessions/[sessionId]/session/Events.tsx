@@ -12,8 +12,14 @@ import {
   useCreateEventMutation,
   useUpdateEventMutation,
   useDeleteEventMutation,
+  useCreateEventForLessonsMutation,
 } from "@/lib/apis/events";
-import { Event, CreateEventRequest, UpdateEventRequest } from "@/types/events";
+import {
+  Event,
+  CreateEventRequest,
+  UpdateEventRequest,
+  CreateEventForLessonsRequest,
+} from "@/types/events";
 import { EventEditor } from "@/components/event/EventEditor";
 import { EventItem } from "@/components/event/EventItem";
 
@@ -32,6 +38,8 @@ export default function Events() {
   } = useGetEventsBySessionQuery({ sessionId });
 
   const [createEvent, { isLoading: creating }] = useCreateEventMutation();
+  const [createEventForLessons, { isLoading: creatingLessons }] =
+    useCreateEventForLessonsMutation();
   const [updateEvent, { isLoading: updating }] = useUpdateEventMutation();
   const [deleteEvent, { isLoading: deleting }] = useDeleteEventMutation();
   const events = eventsData?.data || [];
@@ -47,7 +55,11 @@ export default function Events() {
   };
 
   const handleSaveEvent = async (
-    data: CreateEventRequest | UpdateEventRequest | (CreateEventRequest & { courseId: string })
+    data:
+      | CreateEventRequest
+      | UpdateEventRequest
+      | (CreateEventRequest & { courseId: string })
+      | CreateEventForLessonsRequest
   ) => {
     try {
       if (editingEvent) {
@@ -64,9 +76,14 @@ export default function Events() {
         await updateEvent(updateData).unwrap();
         toast.success("Emploi du temps mis à jour avec succès !");
       } else {
-        // Create new event with courseId
-        const { courseId, ...eventData } = data as CreateEventRequest & { courseId: string };
-        await createEvent({ courseId, ...eventData }).unwrap();
+        // Check if it's a CreateEventForLessonsRequest
+        if ("id_cible_lesson" in data) {
+          await createEventForLessons(data as CreateEventForLessonsRequest).unwrap();
+        } else {
+          // Create new event with courseId
+          const { courseId, ...eventData } = data as CreateEventRequest & { courseId: string };
+          await createEvent({ courseId, ...eventData }).unwrap();
+        }
         toast.success("Emploi du temps créé avec succès !");
       }
       setEventEditorOpen(false);
@@ -250,7 +267,7 @@ export default function Events() {
         sessionId={sessionId}
         onSave={handleSaveEvent}
         onCancel={handleCancel}
-        isLoading={creating || updating}
+        isLoading={creating || updating || creatingLessons}
       />
     </div>
   );

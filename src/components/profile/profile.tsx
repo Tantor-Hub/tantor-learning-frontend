@@ -1,15 +1,30 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, Home, MapPin, Calendar } from "lucide-react";
+import { Mail, Phone, Home, MapPin, Calendar, QrCode } from "lucide-react";
 import { useGetUserProfileQuery, UserProfile } from "@/lib/apis/users-api";
 import { Loading } from "../shared/loading";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { UpdateProfile } from "./update-profile";
+import { QrScanner } from "./qr-scanner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
+import { useJoinEventMutation } from "@/lib/apis/events";
 
 export function ProfilePage() {
   const { data, isLoading, isError, refetch } = useGetUserProfileQuery();
   const [userData, setUserData] = useState<UserProfile | null>(null);
+  const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
+  const currentUser = useSelector(selectCurrentUser);
+  const [joinEvent] = useJoinEventMutation();
 
   // Vérifier et mettre à jour les données utilisateur quand elles sont chargées
   useEffect(() => {
@@ -48,6 +63,44 @@ export function ProfilePage() {
               email={userData.email}
               onProfileUpdate={refetch}
             />
+            {currentUser?.role === "student" && (
+              <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full mt-4">
+                    <QrCode className="mr-2 h-4 w-4" />
+                    Scanner un QR Code
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Scanner un QR Code</DialogTitle>
+                    <DialogDescription>
+                      Placez le QR code devant la caméra pour le scanner.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <QrScanner
+                    onScan={async (result) => {
+                      console.warn("QR Code scanned:", result);
+                      try {
+                        await joinEvent({ eventId: result }).unwrap();
+                        alert(`Événement rejoint avec succès! ID: ${result}`);
+                      } catch (error: any) {
+                        console.error("Error joining event:", error);
+                        alert(
+                          "Erreur lors de la participation à l'événement: " +
+                            (error?.data?.message || error.message)
+                        );
+                      }
+                      setIsQrDialogOpen(false);
+                    }}
+                    onError={(error) => {
+                      console.error("QR Scan error:", error);
+                      alert("Erreur lors du scan: " + error);
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
 

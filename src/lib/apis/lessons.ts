@@ -69,6 +69,11 @@ export const lessonsApi = createApi({
       }),
       invalidatesTags: (result, error, arg) => [{ type: "Lessons", id: arg.id }],
     }),
+
+    getLessonBySessionCourseIdSecretaryAccess: builder.query<ApiResponse<LessonsResponse>, string>({
+      query: (sessionCourseId) => `lesson/secretary/cours/${sessionCourseId}/lessons`,
+      providesTags: ["Lessons"],
+    }),
   }),
 });
 
@@ -80,4 +85,5 @@ export const {
   useGetAllLessonsQuery,
   useGetStudentLessonsBySessionCourseIdQuery,
   useUpdateLessonMutation,
+  useLazyGetLessonBySessionCourseIdSecretaryAccessQuery,
 } = lessonsApi;

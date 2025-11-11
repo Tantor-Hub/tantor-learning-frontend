@@ -5,6 +5,7 @@ import {
   UpdateEventRequest,
   EventListResponse,
   EventResponse,
+  CreateEventForLessonsRequest,
 } from "@/types/events";
 import { ICourseBySessionIdResponse } from "@/types/secretary/training-secretary";
 
@@ -53,6 +54,25 @@ export const eventsApi = createApi({
       query: ({ sessionId }) => `sessioncours/session/${sessionId}`,
       providesTags: (result, error, { sessionId }) => [{ type: "Course", id: sessionId }, "Course"],
     }),
+
+    // create event for lessons
+
+    createEventForLessons: builder.mutation<EventResponse, CreateEventForLessonsRequest>({
+      query: (request) => ({
+        url: "event/create-for-lesson",
+        method: "POST",
+        body: request,
+      }),
+      invalidatesTags: ["Event"],
+    }),
+    // student Access
+    joinEvent: builder.mutation<void, { eventId: string }>({
+      query: ({ eventId }) => ({
+        url: `event/student/${eventId}/join`,
+        method: "POST",
+      }),
+      invalidatesTags: ["Event"],
+    }),
   }),
 });
 
@@ -62,4 +82,7 @@ export const {
   useUpdateEventMutation,
   useDeleteEventMutation,
   useGetCoursesBySessionQuery,
+  useCreateEventForLessonsMutation,
+  // student Access
+  useJoinEventMutation,
 } = eventsApi;

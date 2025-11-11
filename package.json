@@ -79,6 +79,7 @@
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.57.0",
     "react-hot-toast": "^2.5.2",
+    "react-qr-reader": "3.0.0-beta-1",
     "react-redux": "^9.2.0",
     "recharts": "^2.15.3",
     "redux": "^5.0.1",

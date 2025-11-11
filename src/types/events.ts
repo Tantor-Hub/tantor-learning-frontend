@@ -34,6 +34,15 @@ export interface CreateEventRequest {
   ending_date?: string;
 }
 
+export interface CreateEventForLessonsRequest {
+  title: string;
+  description: string;
+  id_cible_lesson: string[];
+  begining_date: string;
+  beginning_hour: string;
+  ending_hour: string;
+}
+
 export interface UpdateEventRequest {
   id: string;
   title?: string;
