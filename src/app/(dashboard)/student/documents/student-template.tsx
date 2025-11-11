@@ -78,6 +78,12 @@ const EditableVariable = Node.create({
   selectable: true,
   draggable: false,
 
+  addOptions() {
+    return {
+      editable: true,
+    };
+  },
+
   addAttributes() {
     return {
       name: {
@@ -101,6 +107,7 @@ const EditableVariable = Node.create({
     const value = node.attrs.value || "";
     const name = node.attrs.name || "";
     const placeholder = `{{${name}}}`;
+    const isEditable = this.options.editable;
 
     return [
       "span",
@@ -115,7 +122,7 @@ const EditableVariable = Node.create({
         "span",
         {
           class: "variable-field",
-          contenteditable: "true",
+          contenteditable: isEditable ? "true" : "false",
           "data-placeholder": placeholder,
           style: `
             display: inline-block;
@@ -130,11 +137,11 @@ const EditableVariable = Node.create({
             transition: all 0.2s;
             white-space: pre-wrap;
             word-break: break-word;
-            cursor: text;
-            -webkit-user-select: text;
-            -moz-user-select: text;
-            -ms-user-select: text;
-            user-select: text;
+            cursor: ${isEditable ? "text" : "default"};
+            -webkit-user-select: ${isEditable ? "text" : "none"};
+            -moz-user-select: ${isEditable ? "text" : "none"};
+            -ms-user-select: ${isEditable ? "text" : "none"};
+            user-select: ${isEditable ? "text" : "none"};
             position: relative;
           `,
         },
@@ -190,6 +197,11 @@ export default function StudentTemplate({
 
   const title = templateData?.data?.title || "";
 
+  // Determine if the document should be readonly
+  const isReadonly =
+    existingInstance?.is_published &&
+    (existingInstance?.status === "pending" || existingInstance?.status === "validated");
+
   // Initialize editor only on client side
   const editor = useEditor({
     extensions: [
@@ -219,7 +231,9 @@ export default function StudentTemplate({
       }),
       TableCell.configure({ HTMLAttributes: { class: "border border-gray-300 p-3" } }),
       HorizontalRule,
-      EditableVariable,
+      EditableVariable.configure({
+        editable: !isReadonly,
+      }),
     ],
     content: `
       <div style="padding: 20px; text-align: center; color: #666;">
@@ -236,14 +250,14 @@ export default function StudentTemplate({
       handleClick: (view, pos, event) => {
         const target = event.target as HTMLElement;
 
-        // If clicking on a variable field, allow it and focus
-        if (target.classList.contains("variable-field")) {
+        // If clicking on a variable field and editable, allow it and focus
+        if (target.classList.contains("variable-field") && !isReadonly) {
           target.focus();
           return true; // Allow the click
         }
 
-        // If clicking on a variable wrapper, focus the inner field
-        if (target.classList.contains("variable-field-wrapper")) {
+        // If clicking on a variable wrapper and editable, focus the inner field
+        if (target.classList.contains("variable-field-wrapper") && !isReadonly) {
           const field = target.querySelector(".variable-field") as HTMLElement;
           if (field) {
             field.focus();
@@ -267,7 +281,7 @@ export default function StudentTemplate({
           target?.closest(".variable-field") ||
           activeElement?.closest(".variable-field");
 
-        if (isInVariableField) {
+        if (isInVariableField && !isReadonly) {
           // Allow ALL keyboard input inside variable fields including backspace, delete, etc.
           return false; // Let the browser handle all keys normally
         }
@@ -311,7 +325,7 @@ export default function StudentTemplate({
         return true;
       },
     },
-    editable: false,
+    editable: !isReadonly,
   });
 
   // Set client side flag
@@ -484,7 +498,7 @@ export default function StudentTemplate({
 
   // Set up event listeners for variable fields and placeholder behavior
   useEffect(() => {
-    if (!editor || !isContentLoaded || !isClient) return;
+    if (!editor || !isContentLoaded || !isClient || isReadonly) return;
 
     // Add CSS for placeholder effect
     const styleId = "variable-field-placeholder-styles";
@@ -532,7 +546,7 @@ export default function StudentTemplate({
 
     const handleInput = (event: Event) => {
       const target = event.target as HTMLElement;
-      if (target && target.classList.contains("variable-field")) {
+      if (target && target.classList.contains("variable-field") && !isReadonly) {
         // Save scroll position and current selection before any updates
         const scrollContainer = editor.view.dom.closest(".overflow-auto") || window;
         const scrollTop =
@@ -609,7 +623,7 @@ export default function StudentTemplate({
 
     const handleFocus = (event: Event) => {
       const target = event.target as HTMLElement;
-      if (target && target.classList.contains("variable-field")) {
+      if (target && target.classList.contains("variable-field") && !isReadonly) {
         // Save scroll position before focus changes
         const scrollContainer = editor.view.dom.closest(".overflow-auto") || window;
         const scrollTop =
@@ -655,7 +669,7 @@ export default function StudentTemplate({
 
     const handleBlur = (event: Event) => {
       const target = event.target as HTMLElement;
-      if (target && target.classList.contains("variable-field")) {
+      if (target && target.classList.contains("variable-field") && !isReadonly) {
         const hasValue = (target.textContent || "").trim().length > 0;
         target.style.borderBottomColor = hasValue ? "#d97706" : "#f59e0b";
         target.style.boxShadow = "none";
@@ -672,8 +686,8 @@ export default function StudentTemplate({
         event.stopPropagation();
         return;
       }
-      // If clicking on a variable field wrapper, focus the inner field
-      if (target.classList.contains("variable-field-wrapper")) {
+      // If clicking on a variable field wrapper and editable, focus the inner field
+      if (target.classList.contains("variable-field-wrapper") && !isReadonly) {
         const field = target.querySelector(".variable-field") as HTMLElement;
         if (field) {
           field.focus();
@@ -719,7 +733,7 @@ export default function StudentTemplate({
 
   // Update variable fields in DOM when variableValues change (for existing instances)
   useEffect(() => {
-    if (!editor || !isContentLoaded || !isClient) return;
+    if (!editor || !isContentLoaded || !isClient || isReadonly) return;
 
     // Use a small delay to ensure DOM is fully ready
     const timeoutId = setTimeout(() => {
@@ -1852,7 +1866,9 @@ export default function StudentTemplate({
               className={`w-3 h-3 rounded-full ${existingInstance ? "bg-green-500" : "bg-amber-400"}`}
             ></div>
             {existingInstance
-              ? "Document existant trouvé. Vous pouvez modifier les valeurs."
+              ? isReadonly
+                ? "Document validé. Lecture seule."
+                : "Document existant trouvé. Vous pouvez modifier les valeurs."
               : "Cliquez sur les champs surlignés pour les remplir"}
             {existingInstance && (
               <div className="flex items-center gap-4 ml-4">
@@ -1900,7 +1916,10 @@ export default function StudentTemplate({
               <Download className="w-4 h-4 mr-2" />
               Télécharger PDF
             </Button>
-            <Button onClick={handleSave} disabled={isSaving || !isContentLoaded || !editor}>
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || !isContentLoaded || !editor || isReadonly}
+            >
               {isSaving ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
