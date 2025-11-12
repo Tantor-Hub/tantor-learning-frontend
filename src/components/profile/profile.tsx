@@ -25,7 +25,7 @@ export function ProfilePage() {
   const [userData, setUserData] = useState<UserProfile | null>(null);
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   const currentUser = useSelector(selectCurrentUser);
-  const [joinEvent] = useJoinEventMutation();
+  const [joinEvent, { isLoading: isJoinEventLoading }] = useJoinEventMutation();
 
   // Vérifier et mettre à jour les données utilisateur quand elles sont chargées
   useEffect(() => {
@@ -84,13 +84,14 @@ export function ProfilePage() {
                       <QrScanner
                         key="qr-scanner"
                         onScan={async (result) => {
+                          if (isJoinEventLoading) return; // Prevent multiple triggers
                           console.warn("QR Code scanned:", result);
                           const toastId = toast.loading("Enregistrement de la présence...");
+                          setIsQrDialogOpen(false); // Turn off camera immediately after first scan
                           try {
                             const response = await joinEvent({ eventId: result }).unwrap();
                             // Succès - l'utilisateur a été ajouté
                             toast.success("Votre présence a été enregistrée", { id: toastId });
-                            setIsQrDialogOpen(false);
                           } catch (error: any) {
                             console.error("Error joining event:", error);
 
@@ -118,7 +119,6 @@ export function ProfilePage() {
                                 { id: toastId }
                               );
                             }
-                            setIsQrDialogOpen(false);
                           }
                         }}
                         onError={(error) => {

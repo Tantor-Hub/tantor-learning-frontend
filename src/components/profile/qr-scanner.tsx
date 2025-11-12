@@ -10,6 +10,9 @@ interface QrScannerProps {
 
 export function QrScanner({ onScan, onError }: QrScannerProps) {
   const [scanned, setScanned] = useState<string | null>(null);
+  const [permissionState, setPermissionState] = useState<"prompt" | "granted" | "denied" | null>(
+    null
+  );
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [isVideoReady, setIsVideoReady] = useState(false);
@@ -27,16 +30,71 @@ export function QrScanner({ onScan, onError }: QrScannerProps) {
     );
     setFacingMode(isMobile ? "environment" : "user");
 
-    // Check camera permission
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then(() => setHasPermission(true))
-      .catch(() => setHasPermission(false));
+    // Check camera permission state using Permissions API
+    if ("permissions" in navigator && "mediaDevices" in navigator) {
+      (navigator.permissions as any)
+        .query({ name: "camera" })
+        .then((result: any) => {
+          const state = result.state as "prompt" | "granted" | "denied";
+          setPermissionState(state);
+          if (state === "prompt") {
+            // Trigger the permission prompt if needed
+            navigator.mediaDevices
+              .getUserMedia({ video: true })
+              .then(() => {
+                setHasPermission(true);
+                setPermissionState("granted");
+              })
+              .catch((err: any) => {
+                console.error("Permission prompt failed:", err);
+                setHasPermission(false);
+                setPermissionState("denied");
+              });
+          } else if (state === "granted") {
+            setHasPermission(true);
+          } else {
+            setHasPermission(false);
+          }
+        })
+        .catch((err: any) => {
+          console.warn("Permissions API not supported, falling back to getUserMedia check");
+          // Fallback: try getUserMedia directly
+          navigator.mediaDevices
+            .getUserMedia({ video: true })
+            .then(() => {
+              setHasPermission(true);
+              setPermissionState("granted");
+            })
+            .catch((err: any) => {
+              console.error("Fallback getUserMedia failed:", err);
+              setHasPermission(false);
+              setPermissionState("denied");
+            });
+        });
+    } else {
+      // Fallback for browsers without Permissions API
+      if ("mediaDevices" in (navigator as any)) {
+        (navigator as any).mediaDevices
+          .getUserMedia({ video: true })
+          .then(() => {
+            setHasPermission(true);
+            setPermissionState("granted");
+          })
+          .catch((err: any) => {
+            console.error("Fallback getUserMedia failed:", err);
+            setHasPermission(false);
+            setPermissionState("denied");
+          });
+      } else {
+        setHasPermission(false);
+        setPermissionState("denied");
+      }
+    }
   }, []);
 
   // Create and manage our own video stream for display
   useEffect(() => {
-    if (hasPermission && videoRef.current) {
+    if (hasPermission === true && permissionState !== "denied" && videoRef.current) {
       navigator.mediaDevices
         .getUserMedia({
           video: {
@@ -60,6 +118,8 @@ export function QrScanner({ onScan, onError }: QrScannerProps) {
         .catch((err) => {
           console.error("Error getting user media:", err);
           onError(err.message || "Failed to access camera");
+          setHasPermission(false);
+          setPermissionState("denied");
         });
 
       return () => {
@@ -70,7 +130,7 @@ export function QrScanner({ onScan, onError }: QrScannerProps) {
         }
       };
     }
-  }, [hasPermission, facingMode, onError]);
+  }, [hasPermission, permissionState, facingMode, onError]);
 
   const handleResult = (result: any, error: any) => {
     if (result) {
@@ -140,18 +200,28 @@ export function QrScanner({ onScan, onError }: QrScannerProps) {
     }
   };
 
-  if (hasPermission === false) {
+  if (permissionState === "denied") {
     return (
       <div className="flex flex-col items-center gap-4 p-4">
         <p className="text-red-600">
-          Permission de caméra refusée. Veuillez autoriser l'accès à la caméra pour scanner les
-          codes QR.
+          Permission de caméra refusée. Pour scanner les codes QR, veuillez activer l'accès à la
+          caméra dans les paramètres de votre navigateur :
+        </p>
+        <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
+          <li>
+            Chrome/Edge : Paramètres - Confidentialité et sécurité - Paramètres du site - Caméra
+          </li>
+          <li>Firefox : Préférences - Vie privée &amp; sécurité - Permissions - Caméra</li>
+          <li>Safari : Préférences - Sites web - Caméra</li>
+        </ul>
+        <p className="text-sm text-gray-600 mt-2">
+          Après activation, rechargez la page pour réessayer.
         </p>
       </div>
     );
   }
 
-  if (hasPermission === null) {
+  if (permissionState === null || hasPermission === null) {
     return (
       <div className="flex flex-col items-center gap-4 p-4">
         <p>Demande de permission de caméra...</p>
