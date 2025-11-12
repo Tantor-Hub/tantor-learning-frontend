@@ -3,6 +3,8 @@ import {
   IStudentEvaluation,
   IStudentEvaluationsResponse,
   IStudentEvaluationsApiResponse,
+  IStudentsByEvaluationIdApiResponse,
+  IStudentAnswersApiResponse,
 } from "@/types/student-evaluations";
 
 export const studentEvaluationsApi = createApi({
@@ -64,6 +66,33 @@ export const studentEvaluationsApi = createApi({
       }),
       invalidatesTags: ["StudentEvaluations"],
     }),
+
+    // instructor access
+    getStudentEvaluationsBySessionCourseInstructorSecretary: builder.query<
+      IStudentEvaluationsApiResponse,
+      { sessionCoursId: string }
+    >({
+      query: ({ sessionCoursId }) => `studentevaluation/instructor/sessioncours/${sessionCoursId}`,
+      providesTags: ["StudentEvaluations"],
+    }),
+
+    getStudentsByEvaluationId: builder.query<
+      IStudentsByEvaluationIdApiResponse,
+      { evaluationId: string }
+    >({
+      query: ({ evaluationId }) =>
+        `studentevaluation/instructor/evaluation/${evaluationId}/students`,
+      providesTags: ["StudentEvaluations"],
+    }),
+
+    getStudentAnswersByEvaluationAndStudent: builder.query<
+      IStudentAnswersApiResponse,
+      { evaluationId: string; studentId: string }
+    >({
+      query: ({ evaluationId, studentId }) =>
+        `studentevaluation/instructor/evaluation/${evaluationId}/student/${studentId}/answers`,
+      providesTags: ["StudentEvaluations"],
+    }),
   }),
 });
 
@@ -84,4 +113,11 @@ export const {
   useCreateStudentEvaluationMutation,
   useDeleteStudentEvaluationMutation,
   useUpdateStudentEvaluationMutation,
+
+  /*###############################################################################
+    ######################### INSTRUCTOR ACCESS ########################################
+    #################################################################################*/
+  useGetStudentEvaluationsBySessionCourseInstructorSecretaryQuery,
+  useGetStudentsByEvaluationIdQuery,
+  useGetStudentAnswersByEvaluationAndStudentQuery,
 } = studentEvaluationsApi;

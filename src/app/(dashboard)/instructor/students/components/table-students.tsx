@@ -9,33 +9,41 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import studentData from "../data";
 import { Button } from "@/components/ui/button";
-import { StudentDocsData } from "../types";
+import { useGetStudentsAttendanceQuery } from "@/lib/apis/events";
 
-type Status = "all" | "inProgress" | "completed" | "needHelp";
+type Status = "all" | "excellent" | "strong" | "average" | "weak" | "very_weak";
 
 const titleSubtitle = {
   all: {
     title: "Tous mes étudiants",
     subtitle: "Liste complète de tous vos étudiants enregistrés",
   },
-  inProgress: {
-    title: "Étudiants actifs",
-    subtitle: "Étudiants actuellement engagés dans un programme ou une formation",
+  excellent: {
+    title: "Étudiants excellents",
+    subtitle: "Étudiants avec une progression excellente (80-100%)",
   },
-  completed: {
-    title: "Étudiants ayant terminés",
-    subtitle: "Ceux ayant terminé leurs formations ou parcours",
+  strong: {
+    title: "Étudiants forts",
+    subtitle: "Étudiants avec une bonne progression (60-79%)",
   },
-  needHelp: {
-    title: "Étudiants avec bésoin d'aide",
-    subtitle: "Étudiants qui ont besoin d’assistance ou de suivi",
+  average: {
+    title: "Étudiants moyens",
+    subtitle: "Étudiants avec une progression moyenne (40-59%)",
+  },
+  weak: {
+    title: "Étudiants faibles",
+    subtitle: "Étudiants avec une progression faible (20-39%)",
+  },
+  very_weak: {
+    title: "Étudiants très faibles",
+    subtitle: "Étudiants avec une progression très faible (0-19%)",
   },
 };
 
-const StudentsTabs = ({ data = studentData }: { data?: StudentDocsData }) => {
+const StudentsTabs = () => {
   const [selected, setSelected] = useState<Status>("all");
+  const { data: attendanceData, isLoading, error } = useGetStudentsAttendanceQuery();
 
   const getProgressBarColor = (action: string) => {
     return action === "Actif"
@@ -61,14 +69,20 @@ const StudentsTabs = ({ data = studentData }: { data?: StudentDocsData }) => {
               <TabsTrigger value="all" className="px-7 py-2">
                 Tous
               </TabsTrigger>
-              <TabsTrigger value="inProgress" className="px-7 py-2">
-                Actifs
+              <TabsTrigger value="excellent" className="px-7 py-2">
+                Excellents
               </TabsTrigger>
-              <TabsTrigger value="completed" className="px-7 py-2">
-                Terminés
+              <TabsTrigger value="strong" className="px-7 py-2">
+                Forts
               </TabsTrigger>
-              <TabsTrigger value="needHelp" className="px-7 py-2">
-                Besoin d'aide
+              <TabsTrigger value="average" className="px-7 py-2">
+                Moyens
+              </TabsTrigger>
+              <TabsTrigger value="weak" className="px-7 py-2">
+                Faibles
+              </TabsTrigger>
+              <TabsTrigger value="very_weak" className="px-7 py-2">
+                Très faibles
               </TabsTrigger>
             </TabsList>
           </div>
@@ -79,22 +93,11 @@ const StudentsTabs = ({ data = studentData }: { data?: StudentDocsData }) => {
               </h2>
               <p className="text-sm text-gray-500">{titleSubtitle[selected].subtitle}</p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 p-3 w-fit">
-              <Button
-                variant={"outline"}
-                className="p-5 text-sm text-[#0466C8] border border-[#0466C8] rounded-md"
-              >
-                Voir le temps d'étude
-              </Button>
-              <Button className="p-5 text-sm text-white bg-[#0466C8] rounded-md">
-                Faire l'appel
-              </Button>
-            </div>
           </div>
 
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-100 grid grid-cols-8">
+              <TableRow className="bg-gray-100 grid grid-cols-5">
                 <TableHead className="font-medium text-black flex items-center">Nom</TableHead>
                 <TableHead className="font-medium text-black flex items-center col-span-2">
                   Email
@@ -103,63 +106,50 @@ const StudentsTabs = ({ data = studentData }: { data?: StudentDocsData }) => {
                 <TableHead className="font-medium text-black flex items-center">
                   Progression
                 </TableHead>
-                <TableHead className="font-medium text-black flex items-center">Statut</TableHead>
-                <TableHead className="font-medium text-black flex items-center">
-                  Date de connexion
-                </TableHead>
-                <TableHead className="font-medium text-black flex items-center">Adresse</TableHead>
               </TableRow>
             </TableHeader>
 
             <TabsContent value={selected} className="m-0">
               <TableBody>
-                {data[selected]?.map((student, i) => (
-                  <TableRow key={i} className="border-b grid grid-cols-8">
-                    <TableCell className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-                      <p className="font-medium text-sm">
-                        {student.name.split(" ").map((el, i) => (
-                          <Fragment key={i}>
-                            {el}
-                            <br />
-                          </Fragment>
-                        ))}
-                      </p>
-                    </TableCell>
-                    <TableCell className="col-span-2">
-                      <p className="text-sm text-gray-500">{student.email}</p>
-                    </TableCell>
-                    <TableCell>{student.course}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 h-2 bg-gray-200 rounded-full">
-                          <div
-                            className={`h-2 rounded-full ${getProgressBarColor(student.action)}`}
-                            style={{ width: `${student.progress}%` }}
-                          ></div>
+                {attendanceData?.data.rows
+                  .filter((student) => {
+                    if (selected === "all") return true;
+                    return student.progressionStatus === selected;
+                  })
+                  .map((student, i) => (
+                    <TableRow key={i} className="border-b grid grid-cols-5">
+                      <TableCell className="flex items-center gap-3">
+                        <img
+                          src={student.studentAvatar}
+                          alt={student.studentName}
+                          className="w-8 h-8 rounded-full"
+                        />
+                        <p className="font-medium text-sm">
+                          {student.studentName.split(" ").map((el, idx) => (
+                            <Fragment key={idx}>
+                              {el}
+                              <br />
+                            </Fragment>
+                          ))}
+                        </p>
+                      </TableCell>
+                      <TableCell className="col-span-2">
+                        <p className="text-sm text-gray-500">{student.studentEmail}</p>
+                      </TableCell>
+                      <TableCell>{student.sessionCoursTitle}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 h-2 bg-gray-200 rounded-full">
+                            <div
+                              className="h-2 rounded-full bg-blue-500"
+                              style={{ width: `${student.progression}%` }}
+                            ></div>
+                          </div>
+                          <span>{student.progression}%</span>
                         </div>
-                        <span>{student.progress}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-3 py-1 text-xs rounded-full ${
-                          student.action === "Actif"
-                            ? "bg-green-100 text-green-600 border border-green-600"
-                            : student.action === "Traitement"
-                              ? "bg-blue-100 text-blue-600 border border-blue-600"
-                              : student.action === "Terminé"
-                                ? "bg-yellow-100 text-yellow-600 border border-yellow-600"
-                                : "bg-red-100 text-red-600 border border-red-600"
-                        }`}
-                      >
-                        {student.action}
-                      </span>
-                    </TableCell>
-                    <TableCell>{student.lastConnection}</TableCell>
-                    <TableCell>{student.city}</TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </TabsContent>
           </Table>

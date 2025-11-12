@@ -6,6 +6,7 @@ import {
   EventListResponse,
   EventResponse,
   CreateEventForLessonsRequest,
+  StudentsAttendanceResponse,
 } from "@/types/events";
 import { ICourseBySessionIdResponse } from "@/types/secretary/training-secretary";
 
@@ -73,6 +74,12 @@ export const eventsApi = createApi({
       }),
       invalidatesTags: ["Event"],
     }),
+
+    // Get students attendance for instructor sessioncours
+    getStudentsAttendance: builder.query<StudentsAttendanceResponse, void>({
+      query: () => `event/instructor/students-attendance`,
+      providesTags: ["Event"],
+    }),
   }),
 });
 
@@ -83,6 +90,8 @@ export const {
   useDeleteEventMutation,
   useGetCoursesBySessionQuery,
   useCreateEventForLessonsMutation,
+  // secretary Access
+  useGetStudentsAttendanceQuery,
   // student Access
   useJoinEventMutation,
 } = eventsApi;

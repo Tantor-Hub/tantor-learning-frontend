@@ -65,3 +65,25 @@ export interface EventResponse {
   message: string;
   data: Event;
 }
+
+export interface StudentAttendance {
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  studentAvatar: string;
+  sessionCoursTitle: string;
+  progression: number;
+  progressionStatus: string;
+  eventsAttended: number;
+  totalEvents: number;
+  eventDates: string[];
+}
+
+export interface StudentsAttendanceResponse {
+  status: number;
+  data: {
+    length: number;
+    rows: StudentAttendance[];
+  };
+  message: string;
+}

@@ -60,6 +60,19 @@ export const studentAnswersApi = createApi({
       query: (questionId) => `studentanswer/question/${questionId}`,
       providesTags: ["StudentAnswer"],
     }),
+
+    // instructor access
+    updateStudentAnswerPoints: builder.mutation<
+      { status: number; message: string; data: IStudentAnswer },
+      { answerId: string; points: number }
+    >({
+      query: ({ answerId, points }) => ({
+        url: `studentanswer/instructor/${answerId}/points`,
+        method: "PATCH",
+        body: { points },
+      }),
+      invalidatesTags: ["StudentAnswer"],
+    }),
   }),
 });
 
@@ -74,4 +87,6 @@ export const {
   // student access
   useGetStudentAnswersByQuestionIdQuery,
   useLazyGetStudentAnswersByQuestionIdQuery,
+  // instructor access
+  useUpdateStudentAnswerPointsMutation,
 } = studentAnswersApi;

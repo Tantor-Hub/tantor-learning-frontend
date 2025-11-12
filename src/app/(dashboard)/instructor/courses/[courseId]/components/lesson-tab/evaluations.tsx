@@ -19,9 +19,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AddLessonModal } from "./add-lesson";
 import { UpdateEvaluationModal } from "./update-evaluation";
-import { MoreHorizontal, Trash2, Edit, FileText, Ellipsis } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, FileText, Ellipsis, CheckCircle } from "lucide-react";
 import {
-  useGetStudentEvaluationsBySessionQuery,
+  useGetStudentEvaluationsBySessionCourseInstructorSecretaryQuery,
   useDeleteStudentEvaluationMutation,
 } from "@/lib/apis/student-evaluations";
 import {
@@ -44,10 +44,11 @@ export function Evaluations() {
   const [selectedEvaluationId, setSelectedEvaluationId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data: evaluationsData, isLoading } = useGetStudentEvaluationsBySessionQuery(
-    { sessionCoursId: courseId },
-    { skip: !courseId }
-  );
+  const { data: evaluationsData, isLoading } =
+    useGetStudentEvaluationsBySessionCourseInstructorSecretaryQuery(
+      { sessionCoursId: courseId },
+      { skip: !courseId }
+    );
   const [deleteEvaluation] = useDeleteStudentEvaluationMutation();
 
   const evaluations = evaluationsData?.data?.evaluations || [];
@@ -153,6 +154,16 @@ export function Evaluations() {
                       >
                         <FileText className="mr-2 h-4 w-4" />
                         Gérer les questions
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          router.push(
+                            `/instructor/courses/${courseId}/evaluations/${evaluation.id}/students`
+                          )
+                        }
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Corriger
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-600"
