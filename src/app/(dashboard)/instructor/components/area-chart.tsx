@@ -9,18 +9,42 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-const data = [
-  { name: "Lun", uv: 100 },
-  { name: "mar", uv: 60 },
-  { name: "mer", uv: 70 },
-  { name: "jeu", uv: 85 },
-  { name: "ven", uv: 90 },
-  { name: "sam", uv: 70 },
-  { name: "dim", uv: 65 },
-];
+import { useGetPastEventsForInstructorQuery } from "@/lib/apis/events";
 
 const AreaChartComponent = () => {
+  const { data: pastEventsData, isLoading } = useGetPastEventsForInstructorQuery();
+
+  // Process past events data to create chart data
+  const data = pastEventsData?.data?.rows?.reduce((acc: any[], event: any) => {
+    const eventDate = new Date(event.begining_date);
+    const dayName = eventDate.toLocaleDateString("fr-FR", { weekday: "short" });
+
+    // Find existing day or create new entry
+    const existingDay = acc.find((item) => item.name === dayName);
+    if (existingDay) {
+      existingDay.uv += event.participantCount || 0;
+    } else {
+      acc.push({
+        name: dayName,
+        uv: event.participantCount || 0,
+      });
+    }
+
+    return acc;
+  }, []) || [
+    { name: "Lun", uv: 0 },
+    { name: "mar", uv: 0 },
+    { name: "mer", uv: 0 },
+    { name: "jeu", uv: 0 },
+    { name: "ven", uv: 0 },
+    { name: "sam", uv: 0 },
+    { name: "dim", uv: 0 },
+  ];
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-full">Chargement...</div>;
+  }
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -36,7 +60,7 @@ const AreaChartComponent = () => {
         <Tooltip
           formatter={(value, name) => {
             if (name === "uv") {
-              return [value, "pres"];
+              return [value, "présences"];
             }
             return [value, name];
           }}

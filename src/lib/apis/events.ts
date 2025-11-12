@@ -80,6 +80,22 @@ export const eventsApi = createApi({
       query: () => `event/instructor/students-attendance`,
       providesTags: ["Event"],
     }),
+
+    // Get past events for instructor
+    getPastEventsForInstructor: builder.query<
+      {
+        status: number;
+        data: {
+          length: number;
+          rows: Event[];
+        };
+        message: string;
+      },
+      void
+    >({
+      query: () => `event/instructor/past-events`,
+      providesTags: ["Event"],
+    }),
   }),
 });
 
@@ -94,4 +110,5 @@ export const {
   useGetStudentsAttendanceQuery,
   // student Access
   useJoinEventMutation,
+  useGetPastEventsForInstructorQuery,
 } = eventsApi;

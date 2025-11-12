@@ -22,6 +22,7 @@ export interface Event {
   sessionCours?: SessionCours;
   createdAt?: string;
   updatedAt?: string;
+  participantCount?: number;
 }
 
 export interface CreateEventRequest {

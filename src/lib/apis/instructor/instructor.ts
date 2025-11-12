@@ -133,6 +133,15 @@ export const instructorApi = createApi({
       invalidatesTags: ["Instructor"],
     }),
 
+    // Delete lesson by ID
+    deleteLesson: builder.mutation<void, { lessonId: string }>({
+      query: ({ lessonId }) => ({
+        url: `lesson/${lessonId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Instructor"],
+    }),
+
     // Get lesson documents by lesson ID
     getLessonDocuments: builder.query<ILessonDocumentsResponse, { lessonId: string }>({
       query: ({ lessonId }) => `lessondocument/lesson/${lessonId}`,
@@ -215,6 +224,7 @@ export const {
   useGetLessonsByCourseIdQuery,
   useGetLessonByIdQuery,
   useCreateLessonMutation,
+  useDeleteLessonMutation,
   useGetLessonDocumentsQuery,
   useCreateLessonDocumentMutation,
   useDeleteLessonDocumentMutation,
