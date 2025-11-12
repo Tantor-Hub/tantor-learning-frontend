@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState } from "react";
 import { EventViewer } from "./event-viewer";
 import { NewEvent } from "./new-event";
 import { useListInstructorEventsQuery } from "@/lib/apis/common/planning";
@@ -17,7 +17,7 @@ export function PlanningClient() {
     return <PlanningSkeleton />;
   }
 
-  const events = (data as any)?.data?.rows || [];
+  const events = data?.data?.rows || [];
   const datesWithEvents = new Set(
     events.map((event: any) => new Date(event.begining_date).toDateString())
   );

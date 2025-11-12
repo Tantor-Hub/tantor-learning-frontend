@@ -9,30 +9,41 @@ export interface InstructorEventsResponse {
       id: string;
       title: string;
       description?: string;
+      id_cible_training?: string | null;
+      id_cible_session?: string | null;
+      id_cible_cours?: string | null;
+      id_cible_lesson?: string[];
+      id_cible_user?: string | null;
+      createdBy?: string | null;
       begining_date: string;
       beginning_hour: string;
       ending_hour: string;
-      id_cible_cours: string;
-      id_cible_session: string;
-      createdBy: string;
+      qrcode: string;
+      participant: string[];
       createdAt: string;
       updatedAt: string;
-      sessionCours: {
+      trainings: any[];
+      trainingSession?: {
+        id: string;
+        title: string;
+      } | null;
+      sessionCours?: {
         id: string;
         title: string;
         id_session: string;
         id_formateur: string[];
-      };
-      trainingSession: {
-        id: string;
-        title: string;
-      };
-      creator: {
+      } | null;
+      users: any[];
+      creator?: {
         id: string;
         firstName: string;
         lastName: string;
         email: string;
-      };
+      } | null;
+      lessons: {
+        id: string;
+        title: string;
+      }[];
     }[];
   };
   message: string;
