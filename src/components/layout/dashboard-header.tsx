@@ -37,7 +37,7 @@ export function DashboardHeader() {
     <header className="p-4 flex items-center justify-between border-b sticky top-0 z-50 backdrop-blur-xl bg-[#FFFFFFCC]">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="-ml-1" />
-        <h1 className="text-xl font-semibold text-blue-600">{title}</h1>
+        <h1 className="text-xl font-semibold text-blue-600 hidden md:block">{title}</h1>
       </div>
 
       <div className="flex items-center gap-2">

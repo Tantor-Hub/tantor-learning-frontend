@@ -91,21 +91,17 @@ export function SessionSelector({ selectedSessionId, onSessionChange }: SessionS
     setSelectedInDialog(selectedSessionId || localSessions[0]?.trainingSession.id || "");
   };
 
-  if (isLoading && fetchSessions) {
-    return <div className="min-w-[300px] h-10 bg-gray-200 animate-pulse rounded-md" />;
-  }
-
   const selectedSession =
     localSessions.find((s) => s.trainingSession.id === selectedSessionId) || localSessions[0];
 
   // Show message if no sessions available and user has opened dialog
-  const hasNoSessions = localSessions.length === 0 && fetchSessions && !isLoading;
-
+  const hasNoSessions = localSessions.length === 0 && fetchSessions;
+  // ${selectedSession.trainingSession.title || "Session sans nom"} - ${selectedSession.training.title}
   return (
     <>
-      <Button variant="outline" onClick={handleOpenDialog} className="min-w-[300px] justify-start">
+      <Button variant="outline" onClick={handleOpenDialog} className="justify-start">
         {selectedSession
-          ? `${selectedSession.trainingSession.title || "Session sans nom"} - ${selectedSession.training.title}`
+          ? `${selectedSession.trainingSession.title || "Session sans nom"}`
           : "Sélectionner une session"}
       </Button>
 
@@ -127,7 +123,13 @@ export function SessionSelector({ selectedSessionId, onSessionChange }: SessionS
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2 max-h-60 overflow-y-auto">
-            {hasNoSessions ? (
+            {isLoading ? (
+              <>
+                <div className="h-10 bg-gray-200 animate-pulse rounded-md" />
+                <div className="h-10 bg-gray-200 animate-pulse rounded-md" />
+                <div className="h-10 bg-gray-200 animate-pulse rounded-md" />
+              </>
+            ) : hasNoSessions ? (
               <div className="text-center py-8 text-muted-foreground">
                 Aucune session disponible
               </div>
@@ -146,7 +148,7 @@ export function SessionSelector({ selectedSessionId, onSessionChange }: SessionS
           </div>
           <AlertDialogFooter className="mt-4">
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            {!hasNoSessions && (
+            {!hasNoSessions && !isLoading && (
               <AlertDialogAction
                 onClick={() => {
                   handleSessionChange(selectedInDialog);
