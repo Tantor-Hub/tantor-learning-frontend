@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Facebook, Instagram, Linkedin, Youtube, PhoneCall } from "lucide-react";
 import { Separator } from "../ui/separator";
+import Image from "next/image";
 
 const footerLinks = [
   [
@@ -90,6 +91,19 @@ export function Footer() {
             </div>
           </section>
           <section>
+            <div className="mb-6 space-y-2">
+              <Image src="/icons/qualiopi.png" alt="France Education" width={200} height={200} />
+              <div className="max-w-[250px] space-y-2">
+                <p className="text-sm">
+                  La certification qualité a été délivrée au titre des categories d'actions
+                  suivantes
+                </p>
+                <div className="text-base font-semibold space-y-0">
+                  <p>ACTIONS DE FORMATION</p>
+                  <p>BILAN DE COMPETENCES</p>
+                </div>
+              </div>
+            </div>
             <Separator />
             <p className="text-center mt-12 font-light">
               © 2025 Tantor Learning. Tous droits reserves
