@@ -53,11 +53,7 @@ export function MessageActions({
       </Button>
       <div className="flex items-center gap-4">
         <ReplyMessageDialog messageId={messageId} />
-        <TransferMessageDialog
-          messageId={messageId}
-          originalSubject={subject}
-          originalContent={content || ""}
-        />
+        <TransferMessageDialog messageId={messageId} />
         {isDeleted ? (
           <Button variant={"outline"} onClick={handleRestore} className="flex items-center gap-2">
             <RotateCcw />

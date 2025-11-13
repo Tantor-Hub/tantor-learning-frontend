@@ -10,10 +10,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Loader2, Forward } from "lucide-react";
-import { useCreateMessageMutation } from "@/lib/apis/common/chat-api";
+import { useTransferChatMutation } from "@/lib/apis/common/chat-api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -53,29 +51,14 @@ import { IUser, UserRole } from "@/types/user";
 
 const transferFormSchema = z.object({
   recipientId: z.array(z.string()).min(1, "Au moins un destinataire est requis"),
-  subject: z
-    .string()
-    .min(1, "Le sujet est requis")
-    .max(100, "Le sujet ne doit pas dépasser 100 caractères"),
-  content: z
-    .string()
-    .min(1, "Le message est requis")
-    .max(1000, "Le message ne doit pas dépasser 1000 caractères"),
-  piece_joint: z.array(z.any()).optional(),
 });
 
 interface TransferMessageDialogProps {
   messageId: string;
-  originalSubject: string;
-  originalContent: string;
 }
 
-export function TransferMessageDialog({
-  messageId,
-  originalSubject,
-  originalContent,
-}: TransferMessageDialogProps) {
-  const [createMessage, { isLoading }] = useCreateMessageMutation();
+export function TransferMessageDialog({ messageId }: TransferMessageDialogProps) {
+  const [transferChat, { isLoading }] = useTransferChatMutation();
   const currentUser = useSelector(selectCurrentUser);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [openRecipients, setOpenRecipients] = useState(false);
@@ -90,9 +73,6 @@ export function TransferMessageDialog({
     resolver: zodResolver(transferFormSchema),
     defaultValues: {
       recipientId: [],
-      subject: `Fwd: ${originalSubject}`,
-      content: `--- Message transféré ---\n\n${originalContent}`,
-      piece_joint: [],
     },
     mode: "onChange",
   });
@@ -129,26 +109,15 @@ export function TransferMessageDialog({
 
   const onSubmit = async (values: z.infer<typeof transferFormSchema>) => {
     try {
-      const payload: any = {
-        subject: values.subject,
-        content: values.content,
-        id_user_receiver: values.recipientId,
-        is_forwarded_from: messageId,
+      const payload = {
+        id_chat: messageId,
+        receivers: values.recipientId,
       };
 
-      if (values.piece_joint && values.piece_joint.length > 0) {
-        const piece_jointe = await Promise.all(
-          values.piece_joint.map(async (file: File) => {
-            // Implement file upload logic here
-            return file.name;
-          })
-        );
-        payload.piece_jointe = piece_jointe;
-      }
-
-      await createMessage(payload).unwrap();
+      await transferChat(payload).unwrap();
       toast.success("Message transféré");
       form.reset();
+      setDialogOpen(false);
     } catch {
       toast.error("Une erreur est survenue");
     }
@@ -167,7 +136,7 @@ export function TransferMessageDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Transférer le message</AlertDialogTitle>
           <AlertDialogDescription>
-            Transférez ce message à un autre destinataire.
+            Sélectionnez les nouveaux destinataires pour ce message.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -297,57 +266,6 @@ export function TransferMessageDialog({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="subject"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Sujet</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Entrez le sujet" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="content"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Message</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Écrivez votre message ici..." {...field} rows={5} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="piece_joint"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Pièces jointes (optionnel)</FormLabel>
-                  <FormControl>
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => {
-                        const files = e.target.files;
-                        if (files) {
-                          form.setValue("piece_joint", Array.from(files));
-                        }
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <AlertDialogFooter>
               <AlertDialogCancel
                 type="button"
@@ -357,10 +275,7 @@ export function TransferMessageDialog({
               >
                 Annuler
               </AlertDialogCancel>
-              <Button
-                type="submit"
-                disabled={!isFormValid || form.formState.isSubmitting || isLoading}
-              >
+              <Button type="submit" disabled={!isFormValid || isLoading}>
                 {isLoading ? <Loader2 className="animate-spin" /> : "Transférer"}
               </Button>
             </AlertDialogFooter>

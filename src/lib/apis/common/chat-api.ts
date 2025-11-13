@@ -130,6 +130,40 @@ export const chatApi = createApi({
       }),
       invalidatesTags: ["Chat"],
     }),
+
+    transferChat: builder.mutation<any, { id_chat: string; receivers: string[] }>({
+      query: (request) => ({
+        url: "chat/transfer",
+        method: "POST",
+        body: request,
+      }),
+      invalidatesTags: ["Chat"],
+    }),
+
+    updateTransfer: builder.mutation<any, { id: string; receivers: string[] }>({
+      query: ({ id, ...body }) => ({
+        url: `chat/transfer/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Chat"],
+    }),
+
+    deleteTransfer: builder.mutation<void, { id: string }>({
+      query: ({ id }) => ({
+        url: `chat/transfer/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Chat"],
+    }),
+
+    getTransfer: builder.query<any, { id: string }>({
+      query: ({ id }) => ({
+        url: `chat/transfer/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["Chat"],
+    }),
   }),
 });
 
@@ -148,4 +182,8 @@ export const {
   useListReceivedMessagesQuery,
   useListSentMessagesQuery,
   useRestoreChatMutation,
+  useTransferChatMutation,
+  useUpdateTransferMutation,
+  useDeleteTransferMutation,
+  useGetTransferQuery,
 } = chatApi;
