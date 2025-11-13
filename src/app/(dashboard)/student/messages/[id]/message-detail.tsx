@@ -113,6 +113,47 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
           </p>
         </div>
         <p>{message.content}</p>
+        {message.piece_joint && message.piece_joint.length > 0 && (
+          <div className="mt-4">
+            <p className="font-semibold mb-2">Pièces jointes:</p>
+            <div className="flex flex-wrap gap-2">
+              {message.piece_joint.map((url: string, index: number) => {
+                const extension = url.split(".").pop()?.toLowerCase();
+                const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(extension || "");
+                const isPdf = extension === "pdf";
+
+                return (
+                  <div key={index} className="flex items-center gap-2 p-2 border rounded">
+                    {isImage ? (
+                      <img
+                        src={url}
+                        alt={`Attachment ${index + 1}`}
+                        className="w-16 h-16 object-cover cursor-pointer"
+                        onClick={() => window.open(url, "_blank")}
+                      />
+                    ) : isPdf ? (
+                      <div
+                        className="flex items-center gap-2 cursor-pointer"
+                        onClick={() => window.open(url, "_blank")}
+                      >
+                        <span className="text-red-500">📄</span>
+                        <span>PDF Document</span>
+                      </div>
+                    ) : (
+                      <div
+                        className="flex items-center gap-2 cursor-pointer"
+                        onClick={() => window.open(url, "_blank")}
+                      >
+                        <span>📎</span>
+                        <span>{extension?.toUpperCase()} File</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Replies */}

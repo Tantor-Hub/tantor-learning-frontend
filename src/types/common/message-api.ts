@@ -69,6 +69,7 @@ export interface IGetMessageByIdResponse {
     date_d_envoie: string;
     date_de_lecture: string | null;
     piece_jointe: any | null;
+    piece_joint: string[];
     is_readed: number;
     is_replied_to: number;
     thread: string;
