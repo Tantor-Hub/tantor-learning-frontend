@@ -52,11 +52,7 @@ export function MessageActions({
         Retour
       </Button>
       <div className="flex items-center gap-4">
-        <ReplyMessageDialog
-          messageId={messageId}
-          originalSubject={subject}
-          recipientId={senderId}
-        />
+        <ReplyMessageDialog messageId={messageId} />
         <TransferMessageDialog
           messageId={messageId}
           originalSubject={subject}
