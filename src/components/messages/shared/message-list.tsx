@@ -6,8 +6,9 @@ import { usePathname } from "next/navigation";
 import { MessageListSkeleton } from "@/components/skeletons/message-list-skeleton";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { useSelector } from "react-redux";
-import { useListMessageByUserIdQuery, useMarkAsReadMutation } from "@/lib/apis/common/chat-api";
+import { useListMessageByUserIdQuery } from "@/lib/apis/common/chat-api";
 import { useRouter } from "next/navigation";
+
 interface MessageListProps {
   messages: IMessage[] | undefined;
   isLoading: boolean;
@@ -23,7 +24,6 @@ export const MessageList = ({
 }: MessageListProps) => {
   const currentUser = useSelector(selectCurrentUser);
   const router = useRouter();
-  const [markAsRead] = useMarkAsReadMutation();
 
   if (isLoading) {
     return <MessageListSkeleton />;
@@ -39,19 +39,15 @@ export const MessageList = ({
     return null;
   }
 
-  const handleClick = async (msg: IMessage) => {
-    const isSender = msg.sender.id === currentUser?.id;
-    if (!isSender && !msg.reader.includes(currentUser?.id || "")) {
-      await markAsRead({ id: msg.id });
-    }
+  const handleClick = (msg: IMessage) => {
     router.push(`/${currentUser?.role}/messages/${msg.id}?threadId=${msg.id}`);
   };
 
   return (
     <div className="my-4 grid grid-cols-1 gap-4">
       {messages?.map((msg) => {
-        const isSender = msg.sender.id === currentUser?.id;
-        const isRead = isSender || msg.reader.includes(currentUser?.id || "");
+        const isSender = msg.role === "sender";
+        const isRead = isSender || msg.isOpened;
         return (
           <div key={msg.id} onClick={() => handleClick(msg)} className="cursor-pointer">
             <MessageCard

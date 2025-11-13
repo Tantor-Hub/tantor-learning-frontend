@@ -150,7 +150,8 @@ export interface IMessage {
   id_user_receiver: string[];
   subject: string;
   content: string;
-  reader: string[];
+  isOpened: boolean;
+  role: string;
   status: string;
   dontshowme: string[];
   piece_joint: string[];
