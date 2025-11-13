@@ -1,5 +1,5 @@
 "use client";
-import CourseTab from "../student/courses/components/courses-tab";
+import { InstructorCourseTab } from "../secretary/components/courses-tab";
 import AreaChartComponent from "./components/area-chart";
 import { instructors } from "./data";
 import InstructorCard from "./components/instructror-card";
@@ -61,7 +61,7 @@ export default function Page() {
           <div className="h-40 md:h-72">{<AreaChartComponent />}</div>
         </div>
       </div>
-      <CourseTab idSession={"1"} />
+      <InstructorCourseTab />
       <div className="p-5 my-5 rounded-md bg-white">
         <div className="flex flex-col mb-5">
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">

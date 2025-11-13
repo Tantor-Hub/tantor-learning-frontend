@@ -1,6 +1,6 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useListCoursesBySessionIdQuery } from "@/lib/apis/student/training-api";
+import { useListAllCoursesByIdInstructorQuery } from "@/lib/apis/instructor/instructor";
 import { Loading } from "@/components/shared/loading";
 import Link from "next/link";
 
@@ -10,21 +10,17 @@ interface Cours {
   title: string;
   description: string;
   is_published: boolean;
-  ponderation: number;
-  formateurs: Array<{
+  ponderation?: number;
+  CreatedBy?: {
     firstName: string;
     lastName: string;
-  }>;
+  };
   createdAt: string;
   updatedAt: string;
 }
 
-export function StudentCourseTab({ idSession }: { idSession: string }) {
-  const { data: coursesResponse, isLoading } = useListCoursesBySessionIdQuery(
-    { id_session: idSession },
-
-    { skip: !idSession }
-  );
+export function InstructorCourseTab() {
+  const { data: coursesResponse, isLoading } = useListAllCoursesByIdInstructorQuery();
 
   if (isLoading) {
     return (
@@ -123,7 +119,7 @@ const CourseCard = ({ course }: { course: Cours }) => {
           <div className="w-7 h-7 bg-gray-200 rounded-md" />
           <div className="text-sm text-gray-800 flex flex-col">
             <span className="text-[#0466C8]">
-              {course.formateurs[0]?.firstName} {course.formateurs[0]?.lastName}
+              {course.CreatedBy?.firstName} {course.CreatedBy?.lastName}
             </span>
             <span className="text-[10px] text-gray-500">Professeur</span>
           </div>

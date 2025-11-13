@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { BarVisual } from "./components/bar-chart";
 import OngoingCourse from "./components/ongoing-course";
 import { SessionProgress } from "./components/pie-chart";
-import CourseTab from "./courses/components/courses-tab";
+import { StudentCourseTab } from "./courses/components/courses-tab";
 import { ongoingCourse } from "./data";
 import { ClipboardList, ListCheck, Percent } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -140,7 +140,7 @@ export default function Page() {
             </div>
             <SessionProgress id_session={selectedSessionId} />
           </div>
-          <CourseTab idSession={selectedSessionId} />
+          <StudentCourseTab idSession={selectedSessionId} />
         </>
       )}
     </>
