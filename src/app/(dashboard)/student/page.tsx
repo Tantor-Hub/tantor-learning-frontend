@@ -9,6 +9,7 @@ import { ClipboardList, ListCheck, Percent } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loading } from "@/components/shared/loading";
 import { useGetTrainingSessionByIdQuery } from "@/lib/apis/training-sessions";
+import { useGetStudentStatisticsQuery } from "@/lib/apis/student-evaluations";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { useSelectedSession } from "@/hooks/use-selected-session";
@@ -27,6 +28,11 @@ export default function Page() {
     { skip: !selectedSessionId }
   );
 
+  const studentStats = useGetStudentStatisticsQuery(
+    { sessionId: selectedSessionId as string },
+    { skip: !selectedSessionId }
+  );
+
   const is402Error =
     sessionDetails.error && "status" in sessionDetails.error && sessionDetails.error.status === 402;
   const errorMessage =
@@ -38,7 +44,7 @@ export default function Page() {
     return null;
   }
 
-  if (alertLoading || sessionDetails.isLoading) {
+  if (alertLoading || sessionDetails.isLoading || studentStats.isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh]">
         {" "}
@@ -76,7 +82,7 @@ export default function Page() {
               </CardHeader>
               <CardContent className="px-4 flex gap-2.5 items-center">
                 <span className="font-black text-xl md:text-2xl">
-                  {/* {studentsStatus.data?.data[1].homework} */}
+                  {studentStats.data?.data.futureHomeworkCount}
                 </span>
                 <span className="text-[10px] text-[#00CBB8]">
                   {/* ↗ {studentsStatus.data?.data[1].nextDelivery.length} pour demain */}
@@ -98,7 +104,7 @@ export default function Page() {
               </CardHeader>
               <CardContent className="px-4 flex gap-2.5 items-center">
                 <span className="font-black text-xl md:text-2xl">
-                  {/* {average.data?.data.scoreLastSemester}/{average.data?.data.scoreLastSemester} */}
+                  {studentStats.data?.data.averagePoints}
                 </span>
                 <span className="text-[10px] text-[#FF0000]">
                   {/* ↓ {average.data?.data.scoreLastSemester} */}
@@ -120,7 +126,7 @@ export default function Page() {
               </CardHeader>
               <CardContent className="px-4 flex gap-2.5 items-center">
                 <span className="font-black text-xl md:text-2xl">
-                  {/* {average.data?.data.totalLastSemeter}% */}
+                  {studentStats.data?.data.percentage}%
                 </span>
                 <span className="text-[10px] text-[#00CBB8]">
                   {/* ↗ +{average.data?.data.totalOngoingSemester}% */}
@@ -133,7 +139,7 @@ export default function Page() {
           </div>
           {/* {(nextLiveSession.data?.data?.length ?? 0) > 0 && <OngoingCourse ongoing={ongoingCourse} />} */}
           <div className="flex flex-col lg:flex-row gap-5 my-5">
-            <div className="flex-[3] border border-border rounded py-4  bg-white">
+            <div className="flex-[3] border rounded">
               <div className="h-auto">
                 <BarVisual id_session={selectedSessionId} />
               </div>

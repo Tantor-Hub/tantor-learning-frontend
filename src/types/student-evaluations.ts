@@ -174,3 +174,20 @@ export interface IStudentAnswersApiResponse {
   message: string;
   data: IStudentAnswersResponse;
 }
+
+export interface IStudentStatisticsData {
+  sessionId: string;
+  averagePoints: number;
+  percentage: number;
+  totalPointsEarned: number;
+  totalPossiblePoints: number;
+  futureHomeworkCount: number;
+  sessionCoursCount: number;
+  evaluationCount: number;
+}
+
+export interface IStudentStatisticsApiResponse {
+  status: number;
+  message: string;
+  data: IStudentStatisticsData;
+}

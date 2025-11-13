@@ -5,6 +5,7 @@ import {
   IStudentEvaluationsApiResponse,
   IStudentsByEvaluationIdApiResponse,
   IStudentAnswersApiResponse,
+  IStudentStatisticsApiResponse,
 } from "@/types/student-evaluations";
 
 export const studentEvaluationsApi = createApi({
@@ -25,6 +26,10 @@ export const studentEvaluationsApi = createApi({
     }),
     getStudentEvaluationById: builder.query<{ data: IStudentEvaluation }, { id: string }>({
       query: ({ id }) => `studentevaluation/${id}`,
+      providesTags: ["StudentEvaluations"],
+    }),
+    getStudentStatistics: builder.query<IStudentStatisticsApiResponse, { sessionId: string }>({
+      query: ({ sessionId }) => `studentevaluation/student/session/${sessionId}/statistics`,
       providesTags: ["StudentEvaluations"],
     }),
 
@@ -102,6 +107,7 @@ export const {
     #################################################################################*/
   useGetStudentEvaluationsBySessionQuery,
   useGetStudentEvaluationByIdQuery,
+  useGetStudentStatisticsQuery,
 
   /*###############################################################################
     ######################### ADMIN ACCESS ########################################

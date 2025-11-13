@@ -110,7 +110,7 @@ export function BarVisual({ id_session }: BarVisualProps) {
 
   if (isLoading) {
     return (
-      <div className="p-4">
+      <div>
         <h3 className="text-xl font-semibold text-gray-900">Détails de la session</h3>
         <div className="flex items-center justify-center h-64">
           <Loading />
@@ -175,7 +175,7 @@ export function BarVisual({ id_session }: BarVisualProps) {
   return (
     <div className="space-y-4 p-4">
       {/* Détails de la session */}
-      <div className="bg-white p-6 rounded-lg border">
+      <div>
         <div className="flex justify-between items-start mb-6">
           <h3 className="text-2xl font-semibold text-gray-900">Détails de la session</h3>
           <Badge className={`px-3 py-1 text-sm rounded-full ${status.color}`}>{status.text}</Badge>
