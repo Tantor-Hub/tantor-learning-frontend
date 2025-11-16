@@ -35,25 +35,25 @@ export function BooksTab() {
   return (
     <>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl">Books</h2>
+        <h2 className="text-xl">Livres</h2>
         <Button
           onClick={() => {
             setEditingBook(null);
             setBookDialogOpen(true);
           }}
         >
-          Add Book
+          Ajouter un livre
         </Button>
       </div>
       {booksLoading ? (
-        <p>Loading...</p>
+        <p>Chargement...</p>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Author</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Titre</TableHead>
+              <TableHead>Auteur</TableHead>
+              <TableHead>Statut</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -62,7 +62,7 @@ export function BooksTab() {
               <TableRow key={book.id}>
                 <TableCell>{book.title}</TableCell>
                 <TableCell>{book.author}</TableCell>
-                <TableCell>{book.status}</TableCell>
+                <TableCell>{book.status === "premium" ? "Premium" : "Gratuit"}</TableCell>
                 <TableCell>
                   <Button
                     variant="outline"
@@ -70,10 +70,10 @@ export function BooksTab() {
                     onClick={() => handleEditBook(book)}
                     className="mr-2"
                   >
-                    Edit
+                    Modifier
                   </Button>
                   <Button variant="destructive" size="sm" onClick={() => handleDeleteBook(book.id)}>
-                    Delete
+                    Supprimer
                   </Button>
                 </TableCell>
               </TableRow>

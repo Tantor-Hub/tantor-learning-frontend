@@ -10,11 +10,11 @@ export default function Page() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Bibliotheque</h1>
+      <h1 className="text-2xl font-bold mb-4">Bibliothèque</h1>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="books">Books</TabsTrigger>
-          <TabsTrigger value="categories">Book Categories</TabsTrigger>
+          <TabsTrigger value="books">Livres</TabsTrigger>
+          <TabsTrigger value="categories">Catégories de livres</TabsTrigger>
         </TabsList>
         <TabsContent value="books">
           <BooksTab />

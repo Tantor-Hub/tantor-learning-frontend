@@ -11,6 +11,7 @@ export interface Book {
   piece_joint: string;
   views: number;
   download: number;
+  downloadable?: boolean;
   createdAt: string;
   updatedAt: string;
 }

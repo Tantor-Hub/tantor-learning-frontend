@@ -47,6 +47,22 @@ export const bookApi = createApi({
       }),
       invalidatesTags: ["Book"],
     }),
+    incrementBookViews: builder.mutation<Book, string>({
+      query: (id) => ({
+        url: `book/${id}/views`,
+        method: "POST",
+      }),
+      invalidatesTags: ["Book"],
+      transformResponse: (response: ApiResponse<Book>) => response.data,
+    }),
+    incrementBookDownloads: builder.mutation<Book, string>({
+      query: (id) => ({
+        url: `book/${id}/downloads`,
+        method: "POST",
+      }),
+      invalidatesTags: ["Book"],
+      transformResponse: (response: ApiResponse<Book>) => response.data,
+    }),
   }),
 });
 
@@ -56,4 +72,6 @@ export const {
   useGetBookByIdQuery,
   useUpdateBookMutation,
   useDeleteBookMutation,
+  useIncrementBookViewsMutation,
+  useIncrementBookDownloadsMutation,
 } = bookApi;

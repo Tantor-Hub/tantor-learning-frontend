@@ -25,9 +25,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useCreateBookMutation, useUpdateBookMutation } from "@/lib/apis/book";
 import { useLazyGetBookCategoriesQuery } from "@/lib/apis/bookcategory";
-import { useUploadImageMutation, useUploadDocumentMutation } from "@/lib/apis/upload-api";
+import { useLazyGetAllTrainingSessionsSimplifiedQuery } from "@/lib/apis/training-sessions";
 import { Book, CreateBookRequest, UpdateBookRequest } from "@/types/book";
 import { BookCategory } from "@/types/bookcategory";
+import { SimplifiedTrainingSession } from "@/types/training-sessions";
 import toast from "react-hot-toast";
 
 interface CreateBookModalProps {
@@ -43,15 +44,18 @@ export function CreateBookModal({
   editingBook,
   onSuccess,
 }: CreateBookModalProps) {
-  const [createBook] = useCreateBookMutation();
-  const [updateBook] = useUpdateBookMutation();
-  const [uploadImage] = useUploadImageMutation();
-  const [uploadDocument] = useUploadDocumentMutation();
+  const [createBook, { isLoading: isCreating }] = useCreateBookMutation();
+  const [updateBook, { isLoading: isUpdating }] = useUpdateBookMutation();
 
   // Categories lazy query
   const [getBookCategories, { data: categoriesData, isLoading: categoriesLoading }] =
     useLazyGetBookCategoriesQuery();
   const categories: BookCategory[] = categoriesData?.data || [];
+
+  // Sessions lazy query
+  const [getSessions, { data: sessionsData, isLoading: sessionsLoading }] =
+    useLazyGetAllTrainingSessionsSimplifiedQuery();
+  const sessions: SimplifiedTrainingSession[] = sessionsData?.data || [];
 
   // Form state
   const [bookForm, setBookForm] = useState<Partial<CreateBookRequest & UpdateBookRequest>>({});
@@ -59,8 +63,8 @@ export function CreateBookModal({
   // File upload state
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [pieceJointFile, setPieceJointFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadStep, setUploadStep] = useState<"form" | "uploading" | "complete">("form");
+
+  const isUploading = isCreating || isUpdating;
 
   // Reset form when modal opens/closes or editingBook changes
   useEffect(() => {
@@ -77,9 +81,14 @@ export function CreateBookModal({
           icon: editingBook.icon,
           piece_joint: editingBook.piece_joint,
         });
+        // Load sessions when editing to display session names in badges
+        if (sessions.length === 0 && !sessionsLoading) {
+          getSessions();
+        }
       } else {
         setBookForm({
           category: [],
+          session: [],
           status: "free", // Default status
           public: true,
           downloadable: false,
@@ -87,93 +96,49 @@ export function CreateBookModal({
       }
       setIconFile(null);
       setPieceJointFile(null);
-      setUploadStep("form");
     } else {
       setBookForm({});
       setIconFile(null);
       setPieceJointFile(null);
-      setUploadStep("form");
     }
-  }, [open, editingBook]);
+  }, [open, editingBook, sessions.length, sessionsLoading, getSessions]);
 
   const handleSubmit = async () => {
     // Validate required fields
     if (!bookForm.title?.trim()) {
-      toast.error("Title is required.");
+      toast.error("Le titre est requis.");
       return;
     }
 
     if (!bookForm.status || (bookForm.status !== "premium" && bookForm.status !== "free")) {
-      toast.error("Status is required and must be either 'premium' or 'free'.");
+      toast.error("Le statut est requis et doit être soit 'premium' soit 'free'.");
       return;
     }
 
     if (!bookForm.category?.length) {
-      toast.error("At least one category is required.");
+      toast.error("Au moins une catégorie est requise.");
       return;
     }
 
     // Validate icon and piece_joint files are provided when creating
     if (!editingBook) {
       if (!iconFile) {
-        toast.error("Icon is required. Please select an image file.");
+        toast.error("L'icône est requise. Veuillez sélectionner un fichier image.");
         return;
       }
 
       if (!pieceJointFile) {
-        toast.error("Piece joint is required. Please select a file.");
+        toast.error("La pièce jointe est requise. Veuillez sélectionner un fichier.");
         return;
       }
     }
 
-    setIsUploading(true);
-    setUploadStep("uploading");
-    const uploadToastId = toast.loading("Uploading files...");
+    const loadingToastId = toast.loading(
+      editingBook ? "Mise à jour du livre..." : "Création du livre..."
+    );
 
     try {
-      let iconUrl = bookForm.icon || "";
-      let pieceJointUrl = bookForm.piece_joint || "";
-
-      // Step 1: Upload files if creating new book or if files were selected when editing
-      if (!editingBook) {
-        // Upload icon
-        const iconFormData = new FormData();
-        iconFormData.append("image", iconFile!);
-        const iconResult = await uploadImage(iconFormData).unwrap();
-        iconUrl = iconResult.url;
-
-        // Upload piece_joint (document)
-        const docFormData = new FormData();
-        docFormData.append("image", pieceJointFile!); // Using same endpoint for now
-        const docResult = await uploadDocument(docFormData).unwrap();
-        pieceJointUrl = docResult.url;
-      } else {
-        // When editing, only upload if new files were selected
-        if (iconFile) {
-          const iconFormData = new FormData();
-          iconFormData.append("image", iconFile);
-          const iconResult = await uploadImage(iconFormData).unwrap();
-          iconUrl = iconResult.url;
-        } else {
-          // Keep existing icon URL if no new file selected
-          iconUrl = bookForm.icon || "";
-        }
-
-        if (pieceJointFile) {
-          const docFormData = new FormData();
-          docFormData.append("image", pieceJointFile);
-          const docResult = await uploadDocument(docFormData).unwrap();
-          pieceJointUrl = docResult.url;
-        } else {
-          // Keep existing piece_joint URL if no new file selected
-          pieceJointUrl = bookForm.piece_joint || "";
-        }
-      }
-
-      toast.dismiss(uploadToastId);
-      toast.loading("Creating book...", { id: uploadToastId });
-
-      // Step 2: Create or update book with FormData including files
+      // Create FormData with all book data and files
       const bookFormData = new FormData();
       bookFormData.append("title", bookForm.title!.trim());
       bookFormData.append("description", bookForm.description || "");
@@ -185,7 +150,7 @@ export function CreateBookModal({
       bookFormData.append("downloadable", (bookForm.downloadable ?? false).toString());
 
       if (editingBook) {
-        // For update, append files if new ones selected, otherwise use URLs
+        // For update, append files if new ones selected, otherwise use existing URLs
         if (iconFile) {
           bookFormData.append("icon", iconFile);
         } else if (bookForm.icon) {
@@ -202,17 +167,16 @@ export function CreateBookModal({
           id: editingBook.id,
           body: bookFormData,
         });
-        toast.success("Book updated successfully!", { id: uploadToastId });
+        toast.success("Livre mis à jour avec succès !", { id: loadingToastId });
       } else {
-        // For create, append the uploaded files
+        // For create, append the files directly - backend will handle Cloudinary upload
         bookFormData.append("icon", iconFile!);
         bookFormData.append("piece_joint", pieceJointFile!);
 
         await createBook(bookFormData);
-        toast.success("Book created successfully!", { id: uploadToastId });
+        toast.success("Livre créé avec succès !", { id: loadingToastId });
       }
 
-      setUploadStep("complete");
       onOpenChange(false);
       setBookForm({});
       setIconFile(null);
@@ -220,11 +184,8 @@ export function CreateBookModal({
       onSuccess?.();
     } catch (error: any) {
       console.error("Error creating/updating book:", error);
-      toast.dismiss(uploadToastId);
-      toast.error(error?.data?.message || "An error occurred. Please try again.");
-      setUploadStep("form");
-    } finally {
-      setIsUploading(false);
+      toast.dismiss(loadingToastId);
+      toast.error(error?.data?.message || "Une erreur s'est produite. Veuillez réessayer.");
     }
   };
 
@@ -232,12 +193,12 @@ export function CreateBookModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{editingBook ? "Edit Book" : "Add Book"}</DialogTitle>
+          <DialogTitle>{editingBook ? "Modifier le livre" : "Ajouter un livre"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
             <Label htmlFor="title">
-              Title <span className="text-red-500">*</span>
+              Titre <span className="text-red-500">*</span>
             </Label>
             <Input
               id="title"
@@ -255,7 +216,7 @@ export function CreateBookModal({
             />
           </div>
           <div>
-            <Label htmlFor="author">Author</Label>
+            <Label htmlFor="author">Auteur</Label>
             <Input
               id="author"
               value={bookForm.author || ""}
@@ -264,7 +225,7 @@ export function CreateBookModal({
           </div>
           <div>
             <Label htmlFor="status">
-              Status <span className="text-red-500">*</span>
+              Statut <span className="text-red-500">*</span>
             </Label>
             <Select
               value={bookForm.status || "free"}
@@ -276,15 +237,88 @@ export function CreateBookModal({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="free">Gratuit</SelectItem>
                 <SelectItem value="premium">Premium</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
+          {/* Sessions Multi-Select */}
+          <div>
+            <Label>Sessions</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="w-full justify-between"
+                  onClick={() => {
+                    if (sessions.length === 0 && !sessionsLoading) {
+                      getSessions();
+                    }
+                  }}
+                >
+                  {bookForm.session && bookForm.session.length > 0
+                    ? `${bookForm.session.length} sélectionné${bookForm.session.length > 1 ? "s" : ""}`
+                    : "Sélectionner des sessions..."}
+                  <span className="ml-2">▼</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput placeholder="Rechercher des sessions..." />
+                  <CommandEmpty>
+                    {sessionsLoading ? "Chargement..." : "Aucune session trouvée."}
+                  </CommandEmpty>
+                  <CommandGroup className="max-h-48 overflow-y-auto">
+                    {sessions.map((session) => {
+                      const selectedSessions = bookForm.session || [];
+                      const isSelected = selectedSessions.includes(session.sessionId);
+                      return (
+                        <CommandItem
+                          key={session.sessionId}
+                          onSelect={() => {
+                            const newSelected = isSelected
+                              ? selectedSessions.filter((id) => id !== session.sessionId)
+                              : [...selectedSessions, session.sessionId];
+                            setBookForm({ ...bookForm, session: newSelected });
+                          }}
+                        >
+                          <Checkbox checked={isSelected} className="mr-2" />
+                          {session.sessionTitle} - {session.trainingTitle}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {bookForm.session && bookForm.session.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {bookForm.session.map((sessionId) => {
+                  const session = sessions.find((s) => s.sessionId === sessionId);
+                  return (
+                    <Badge key={sessionId} variant="secondary">
+                      {session ? `${session.sessionTitle} - ${session.trainingTitle}` : sessionId}
+                      <button
+                        className="ml-1 text-xs"
+                        onClick={() => {
+                          const newSelected = bookForm.session!.filter((id) => id !== sessionId);
+                          setBookForm({ ...bookForm, session: newSelected });
+                        }}
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* Categories Multi-Select */}
           <div>
-            <Label>Categories (Required)</Label>
+            <Label>Catégories (Requis)</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -298,16 +332,16 @@ export function CreateBookModal({
                   }}
                 >
                   {bookForm.category && bookForm.category.length > 0
-                    ? `${bookForm.category.length} selected`
-                    : "Select categories..."}
+                    ? `${bookForm.category.length} sélectionnée${bookForm.category.length > 1 ? "s" : ""}`
+                    : "Sélectionner des catégories..."}
                   <span className="ml-2">▼</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0">
                 <Command>
-                  <CommandInput placeholder="Search categories..." />
+                  <CommandInput placeholder="Rechercher des catégories..." />
                   <CommandEmpty>
-                    {categoriesLoading ? "Loading..." : "No categories found."}
+                    {categoriesLoading ? "Chargement..." : "Aucune catégorie trouvée."}
                   </CommandEmpty>
                   <CommandGroup className="max-h-48 overflow-y-auto">
                     {categories.map((category) => {
@@ -359,7 +393,7 @@ export function CreateBookModal({
             <>
               <div>
                 <Label htmlFor="icon">
-                  Icon <span className="text-red-500">*</span>
+                  Icône <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="icon"
@@ -373,12 +407,14 @@ export function CreateBookModal({
                   disabled={isUploading}
                 />
                 {iconFile && (
-                  <p className="text-sm text-muted-foreground mt-1">Selected: {iconFile.name}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Sélectionné : {iconFile.name}
+                  </p>
                 )}
               </div>
               <div>
                 <Label htmlFor="piece_joint">
-                  Piece Joint <span className="text-red-500">*</span>
+                  Pièce jointe <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="piece_joint"
@@ -393,7 +429,7 @@ export function CreateBookModal({
                 />
                 {pieceJointFile && (
                   <p className="text-sm text-muted-foreground mt-1">
-                    Selected: {pieceJointFile.name}
+                    Sélectionné : {pieceJointFile.name}
                   </p>
                 )}
               </div>
@@ -402,7 +438,9 @@ export function CreateBookModal({
           {editingBook && (
             <>
               <div>
-                <Label htmlFor="icon">Icon (Optional - leave empty to keep current)</Label>
+                <Label htmlFor="icon">
+                  Icône (Optionnel - laisser vide pour conserver l'actuel)
+                </Label>
                 <Input
                   id="icon"
                   type="file"
@@ -415,16 +453,16 @@ export function CreateBookModal({
                 />
                 {iconFile && (
                   <p className="text-sm text-muted-foreground mt-1">
-                    New file selected: {iconFile.name}
+                    Nouveau fichier sélectionné : {iconFile.name}
                   </p>
                 )}
                 {!iconFile && bookForm.icon && (
-                  <p className="text-sm text-muted-foreground mt-1">Current: {bookForm.icon}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Actuel : {bookForm.icon}</p>
                 )}
               </div>
               <div>
                 <Label htmlFor="piece_joint">
-                  Piece Joint (Optional - leave empty to keep current)
+                  Pièce jointe (Optionnel - laisser vide pour conserver l'actuel)
                 </Label>
                 <Input
                   id="piece_joint"
@@ -438,12 +476,12 @@ export function CreateBookModal({
                 />
                 {pieceJointFile && (
                   <p className="text-sm text-muted-foreground mt-1">
-                    New file selected: {pieceJointFile.name}
+                    Nouveau fichier sélectionné : {pieceJointFile.name}
                   </p>
                 )}
                 {!pieceJointFile && bookForm.piece_joint && (
                   <p className="text-sm text-muted-foreground mt-1">
-                    Current: {bookForm.piece_joint}
+                    Actuel : {bookForm.piece_joint}
                   </p>
                 )}
               </div>
@@ -475,7 +513,7 @@ export function CreateBookModal({
                 disabled={isUploading}
               />
               <Label htmlFor="downloadable" className="cursor-pointer">
-                Downloadable
+                Téléchargeable
               </Label>
             </div>
           </div>
@@ -487,16 +525,16 @@ export function CreateBookModal({
               onClick={() => onOpenChange(false)}
               disabled={isUploading}
             >
-              Cancel
+              Annuler
             </Button>
             <Button onClick={handleSubmit} disabled={isUploading}>
               {isUploading
-                ? uploadStep === "uploading"
-                  ? "Uploading..."
-                  : "Creating..."
+                ? editingBook
+                  ? "Mise à jour..."
+                  : "Création..."
                 : editingBook
-                  ? "Update"
-                  : "Create"}
+                  ? "Mettre à jour"
+                  : "Créer"}
             </Button>
           </div>
         </div>

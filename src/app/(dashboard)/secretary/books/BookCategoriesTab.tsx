@@ -71,7 +71,7 @@ export function BookCategoriesTab() {
   return (
     <>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl">Book Categories</h2>
+        <h2 className="text-xl">Catégories de livres</h2>
         <Button
           onClick={() => {
             setEditingCategory(null);
@@ -79,16 +79,16 @@ export function BookCategoriesTab() {
             setCategoryDialogOpen(true);
           }}
         >
-          Add Category
+          Ajouter une catégorie
         </Button>
       </div>
       {categoriesLoading ? (
-        <p>Loading...</p>
+        <p>Chargement...</p>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
+              <TableHead>Titre</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -103,14 +103,14 @@ export function BookCategoriesTab() {
                     onClick={() => handleEditCategory(category)}
                     className="mr-2"
                   >
-                    Edit
+                    Modifier
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDeleteCategory(category.id)}
                   >
-                    Delete
+                    Supprimer
                   </Button>
                 </TableCell>
               </TableRow>
@@ -123,11 +123,13 @@ export function BookCategoriesTab() {
       <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingCategory ? "Edit Category" : "Add Category"}</DialogTitle>
+            <DialogTitle>
+              {editingCategory ? "Modifier la catégorie" : "Ajouter une catégorie"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="categoryTitle">Title</Label>
+              <Label htmlFor="categoryTitle">Titre</Label>
               <Input
                 id="categoryTitle"
                 value={categoryForm.title || ""}
@@ -136,10 +138,10 @@ export function BookCategoriesTab() {
             </div>
             <div className="flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={() => setCategoryDialogOpen(false)}>
-                Cancel
+                Annuler
               </Button>
               <Button onClick={handleCreateCategory}>
-                {editingCategory ? "Update" : "Create"}
+                {editingCategory ? "Mettre à jour" : "Créer"}
               </Button>
             </div>
           </div>
