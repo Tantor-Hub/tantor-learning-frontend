@@ -38,6 +38,8 @@ import { uploadApi } from "./upload-api";
 import { documentsApi } from "./documents";
 import { catalogueFormationApi } from "./catalogue-formation";
 import { sessionDocumentApi } from "./session-document";
+import { bookApi } from "./book";
+import { bookCategoryApi } from "./bookcategory";
 
 // Export all API slices for easy access
 export {
@@ -80,6 +82,8 @@ export {
   uploadApi,
   catalogueFormationApi,
   sessionDocumentApi,
+  bookApi,
+  bookCategoryApi,
 };
 
 // Combine all reducers for easy store setup
@@ -123,6 +127,8 @@ export const apiReducers = {
   [uploadApi.reducerPath]: uploadApi.reducer,
   [catalogueFormationApi.reducerPath]: catalogueFormationApi.reducer,
   [sessionDocumentApi.reducerPath]: sessionDocumentApi.reducer,
+  [bookApi.reducerPath]: bookApi.reducer,
+  [bookCategoryApi.reducerPath]: bookCategoryApi.reducer,
 };
 
 // Combine all middlewares for easy store setup
@@ -166,4 +172,6 @@ export const apiMiddlewares = [
   uploadApi.middleware,
   catalogueFormationApi.middleware,
   sessionDocumentApi.middleware,
+  bookApi.middleware,
+  bookCategoryApi.middleware,
 ];
