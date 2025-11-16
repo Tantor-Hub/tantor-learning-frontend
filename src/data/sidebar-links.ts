@@ -15,6 +15,7 @@ import {
   Shapes,
   Bell,
   BadgeEuro,
+  Book,
 } from "lucide-react";
 
 interface NavigationMenu {
@@ -188,6 +189,11 @@ const navigationMenus: NavigationMenus = {
       title: "Inscriptions",
       url: "secretary/payment",
       icon: BadgeEuro,
+    },
+    {
+      title: "Bibliothèque",
+      url: "secretary/books",
+      icon: Book,
     },
     // {
     //   title: "Notifications",
