@@ -52,6 +52,7 @@ export const bookCategoryApi = createApi({
 
 export const {
   useGetBookCategoriesQuery,
+  useLazyGetBookCategoriesQuery,
   useGetBookCategoryQuery,
   useCreateBookCategoryMutation,
   useUpdateBookCategoryMutation,

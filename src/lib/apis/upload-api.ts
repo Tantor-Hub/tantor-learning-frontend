@@ -23,7 +23,19 @@ export const uploadApi = createApi({
       }),
       invalidatesTags: ["Upload"],
     }),
+    uploadDocument: builder.mutation<UploadImageResponse, FormData>({
+      query: (formData) => ({
+        url: "uploads/image", // Using same endpoint - adjust if different
+        method: "POST",
+        body: formData,
+        prepareHeaders: (headers: any) => {
+          headers.delete("Content-Type");
+          return headers;
+        },
+      }),
+      invalidatesTags: ["Upload"],
+    }),
   }),
 });
 
-export const { useUploadImageMutation } = uploadApi;
+export const { useUploadImageMutation, useUploadDocumentMutation } = uploadApi;

@@ -22,9 +22,10 @@ export interface CreateBookRequest {
   author: string;
   status: "premium" | "free";
   category: string[];
-  icon: File;
-  piece_joint: File;
+  icon: string; // URL after upload
+  piece_joint: string; // URL after upload
   public: boolean;
+  downloadable?: boolean;
 }
 
 export interface UpdateBookRequest {
@@ -34,9 +35,10 @@ export interface UpdateBookRequest {
   author?: string;
   status?: "premium" | "free";
   category?: string[];
-  icon?: File;
-  piece_joint?: File;
+  icon?: string; // URL after upload
+  piece_joint?: string; // URL after upload
   public?: boolean;
+  downloadable?: boolean;
 }
 
 export interface ApiResponse<T> {

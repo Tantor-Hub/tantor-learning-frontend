@@ -1,9 +1,9 @@
-import { createApi, enhancedBaseQuery } from "./base-api";
+import { createApi, fileUploadEnhancedBaseQuery } from "./base-api";
 import { Book, CreateBookRequest, UpdateBookRequest, ApiResponse } from "@/types/book";
 
 export const bookApi = createApi({
   reducerPath: "bookApi",
-  baseQuery: enhancedBaseQuery,
+  baseQuery: fileUploadEnhancedBaseQuery,
   tagTypes: ["Book"],
   endpoints: (builder) => ({
     getBooks: builder.query<Book[], void>({
@@ -14,11 +14,11 @@ export const bookApi = createApi({
       providesTags: ["Book"],
       transformResponse: (response: ApiResponse<Book[]>) => response.data,
     }),
-    createBook: builder.mutation<Book, CreateBookRequest>({
-      query: (body) => ({
+    createBook: builder.mutation<Book, FormData>({
+      query: (formData) => ({
         url: "book",
         method: "POST",
-        body,
+        body: formData,
       }),
       invalidatesTags: ["Book"],
       transformResponse: (response: ApiResponse<Book>) => response.data,
@@ -31,7 +31,7 @@ export const bookApi = createApi({
       providesTags: ["Book"],
       transformResponse: (response: ApiResponse<Book>) => response.data,
     }),
-    updateBook: builder.mutation<Book, { id: string; body: UpdateBookRequest }>({
+    updateBook: builder.mutation<Book, { id: string; body: FormData }>({
       query: ({ id, body }) => ({
         url: `book/${id}`,
         method: "PATCH",
