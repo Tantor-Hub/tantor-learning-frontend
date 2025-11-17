@@ -10,6 +10,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 import { useGetBooksQuery, useDeleteBookMutation } from "@/lib/apis/book";
 import { Book } from "@/types/book";
 import { CreateBookModal } from "./create-book-modal";
@@ -55,6 +62,8 @@ export function BooksTab() {
               <TableHead>Titre</TableHead>
               <TableHead>Auteur</TableHead>
               <TableHead>Statut</TableHead>
+              <TableHead>Vues</TableHead>
+              <TableHead>Téléchargements</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -64,18 +73,28 @@ export function BooksTab() {
                 <TableCell>{book.title}</TableCell>
                 <TableCell>{book.author}</TableCell>
                 <TableCell>{book.status === "premium" ? "Premium" : "Gratuit"}</TableCell>
+                <TableCell>{book.views}</TableCell>
+                <TableCell>{book.download}</TableCell>
                 <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditBook(book)}
-                    className="mr-2"
-                  >
-                    Modifier
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleDeleteBook(book.id)}>
-                    Supprimer
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Ouvrir le menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEditBook(book)}>
+                        Modifier
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteBook(book.id)}
+                        className="text-destructive"
+                      >
+                        Supprimer
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
