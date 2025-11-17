@@ -25,7 +25,7 @@ export const chatApi = createApi({
 
     deleteChat: builder.mutation<void, { id: string }>({
       query: ({ id }) => ({
-        url: `api/chat`,
+        url: `chat`,
         method: "DELETE",
         body: { id },
       }),

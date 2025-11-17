@@ -37,6 +37,7 @@ import { BookCategory } from "@/types/bookcategory";
 import { SimplifiedTrainingSession } from "@/types/training-sessions";
 import toast from "react-hot-toast";
 import { X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CreateBookModalProps {
   open: boolean;
@@ -180,30 +181,28 @@ export function CreateBookModal({
       bookFormData.append("downloadable", (bookForm.downloadable ?? false).toString());
 
       if (editingBook) {
-        // For update, append files if new ones selected, otherwise use existing URLs
+        // For update, only append files if new ones are selected
+        // Backend will keep existing files if no new files are provided
         if (iconFile) {
           bookFormData.append("icon", iconFile);
-        } else if (bookForm.icon) {
-          bookFormData.append("icon", bookForm.icon);
         }
 
         if (pieceJointFile) {
           bookFormData.append("piece_joint", pieceJointFile);
-        } else if (bookForm.piece_joint) {
-          bookFormData.append("piece_joint", bookForm.piece_joint);
         }
 
         await updateBook({
           id: editingBook.id,
           body: bookFormData,
-        });
+        }).unwrap();
+
         toast.success("Livre mis à jour avec succès !", { id: loadingToastId });
       } else {
         // For create, append the files directly - backend will handle Cloudinary upload
         bookFormData.append("icon", iconFile!);
         bookFormData.append("piece_joint", pieceJointFile!);
 
-        await createBook(bookFormData);
+        await createBook(bookFormData).unwrap();
         toast.success("Livre créé avec succès !", { id: loadingToastId });
       }
 
@@ -379,7 +378,7 @@ export function CreateBookModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-[95vw] max-w-4xl"
+        className="w-[96vw] max-w-5xl sm:max-w-6xl max-h-[90vh] overflow-y-auto"
         onInteractOutside={(event) => event.preventDefault()}
         onEscapeKeyDown={(event) => event.preventDefault()}
       >
@@ -456,27 +455,45 @@ export function CreateBookModal({
                     <Command>
                       <CommandInput placeholder="Rechercher des sessions..." />
                       <CommandEmpty>
-                        {sessionsLoading ? "Chargement..." : "Aucune session trouvée."}
+                        {sessionsLoading ? (
+                          <div className="space-y-2 p-2">
+                            {Array.from({ length: 3 }).map((_, i) => (
+                              <div key={i} className="flex items-center gap-2">
+                                <Skeleton className="h-4 w-4" />
+                                <Skeleton className="h-4 w-full" />
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          "Aucune session trouvée."
+                        )}
                       </CommandEmpty>
                       <CommandGroup className="max-h-48 overflow-y-auto">
-                        {sessions.map((session) => {
-                          const selectedSessions = bookForm.session || [];
-                          const isSelected = selectedSessions.includes(session.sessionId);
-                          return (
-                            <CommandItem
-                              key={session.sessionId}
-                              onSelect={() => {
-                                const newSelected = isSelected
-                                  ? selectedSessions.filter((id) => id !== session.sessionId)
-                                  : [...selectedSessions, session.sessionId];
-                                setBookForm({ ...bookForm, session: newSelected });
-                              }}
-                            >
-                              <Checkbox checked={isSelected} className="mr-2" />
-                              {session.sessionTitle} - {session.trainingTitle}
-                            </CommandItem>
-                          );
-                        })}
+                        {sessionsLoading && sessions.length === 0
+                          ? Array.from({ length: 3 }).map((_, i) => (
+                              <CommandItem key={i} disabled>
+                                <Skeleton className="h-4 w-4 mr-2" />
+                                <Skeleton className="h-4 w-full" />
+                              </CommandItem>
+                            ))
+                          : sessions.map((session) => {
+                              const selectedSessions = bookForm.session || [];
+                              const isSelected = selectedSessions.includes(session.sessionId);
+                              return (
+                                <CommandItem
+                                  key={session.sessionId}
+                                  onSelect={() => {
+                                    const newSelected = isSelected
+                                      ? selectedSessions.filter((id) => id !== session.sessionId)
+                                      : [...selectedSessions, session.sessionId];
+                                    setBookForm({ ...bookForm, session: newSelected });
+                                  }}
+                                >
+                                  <Checkbox checked={isSelected} className="mr-2" />
+                                  {session.sessionTitle} - {session.trainingTitle}
+                                </CommandItem>
+                              );
+                            })}
                       </CommandGroup>
                     </Command>
                   </PopoverContent>
@@ -537,27 +554,45 @@ export function CreateBookModal({
                     <Command>
                       <CommandInput placeholder="Rechercher des catégories..." />
                       <CommandEmpty>
-                        {categoriesLoading ? "Chargement..." : "Aucune catégorie trouvée."}
+                        {categoriesLoading ? (
+                          <div className="space-y-2 p-2">
+                            {Array.from({ length: 3 }).map((_, i) => (
+                              <div key={i} className="flex items-center gap-2">
+                                <Skeleton className="h-4 w-4" />
+                                <Skeleton className="h-4 w-full" />
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          "Aucune catégorie trouvée."
+                        )}
                       </CommandEmpty>
                       <CommandGroup className="max-h-48 overflow-y-auto">
-                        {categories.map((category) => {
-                          const selectedCategories = bookForm.category || [];
-                          const isSelected = selectedCategories.includes(category.id);
-                          return (
-                            <CommandItem
-                              key={category.id}
-                              onSelect={() => {
-                                const newSelected = isSelected
-                                  ? selectedCategories.filter((id) => id !== category.id)
-                                  : [...selectedCategories, category.id];
-                                setBookForm({ ...bookForm, category: newSelected });
-                              }}
-                            >
-                              <Checkbox checked={isSelected} className="mr-2" />
-                              {category.title}
-                            </CommandItem>
-                          );
-                        })}
+                        {categoriesLoading && categories.length === 0
+                          ? Array.from({ length: 3 }).map((_, i) => (
+                              <CommandItem key={i} disabled>
+                                <Skeleton className="h-4 w-4 mr-2" />
+                                <Skeleton className="h-4 w-full" />
+                              </CommandItem>
+                            ))
+                          : categories.map((category) => {
+                              const selectedCategories = bookForm.category || [];
+                              const isSelected = selectedCategories.includes(category.id);
+                              return (
+                                <CommandItem
+                                  key={category.id}
+                                  onSelect={() => {
+                                    const newSelected = isSelected
+                                      ? selectedCategories.filter((id) => id !== category.id)
+                                      : [...selectedCategories, category.id];
+                                    setBookForm({ ...bookForm, category: newSelected });
+                                  }}
+                                >
+                                  <Checkbox checked={isSelected} className="mr-2" />
+                                  {category.title}
+                                </CommandItem>
+                              );
+                            })}
                       </CommandGroup>
                     </Command>
                   </PopoverContent>

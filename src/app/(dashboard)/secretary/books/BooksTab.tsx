@@ -16,20 +16,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Loader2 } from "lucide-react";
 import { useGetBooksQuery, useDeleteBookMutation } from "@/lib/apis/book";
 import { Book } from "@/types/book";
 import { CreateBookModal } from "./create-book-modal";
+import toast from "react-hot-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function BooksTab() {
   // Books hooks
   const { data: booksResponse, isLoading: booksLoading } = useGetBooksQuery({});
   const books = booksResponse?.data || [];
-  const [deleteBook] = useDeleteBookMutation();
+  const [deleteBook, { isLoading: isDeleting }] = useDeleteBookMutation();
 
   // State for dialog
   const [bookDialogOpen, setBookDialogOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [deletingBookId, setDeletingBookId] = useState<string | null>(null);
 
   const handleEditBook = (book: Book) => {
     setEditingBook(book);
@@ -37,7 +40,19 @@ export function BooksTab() {
   };
 
   const handleDeleteBook = async (id: string) => {
-    await deleteBook(id);
+    try {
+      setDeletingBookId(id);
+      const loadingToastId = toast.loading("Suppression du livre...");
+
+      await deleteBook(id).unwrap();
+
+      toast.success("Livre supprimé avec succès !", { id: loadingToastId });
+      setDeletingBookId(null);
+    } catch (error: any) {
+      console.error("Error deleting book:", error);
+      toast.error(error?.data?.message || "Erreur lors de la suppression du livre");
+      setDeletingBookId(null);
+    }
   };
 
   return (
@@ -54,7 +69,42 @@ export function BooksTab() {
         </Button>
       </div>
       {booksLoading ? (
-        <p>Chargement...</p>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Titre</TableHead>
+              <TableHead>Auteur</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead>Vues</TableHead>
+              <TableHead>Téléchargements</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <Skeleton className="h-4 w-48" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-32" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-20" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-16" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-16" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-8 w-8" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       ) : (
         <Table>
           <TableHeader>
@@ -68,36 +118,50 @@ export function BooksTab() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {books.map((book) => (
-              <TableRow key={book.id}>
-                <TableCell>{book.title}</TableCell>
-                <TableCell>{book.author}</TableCell>
-                <TableCell>{book.status === "premium" ? "Premium" : "Gratuit"}</TableCell>
-                <TableCell>{book.views}</TableCell>
-                <TableCell>{book.download}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Ouvrir le menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditBook(book)}>
-                        Modifier
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDeleteBook(book.id)}
-                        className="text-destructive"
-                      >
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+            {books.map((book) => {
+              const isDeletingThis = deletingBookId === book.id;
+              return (
+                <TableRow key={book.id} className={isDeletingThis ? "opacity-50" : ""}>
+                  <TableCell>{book.title}</TableCell>
+                  <TableCell>{book.author}</TableCell>
+                  <TableCell>{book.status === "premium" ? "Premium" : "Gratuit"}</TableCell>
+                  <TableCell>{book.views}</TableCell>
+                  <TableCell>{book.download}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0" disabled={isDeletingThis}>
+                          <span className="sr-only">Ouvrir le menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleEditBook(book)}
+                          disabled={isDeletingThis}
+                        >
+                          Modifier
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteBook(book.id)}
+                          className="text-destructive"
+                          disabled={isDeletingThis}
+                        >
+                          {isDeletingThis ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Suppression...
+                            </>
+                          ) : (
+                            "Supprimer"
+                          )}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       )}

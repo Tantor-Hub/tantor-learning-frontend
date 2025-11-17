@@ -9,8 +9,7 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("books");
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Bibliothèque</h1>
+    <div>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="books">Livres</TabsTrigger>

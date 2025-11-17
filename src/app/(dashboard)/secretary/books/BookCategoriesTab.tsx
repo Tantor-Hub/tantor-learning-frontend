@@ -24,6 +24,9 @@ import {
   CreateBookCategoryRequest,
   UpdateBookCategoryRequest,
 } from "@/types/bookcategory";
+import toast from "react-hot-toast";
+import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function BookCategoriesTab() {
   // Book Categories hooks
@@ -36,6 +39,7 @@ export function BookCategoriesTab() {
   // State for dialog
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<BookCategory | null>(null);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
 
   // Form state
   const [categoryForm, setCategoryForm] = useState<
@@ -65,7 +69,68 @@ export function BookCategoriesTab() {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    await deleteCategory(id);
+    let loadingToastId: string | undefined;
+    try {
+      setDeletingCategoryId(id);
+      loadingToastId = toast.loading("Suppression de la catégorie...");
+
+      await deleteCategory(id).unwrap();
+
+      toast.success("Catégorie supprimée avec succès !", { id: loadingToastId });
+      setDeletingCategoryId(null);
+    } catch (error: any) {
+      console.error("Error deleting category:", error);
+      console.error("Error details:", {
+        status: error?.status,
+        data: error?.data,
+        message: error?.message,
+        fullError: JSON.stringify(error, null, 2),
+      });
+
+      // Extract error message from various possible locations
+      let errorMessage = "Erreur lors de la suppression de la catégorie";
+
+      // Handle 409 conflict error with detailed message
+      if (error?.status === 409) {
+        // Try multiple locations for the error message
+        if (typeof error?.data === "string") {
+          // If data is a string (like in the API response)
+          errorMessage = error.data;
+        } else if (error?.data?.data) {
+          // If data is nested
+          errorMessage = error.data.data;
+        } else if (error?.data?.message) {
+          // If message is in data object
+          errorMessage = error.data.message;
+        } else if (error?.message) {
+          // Fallback to message field
+          errorMessage = error.message;
+        } else {
+          errorMessage = "Impossible de supprimer cette catégorie car des livres y sont associés.";
+        }
+
+        toast.error(errorMessage, {
+          id: loadingToastId,
+          duration: 6000, // Show longer for important error messages
+        });
+      } else {
+        // Handle other errors
+        if (typeof error?.data === "string") {
+          errorMessage = error.data;
+        } else if (error?.data?.data) {
+          errorMessage = error.data.data;
+        } else if (error?.data?.message) {
+          errorMessage = error.data.message;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+
+        toast.error(errorMessage, {
+          id: loadingToastId,
+        });
+      }
+      setDeletingCategoryId(null);
+    }
   };
 
   return (
@@ -83,7 +148,29 @@ export function BookCategoriesTab() {
         </Button>
       </div>
       {categoriesLoading ? (
-        <p>Chargement...</p>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Titre</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <Skeleton className="h-4 w-48" />
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Skeleton className="h-8 w-20" />
+                    <Skeleton className="h-8 w-20" />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       ) : (
         <Table>
           <TableHeader>
@@ -93,28 +180,40 @@ export function BookCategoriesTab() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categories.map((category) => (
-              <TableRow key={category.id}>
-                <TableCell>{category.title}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditCategory(category)}
-                    className="mr-2"
-                  >
-                    Modifier
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteCategory(category.id)}
-                  >
-                    Supprimer
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {categories.map((category) => {
+              const isDeletingThis = deletingCategoryId === category.id;
+              return (
+                <TableRow key={category.id} className={isDeletingThis ? "opacity-50" : ""}>
+                  <TableCell>{category.title}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditCategory(category)}
+                      className="mr-2"
+                      disabled={isDeletingThis}
+                    >
+                      Modifier
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteCategory(category.id)}
+                      disabled={isDeletingThis}
+                    >
+                      {isDeletingThis ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Suppression...
+                        </>
+                      ) : (
+                        "Supprimer"
+                      )}
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       )}
