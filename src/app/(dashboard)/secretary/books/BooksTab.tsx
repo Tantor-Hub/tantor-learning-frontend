@@ -16,7 +16,8 @@ import { CreateBookModal } from "./create-book-modal";
 
 export function BooksTab() {
   // Books hooks
-  const { data: books = [], isLoading: booksLoading } = useGetBooksQuery();
+  const { data: booksResponse, isLoading: booksLoading } = useGetBooksQuery({});
+  const books = booksResponse?.data || [];
   const [deleteBook] = useDeleteBookMutation();
 
   // State for dialog

@@ -33,12 +33,12 @@ const contactInfo = {
     {
       type: "Email",
       icon: <Mail className="text-[#33415C] h-full w-auto" />,
-      value: "infos@tantor.com",
+      value: "secretariat@tantorelarning.com",
     },
     {
       type: "Adresse",
       icon: <MapPin className="text-[#33415C] h-full w-auto" />,
-      value: "France, Paris",
+      value: "Villefontaine, France",
     },
   ],
 };

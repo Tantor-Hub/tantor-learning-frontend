@@ -84,7 +84,7 @@ export default function Page() {
             </div>
             <div>
               <h3 className="font-bold">Email</h3>
-              <p>infos@tantor.com</p>
+              <p>secretariat@tantorelarning.com</p>
             </div>
           </div>
           <div className="flex gap-4 items-center mt-6">
@@ -93,7 +93,7 @@ export default function Page() {
             </div>
             <div>
               <h3 className="font-bold">Adresse</h3>
-              <p>France, Paris</p>
+              <p>Villefontaine, France</p>
             </div>
           </div>
         </div>

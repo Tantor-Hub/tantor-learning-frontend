@@ -3,7 +3,7 @@
 import {
   useGetBookByIdQuery,
   useIncrementBookViewsMutation,
-  useIncrementBookDownloadsMutation,
+  useIncrementBookDownloadCountMutation,
 } from "@/lib/apis/book";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -23,7 +23,7 @@ export default function BookDetailPage() {
 
   const { data: book, isLoading, error } = useGetBookByIdQuery(bookId);
   const [incrementViews] = useIncrementBookViewsMutation();
-  const [incrementDownloads] = useIncrementBookDownloadsMutation();
+  const [incrementDownloadCount] = useIncrementBookDownloadCountMutation();
 
   // Increment views when page loads (only once)
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function BookDetailPage() {
 
     try {
       // Increment download count
-      await incrementDownloads(bookId).unwrap();
+      await incrementDownloadCount(bookId).unwrap();
 
       // Open the file in a new tab
       window.open(book.piece_joint, "_blank");
@@ -57,15 +57,43 @@ export default function BookDetailPage() {
   };
 
   if (error) {
+    const isPaymentRequired = "status" in error && error.status === 402;
     return (
       <section className="mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12">
-          <div className="text-center py-12">
-            <p className="text-red-500 mb-4">Erreur lors du chargement du livre.</p>
-            <Button onClick={() => router.push("/library")} variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour à la bibliothèque
-            </Button>
+          <div className="max-w-md mx-auto">
+            <Card className="border-destructive/50 bg-destructive/5">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                  <BookOpen className="h-6 w-6 text-destructive" />
+                </div>
+                <CardTitle className="text-destructive">
+                  {isPaymentRequired ? "Accès refusé" : "Erreur de chargement"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-center space-y-4">
+                <CardDescription className="text-base">
+                  {isPaymentRequired
+                    ? "Veuillez finaliser le paiement d'une session liée à ce livre pour accéder au contenu."
+                    : "Une erreur s'est produite lors du chargement du livre. Veuillez réessayer plus tard."}
+                </CardDescription>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={() => router.push("/library")}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Retour à la bibliothèque
+                  </Button>
+                  {isPaymentRequired && (
+                    <Button onClick={() => router.push("/dashboard")} className="w-full">
+                      Aller au tableau de bord
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
