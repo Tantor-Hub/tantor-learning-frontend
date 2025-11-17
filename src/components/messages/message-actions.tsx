@@ -56,7 +56,7 @@ export function MessageActions({
       <div className="flex items-center gap-4">
         <ReplyMessageDialog messageId={messageId} />
         {/* Transfer button - hidden when hideTransfer prop is true */}
-        {!hideTransfer && <TransferMessageDialog messageId={messageId} />}
+        <TransferMessageDialog messageId={messageId} />
         {isDeleted ? (
           <Button variant={"outline"} onClick={handleRestore} className="flex items-center gap-2">
             <RotateCcw />

@@ -143,7 +143,7 @@ export default function NotesPage() {
     }
 
     try {
-      toast.loading("Génération du PDF en cours...", { id: "pdf-generation" });
+      toast.loading("Génération du PDF en matière...", { id: "pdf-generation" });
 
       // Get filter names for display based on applied filters
       const appliedTraining = trainings.find((t) => t.id === appliedFilters.trainingId);
@@ -300,7 +300,7 @@ export default function NotesPage() {
             <h2>Filtres appliqués</h2>
             ${trainingName ? `<p><strong>Formation:</strong> ${trainingName}</p>` : ""}
             ${sessionName ? `<p><strong>Session:</strong> ${sessionName}</p>` : ""}
-            ${courseName ? `<p><strong>Cours:</strong> ${courseName}</p>` : ""}
+            ${courseName ? `<p><strong>Matière:</strong> ${courseName}</p>` : ""}
             ${lessonName ? `<p><strong>Leçon:</strong> ${lessonName}</p>` : ""}
             ${studentName ? `<p><strong>Étudiant:</strong> ${studentName}</p>` : ""}
           </div>
@@ -540,14 +540,14 @@ export default function NotesPage() {
 
           {/* Course Selector */}
           <div>
-            <Label htmlFor="sessioncoursId">Cours</Label>
+            <Label htmlFor="sessioncoursId">Matière</Label>
             <Select
               value={filters.sessioncoursId || ""}
               onValueChange={(value) => handleFilterChange("sessioncoursId", value)}
               disabled={!filters.trainingsessionId}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un cours" />
+                <SelectValue placeholder="Sélectionner un Matière" />
               </SelectTrigger>
               <SelectContent>
                 {!filters.trainingsessionId ? (
@@ -559,7 +559,7 @@ export default function NotesPage() {
                     <Skeleton className="h-4 w-full" />
                   </div>
                 ) : courses.length === 0 ? (
-                  <div className="p-2 text-sm text-muted-foreground">Aucun cours trouvé</div>
+                  <div className="p-2 text-sm text-muted-foreground">Aucune Matière trouvé</div>
                 ) : (
                   courses.map((course) => (
                     <SelectItem key={course.id} value={course.id}>
@@ -593,7 +593,7 @@ export default function NotesPage() {
               <SelectContent>
                 {!filters.sessioncoursId ? (
                   <div className="p-2 text-sm text-muted-foreground">
-                    Sélectionnez d'abord un cours
+                    Sélectionnez d'abord un Matière
                   </div>
                 ) : lessonsLoading ? (
                   <div className="p-2">

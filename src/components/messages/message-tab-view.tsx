@@ -6,16 +6,24 @@ import { SentMessagesTab } from "./tab/sent-messages-tab";
 import { ReceivedMessagesTab } from "./tab/received-messages-tab";
 import { Button } from "../ui/button";
 import { ChevronLeft, Mail, Send, Inbox, Trash2, RefreshCw, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MessageAlert } from "./shared/new-message";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { NewMessageSkeleton } from "@/components/skeletons/new-message-skeleton";
 
 export function MessageTabView() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("all");
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "all");
   const [refreshKey, setRefreshKey] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams, activeTab]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
