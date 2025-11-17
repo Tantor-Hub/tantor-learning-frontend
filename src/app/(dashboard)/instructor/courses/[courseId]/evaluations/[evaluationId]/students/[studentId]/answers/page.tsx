@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +27,7 @@ export default function StudentAnswers() {
 
   const [updatePoints] = useUpdateStudentAnswerPointsMutation();
 
-  const answers = answersData?.data?.answers || [];
+  const answers = useMemo(() => answersData?.data?.answers || [], [answersData?.data?.answers]);
   const evaluation = answersData?.data?.evaluation;
 
   // Initialize points state when answers load

@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState } from "react";
+import Image from "next/image";
 
 export interface EventProps {
   id: string;
@@ -243,9 +244,11 @@ export function EventViewer({
           </DialogHeader>
           {selectedEvent && !isEventTimePassed(selectedEvent) && (
             <div className="flex justify-center">
-              <img
+              <Image
                 src={selectedEvent.qrcode}
                 alt="QR Code pour l'événement"
+                width={192}
+                height={192}
                 className="w-48 h-48"
               />
             </div>

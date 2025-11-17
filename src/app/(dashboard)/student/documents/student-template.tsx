@@ -729,7 +729,7 @@ export default function StudentTemplate({
       editorElement.removeEventListener("blur", handleBlur, true);
       editorElement.removeEventListener("click", handleClick, true);
     };
-  }, [editor, updateVariableField, isContentLoaded, isClient]);
+  }, [editor, updateVariableField, isContentLoaded, isClient, isReadonly]);
 
   // Update variable fields in DOM when variableValues change (for existing instances)
   useEffect(() => {
@@ -798,7 +798,7 @@ export default function StudentTemplate({
     }, 200); // Small delay to ensure DOM is ready
 
     return () => clearTimeout(timeoutId);
-  }, [variableValues, editor, isContentLoaded, isClient]);
+  }, [variableValues, editor, isContentLoaded, isClient, isReadonly]);
 
   // Position the secretary comment similar to Google Docs near the first editable field
   useEffect(() => {
@@ -1701,7 +1701,7 @@ export default function StudentTemplate({
     } catch (error) {
       toast.error("Erreur lors du téléchargement du PDF");
     }
-  }, [editor, title, variableValues, sanitizeStylesForPDF, cropSettings]);
+  }, [editor, title, variableValues, sanitizeStylesForPDF, cropSettings, calculateCropSettings]);
 
   // Debug logging
   useEffect(() => {

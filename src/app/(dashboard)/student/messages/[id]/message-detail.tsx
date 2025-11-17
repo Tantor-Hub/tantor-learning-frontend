@@ -5,6 +5,7 @@ import { useGetChatByIdQuery, useGetRepliesByChatIdQuery } from "@/lib/apis/comm
 import { useRouter } from "next/navigation";
 import { RepliesSkeleton } from "./replies-skeleton";
 import { MessageDetailSkeleton } from "@/components/skeletons/message-detail-skeleton";
+import Image from "next/image";
 
 interface MessageDetailProps {
   messageId: string;
@@ -78,9 +79,11 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
                 return (
                   <div key={index} className="flex items-center gap-2 p-2 border rounded">
                     {isImage ? (
-                      <img
+                      <Image
                         src={url}
                         alt={`Attachment ${index + 1}`}
+                        width={64}
+                        height={64}
                         className="w-16 h-16 object-cover cursor-pointer"
                         onClick={() => window.open(url, "_blank")}
                       />

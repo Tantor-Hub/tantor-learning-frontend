@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useGetStudentsAttendanceQuery } from "@/lib/apis/events";
+import Image from "next/image";
 
 type Status = "all" | "excellent" | "strong" | "average" | "weak" | "very_weak";
 
@@ -119,9 +120,11 @@ const StudentsTabs = () => {
                   .map((student, i) => (
                     <TableRow key={i} className="border-b grid grid-cols-5">
                       <TableCell className="flex items-center gap-3">
-                        <img
+                        <Image
                           src={student.studentAvatar}
                           alt={student.studentName}
+                          width={32}
+                          height={32}
                           className="w-8 h-8 rounded-full"
                         />
                         <p className="font-medium text-sm">

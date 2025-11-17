@@ -1161,15 +1161,7 @@ export default function DocumentTemplatePage() {
       console.error("❌ Error downloading PDF:", error);
       toast.error("Erreur lors du téléchargement du PDF");
     }
-  }, [
-    editor,
-    title,
-    variableValues,
-    sanitizeStylesForPDF,
-    cropSettings,
-    isContentLoaded,
-    calculateCropSettings,
-  ]);
+  }, [editor, title, sanitizeStylesForPDF, isContentLoaded, calculateCropSettings]);
 
   // Debug logging
   useEffect(() => {}, [
