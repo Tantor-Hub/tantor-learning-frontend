@@ -191,3 +191,36 @@ export interface IStudentStatisticsApiResponse {
   message: string;
   data: IStudentStatisticsData;
 }
+
+export interface ISecretaryStudentStatistics {
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  studentAvatar: string;
+  averagePoints: number;
+  percentage: number;
+  totalPointsEarned: number;
+  totalPossiblePoints: number;
+  evaluationCount: number;
+}
+
+export interface ISecretaryStatisticsFilters {
+  trainingId?: string;
+  trainingsessionId?: string;
+  sessioncoursId?: string;
+  lessonId?: string;
+  studentId?: string;
+}
+
+export interface ISecretaryStatisticsData {
+  students: ISecretaryStudentStatistics[];
+  filters: ISecretaryStatisticsFilters;
+  totalEvaluations: number;
+  totalPossiblePoints: number;
+}
+
+export interface ISecretaryStatisticsApiResponse {
+  status: number;
+  message: string;
+  data: ISecretaryStatisticsData;
+}

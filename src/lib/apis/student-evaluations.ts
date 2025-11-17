@@ -6,6 +6,8 @@ import {
   IStudentsByEvaluationIdApiResponse,
   IStudentAnswersApiResponse,
   IStudentStatisticsApiResponse,
+  ISecretaryStatisticsApiResponse,
+  ISecretaryStatisticsFilters,
 } from "@/types/student-evaluations";
 
 export const studentEvaluationsApi = createApi({
@@ -43,7 +45,24 @@ export const studentEvaluationsApi = createApi({
     ######################### SECRETARY ACCESS ########################################
     #################################################################################*/
 
-    // Add secretary-specific endpoints here if needed
+    getSecretaryStudentEvaluationStatistics: builder.query<
+      ISecretaryStatisticsApiResponse,
+      ISecretaryStatisticsFilters
+    >({
+      query: (filters) => {
+        const searchParams = new URLSearchParams();
+        if (filters.trainingId) searchParams.append("trainingId", filters.trainingId);
+        if (filters.trainingsessionId)
+          searchParams.append("trainingsessionId", filters.trainingsessionId);
+        if (filters.sessioncoursId) searchParams.append("sessioncoursId", filters.sessioncoursId);
+        if (filters.lessonId) searchParams.append("lessonId", filters.lessonId);
+        if (filters.studentId) searchParams.append("studentId", filters.studentId);
+
+        const queryString = searchParams.toString();
+        return `studentevaluation/secretary/statistics${queryString ? `?${queryString}` : ""}`;
+      },
+      providesTags: ["StudentEvaluations"],
+    }),
 
     createStudentEvaluation: builder.mutation<void, IStudentEvaluation>({
       query: (body) => ({
@@ -116,6 +135,7 @@ export const {
   /*###############################################################################
     ######################### SECRETARY ACCESS ########################################
     #################################################################################*/
+  useGetSecretaryStudentEvaluationStatisticsQuery,
   useCreateStudentEvaluationMutation,
   useDeleteStudentEvaluationMutation,
   useUpdateStudentEvaluationMutation,

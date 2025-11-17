@@ -16,6 +16,7 @@ import {
   Bell,
   BadgeEuro,
   Book,
+  ClipboardList,
 } from "lucide-react";
 
 interface NavigationMenu {
@@ -194,6 +195,11 @@ const navigationMenus: NavigationMenus = {
       title: "Bibliothèque",
       url: "secretary/books",
       icon: Book,
+    },
+    {
+      title: "Notes",
+      url: "secretary/notes",
+      icon: ClipboardList,
     },
     // {
     //   title: "Notifications",
