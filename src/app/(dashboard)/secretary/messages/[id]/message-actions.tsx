@@ -176,9 +176,10 @@ export function MessageActions({ messageId }: MessageActionsProps) {
           <Button variant={"outline"} onClick={handleReply}>
             <Reply /> Répondre
           </Button>
-          <Button variant={"outline"}>
+          {/* Transfer button commented out */}
+          {/* <Button variant={"outline"}>
             <Forward /> Transférer
-          </Button>
+          </Button> */}
           <Button variant={"outline"} onClick={handleDelete} className="flex items-center gap-2">
             <Trash2 />
             Supprimer

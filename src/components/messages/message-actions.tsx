@@ -13,6 +13,7 @@ interface MessageActionsProps {
   subject: string;
   isDeleted?: boolean;
   content?: string;
+  hideTransfer?: boolean;
 }
 
 export function MessageActions({
@@ -21,6 +22,7 @@ export function MessageActions({
   subject,
   isDeleted = false,
   content,
+  hideTransfer = false,
 }: MessageActionsProps) {
   const router = useRouter();
   const [deleteChat] = useDeleteChatMutation();
@@ -53,7 +55,8 @@ export function MessageActions({
       </Button>
       <div className="flex items-center gap-4">
         <ReplyMessageDialog messageId={messageId} />
-        <TransferMessageDialog messageId={messageId} />
+        {/* Transfer button - hidden when hideTransfer prop is true */}
+        {!hideTransfer && <TransferMessageDialog messageId={messageId} />}
         {isDeleted ? (
           <Button variant={"outline"} onClick={handleRestore} className="flex items-center gap-2">
             <RotateCcw />

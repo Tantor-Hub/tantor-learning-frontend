@@ -32,7 +32,13 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
   if (error || !data) {
     return (
       <div>
-        <MessageActions messageId={messageId} senderId="" subject="" content="" />
+        <MessageActions
+          messageId={messageId}
+          senderId=""
+          subject=""
+          content=""
+          hideTransfer={true}
+        />
         <div className="border border-border rounded-lg p-4">
           <p>{error ? "Erreur lors du chargement du message" : "Message non trouvé"}</p>
         </div>
@@ -50,6 +56,7 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
         senderId={message.sender.id}
         subject={message.subject}
         content={message.content}
+        hideTransfer={true}
       />
 
       {/* Main message */}

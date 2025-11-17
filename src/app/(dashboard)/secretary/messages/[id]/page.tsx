@@ -1,13 +1,13 @@
-import { Suspense } from "react";
-import { MessageActions } from "./message-actions";
-import { MessageActionsSkeleton } from "./message-actions-skeleton";
+import React, { Suspense } from "react";
+import { MessageDetail } from "./message-detail";
+import { MessageDetailSkeleton } from "@/components/skeletons/message-detail-skeleton";
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
 
   return (
-    <Suspense fallback={<MessageActionsSkeleton />}>
-      <MessageActions messageId={id} />
+    <Suspense fallback={<MessageDetailSkeleton />}>
+      <MessageDetail messageId={id} />
     </Suspense>
   );
 }

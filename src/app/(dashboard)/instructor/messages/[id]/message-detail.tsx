@@ -2,13 +2,10 @@
 import React from "react";
 import { MessageActions } from "@/components/messages/message-actions";
 import { useGetChatByIdQuery, useGetRepliesByChatIdQuery } from "@/lib/apis/common/chat-api";
-import { ChevronLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { RepliesSkeleton } from "./replies-skeleton";
 import { MessageDetailSkeleton } from "@/components/skeletons/message-detail-skeleton";
-import { useSelector } from "react-redux";
-import { selectCurrentUser } from "@/features/auth/auth-slice";
+import Image from "next/image";
 
 interface MessageDetailProps {
   messageId: string;
@@ -16,7 +13,7 @@ interface MessageDetailProps {
 
 export function MessageDetail({ messageId }: MessageDetailProps) {
   const router = useRouter();
-  const currentUser = useSelector(selectCurrentUser);
+
   const { data, error, isLoading } = useGetChatByIdQuery({ id: messageId });
   const {
     data: repliesData,
@@ -24,7 +21,9 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
     isError: repliesError,
   } = useGetRepliesByChatIdQuery({ chatId: messageId });
 
-  // Handle replies error in render
+  if (repliesError) {
+    console.error("Error getting replies by chat id:", repliesError);
+  }
 
   if (isLoading) {
     return <MessageDetailSkeleton />;
@@ -33,13 +32,15 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
   if (error || !data) {
     return (
       <div>
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <Button variant={"outline"} onClick={() => router.back()}>
-            <ChevronLeft /> Retour
-          </Button>
-        </div>
+        <MessageActions
+          messageId={messageId}
+          senderId=""
+          subject=""
+          content=""
+          hideTransfer={true}
+        />
         <div className="border border-border rounded-lg p-4">
-          <p>Il y a une erreur, réessayer.</p>
+          <p>{error ? "Erreur lors du chargement du message" : "Message non trouvé"}</p>
         </div>
       </div>
     );
@@ -48,17 +49,14 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
   const message = data.data;
   const replies = repliesData?.data.rows || [];
 
-  if (typeof window === "undefined") {
-    return null; // Prevent hydration mismatch by rendering nothing on server
-  }
-
   return (
     <div>
       <MessageActions
         messageId={messageId}
-        senderId={message.sender.id.toString()}
+        senderId={message.sender.id}
         subject={message.subject}
-        isDeleted={message.is_deletedto?.includes(Number(currentUser?.id)) || false}
+        content={message.content}
+        hideTransfer={true}
       />
 
       {/* Main message */}
@@ -76,6 +74,49 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
           </p>
         </div>
         <p>{message.content}</p>
+        {message.piece_joint && message.piece_joint.length > 0 && (
+          <div className="mt-4">
+            <p className="font-semibold mb-2">Pièces jointes:</p>
+            <div className="flex flex-wrap gap-2">
+              {message.piece_joint.map((url: string, index: number) => {
+                const extension = url.split(".").pop()?.toLowerCase();
+                const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(extension || "");
+                const isPdf = extension === "pdf";
+
+                return (
+                  <div key={index} className="flex items-center gap-2 p-2 border rounded">
+                    {isImage ? (
+                      <Image
+                        src={url}
+                        alt={`Attachment ${index + 1}`}
+                        width={64}
+                        height={64}
+                        className="w-16 h-16 object-cover cursor-pointer"
+                        onClick={() => window.open(url, "_blank")}
+                      />
+                    ) : isPdf ? (
+                      <div
+                        className="flex items-center gap-2 cursor-pointer"
+                        onClick={() => window.open(url, "_blank")}
+                      >
+                        <span className="text-red-500">📄</span>
+                        <span>PDF Document</span>
+                      </div>
+                    ) : (
+                      <div
+                        className="flex items-center gap-2 cursor-pointer"
+                        onClick={() => window.open(url, "_blank")}
+                      >
+                        <span>📎</span>
+                        <span>{extension?.toUpperCase()} File</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Replies */}
