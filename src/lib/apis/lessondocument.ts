@@ -1,5 +1,5 @@
 import { createApi, fileUploadEnhancedBaseQuery } from "./base-api";
-import { ILessonDocumentResponse } from "@/types/lessondocument";
+import { ILessonDocumentResponse, ILessonDocumentByIdResponse } from "@/types/lessondocument";
 
 // Lesson Document API
 export const lessonDocumentApi = createApi({
@@ -16,6 +16,11 @@ export const lessonDocumentApi = createApi({
       providesTags: ["LessonDocument"],
     }),
 
+    getLessonDocumentById: builder.query<ILessonDocumentByIdResponse, { id: string }>({
+      query: (request) => `lessondocument/${request.id}`,
+      providesTags: ["LessonDocument"],
+    }),
+
     /*###############################################################################
     ######################### INSTRUCTOR ACCESS ######################################
     #################################################################################*/
@@ -28,6 +33,18 @@ export const lessonDocumentApi = createApi({
       }),
       invalidatesTags: ["LessonDocument"],
     }),
+
+    updateLessonDocument: builder.mutation<
+      ILessonDocumentByIdResponse,
+      { id: string; formData: FormData }
+    >({
+      query: ({ id, formData }) => ({
+        url: `lessondocument/instructor/update/${id}`,
+        method: "PATCH",
+        body: formData,
+      }),
+      invalidatesTags: ["LessonDocument"],
+    }),
   }),
 });
 
@@ -36,9 +53,11 @@ export const {
     ######################### STUDENT ACCESS ########################################
     #################################################################################*/
   useGetLessonDocumentsQuery,
+  useGetLessonDocumentByIdQuery,
 
   /*###############################################################################
     ######################### INSTRUCTOR ACCESS ######################################
     #################################################################################*/
   useCreateLessonDocumentMutation,
+  useUpdateLessonDocumentMutation,
 } = lessonDocumentApi;

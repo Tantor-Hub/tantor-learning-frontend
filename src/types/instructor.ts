@@ -156,6 +156,7 @@ export interface ILessonDocument {
   type: string;
   title: string;
   description: string;
+  ispublish: boolean;
   id_lesson: string;
   createdBy: string;
   createdAt: string;

@@ -22,6 +22,7 @@ import { ContentTab } from "./tab/content";
 import { EvaluationTab } from "./tab/evalution";
 import { DevoirTab } from "./tab/devoirs";
 import { UploadDocumentModal } from "./upload-document-modal";
+import { UpdateLessonDocument } from "./update-lesson-document";
 
 export function LessonDetail() {
   const params = useParams();
@@ -173,11 +174,12 @@ export function LessonDetail() {
                 {lessonDocuments.data.lessondocuments.map((doc) => (
                   <Card key={doc.id}>
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <FileText className="w-8 h-8 text-blue-600" />
-                          <div>
-                            <h4 className="font-semibold">{doc.file_name}</h4>
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3 flex-1">
+                          <FileText className="w-8 h-8 text-blue-600 mt-1" />
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-lg mb-1">{doc.title}</h4>
+                            <p className="text-muted-foreground mb-2">{doc.description}</p>
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                               <Badge variant="secondary">{doc.type}</Badge>
                               <span>
@@ -185,16 +187,28 @@ export function LessonDetail() {
                               </span>
                               <span>•</span>
                               <span>{new Date(doc.createdAt).toLocaleDateString("fr-FR")}</span>
+                              {doc.ispublish && (
+                                <>
+                                  <span>•</span>
+                                  <Badge
+                                    variant="outline"
+                                    className="text-green-600 border-green-600"
+                                  >
+                                    Publié
+                                  </Badge>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 ml-4">
                           <Button variant="outline" size="sm" asChild>
                             <a href={doc.piece_jointe} target="_blank" rel="noopener noreferrer">
                               <Download className="w-4 h-4 mr-2" />
                               Télécharger
                             </a>
                           </Button>
+                          <UpdateLessonDocument documentId={doc.id} onSuccess={refetchDocuments} />
                           <Button
                             variant="outline"
                             size="sm"
