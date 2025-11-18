@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useGetSecretaryStudentEvaluationStatisticsQuery } from "@/lib/apis/student-evaluations";
+import {
+  useGetSecretaryStudentEvaluationStatisticsQuery,
+  useGetStudentEvaluationsBySessionCourseInstructorSecretaryQuery,
+} from "@/lib/apis/student-evaluations";
 import { ISecretaryStatisticsFilters } from "@/types/student-evaluations";
 import { useListTrainingQuery } from "@/lib/apis/secretary/training-secretary-api";
 import { useListSessionByTrainingIdQuery } from "@/lib/apis/secretary/training-secretary-api";
@@ -28,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Image from "next/image";
-import { Search, Filter, X, Download } from "lucide-react";
+import { Search, Filter, X, Download, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import html2pdf from "html2pdf.js";
 import toast from "react-hot-toast";
@@ -73,11 +76,18 @@ export default function NotesPage() {
     }
   }, [filters.sessioncoursId, getLessons]);
 
-  const { data, isLoading, error } =
+  const { data, isLoading, error, refetch } =
     useGetSecretaryStudentEvaluationStatisticsQuery(appliedFilters);
 
   const students = data?.data?.students || [];
   const statistics = data?.data;
+
+  // Fetch evaluations for transcript generation
+  const { data: evaluationsData } = useGetStudentEvaluationsBySessionCourseInstructorSecretaryQuery(
+    { sessionCoursId: appliedFilters.sessioncoursId! },
+    { skip: !appliedFilters.sessioncoursId || !appliedFilters.studentId }
+  );
+  const evaluations = evaluationsData?.data?.evaluations || [];
 
   const handleFilterChange = (key: keyof ISecretaryStatisticsFilters, value: string) => {
     setFilters((prev) => {
@@ -134,6 +144,567 @@ export default function NotesPage() {
   const getSelectedStudentName = () => {
     const student = allStudents.find((s) => s.id === filters.studentId);
     return student ? `${student.firstName || ""} ${student.lastName || ""}`.trim() : "";
+  };
+
+  const handleGenerateTranscript = async (studentId?: string) => {
+    // Use provided studentId or fall back to applied filter
+    const targetStudentId = studentId || appliedFilters.studentId;
+
+    // Check if training is selected
+    if (!filters.trainingId && !appliedFilters.trainingId) {
+      toast.error("Veuillez sélectionner une formation");
+      return;
+    }
+
+    if (!targetStudentId) {
+      toast.error("Veuillez sélectionner un étudiant");
+      return;
+    }
+
+    // Apply filters automatically: training and student
+    const filtersToApply: ISecretaryStatisticsFilters = {
+      trainingId: filters.trainingId || appliedFilters.trainingId,
+      studentId: targetStudentId,
+      // Include other filters if they are set
+      trainingsessionId: filters.trainingsessionId || appliedFilters.trainingsessionId,
+      sessioncoursId: filters.sessioncoursId || appliedFilters.sessioncoursId,
+      lessonId: filters.lessonId || appliedFilters.lessonId,
+    };
+
+    // Apply filters if not already applied
+    let selectedStudent = students.find((s) => s.studentId === targetStudentId);
+
+    if (JSON.stringify(filtersToApply) !== JSON.stringify(appliedFilters)) {
+      setAppliedFilters(filtersToApply);
+      // Refetch data with new filters
+      const result = await refetch();
+      const updatedStudents = result.data?.data?.students || [];
+      selectedStudent = updatedStudents.find((s) => s.studentId === targetStudentId);
+    }
+
+    if (!selectedStudent) {
+      toast.error("Étudiant non trouvé avec les filtres appliqués");
+      return;
+    }
+
+    try {
+      toast.loading("Génération du relevé de notes...", { id: "transcript-generation" });
+
+      // Get all necessary data
+      const appliedTraining = trainings.find((t) => t.id === filtersToApply.trainingId);
+      const trainingName = appliedTraining?.title || "";
+      const trainingSubtitle = appliedTraining?.subtitle || "";
+      const trainingCode = appliedTraining?.rnc || appliedTraining?.id || "";
+      const trainingDescription = appliedTraining?.description || "";
+
+      const appliedSession = sessions.find((s) => s.id === filtersToApply.trainingsessionId);
+      const sessionName = appliedSession?.title || "";
+      const sessionStartDate = appliedSession?.begining_date
+        ? new Date(appliedSession.begining_date).toLocaleDateString("fr-FR")
+        : "";
+      const sessionEndDate = appliedSession?.ending_date
+        ? new Date(appliedSession.ending_date).toLocaleDateString("fr-FR")
+        : "";
+
+      // Get training duration from student statistics (totalHours)
+      let trainingDuration = "___";
+      if (selectedStudent.totalHours !== undefined && selectedStudent.totalHours !== null) {
+        // Format totalHours: if it's a decimal, show one decimal place, otherwise show as integer
+        trainingDuration = Number.isInteger(selectedStudent.totalHours)
+          ? selectedStudent.totalHours.toString()
+          : selectedStudent.totalHours.toFixed(1);
+      } else if (appliedSession?.begining_date && appliedSession?.ending_date) {
+        // Fallback: calculate from session dates
+        const startDate = new Date(appliedSession.begining_date);
+        const endDate = new Date(appliedSession.ending_date);
+        const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        // Estimate hours: assume 7 hours per day (typical training day)
+        const estimatedHours = diffDays * 7;
+        trainingDuration = estimatedHours.toString();
+      }
+
+      // Get courses - use all courses from session if no specific course is selected
+      // Note: courses are loaded based on filters.trainingsessionId, but we need them for filtersToApply
+      // If courses are empty, we'll create a generic entry
+      let coursesToUse = filtersToApply.sessioncoursId
+        ? courses.filter((c) => c.id === filtersToApply.sessioncoursId)
+        : courses;
+
+      // Ensure we always have at least one entry to display
+      if (coursesToUse.length === 0) {
+        // Create a placeholder course entry
+        coursesToUse = [{ id: "", title: trainingName || "Formation" } as (typeof courses)[0]];
+      }
+
+      const studentInfo = allStudents.find((s) => s.id === targetStudentId);
+      const studentFullName = studentInfo
+        ? `${studentInfo.firstName || ""} ${studentInfo.lastName || ""}`.trim()
+        : selectedStudent.studentName;
+      const studentEmail = selectedStudent.studentEmail || studentInfo?.email || "";
+      const studentRegistrationNumber = studentInfo?.id || "";
+
+      // Get evaluation details - always populate with student statistics
+      const evaluationDetails: Array<{
+        subject: string;
+        evaluationType: string;
+        grade: number;
+        maxGrade: number;
+        coefficient: number;
+        classAverage: number;
+        comment: string;
+      }> = [];
+
+      // Calculate average grade per evaluation (convert to 20-point scale)
+      const avgGradePerEvaluation =
+        selectedStudent.evaluationCount > 0 && selectedStudent.totalPossiblePoints > 0
+          ? (selectedStudent.totalPointsEarned / selectedStudent.totalPossiblePoints) * 20
+          : 0;
+      const avgMaxPerEvaluation = 20; // Always 20 for display
+
+      // Calculate raw points for display
+      const avgPointsPerEvaluation =
+        selectedStudent.evaluationCount > 0
+          ? selectedStudent.totalPointsEarned / selectedStudent.evaluationCount
+          : 0;
+      const avgMaxPointsPerEvaluation =
+        selectedStudent.evaluationCount > 0
+          ? selectedStudent.totalPossiblePoints / selectedStudent.evaluationCount
+          : 20;
+
+      // If we have courses, create entries for each course
+      if (coursesToUse.length > 0) {
+        coursesToUse.forEach((course) => {
+          // Calculate how many evaluations might be in this course
+          // Distribute evaluations across courses
+          const evaluationsPerCourse = Math.max(
+            1,
+            Math.floor(selectedStudent.evaluationCount / coursesToUse.length)
+          );
+
+          evaluationDetails.push({
+            subject: course.title || "Matière",
+            evaluationType: "Évaluation",
+            grade: avgGradePerEvaluation, // Already on 20-point scale
+            maxGrade: avgMaxPerEvaluation, // 20
+            coefficient: 1,
+            classAverage: avgGradePerEvaluation * 0.95, // Placeholder - 5% below student average
+            comment:
+              selectedStudent.percentage >= 80
+                ? "Très bon"
+                : selectedStudent.percentage >= 60
+                  ? "Bon"
+                  : "Correct",
+          });
+        });
+      } else {
+        // If no courses, create a single entry with overall statistics
+        evaluationDetails.push({
+          subject: trainingName || "Formation générale",
+          evaluationType: "Évaluation",
+          grade: avgGradePerEvaluation, // Already on 20-point scale
+          maxGrade: avgMaxPerEvaluation, // 20
+          coefficient: 1,
+          classAverage: avgGradePerEvaluation * 0.95,
+          comment:
+            selectedStudent.percentage >= 80
+              ? "Très bon"
+              : selectedStudent.percentage >= 60
+                ? "Bon"
+                : "Correct",
+        });
+      }
+
+      // Calculate subject averages
+      // Use sessionStats if available, otherwise fall back to calculated averages
+      let sessionAveragesData: Array<{
+        sessionTitle: string;
+        studentAverage: number;
+        classAverage: number;
+        studentPoints?: number;
+        totalMaxPoints?: number;
+        sessionAverage?: number;
+        coefficient: number;
+      }> = [];
+
+      if (selectedStudent.sessionStats && selectedStudent.sessionStats.length > 0) {
+        // Use sessionStats from API response with all details (raw values, no conversion)
+        sessionAveragesData = selectedStudent.sessionStats.map((sessionStat) => {
+          return {
+            sessionTitle: sessionStat.sessionTitle,
+            studentAverage: sessionStat.studentPoints, // Use raw studentPoints
+            classAverage: sessionStat.sessionAverage, // Use raw sessionAverage
+            studentPoints: sessionStat.studentPoints,
+            totalMaxPoints: sessionStat.totalMaxPoints,
+            sessionAverage: sessionStat.sessionAverage,
+            coefficient: 1, // Default coefficient, adjust if needed
+          };
+        });
+      } else {
+        // Fallback: calculate from evaluation details (old method)
+        const subjectAverages = evaluationDetails.reduce(
+          (acc, evalDetail) => {
+            const existing = acc.find((s) => s.subject === evalDetail.subject);
+            if (existing) {
+              existing.totalGrade += evalDetail.grade * evalDetail.coefficient;
+              existing.totalMax += evalDetail.maxGrade * evalDetail.coefficient;
+              existing.totalCoeff += evalDetail.coefficient;
+              existing.totalClassAvg += evalDetail.classAverage * evalDetail.coefficient;
+            } else {
+              acc.push({
+                subject: evalDetail.subject,
+                totalGrade: evalDetail.grade * evalDetail.coefficient,
+                totalMax: evalDetail.maxGrade * evalDetail.coefficient,
+                totalCoeff: evalDetail.coefficient,
+                totalClassAvg: evalDetail.classAverage * evalDetail.coefficient,
+                coeff: evalDetail.coefficient,
+              });
+            }
+            return acc;
+          },
+          [] as Array<{
+            subject: string;
+            totalGrade: number;
+            totalMax: number;
+            totalCoeff: number;
+            totalClassAvg: number;
+            coeff: number;
+          }>
+        );
+
+        sessionAveragesData = subjectAverages.map((subj) => ({
+          sessionTitle: subj.subject,
+          studentAverage: subj.totalCoeff > 0 ? subj.totalGrade / subj.totalCoeff : 0,
+          classAverage: subj.totalCoeff > 0 ? subj.totalClassAvg / subj.totalCoeff : 0,
+          studentPoints: 0, // Not available in fallback
+          totalMaxPoints: 0, // Not available in fallback
+          sessionAverage: subj.totalCoeff > 0 ? subj.totalClassAvg / subj.totalCoeff : 0,
+          coefficient: subj.coeff,
+        }));
+      }
+
+      // Calculate weighted averages using raw values from sessionStats
+      const weightedGeneralAverage =
+        sessionAveragesData.reduce((sum, s) => sum + s.studentAverage * s.coefficient, 0) /
+          sessionAveragesData.reduce((sum, s) => sum + s.coefficient, 0) || 0;
+      const weightedClassAverage =
+        sessionAveragesData.reduce((sum, s) => sum + s.classAverage * s.coefficient, 0) /
+          sessionAveragesData.reduce((sum, s) => sum + s.coefficient, 0) || 0;
+
+      // Create HTML content for transcript PDF
+      const bodyContent = `
+        <style>
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          .transcript-container {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            color: #000;
+            width: 100%;
+            max-width: 210mm;
+            margin: 0 auto;
+            background: #fff;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+          }
+          .header h1 {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #000;
+          }
+          .header h2 {
+            font-size: 16px;
+            font-weight: normal;
+            color: #000;
+          }
+          .section {
+            margin-bottom: 20px;
+          }
+          .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #000;
+          }
+          .section-content {
+            font-size: 12px;
+            line-height: 1.8;
+            color: #000;
+          }
+          .section-content p {
+            margin: 5px 0;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 11px;
+          }
+          table th,
+          table td {
+            border: 1px solid #000;
+            padding: 8px 5px;
+            text-align: left;
+          }
+          table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+          }
+          table td {
+            text-align: center;
+          }
+          .checkbox {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border: 1px solid #000;
+            margin-right: 5px;
+            vertical-align: middle;
+          }
+          .signature-section {
+            margin-top: 30px;
+            font-size: 12px;
+          }
+          .signature-section p {
+            margin: 8px 0;
+          }
+          .signature-line {
+            border-top: 1px solid #000;
+            width: 200px;
+            margin-top: 40px;
+          }
+        </style>
+        <div class="transcript-container">
+          <div class="header">
+            <h1>Centre de Formation Tantor Learning</h1>
+            <h2>Relevé de Notes - Attestation de Formation</h2>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Informations sur le stagiaire</div>
+            <div class="section-content">
+              <p><strong>Nom et prénom :</strong> ${studentFullName}</p>
+              <p><strong>Email :</strong> ${studentEmail || "___"}</p>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Formation suivie</div>
+            <div class="section-content">
+              <p><strong>Intitulé :</strong> ${trainingName || "___"}${trainingSubtitle ? ` - ${trainingSubtitle}` : ""}</p>
+              <p><strong>Référence / Code formation :</strong> ${trainingCode || "___"}</p>
+              <p><strong>Durée totale :</strong> ${trainingDuration} heures</p>
+              ${trainingDescription ? `<p><strong>Description :</strong> ${trainingDescription}</p>` : ""}
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Détail des évaluations</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Matière / Module</th>
+                  <th>Évaluation</th>
+                  <th>Note</th>
+                  <th>Max</th>
+                  <th>Coeff Ev</th>
+                  <th>Moyenne Classe</th>
+                  <th>Commentaire</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${evaluationDetails
+                  .map(
+                    (evaluationDetail) => `
+                  <tr>
+                    <td>${evaluationDetail.subject}</td>
+                    <td>${evaluationDetail.evaluationType}</td>
+                    <td>${evaluationDetail.grade.toFixed(1)}</td>
+                    <td>${evaluationDetail.maxGrade}</td>
+                    <td>${evaluationDetail.coefficient}</td>
+                    <td>${evaluationDetail.classAverage.toFixed(1)}</td>
+                    <td>${evaluationDetail.comment}</td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Moyenne par session</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Session</th>
+                  <th>Points obtenus</th>
+                  <th>Points maximum</th>
+                  <th>Moyenne stagiaire</th>
+                  <th>Moyenne classe</th>
+                  <th>Coeff session</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${sessionAveragesData
+                  .map(
+                    (session) => `
+                  <tr>
+                    <td>${session.sessionTitle}</td>
+                    <td>${session.studentPoints !== undefined ? session.studentPoints.toFixed(1) : "-"}</td>
+                    <td>${session.totalMaxPoints !== undefined ? session.totalMaxPoints.toFixed(1) : "-"}</td>
+                    <td>${session.studentAverage.toFixed(1)}</td>
+                    <td>${session.classAverage.toFixed(1)}</td>
+                    <td>${session.coefficient}</td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+                <tr>
+                  <td><strong>Moyenne générale pondérée</strong></td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td><strong>${weightedGeneralAverage.toFixed(1)}</strong></td>
+                  <td><strong>${weightedClassAverage.toFixed(1)}</strong></td>
+                  <td>-</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Appréciation globale de la formation</div>
+            <div class="section-content">
+              <p style="min-height: 40px; border-bottom: 1px solid #ccc; margin-bottom: 10px;"></p>
+              <p style="min-height: 40px; border-bottom: 1px solid #ccc;"></p>
+            </div>
+          </div>
+
+          <div class="signature-section">
+            <div class="section-title">Signature du formateur / responsable pédagogique</div>
+            <div class="section-content">
+              <p><strong>Nom :</strong> _________________________</p>
+              <p><strong>Date:</strong> ___/___/___</p>
+              <p><strong>Signature :</strong></p>
+              <div class="signature-line"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Ensure we have evaluation details
+      if (evaluationDetails.length === 0) {
+        throw new Error("Aucune donnée d'évaluation disponible");
+      }
+
+      // Debug: Log the content to verify it's being generated (removed for production)
+
+      // Verify bodyContent is not empty
+      if (!bodyContent || bodyContent.trim().length === 0) {
+        throw new Error("Le contenu HTML est vide");
+      }
+
+      // Create a temporary div to hold the HTML content
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = bodyContent;
+
+      // Set styles to ensure visibility and proper rendering
+      // Use relative positioning instead of fixed to ensure html2canvas can capture it
+      tempDiv.style.position = "relative";
+      tempDiv.style.left = "0";
+      tempDiv.style.top = "0";
+      tempDiv.style.width = "210mm";
+      tempDiv.style.minHeight = "297mm"; // A4 height
+      tempDiv.style.backgroundColor = "#ffffff";
+      tempDiv.style.visibility = "visible";
+      tempDiv.style.display = "block";
+      tempDiv.style.zIndex = "9999";
+      tempDiv.style.opacity = "1";
+      tempDiv.style.overflow = "visible";
+
+      document.body.appendChild(tempDiv);
+
+      // Verify content was inserted
+      if (tempDiv.children.length === 0) {
+        throw new Error("Le contenu HTML n'a pas été inséré correctement");
+      }
+
+      // Wait for content to render and images to load
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Force a reflow to ensure rendering
+      const height = tempDiv.offsetHeight;
+      const width = tempDiv.offsetWidth;
+
+      if (height === 0 || width === 0) {
+        console.error("PDF content dimensions are 0, content might not be rendering");
+        // Try to make it visible temporarily
+        tempDiv.style.position = "relative";
+        tempDiv.style.left = "0";
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      // Generate PDF
+      const options = {
+        margin: [10, 10, 10, 10] as [number, number, number, number],
+        filename: `Releve_Notes_${studentFullName.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.pdf`,
+        image: { type: "jpeg" as const, quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          letterRendering: true,
+          logging: false,
+          backgroundColor: "#ffffff",
+          width: Math.max(tempDiv.scrollWidth || 794, 794), // Minimum A4 width in pixels
+          height: Math.max(tempDiv.scrollHeight || 1123, 1123), // Minimum A4 height in pixels
+          windowWidth: Math.max(tempDiv.scrollWidth || 794, 794),
+          windowHeight: Math.max(tempDiv.scrollHeight || 1123, 1123),
+          x: 0,
+          y: 0,
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait" as const,
+          compress: true,
+        },
+        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+      };
+
+      try {
+        await html2pdf().set(options).from(tempDiv).save();
+      } catch (pdfError) {
+        console.error("PDF generation error:", pdfError);
+        // Try alternative approach - make element visible first
+        const originalPosition = tempDiv.style.position;
+        tempDiv.style.position = "relative";
+        tempDiv.style.left = "0";
+        tempDiv.style.top = "0";
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        await html2pdf().set(options).from(tempDiv).save();
+        tempDiv.style.position = originalPosition;
+      }
+
+      // Clean up
+      if (tempDiv.parentNode) {
+        document.body.removeChild(tempDiv);
+      }
+
+      toast.dismiss("transcript-generation");
+      toast.success("Relevé de notes généré avec succès");
+    } catch (error) {
+      toast.dismiss("transcript-generation");
+      toast.error("Erreur lors de la génération du relevé de notes");
+      console.error(error);
+    }
   };
 
   const handleDownloadPDF = async () => {
@@ -686,6 +1257,28 @@ export default function NotesPage() {
         </div>
       )}
 
+      {/* Generate Transcript Button - Show when students are available */}
+      {students.length > 0 && (
+        <div className="bg-white border rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Relevé de notes</h3>
+              <p className="text-sm text-muted-foreground">
+                {appliedFilters.studentId
+                  ? "Générez le relevé de notes officiel pour l'étudiant sélectionné"
+                  : "Générez le relevé de notes pour chaque étudiant depuis le tableau ci-dessous"}
+              </p>
+            </div>
+            {appliedFilters.studentId && (
+              <Button onClick={() => handleGenerateTranscript()}>
+                <FileText className="h-4 w-4 mr-2" />
+                Générer le relevé de notes
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Students Table */}
       <div className="bg-white border rounded-lg">
         {isLoading ? (
@@ -699,6 +1292,7 @@ export default function NotesPage() {
                   <TableHead>Points obtenus</TableHead>
                   <TableHead>Points possibles</TableHead>
                   <TableHead>Nombre d'évaluations</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -728,6 +1322,9 @@ export default function NotesPage() {
                     <TableCell>
                       <Skeleton className="h-4 w-16" />
                     </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-8 w-20" />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -753,6 +1350,7 @@ export default function NotesPage() {
                 <TableHead>Points obtenus</TableHead>
                 <TableHead>Points possibles</TableHead>
                 <TableHead>Nombre d'évaluations</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -803,6 +1401,18 @@ export default function NotesPage() {
                   </TableCell>
                   <TableCell>
                     <span className="font-medium">{student.evaluationCount}</span>
+                  </TableCell>
+                  <TableCell>
+                    {(filters.trainingId || appliedFilters.trainingId) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerateTranscript(student.studentId)}
+                      >
+                        <FileText className="h-3 w-3 mr-1" />
+                        Relevé
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

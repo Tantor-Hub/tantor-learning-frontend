@@ -192,6 +192,14 @@ export interface IStudentStatisticsApiResponse {
   data: IStudentStatisticsData;
 }
 
+export interface ISessionStat {
+  sessionId: string;
+  sessionTitle: string;
+  studentPoints: number;
+  sessionAverage: number;
+  totalMaxPoints: number;
+}
+
 export interface ISecretaryStudentStatistics {
   studentId: string;
   studentName: string;
@@ -202,6 +210,9 @@ export interface ISecretaryStudentStatistics {
   totalPointsEarned: number;
   totalPossiblePoints: number;
   evaluationCount: number;
+  sessionTitles?: string[];
+  totalHours?: number;
+  sessionStats?: ISessionStat[];
 }
 
 export interface ISecretaryStatisticsFilters {
@@ -212,11 +223,17 @@ export interface ISecretaryStatisticsFilters {
   studentId?: string;
 }
 
+export interface ITrainingPeriod {
+  startDate: string;
+  endDate: string;
+}
+
 export interface ISecretaryStatisticsData {
   students: ISecretaryStudentStatistics[];
   filters: ISecretaryStatisticsFilters;
   totalEvaluations: number;
   totalPossiblePoints: number;
+  trainingPeriod?: ITrainingPeriod;
 }
 
 export interface ISecretaryStatisticsApiResponse {
