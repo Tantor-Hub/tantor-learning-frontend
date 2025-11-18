@@ -51,7 +51,7 @@ export interface IGetAllMessagesResponse {
   message: string;
   data: {
     length: number;
-    list: IMessage[];
+    rows: IMessage[];
   };
 }
 
@@ -78,11 +78,21 @@ export interface IGetMessageByIdResponse {
     is_archievedto: any[];
     createdAt: string;
     updatedAt: string;
+    isTransferred: boolean;
+    transferSender?: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      avatar: string | null;
+    };
+    transferId?: string;
     sender: {
       id: string;
       firstName: string;
       lastName: string;
       email: string;
+      avatar: string | null;
     };
     Receiver: {
       id: number;
@@ -94,6 +104,7 @@ export interface IGetMessageByIdResponse {
       roles: Array<{
         role: string;
       }>;
+      avatar: string | null;
     };
     Thread: Array<{
       id: number;
@@ -122,6 +133,7 @@ export interface IGetMessageByIdResponse {
         roles: Array<{
           role: string;
         }>;
+        avatar: string | null;
       };
       Receiver: {
         id: number;
@@ -133,6 +145,7 @@ export interface IGetMessageByIdResponse {
         roles: Array<{
           role: string;
         }>;
+        avatar: string | null;
       };
     }>;
   };
@@ -158,12 +171,29 @@ export interface IMessage {
   piece_joint: string[];
   createdAt: string;
   updatedAt: string;
+  isTransferred: boolean;
+  transferSender?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatar: string | null;
+  };
+  transferId?: string;
   sender: {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
+    avatar: string | null;
   };
+  receivers: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatar: string | null;
+  }>;
 }
 
 // TREAD
@@ -188,5 +218,80 @@ export interface IListChatTreadResponse {
         email: string;
       };
     }>;
+  };
+}
+
+// GET TRANSFER CHAT REPLIES RESPONSE
+
+export interface IGetTransferChatRepliesResponse {
+  status: number;
+  message: string;
+  data: {
+    length: number;
+    rows: Array<{
+      id: string;
+      content: string;
+      id_sender: string;
+      id_chat: string | null;
+      id_transferechat: string;
+      status: string;
+      is_public: boolean;
+      createdAt: string;
+      updatedAt: string;
+      sender: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+      };
+    }>;
+  };
+}
+
+// CREATE REPLY REQUEST
+
+export interface ICreateReplyRequest {
+  content: string;
+  id_chat?: string;
+  id_transferechat?: string;
+  is_public: boolean;
+}
+
+// GET CHAT TRANSFER BY ID RESPONSE
+
+export interface IGetChatTransferByIdResponse {
+  status: number;
+  message: string;
+  data: {
+    id: string;
+    id_chat: string;
+    sender: string;
+    receivers: string[];
+    reader: string[];
+    dontshowme: string[];
+    isOpened: boolean;
+    chat: {
+      subject: string;
+      content: string;
+      piece_joint: string[];
+      sender: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        avatar: string | null;
+      };
+      createdAt: string;
+      updatedAt: string;
+    };
+    senderUser: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      avatar: string | null;
+    };
+    createdAt: string;
+    updatedAt: string;
   };
 }

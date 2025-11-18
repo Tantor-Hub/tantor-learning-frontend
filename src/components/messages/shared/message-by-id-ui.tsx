@@ -48,7 +48,11 @@ export function MessageByIdUI() {
         <div className="mb-4">
           <p className="text-primary text-xl font-bold">{message.data.subject}</p>
           <p className="text-[#979DAC]">
-            De : {message.data.sender.firstName} {message.data.sender.lastName}.{" "}
+            De :{" "}
+            {message.data.isTransferred && message.data.transferSender
+              ? `${message.data.transferSender.firstName} ${message.data.transferSender.lastName} (Transféré par ${message.data.sender.firstName} ${message.data.sender.lastName})`
+              : `${message.data.sender.firstName} ${message.data.sender.lastName}`}
+            .{" "}
             {new Date(message.data.createdAt).toLocaleDateString("fr-FR", {
               weekday: "long",
               year: "numeric",

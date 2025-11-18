@@ -2,8 +2,11 @@ import { baseQuery, createApi } from "../base-api";
 import {
   ICreateMessageRequest,
   ICreateMessageResponse,
+  ICreateReplyRequest,
   IGetAllMessagesResponse,
+  IGetChatTransferByIdResponse,
   IGetMessageByIdResponse,
+  IGetTransferChatRepliesResponse,
   IListChatTreadResponse,
   IUpdateMessageRequest,
 } from "@/types/common/message-api";
@@ -64,7 +67,7 @@ export const chatApi = createApi({
       providesTags: ["Chat"],
     }),
 
-    createReply: builder.mutation<any, { content: string; id_chat: string; is_public: boolean }>({
+    createReply: builder.mutation<any, ICreateReplyRequest>({
       query: (request) => ({
         url: "replieschat/create",
         method: "POST",
@@ -73,8 +76,19 @@ export const chatApi = createApi({
       invalidatesTags: ["Chat"],
     }),
 
+    getTransferChatReplies: builder.query<
+      IGetTransferChatRepliesResponse,
+      { transferChatId: string }
+    >({
+      query: ({ transferChatId }) => ({
+        url: `replieschat/transfer/${transferChatId}`,
+        method: "GET",
+      }),
+      providesTags: ["Chat"],
+    }),
+
     // authenticated user messages
-    listMessageByUserId: builder.query({
+    listMessageByUserId: builder.query<IGetAllMessagesResponse, void>({
       query: () => ({
         url: "chat/user",
         method: "GET",
@@ -157,7 +171,7 @@ export const chatApi = createApi({
       invalidatesTags: ["Chat"],
     }),
 
-    getTransfer: builder.query<any, { id: string }>({
+    getTransfer: builder.query<IGetChatTransferByIdResponse, { id: string }>({
       query: ({ id }) => ({
         url: `chat/transfer/${id}`,
         method: "GET",
@@ -178,6 +192,7 @@ export const {
   useGetChatByIdQuery,
   useGetRepliesByChatIdQuery,
   useCreateReplyMutation,
+  useGetTransferChatRepliesQuery,
   useListDeletedMessagesQuery,
   useListReceivedMessagesQuery,
   useListSentMessagesQuery,

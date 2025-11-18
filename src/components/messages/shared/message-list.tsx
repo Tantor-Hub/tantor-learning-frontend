@@ -45,24 +45,11 @@ export const MessageList = ({
 
   return (
     <div className="my-4 grid grid-cols-1 gap-4">
-      {messages?.map((msg) => {
-        const isSender = msg.role === "sender";
-        const isRead = isSender || msg.isOpened;
-        return (
-          <div key={msg.id} onClick={() => handleClick(msg)} className="cursor-pointer">
-            <MessageCard
-              name={`${msg.sender.firstName} ${msg.sender.lastName}`}
-              role=""
-              title={msg.subject}
-              message={msg.content}
-              isRead={isRead}
-              date={new Date(msg.createdAt)}
-              isSender={isSender}
-              actions={renderActions ? renderActions(msg) : undefined}
-            />
-          </div>
-        );
-      })}
+      {messages?.map((msg, index) => (
+        <div key={`${msg.id}-${index}`} onClick={() => handleClick(msg)} className="cursor-pointer">
+          <MessageCard message={msg} actions={renderActions ? renderActions(msg) : undefined} />
+        </div>
+      ))}
     </div>
   );
 };

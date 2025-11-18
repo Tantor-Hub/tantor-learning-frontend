@@ -10,7 +10,7 @@ export const NewMessagesTab = () => {
 
   return (
     <MessageList
-      messages={newMessages?.data.list}
+      messages={newMessages?.data.rows}
       isLoading={isLoadingNew}
       isSuccess={isSuccessNew}
     />

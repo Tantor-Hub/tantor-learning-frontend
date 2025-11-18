@@ -10,7 +10,7 @@ export const ArchivedMessagesTab = () => {
   // const list = archivedMessages?.data.list;
   return (
     <MessageList
-      messages={archivedMessages?.data.list}
+      messages={archivedMessages?.data.rows}
       isLoading={isLoadingArchived}
       isSuccess={isSuccessArchived}
     />

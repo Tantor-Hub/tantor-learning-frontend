@@ -6,7 +6,7 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const AllMessagesTab = ({ refreshKey }: { refreshKey: number }) => {
-  const { data, isLoading, isSuccess, isError, refetch } = useListMessageByUserIdQuery({});
+  const { data, isLoading, isSuccess, isError, refetch } = useListMessageByUserIdQuery();
 
   useEffect(() => {
     refetch();

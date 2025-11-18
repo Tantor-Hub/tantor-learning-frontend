@@ -1,7 +1,11 @@
 "use client";
 import React from "react";
 import { MessageActions } from "@/components/messages/message-actions";
-import { useGetChatByIdQuery, useGetRepliesByChatIdQuery } from "@/lib/apis/common/chat-api";
+import {
+  useGetChatByIdQuery,
+  useGetRepliesByChatIdQuery,
+  useGetTransferChatRepliesQuery,
+} from "@/lib/apis/common/chat-api";
 import { useRouter } from "next/navigation";
 import { RepliesSkeleton } from "./replies-skeleton";
 import { MessageDetailSkeleton } from "@/components/skeletons/message-detail-skeleton";
@@ -15,14 +19,30 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
   const router = useRouter();
 
   const { data, error, isLoading } = useGetChatByIdQuery({ id: messageId });
+
+  // Always call both hooks to avoid conditional hook calls
   const {
     data: repliesData,
     isLoading: repliesLoading,
     isError: repliesError,
   } = useGetRepliesByChatIdQuery({ chatId: messageId });
 
-  if (repliesError) {
-    console.error("Error getting replies by chat id:", repliesError);
+  const {
+    data: transferRepliesData,
+    isLoading: transferRepliesLoading,
+    isError: transferRepliesError,
+  } = useGetTransferChatRepliesQuery({ transferChatId: data?.data?.transferId || "" });
+
+  // Check if the message is transferred to decide which replies data to use
+  const isTransferred = data?.data?.isTransferred;
+  const transferId = data?.data?.transferId;
+
+  const finalRepliesData = isTransferred && transferId ? transferRepliesData : repliesData;
+  const finalRepliesLoading = isTransferred && transferId ? transferRepliesLoading : repliesLoading;
+  const finalRepliesError = isTransferred && transferId ? transferRepliesError : repliesError;
+
+  if (finalRepliesError) {
+    console.error("Error getting replies:", finalRepliesError);
   }
 
   if (isLoading) {
@@ -47,7 +67,7 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
   }
 
   const message = data.data;
-  const replies = repliesData?.data.rows || [];
+  const replies = finalRepliesData?.data.rows || [];
 
   return (
     <div>
@@ -64,7 +84,11 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
         <div className="mb-4">
           <p className="text-primary text-xl font-bold">{message.subject}</p>
           <p className="text-[#979DAC]">
-            De : {message.sender.firstName} {message.sender.lastName}.{" "}
+            De :{" "}
+            {message.isTransferred && message.transferSender
+              ? `${message.transferSender.firstName} ${message.transferSender.lastName} (Transféré par ${message.sender.firstName} ${message.sender.lastName})`
+              : `${message.sender.firstName} ${message.sender.lastName}`}
+            .{" "}
             {new Date(message.createdAt).toLocaleDateString("fr-FR", {
               weekday: "long",
               year: "numeric",
@@ -122,7 +146,7 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
       {/* Replies */}
       <div className="mt-6">
         <h3 className="text-lg font-semibold mb-4">Réponses</h3>
-        {repliesLoading ? (
+        {finalRepliesLoading ? (
           <RepliesSkeleton />
         ) : replies.length > 0 ? (
           replies.map((reply) => (

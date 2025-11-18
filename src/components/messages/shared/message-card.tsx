@@ -1,29 +1,27 @@
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { IMessage } from "@/types/common/message-api";
 
 type MessageCardProps = {
-  name: string;
-  role?: string;
-  title: string;
-  message: string;
-  isRead: boolean;
-  date: Date;
-  isSender: boolean;
+  message: IMessage;
   actions?: React.ReactNode;
 };
 
-export function MessageCard({
-  name,
-  role,
-  title,
-  message,
-  isRead,
-  date,
-  isSender,
-  actions,
-}: MessageCardProps) {
+export function MessageCard({ message, actions }: MessageCardProps) {
+  const isSender = message.role === "sender";
+  const isRead = isSender || message.isOpened;
+  const senderName = `${message.sender.firstName} ${message.sender.lastName}`;
+  const displayName =
+    message.isTransferred && message.transferSender
+      ? `${message.transferSender.firstName} ${message.transferSender.lastName} (Transféré)`
+      : senderName;
+  const avatar =
+    message.isTransferred && message.transferSender?.avatar
+      ? message.transferSender.avatar
+      : message.sender.avatar;
+
   return (
     <Card
       className={cn(
@@ -32,13 +30,11 @@ export function MessageCard({
     >
       <div className="flex items-center gap-4">
         <Avatar className="h-10 w-10 flex-shrink-0">
+          <AvatarImage src={avatar || undefined} alt={displayName} />
           <AvatarFallback className="text-xs">
-            {name
+            {displayName
               .split(" ")
-              .reverse()
-              .join(" ")
-              .split(" ")
-              .map((n) => n[0])
+              .map((n: string) => n[0])
               .join("")
               .toUpperCase() || "Expéditeur inconnu"}
           </AvatarFallback>
@@ -46,12 +42,12 @@ export function MessageCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
             <div className="flex flex-col gap-0.5">
-              <p className={cn("text-sm font-medium truncate", !isRead)}>{name}</p>
-              <p className={cn("text-sm truncate", !isRead)}>{title}</p>
+              <p className={cn("text-sm font-medium truncate", !isRead)}>{displayName}</p>
+              <p className={cn("text-sm truncate", !isRead)}>{message.subject}</p>
             </div>
             <div className="flex flex-col items-end gap-1">
               <p className="text-xs text-muted-foreground">
-                {date.toLocaleDateString("fr-FR", {
+                {new Date(message.createdAt).toLocaleDateString("fr-FR", {
                   month: "short",
                   day: "numeric",
                 })}
@@ -59,6 +55,11 @@ export function MessageCard({
               {!isRead && !isSender && (
                 <Badge variant="default" className="text-xs px-2 py-0.5">
                   Nouveau
+                </Badge>
+              )}
+              {message.isTransferred && (
+                <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                  Transféré
                 </Badge>
               )}
             </div>
