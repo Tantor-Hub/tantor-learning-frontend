@@ -1,10 +1,10 @@
-import { createApi, enhancedBaseQuery } from "./base-api";
+import { createApi, fileUploadEnhancedBaseQuery } from "./base-api";
 import { ILessonDocumentResponse } from "@/types/lessondocument";
 
 // Lesson Document API
 export const lessonDocumentApi = createApi({
   reducerPath: "lessonDocumentApi",
-  baseQuery: enhancedBaseQuery,
+  baseQuery: fileUploadEnhancedBaseQuery,
   tagTypes: ["LessonDocument"],
   endpoints: (builder) => ({
     /*###############################################################################
@@ -15,6 +15,19 @@ export const lessonDocumentApi = createApi({
       query: (request) => `lessondocument/student/lesson/${request.lessonId}`,
       providesTags: ["LessonDocument"],
     }),
+
+    /*###############################################################################
+    ######################### INSTRUCTOR ACCESS ######################################
+    #################################################################################*/
+
+    createLessonDocument: builder.mutation<ILessonDocumentResponse, FormData>({
+      query: (formData) => ({
+        url: "lessondocument/create",
+        method: "POST",
+        body: formData,
+      }),
+      invalidatesTags: ["LessonDocument"],
+    }),
   }),
 });
 
@@ -23,4 +36,9 @@ export const {
     ######################### STUDENT ACCESS ########################################
     #################################################################################*/
   useGetLessonDocumentsQuery,
+
+  /*###############################################################################
+    ######################### INSTRUCTOR ACCESS ######################################
+    #################################################################################*/
+  useCreateLessonDocumentMutation,
 } = lessonDocumentApi;

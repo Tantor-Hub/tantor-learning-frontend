@@ -10,20 +10,18 @@ import {
   useDeleteLessonDocumentMutation,
 } from "@/lib/apis/instructor/instructor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, ClipboardList, FileText, Upload, Download, Trash2, X } from "lucide-react";
+import { BookOpen, ClipboardList, FileText, Upload, Download, Trash2 } from "lucide-react";
 import { ChevronLeft } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { toast } from "react-hot-toast";
 import { ContentTab } from "./tab/content";
 import { EvaluationTab } from "./tab/evalution";
 import { DevoirTab } from "./tab/devoirs";
+import { UploadDocumentModal } from "./upload-document-modal";
 
 export function LessonDetail() {
   const params = useParams();
@@ -31,10 +29,6 @@ export function LessonDetail() {
   const courseId = params.courseId as string;
   const router = useRouter();
   const token = useSelector(selectToken);
-
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
 
   const {
     data: lesson,
@@ -50,98 +44,6 @@ export function LessonDetail() {
   } = useGetLessonDocumentsQuery({ lessonId }, { skip: !lessonId });
 
   const [deleteLessonDocument] = useDeleteLessonDocumentMutation();
-
-  const handleFileUpload = async () => {
-    if (!selectedFile) {
-      toast.error("Veuillez sélectionner un fichier");
-      return;
-    }
-
-    if (!token) {
-      toast.error("Token d'authentification manquant");
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    return new Promise<void>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-
-      // Track upload progress
-      xhr.upload.addEventListener(
-        "progress",
-        (event) => {
-          if (event.lengthComputable) {
-            const percentComplete = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(percentComplete);
-          }
-        },
-        false
-      );
-
-      // Handle successful upload
-      xhr.addEventListener("load", () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const result = JSON.parse(xhr.responseText);
-            toast.success("Document ajouté avec succès");
-            setSelectedFile(null);
-            setUploadProgress(0);
-
-            // Reset file input
-            const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-            if (fileInput) {
-              fileInput.value = "";
-            }
-
-            // Refetch documents to update the list
-            refetchDocuments();
-            resolve();
-          } catch (error) {
-            toast.error("Erreur lors du traitement de la réponse");
-            reject(error);
-          }
-        } else {
-          try {
-            const errorData = JSON.parse(xhr.responseText);
-            toast.error(errorData.message || `Erreur HTTP: ${xhr.status}`);
-          } catch {
-            toast.error(`Erreur HTTP: ${xhr.status}`);
-          }
-          reject(new Error(`HTTP error! status: ${xhr.status}`));
-        }
-        setIsUploading(false);
-      });
-
-      // Handle network errors
-      xhr.addEventListener("error", () => {
-        toast.error("Erreur réseau lors du téléchargement");
-        setIsUploading(false);
-        setUploadProgress(0);
-        reject(new Error("Network error"));
-      });
-
-      // Handle aborted uploads
-      xhr.addEventListener("abort", () => {
-        toast.error("Téléchargement annulé");
-        setIsUploading(false);
-        setUploadProgress(0);
-        reject(new Error("Upload aborted"));
-      });
-
-      // Prepare form data
-      const formData = new FormData();
-      formData.append("document", selectedFile);
-      formData.append("id_lesson", lessonId);
-      formData.append("ispublish", "false");
-
-      // Open and send request
-      xhr.open("POST", `${process.env.NEXT_PUBLIC_BASE_URL}/lessondocument/create`);
-      xhr.setRequestHeader("x-connexion-tantor", `Bearer ${token}`);
-      xhr.send(formData);
-    });
-  };
 
   const handleDeleteDocument = async (documentId: string, fileName: string) => {
     if (!confirm(`Êtes-vous sûr de vouloir supprimer "${fileName}" ?`)) {
@@ -166,15 +68,6 @@ export function LessonDetail() {
       const errorMessage = error?.data?.message || "Erreur lors de la suppression du document";
       toast.error(errorMessage);
       console.error("Delete error:", error);
-    }
-  };
-
-  const cancelUpload = () => {
-    setSelectedFile(null);
-    setUploadProgress(0);
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = "";
     }
   };
 
@@ -260,64 +153,8 @@ export function LessonDetail() {
                 <BookOpen className="w-5 h-5" />
                 <h3 className="text-lg font-semibold">Contenu de la leçon</h3>
               </div>
-              <div className="flex gap-2">
-                <Input
-                  type="file"
-                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                  className="max-w-xs"
-                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.ppt,.pptx,.xls,.xlsx"
-                  disabled={isUploading}
-                />
-                <Button
-                  onClick={handleFileUpload}
-                  disabled={!selectedFile || isUploading}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {isUploading ? "Téléchargement..." : "+ Contenu"}
-                  <Upload className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
+              <UploadDocumentModal lessonId={lessonId} onSuccess={refetchDocuments} />
             </div>
-
-            {/* Upload Progress Bar */}
-            {isUploading && (
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-blue-600" />
-                    <span className="text-sm font-medium text-gray-700">{selectedFile?.name}</span>
-                  </div>
-                  <span className="text-sm font-semibold text-blue-600">{uploadProgress}%</span>
-                </div>
-                <Progress value={uploadProgress} className="h-2" />
-                <p className="text-xs text-gray-600 mt-2">
-                  Téléchargement en cours... Veuillez patienter.
-                </p>
-              </div>
-            )}
-
-            {/* Selected File Preview (before upload) */}
-            {selectedFile && !isUploading && (
-              <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-gray-600" />
-                    <span className="text-sm font-medium text-gray-700">{selectedFile.name}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                    </Badge>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={cancelUpload}
-                    className="text-gray-600 hover:text-red-600"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
 
             {isLoadingDocuments ? (
               <div className="space-y-4">
