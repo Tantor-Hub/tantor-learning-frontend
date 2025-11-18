@@ -17,26 +17,34 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Loader2 } from "lucide-react";
-import { useGetBooksQuery, useDeleteBookMutation } from "@/lib/apis/book";
+import { useGetBooksForSecretaryQuery, useDeleteBookMutation } from "@/lib/apis/book";
 import { Book } from "@/types/book";
 import { CreateBookModal } from "./create-book-modal";
+import { UpdateBookModal } from "./update-book-modal";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function BooksTab() {
   // Books hooks
-  const { data: booksResponse, isLoading: booksLoading } = useGetBooksQuery({});
+  const { data: booksResponse, isLoading: booksLoading } = useGetBooksForSecretaryQuery({});
   const books = booksResponse?.data || [];
   const [deleteBook, { isLoading: isDeleting }] = useDeleteBookMutation();
 
   // State for dialog
   const [bookDialogOpen, setBookDialogOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [updateBookDialogOpen, setUpdateBookDialogOpen] = useState(false);
+  const [updatingBookId, setUpdatingBookId] = useState<string>("");
   const [deletingBookId, setDeletingBookId] = useState<string | null>(null);
 
   const handleEditBook = (book: Book) => {
     setEditingBook(book);
     setBookDialogOpen(true);
+  };
+
+  const handleUpdateBook = (bookId: string) => {
+    setUpdatingBookId(bookId);
+    setUpdateBookDialogOpen(true);
   };
 
   const handleDeleteBook = async (id: string) => {
@@ -137,7 +145,7 @@ export function BooksTab() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => handleEditBook(book)}
+                          onClick={() => handleUpdateBook(book.id)}
                           disabled={isDeletingThis}
                         >
                           Modifier
@@ -172,6 +180,14 @@ export function BooksTab() {
         editingBook={editingBook}
         onSuccess={() => {
           setEditingBook(null);
+        }}
+      />
+      <UpdateBookModal
+        open={updateBookDialogOpen}
+        onOpenChange={setUpdateBookDialogOpen}
+        bookId={updatingBookId}
+        onSuccess={() => {
+          setUpdatingBookId("");
         }}
       />
     </>

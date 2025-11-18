@@ -11,9 +11,16 @@ export interface Book {
   piece_joint: string;
   views: number;
   download: number;
+  public?: boolean;
   downloadable?: boolean;
   createdAt: string;
   updatedAt: string;
+  creator?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
 }
 
 export interface CreateBookRequest {

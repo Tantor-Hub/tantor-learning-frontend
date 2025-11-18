@@ -91,17 +91,28 @@ export function Footer() {
             </div>
           </section>
           <section>
-            <div className="mb-6 space-y-2">
-              <Image src="/icons/qualiopi.png" alt="France Education" width={200} height={200} />
-              <div className="max-w-[250px] space-y-2">
-                <p className="text-sm">
-                  La certification qualité a été délivrée au titre des categories d'actions
-                  suivantes
-                </p>
-                <div className="text-base font-semibold space-y-0">
-                  <p>ACTIONS DE FORMATION</p>
-                  <p>BILAN DE COMPETENCES</p>
+            <div className="mb-6 space-y-2 flex">
+              <div>
+                <Image src="/icons/qualiopi.png" alt="France Education" width={200} height={200} />
+                <div className="max-w-[250px] space-y-2">
+                  <p className="text-sm">
+                    La certification qualité a été délivrée au titre des categories d'actions
+                    suivantes
+                  </p>
+                  <div className="text-base font-semibold space-y-0">
+                    <p>ACTIONS DE FORMATION</p>
+                    <p>BILAN DE COMPETENCES</p>
+                  </div>
                 </div>
+              </div>
+              <div>
+                <Image
+                  src="/icons/eu-gdpr.png"
+                  alt="EU GDPR"
+                  className="object-cover"
+                  width={150}
+                  height={150}
+                />
               </div>
             </div>
             <Separator />

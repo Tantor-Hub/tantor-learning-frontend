@@ -51,6 +51,46 @@ export const bookApi = createApi({
         totalItems: response.data.pagination.total,
       }),
     }),
+    getBooksForSecretary: builder.query<
+      { data: Book[]; totalPages: number; totalItems: number },
+      {
+        limit?: number;
+        page?: number;
+        minDownload?: number;
+        minViews?: number;
+        author?: string;
+        category?: string;
+        session?: string;
+        search?: string;
+        status?: string;
+      }
+    >({
+      query: (params = {}) => {
+        const searchParams = new URLSearchParams();
+        if (params.limit) searchParams.append("limit", params.limit.toString());
+        if (params.page) searchParams.append("page", params.page.toString());
+        if (params.minDownload !== undefined)
+          searchParams.append("minDownload", params.minDownload.toString());
+        if (params.minViews !== undefined)
+          searchParams.append("minViews", params.minViews.toString());
+        if (params.author) searchParams.append("author", params.author);
+        if (params.category) searchParams.append("category", params.category);
+        if (params.session) searchParams.append("session", params.session);
+        if (params.search) searchParams.append("search", params.search);
+        if (params.status) searchParams.append("status", params.status);
+        const url = `book/secretary/all${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+        return {
+          url,
+          method: "GET",
+        };
+      },
+      providesTags: ["Book"],
+      transformResponse: (response: ApiResponse<Book[]>) => ({
+        data: response.data,
+        totalPages: 1, // No pagination in this endpoint
+        totalItems: response.data.length,
+      }),
+    }),
     createBook: builder.mutation<Book, FormData>({
       query: (formData) => ({
         url: "book",
@@ -121,6 +161,7 @@ export const bookApi = createApi({
 
 export const {
   useGetBooksQuery,
+  useGetBooksForSecretaryQuery,
   useCreateBookMutation,
   useGetBookByIdQuery,
   useUpdateBookMutation,
@@ -129,4 +170,5 @@ export const {
   useIncrementBookDownloadsMutation,
   useIncrementBookDownloadCountMutation,
   useIncrementBookViewCountMutation,
+  useLazyGetBookByIdQuery,
 } = bookApi;
