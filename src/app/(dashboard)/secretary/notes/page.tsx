@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  useGetSecretaryStudentEvaluationStatisticsQuery,
-  useGetStudentEvaluationsBySessionCourseInstructorSecretaryQuery,
-} from "@/lib/apis/student-evaluations";
+import { useGetSecretaryStudentEvaluationStatisticsQuery } from "@/lib/apis/student-evaluations";
 import { ISecretaryStatisticsFilters } from "@/types/student-evaluations";
 import { useListTrainingQuery } from "@/lib/apis/secretary/training-secretary-api";
 import { useListSessionByTrainingIdQuery } from "@/lib/apis/secretary/training-secretary-api";
@@ -81,13 +78,6 @@ export default function NotesPage() {
 
   const students = data?.data?.students || [];
   const statistics = data?.data;
-
-  // Fetch evaluations for transcript generation
-  const { data: evaluationsData } = useGetStudentEvaluationsBySessionCourseInstructorSecretaryQuery(
-    { sessionCoursId: appliedFilters.sessioncoursId! },
-    { skip: !appliedFilters.sessioncoursId || !appliedFilters.studentId }
-  );
-  const evaluations = evaluationsData?.data?.evaluations || [];
 
   const handleFilterChange = (key: keyof ISecretaryStatisticsFilters, value: string) => {
     setFilters((prev) => {
@@ -1036,8 +1026,11 @@ export default function NotesPage() {
               value={filters.trainingId || ""}
               onValueChange={(value) => handleFilterChange("trainingId", value)}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une formation" />
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder="Sélectionner une formation"
+                  className="line-clamp-none whitespace-normal break-words text-left"
+                />
               </SelectTrigger>
               <SelectContent>
                 {trainingsLoading ? (
@@ -1073,8 +1066,11 @@ export default function NotesPage() {
               onValueChange={(value) => handleFilterChange("trainingsessionId", value)}
               disabled={!filters.trainingId}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une session" />
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder="Sélectionner une session"
+                  className="line-clamp-none whitespace-normal break-words text-left"
+                />
               </SelectTrigger>
               <SelectContent>
                 {!filters.trainingId ? (
@@ -1117,8 +1113,11 @@ export default function NotesPage() {
               onValueChange={(value) => handleFilterChange("sessioncoursId", value)}
               disabled={!filters.trainingsessionId}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un Matière" />
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder="Sélectionner un Matière"
+                  className="line-clamp-none whitespace-normal break-words text-left"
+                />
               </SelectTrigger>
               <SelectContent>
                 {!filters.trainingsessionId ? (
@@ -1158,8 +1157,11 @@ export default function NotesPage() {
               onValueChange={(value) => handleFilterChange("lessonId", value)}
               disabled={!filters.sessioncoursId}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une leçon" />
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder="Sélectionner une leçon"
+                  className="line-clamp-none whitespace-normal break-words text-left"
+                />
               </SelectTrigger>
               <SelectContent>
                 {!filters.sessioncoursId ? (
@@ -1198,8 +1200,11 @@ export default function NotesPage() {
               value={filters.studentId || ""}
               onValueChange={(value) => handleFilterChange("studentId", value)}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un étudiant" />
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder="Sélectionner un étudiant"
+                  className="line-clamp-none whitespace-normal break-words text-left"
+                />
               </SelectTrigger>
               <SelectContent>
                 {studentsLoading ? (

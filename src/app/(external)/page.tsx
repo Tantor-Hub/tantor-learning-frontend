@@ -7,7 +7,7 @@ import Partners from "./components/partner";
 import Teaching from "./components/teaching";
 
 export const metadata: Metadata = {
-  title: "Page d'acceuil",
+  title: "Plateforme de formation professionnelle en ligne partout en France",
 };
 
 export default function Page() {

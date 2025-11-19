@@ -200,7 +200,7 @@ export function Header() {
                 alt="Tantor logo"
                 className="h-8 w-8 mr-2"
               />
-              <span className="text-[16px] font-[600] text-primary">Tantor Learning</span>
+              <span className="text-[16px] font-[600]">Tantor Learning</span>
             </Link>
           </div>
 
