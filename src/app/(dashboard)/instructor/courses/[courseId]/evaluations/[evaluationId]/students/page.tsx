@@ -11,9 +11,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetStudentsByEvaluationIdQuery } from "@/lib/apis/student-evaluations";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  useGetStudentsByEvaluationIdQuery,
+  useUpdateMarkingStatusMutation,
+  useGetMarkingStatusQuery,
+} from "@/lib/apis/student-evaluations";
 import { useRouter } from "next/navigation";
-import { Eye } from "lucide-react";
+import { Eye, MoreHorizontal, Upload } from "lucide-react";
+import { MarkingStatus } from "@/types/student-evaluations";
+import { toast } from "react-hot-toast";
 
 export default function StudentsByEvaluation() {
   const params = useParams();
@@ -26,7 +39,70 @@ export default function StudentsByEvaluation() {
     { skip: !evaluationId }
   );
 
+  const { data: markingStatusData } = useGetMarkingStatusQuery(
+    { evaluationId },
+    { skip: !evaluationId }
+  );
+
+  const [updateMarkingStatus] = useUpdateMarkingStatusMutation();
+
   const students = studentsData?.data?.students || [];
+  const evaluation = studentsData?.data?.evaluation;
+  const currentStatus = (markingStatusData?.data?.markingStatus ||
+    evaluation?.markingStatus) as MarkingStatus;
+
+  const handleStatusUpdate = async (newStatus: MarkingStatus) => {
+    // Validate status progression
+    const statusOrder = [
+      MarkingStatus.PENDING,
+      MarkingStatus.IN_PROGRESS,
+      MarkingStatus.COMPLETED,
+      MarkingStatus.PUBLISHED,
+    ];
+    const currentIndex = statusOrder.indexOf(currentStatus);
+    const newIndex = statusOrder.indexOf(newStatus);
+
+    if (newIndex <= currentIndex) {
+      toast.error("Impossible de revenir à un statut précédent");
+      return;
+    }
+
+    await toast.promise(updateMarkingStatus({ evaluationId, markingStatus: newStatus }).unwrap(), {
+      loading: "Mise à jour du statut...",
+      success: "Statut mis à jour avec succès",
+      error: "Erreur lors de la mise à jour du statut",
+    });
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case MarkingStatus.PENDING:
+        return "bg-gray-100 text-gray-800";
+      case MarkingStatus.IN_PROGRESS:
+        return "bg-blue-100 text-blue-800";
+      case MarkingStatus.COMPLETED:
+        return "bg-green-100 text-green-800";
+      case MarkingStatus.PUBLISHED:
+        return "bg-purple-100 text-purple-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case MarkingStatus.PENDING:
+        return "En attente";
+      case MarkingStatus.IN_PROGRESS:
+        return "En cours";
+      case MarkingStatus.COMPLETED:
+        return "Terminé";
+      case MarkingStatus.PUBLISHED:
+        return "Publié";
+      default:
+        return status;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -78,11 +154,55 @@ export default function StudentsByEvaluation() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Étudiants pour cette évaluation</h3>
+        <div className="flex items-center gap-4">
+          <h3 className="text-lg font-semibold">Étudiants pour cette évaluation</h3>
+          {currentStatus && (
+            <Badge className={getStatusBadgeColor(currentStatus)}>
+              {getStatusLabel(currentStatus)}
+            </Badge>
+          )}
+        </div>
 
-        <Button onClick={() => router.back()} variant="outline">
-          Retour
-        </Button>
+        <div className="flex gap-2">
+          {currentStatus === MarkingStatus.COMPLETED && (
+            <Button
+              onClick={() => handleStatusUpdate(MarkingStatus.PUBLISHED)}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Publier les résultats
+            </Button>
+          )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {currentStatus !== MarkingStatus.IN_PROGRESS && (
+                <DropdownMenuItem onClick={() => handleStatusUpdate(MarkingStatus.IN_PROGRESS)}>
+                  Commencer la correction
+                </DropdownMenuItem>
+              )}
+              {currentStatus !== MarkingStatus.COMPLETED && (
+                <DropdownMenuItem onClick={() => handleStatusUpdate(MarkingStatus.COMPLETED)}>
+                  Marquer comme terminé
+                </DropdownMenuItem>
+              )}
+              {currentStatus !== MarkingStatus.PUBLISHED && (
+                <DropdownMenuItem onClick={() => handleStatusUpdate(MarkingStatus.PUBLISHED)}>
+                  Publier les résultats
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button onClick={() => router.back()} variant="outline">
+            Retour
+          </Button>
+        </div>
       </div>
 
       {students.length === 0 ? (

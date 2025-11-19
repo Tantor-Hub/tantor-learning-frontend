@@ -8,6 +8,8 @@ import {
   IStudentStatisticsApiResponse,
   ISecretaryStatisticsApiResponse,
   ISecretaryStatisticsFilters,
+  MarkingStatus,
+  IMarkingStatusApiResponse,
 } from "@/types/student-evaluations";
 
 export const studentEvaluationsApi = createApi({
@@ -117,6 +119,24 @@ export const studentEvaluationsApi = createApi({
         `studentevaluation/instructor/evaluation/${evaluationId}/student/${studentId}/answers`,
       providesTags: ["StudentEvaluations"],
     }),
+
+    updateMarkingStatus: builder.mutation<
+      void,
+      { evaluationId: string; markingStatus: MarkingStatus }
+    >({
+      query: ({ evaluationId, markingStatus }) => ({
+        url: `studentevaluation/${evaluationId}/marking-status`,
+        method: "PATCH",
+        body: { markingStatus },
+      }),
+      invalidatesTags: ["StudentEvaluations"],
+    }),
+
+    getMarkingStatus: builder.query<IMarkingStatusApiResponse, { evaluationId: string }>({
+      query: ({ evaluationId }) =>
+        `studentevaluation/instructor/evaluation/${evaluationId}/marking-status`,
+      providesTags: ["StudentEvaluations"],
+    }),
   }),
 });
 
@@ -146,4 +166,6 @@ export const {
   useGetStudentEvaluationsBySessionCourseInstructorSecretaryQuery,
   useGetStudentsByEvaluationIdQuery,
   useGetStudentAnswersByEvaluationAndStudentQuery,
+  useUpdateMarkingStatusMutation,
+  useGetMarkingStatusQuery,
 } = studentEvaluationsApi;

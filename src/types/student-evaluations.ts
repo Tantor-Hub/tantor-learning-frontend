@@ -6,6 +6,13 @@ export enum StudentevaluationType {
   EXAMEN = "examen",
 }
 
+export enum MarkingStatus {
+  PENDING = "pending",
+  IN_PROGRESS = "in_progress",
+  COMPLETED = "completed",
+  PUBLISHED = "published",
+}
+
 export interface IStudentEvaluation {
   id?: string;
   title: string;
@@ -240,4 +247,20 @@ export interface ISecretaryStatisticsApiResponse {
   status: number;
   message: string;
   data: ISecretaryStatisticsData;
+}
+
+export interface IMarkingStatusApiResponse {
+  status: number;
+  message: string;
+  data: {
+    markingStatus: MarkingStatus;
+  };
+}
+
+export interface IMarkingStatusApiResponse {
+  status: number;
+  message: string;
+  data: {
+    markingStatus: MarkingStatus;
+  };
 }
