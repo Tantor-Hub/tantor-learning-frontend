@@ -212,6 +212,7 @@ export default function Documents() {
     variables: string[];
     sessionId: string;
     type: "before" | "during" | "after";
+    signature?: boolean;
   }) => {
     try {
       if (editingTemplate.id) {
@@ -220,6 +221,7 @@ export default function Documents() {
           title: template.title,
           content: template.content,
           variables: template.variables,
+          signature: template.signature,
         }).unwrap();
         toast.success("Modèle de document mis à jour avec succès !");
       } else {
@@ -229,6 +231,7 @@ export default function Documents() {
           sessionId: template.sessionId,
           type: template.type,
           variables: template.variables,
+          signature: template.signature,
         }).unwrap();
         toast.success(
           "Modèle de document sauvegardé avec succès ! Vous pouvez continuer à éditer."

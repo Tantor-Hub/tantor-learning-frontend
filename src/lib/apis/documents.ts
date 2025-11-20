@@ -59,7 +59,14 @@ export const documentsApi = createApi({
     }),
     updateDocumentTemplate: builder.mutation<
       { message: string },
-      { id: string; title: string; content: any; variables?: string[]; imageUrl?: string }
+      {
+        id: string;
+        title: string;
+        content: any;
+        variables?: string[];
+        imageUrl?: string;
+        signature?: boolean;
+      }
     >({
       query: ({ id, ...body }) => ({
         url: `documents/templates/${id}`,

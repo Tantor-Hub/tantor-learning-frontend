@@ -37,6 +37,7 @@ export interface CreateDocumentTemplateRequest {
   sessionId: string;
   type: DocumentTemplateType;
   variables?: string[];
+  signature?: boolean;
 }
 
 export interface CreateDocumentTemplateResponse {

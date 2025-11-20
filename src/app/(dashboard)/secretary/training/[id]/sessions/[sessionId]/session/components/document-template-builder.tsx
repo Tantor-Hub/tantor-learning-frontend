@@ -21,6 +21,7 @@ import { HorizontalRule } from "@tiptap/extension-horizontal-rule";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -171,6 +172,7 @@ interface DocumentTemplateBuilderProps {
     variables: string[];
     sessionId: string;
     type: "before" | "during" | "after";
+    signature?: boolean;
   }) => void;
   templateData?: any;
   isLoading?: boolean;
@@ -192,6 +194,7 @@ export default function DocumentTemplateBuilder({
   templates = [],
 }: DocumentTemplateBuilderProps) {
   const [title, setTitle] = useState(templateData?.title || "");
+  const [signature, setSignature] = useState(templateData?.data?.signature || false);
   const [showVariableDialog, setShowVariableDialog] = useState(false);
   const [variableName, setVariableName] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -275,12 +278,14 @@ export default function DocumentTemplateBuilder({
     },
   });
 
-  // Update title when templateData changes
+  // Update title and signature when templateData changes
   useEffect(() => {
     if (templateData?.data) {
       setTitle(templateData.data.title || "");
+      setSignature(templateData.data.signature || false);
     } else {
       setTitle("");
+      setSignature(false);
     }
   }, [templateData]);
 
@@ -291,6 +296,7 @@ export default function DocumentTemplateBuilder({
     if (open) {
       if (isEditing && templateData?.data) {
         setTitle(templateData.data.title || "");
+        setSignature(templateData.data.signature || false);
         try {
           if (templateData.data.content) {
             editor.commands.setContent(templateData.data.content);
@@ -304,6 +310,7 @@ export default function DocumentTemplateBuilder({
       } else if (!isEditing) {
         // Clear for new template
         setTitle("");
+        setSignature(false);
         editor.commands.clearContent();
       }
     }
@@ -336,6 +343,7 @@ export default function DocumentTemplateBuilder({
           variables,
           sessionId,
           type,
+          signature,
         });
         onOpenChange(false);
       } catch (error) {
@@ -343,7 +351,7 @@ export default function DocumentTemplateBuilder({
         console.error("Save error:", error);
       }
     }
-  }, [editor, title, onSave, onOpenChange, sessionId, type, extractVariables]);
+  }, [editor, title, signature, onSave, onOpenChange, sessionId, type, extractVariables]);
 
   const addImage = useCallback(() => {
     if (fileInputRef.current) {
@@ -611,23 +619,21 @@ export default function DocumentTemplateBuilder({
 
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Title Input */}
-          <div className="p-4 border-b bg-gray-50 flex items-center justify-between">
-            <div className="flex-1">
-              <Label htmlFor="template-title" className="text-sm font-medium">
-                Template Title
-              </Label>
-              {isLoading ? (
-                <Skeleton className="h-10 w-full mt-1" />
-              ) : (
-                <Input
-                  id="template-title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter template title..."
-                  className="mt-1"
-                />
-              )}
-            </div>
+          <div className="p-4 border-b bg-gray-50">
+            <Label htmlFor="template-title" className="text-sm font-medium">
+              Template Title
+            </Label>
+            {isLoading ? (
+              <Skeleton className="h-10 w-full mt-1" />
+            ) : (
+              <Input
+                id="template-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter template title..."
+                className="mt-1"
+              />
+            )}
           </div>
 
           {/* Toolbar */}
@@ -931,18 +937,31 @@ export default function DocumentTemplateBuilder({
             Use <span className="font-mono bg-gray-200 px-1 rounded">{"{{variableName}}"}</span> for
             dynamic content
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={!title.trim() || isLoading}>
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4 mr-2" />
-              )}
-              {isLoading ? "Loading..." : "Save Template"}
-            </Button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="signature-required"
+                checked={signature}
+                onCheckedChange={(checked) => setSignature(checked === true)}
+                disabled={isLoading}
+              />
+              <Label htmlFor="signature-required" className="text-sm font-medium cursor-pointer">
+                Signature
+              </Label>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={!title.trim() || isLoading}>
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                {isLoading ? "Loading..." : "Save Template"}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
