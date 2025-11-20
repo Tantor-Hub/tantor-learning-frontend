@@ -67,14 +67,7 @@ export function BooksTab() {
     <>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl">Livres</h2>
-        <Button
-          onClick={() => {
-            setEditingBook(null);
-            setBookDialogOpen(true);
-          }}
-        >
-          Ajouter un livre
-        </Button>
+        <CreateBookModal />
       </div>
       {booksLoading ? (
         <Table>
@@ -174,14 +167,6 @@ export function BooksTab() {
         </Table>
       )}
 
-      <CreateBookModal
-        open={bookDialogOpen}
-        onOpenChange={setBookDialogOpen}
-        editingBook={editingBook}
-        onSuccess={() => {
-          setEditingBook(null);
-        }}
-      />
       <UpdateBookModal
         open={updateBookDialogOpen}
         onOpenChange={setUpdateBookDialogOpen}
