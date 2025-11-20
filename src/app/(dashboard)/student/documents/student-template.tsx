@@ -31,6 +31,8 @@ import {
 import html2pdf from "html2pdf.js";
 import { toast } from "react-hot-toast";
 import { DocumentInstance } from "@/types/documents";
+import { useAppSelector } from "@/store/store";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
 
 // --- Font Size Extension ---
 const FontSize = Extension.create({
@@ -171,9 +173,11 @@ export default function StudentTemplate({
   const [isContentLoaded, setIsContentLoaded] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
+  const [signatureAccepted, setSignatureAccepted] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [commentTop, setCommentTop] = useState<number | null>(null);
+  const currentUser = useAppSelector(selectCurrentUser);
 
   // PDF Crop settings (used for PDF generation)
   const [cropSettings, setCropSettings] = useState({
@@ -340,6 +344,7 @@ export default function StudentTemplate({
       setVariableValues({}); // Reset variable values
       setExistingInstance(null); // Reset existing instance
       setIsPublished(false); // Reset published state
+      setSignatureAccepted(false); // Reset signature acceptance
       getDocumentTemplate({ id: templateId });
     } else if (!open) {
       // Reset state when modal closes
@@ -347,6 +352,7 @@ export default function StudentTemplate({
       setVariableValues({});
       setExistingInstance(null);
       setIsPublished(false);
+      setSignatureAccepted(false);
     }
   }, [open, templateId, getDocumentTemplate, isClient]);
 
@@ -412,7 +418,12 @@ export default function StudentTemplate({
       }
       try {
         if (templateData.data.content) {
-          const convertContent = (content: any, values: Record<string, string>): any => {
+          const convertContent = (
+            content: any,
+            values: Record<string, string>,
+            signatureAccepted: boolean,
+            currentUser: any
+          ): any => {
             if (!content) return null;
 
             const traverse = (node: any): any => {
@@ -444,17 +455,76 @@ export default function StudentTemplate({
               return node;
             };
 
+            let convertedContent = content;
             if (content.type === "doc" && Array.isArray(content.content)) {
-              return {
+              convertedContent = {
                 ...content,
                 content: content.content.map(traverse).filter(Boolean),
               };
             }
 
-            return content;
+            // If signature is required and accepted, append signature to the last empty paragraph
+            if (templateData.data?.signature && signatureAccepted && currentUser) {
+              const signatureContent = [
+                {
+                  type: "paragraph",
+                  attrs: { textAlign: "left" },
+                  content: [
+                    {
+                      type: "text",
+                      text: "Signature",
+                      marks: [{ type: "bold" }],
+                    },
+                  ],
+                },
+                {
+                  type: "paragraph",
+                  attrs: { textAlign: "left" },
+                  content: [
+                    {
+                      type: "text",
+                      text: `${currentUser.firstName} ${currentUser.lastName}`,
+                      marks: [{ type: "italic" }],
+                    },
+                  ],
+                },
+              ];
+
+              if (convertedContent.type === "doc" && Array.isArray(convertedContent.content)) {
+                // Find the last paragraph that is empty or has "Signature"
+                let lastParagraphIndex = -1;
+                for (let i = convertedContent.content.length - 1; i >= 0; i--) {
+                  const node = convertedContent.content[i];
+                  if (node.type === "paragraph") {
+                    if (
+                      !node.content ||
+                      node.content.length === 0 ||
+                      (node.content.length === 1 && node.content[0].text === "Signature")
+                    ) {
+                      lastParagraphIndex = i;
+                      break;
+                    }
+                  }
+                }
+                if (lastParagraphIndex !== -1) {
+                  // Replace the last empty paragraph with signature
+                  convertedContent.content.splice(lastParagraphIndex, 1, ...signatureContent);
+                } else {
+                  // Append to the end
+                  convertedContent.content.push(...signatureContent);
+                }
+              }
+            }
+
+            return convertedContent;
           };
 
-          const convertedContent = convertContent(templateData.data.content, finalVariableValues);
+          const convertedContent = convertContent(
+            templateData.data.content,
+            finalVariableValues,
+            signatureAccepted,
+            currentUser
+          );
 
           if (convertedContent) {
             editor.commands.setContent(convertedContent);
@@ -486,7 +556,16 @@ export default function StudentTemplate({
 
     loadContent();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor, templateData?.data, isClient, instancesLoading, instancesData, userId]);
+  }, [
+    editor,
+    templateData?.data,
+    isClient,
+    instancesLoading,
+    instancesData,
+    userId,
+    signatureAccepted,
+    currentUser,
+  ]);
 
   // Event handlers for variable fields
   const updateVariableField = useCallback((variableName: string, value: string) => {
@@ -495,6 +574,57 @@ export default function StudentTemplate({
       [variableName]: value,
     }));
   }, []);
+
+  // Add CSS styles for signature and apply styling after content loads
+  useEffect(() => {
+    const styleId = "signature-styles";
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.id = styleId;
+      style.textContent = `
+        .signature-title {
+          margin-top: 1.5rem;
+          margin-bottom: 0.5rem;
+          font-weight: bold;
+        }
+        .signature-name {
+          padding-top: 1.5rem;
+          margin-top: 0;
+          font-family: 'Brush Script MT', 'Lucida Handwriting', 'Comic Sans MS', 'Georgia', 'Times New Roman', serif;
+          font-style: italic !important;
+          font-size: 1.25rem;
+          color: #333;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Apply signature styling dynamically after content loads
+    if (editor && isContentLoaded && signatureAccepted && currentUser) {
+      const timeoutId = setTimeout(() => {
+        const editorElement = editor.view.dom;
+        const paragraphs = editorElement.querySelectorAll("p");
+
+        paragraphs.forEach((p, index) => {
+          const paragraph = p as HTMLElement;
+          const text = paragraph.textContent?.trim() || "";
+
+          // Find signature title paragraph
+          if (text === "Signature" && paragraph.querySelector("strong")) {
+            paragraph.classList.add("signature-title");
+
+            // Find the next paragraph which should contain the name
+            const nextParagraph = paragraphs[index + 1] as HTMLElement | undefined;
+            if (nextParagraph && nextParagraph.querySelector("em")) {
+              nextParagraph.classList.add("signature-name");
+            }
+          }
+        });
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [editor, isContentLoaded, signatureAccepted, currentUser]);
 
   // Set up event listeners for variable fields and placeholder behavior
   useEffect(() => {
@@ -1397,6 +1527,84 @@ export default function StudentTemplate({
         elem.removeAttribute("data-show-placeholder");
       });
 
+      // Ensure signature is included in PDF if signature is required and accepted
+      if (templateData?.data?.signature && signatureAccepted && currentUser) {
+        // Check if signature already exists in the content
+        const paragraphs = tempDiv.querySelectorAll("p");
+        let hasSignature = false;
+        let hasSignatureName = false;
+
+        paragraphs.forEach((p) => {
+          const text = p.textContent?.trim() || "";
+          if (text === "Signature" && p.querySelector("strong")) {
+            hasSignature = true;
+          }
+          const paragraphText = p.textContent || "";
+          const firstName = currentUser?.firstName;
+          const lastName = currentUser?.lastName;
+          if (
+            firstName &&
+            lastName &&
+            paragraphText.includes(firstName) &&
+            paragraphText.includes(lastName) &&
+            p.querySelector("em")
+          ) {
+            hasSignatureName = true;
+          }
+        });
+
+        // If signature is missing, add it
+        if (!hasSignature || !hasSignatureName) {
+          const signatureTitle = document.createElement("p");
+          signatureTitle.style.textAlign = "left";
+          signatureTitle.style.marginTop = "1.5rem";
+          signatureTitle.style.marginBottom = "0.5rem";
+          signatureTitle.style.fontWeight = "bold";
+          signatureTitle.innerHTML = "<strong>Signature</strong>";
+
+          const signatureName = document.createElement("p");
+          signatureName.style.textAlign = "left";
+          signatureName.style.paddingTop = "1.5rem";
+          signatureName.style.marginTop = "0";
+          signatureName.style.fontFamily =
+            "'Brush Script MT', 'Lucida Handwriting', 'Comic Sans MS', 'Georgia', 'Times New Roman', serif";
+          signatureName.style.fontStyle = "italic";
+          signatureName.style.fontSize = "1.25rem";
+          signatureName.style.color = "#333";
+          const fullName = `${currentUser?.firstName || ""} ${currentUser?.lastName || ""}`.trim();
+          signatureName.innerHTML = `<em>${fullName}</em>`;
+
+          tempDiv.appendChild(signatureTitle);
+          tempDiv.appendChild(signatureName);
+        } else {
+          // Apply signature styling to existing signature paragraphs
+          paragraphs.forEach((p, index) => {
+            const paragraph = p as HTMLElement;
+            const text = paragraph.textContent?.trim() || "";
+
+            if (text === "Signature" && paragraph.querySelector("strong")) {
+              paragraph.classList.add("signature-title");
+              paragraph.style.marginTop = "1.5rem";
+              paragraph.style.marginBottom = "0.5rem";
+              paragraph.style.fontWeight = "bold";
+
+              // Style the next paragraph which should contain the name
+              const nextParagraph = paragraphs[index + 1] as HTMLElement | undefined;
+              if (nextParagraph && nextParagraph.querySelector("em")) {
+                nextParagraph.classList.add("signature-name");
+                nextParagraph.style.paddingTop = "1.5rem";
+                nextParagraph.style.marginTop = "0";
+                nextParagraph.style.fontFamily =
+                  "'Brush Script MT', 'Lucida Handwriting', 'Comic Sans MS', 'Georgia', 'Times New Roman', serif";
+                nextParagraph.style.fontStyle = "italic";
+                nextParagraph.style.fontSize = "1.25rem";
+                nextParagraph.style.color = "#333";
+              }
+            }
+          });
+        }
+      }
+
       // Ensure all images are properly loaded and visible
       const images = tempDiv.querySelectorAll("img");
 
@@ -1701,7 +1909,17 @@ export default function StudentTemplate({
     } catch (error) {
       toast.error("Erreur lors du téléchargement du PDF");
     }
-  }, [editor, title, variableValues, sanitizeStylesForPDF, cropSettings, calculateCropSettings]);
+  }, [
+    editor,
+    title,
+    variableValues,
+    sanitizeStylesForPDF,
+    cropSettings,
+    calculateCropSettings,
+    templateData,
+    signatureAccepted,
+    currentUser,
+  ]);
 
   // Debug logging
   useEffect(() => {
@@ -1857,6 +2075,25 @@ export default function StudentTemplate({
               </div>
             )}
           </div>
+
+          {/* Signature Acceptance Checkbox */}
+          {templateData?.data?.signature && (
+            <div className="mt-6 flex items-center justify-center">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="signature-acceptance"
+                  checked={signatureAccepted}
+                  onCheckedChange={(checked) => setSignatureAccepted(!!checked)}
+                />
+                <label
+                  htmlFor="signature-acceptance"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  J'accepte de signer ce document avec mon nom et prénom
+                </label>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -1908,14 +2145,18 @@ export default function StudentTemplate({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Fermer
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleDownloadPDF()}
-              disabled={!isContentLoaded || !editor}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Télécharger PDF
-            </Button>
+            {/* Only show download button if signature is not required, or if signature is required and accepted */}
+            {(!templateData?.data?.signature ||
+              (templateData?.data?.signature && signatureAccepted)) && (
+              <Button
+                variant="outline"
+                onClick={() => handleDownloadPDF()}
+                disabled={!isContentLoaded || !editor}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Télécharger PDF
+              </Button>
+            )}
             <Button
               onClick={handleSave}
               disabled={isSaving || !isContentLoaded || !editor || isReadonly}

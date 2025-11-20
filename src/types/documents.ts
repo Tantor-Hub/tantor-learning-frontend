@@ -6,6 +6,7 @@ export interface DocumentTemplate {
   type: DocumentTemplateType;
   variables?: string[];
   imageUrl?: string;
+  signature?: boolean;
   createdAt: string;
   updatedAt: string;
 }
