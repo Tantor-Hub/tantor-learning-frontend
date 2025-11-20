@@ -36,7 +36,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { AuthWrapper } from "@/components/AuthWrapper";
 
 export default function LibraryPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -82,193 +81,187 @@ export default function LibraryPage() {
   };
 
   return (
-    <AuthWrapper>
-      <section>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12">
-          <hgroup className="max-w-lg w-full mx-auto space-y-4 text-center mb-12">
-            <h1 className="text-3xl md:text-4xl text-primary font-semibold mb-4">Bibliothèque</h1>
-            <p className="font-normal text-muted-foreground text-center text-lg">
-              Découvrez notre collection complète de livres et ressources pédagogiques
-            </p>
-          </hgroup>
+    <section>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12">
+        <hgroup className="max-w-lg w-full mx-auto space-y-4 text-center mb-12">
+          <h1 className="text-3xl md:text-4xl text-primary font-semibold mb-4">Bibliothèque</h1>
+          <p className="font-normal text-muted-foreground text-center text-lg">
+            Découvrez notre collection complète de livres et ressources pédagogiques
+          </p>
+        </hgroup>
 
-          {/* Filters Section */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filtres
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Catégorie</Label>
-                  <Select
-                    value={selectedCategory || "all"}
-                    onValueChange={(value) => {
-                      setSelectedCategory(value === "all" ? "" : value);
-                      handleFilterChange();
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Toutes les catégories" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Toutes les catégories</SelectItem>
-                      {categories?.data?.map((category: BookCategory) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+        {/* Filters Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filtres
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="category">Catégorie</Label>
+                <Select
+                  value={selectedCategory || "all"}
+                  onValueChange={(value) => {
+                    setSelectedCategory(value === "all" ? "" : value);
+                    handleFilterChange();
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Toutes les catégories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toutes les catégories</SelectItem>
+                    {categories?.data?.map((category: BookCategory) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="author">Auteur</Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="author"
-                      placeholder="Rechercher par auteur..."
-                      value={author}
-                      onChange={(e) => {
-                        setAuthor(e.target.value);
-                        handleFilterChange();
-                      }}
-                      className="pl-9"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="status">Statut</Label>
-                  <Select
-                    value={selectedStatus || "all"}
-                    onValueChange={(value) => {
-                      setSelectedStatus(value === "all" ? "" : value);
-                      handleFilterChange();
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Tous les statuts" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tous les statuts</SelectItem>
-                      <SelectItem value="free">Gratuit</SelectItem>
-                      <SelectItem value="premium">Premium</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="minViews">Vues minimum</Label>
+              <div className="space-y-2">
+                <Label htmlFor="author">Auteur</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="minViews"
-                    type="number"
-                    placeholder="0"
-                    value={minViews}
+                    id="author"
+                    placeholder="Rechercher par auteur..."
+                    value={author}
                     onChange={(e) => {
-                      setMinViews(e.target.value);
+                      setAuthor(e.target.value);
                       handleFilterChange();
                     }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="minDownloads">Téléchargements minimum</Label>
-                  <Input
-                    id="minDownloads"
-                    type="number"
-                    placeholder="0"
-                    value={minDownloads}
-                    onChange={(e) => {
-                      setMinDownloads(e.target.value);
-                      handleFilterChange();
-                    }}
+                    className="pl-9"
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {isLoading ? (
+              <div className="space-y-2">
+                <Label htmlFor="status">Statut</Label>
+                <Select
+                  value={selectedStatus || "all"}
+                  onValueChange={(value) => {
+                    setSelectedStatus(value === "all" ? "" : value);
+                    handleFilterChange();
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tous les statuts" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les statuts</SelectItem>
+                    <SelectItem value="free">Gratuit</SelectItem>
+                    <SelectItem value="premium">Premium</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="minViews">Vues minimum</Label>
+                <Input
+                  id="minViews"
+                  type="number"
+                  placeholder="0"
+                  value={minViews}
+                  onChange={(e) => {
+                    setMinViews(e.target.value);
+                    handleFilterChange();
+                  }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="minDownloads">Téléchargements minimum</Label>
+                <Input
+                  id="minDownloads"
+                  type="number"
+                  placeholder="0"
+                  value={minDownloads}
+                  onChange={(e) => {
+                    setMinDownloads(e.target.value);
+                    handleFilterChange();
+                  }}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <Card key={i} className="overflow-hidden">
+                <Skeleton className="w-full h-48" />
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-5/6" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : books.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Aucun livre trouvé</h3>
+            <p className="text-muted-foreground text-center max-w-md">
+              Aucun livre ne correspond à vos critères de recherche. Essayez de modifier vos filtres
+              ou de rechercher un autre terme.
+            </p>
+          </div>
+        ) : (
+          <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <Card key={i} className="overflow-hidden">
-                  <Skeleton className="w-full h-48" />
-                  <CardHeader>
-                    <Skeleton className="h-6 w-3/4 mb-2" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-4 w-full mb-2" />
-                    <Skeleton className="h-4 w-5/6" />
-                  </CardContent>
-                </Card>
+              {books.map((book: Book) => (
+                <BookCard key={book.id} book={book} />
               ))}
             </div>
-          ) : books.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Aucun livre trouvé</h3>
-              <p className="text-muted-foreground text-center max-w-md">
-                Aucun livre ne correspond à vos critères de recherche. Essayez de modifier vos
-                filtres ou de rechercher un autre terme.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {books.map((book: Book) => (
-                  <BookCard key={book.id} book={book} />
-                ))}
-              </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="mt-8">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => setPage(Math.max(1, page - 1))}
-                          className={
-                            page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"
-                          }
-                        />
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setPage(Math.max(1, page - 1))}
+                        className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          onClick={() => setPage(pageNum)}
+                          isActive={page === pageNum}
+                          className="cursor-pointer"
+                        >
+                          {pageNum}
+                        </PaginationLink>
                       </PaginationItem>
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                        <PaginationItem key={pageNum}>
-                          <PaginationLink
-                            onClick={() => setPage(pageNum)}
-                            isActive={page === pageNum}
-                            className="cursor-pointer"
-                          >
-                            {pageNum}
-                          </PaginationLink>
-                        </PaginationItem>
-                      ))}
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => setPage(Math.min(totalPages, page + 1))}
-                          className={
-                            page === totalPages
-                              ? "pointer-events-none opacity-50"
-                              : "cursor-pointer"
-                          }
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </section>
-    </AuthWrapper>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setPage(Math.min(totalPages, page + 1))}
+                        className={
+                          page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
   );
 }
 

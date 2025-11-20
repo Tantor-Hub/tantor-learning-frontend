@@ -1,6 +1,7 @@
 import Image from "next/image";
 
-const partners = ["france travail", "lk paie", "qualiopi", "voltaire", "mon compe", "la region"];
+// const partners = ["france travail", "lk paie", "qualiopi", "voltaire", "mon compe", "la region"];
+const partners = ["lk paie", "qualiopi", "voltaire"];
 const Partners = () => {
   return (
     <section id="partners" className="pt-6">

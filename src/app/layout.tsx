@@ -8,9 +8,14 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: {
     default: "Tantor Learning",
-    template: "%s - Tantor Learning",
+    template: "Tantor Learning - %s",
   },
   description: "Formations certifiantes en ligne et en présentiel, partout en France.",
+  twitter: {
+    card: "summary_large_image",
+    title: "Tantor Learning: Plateforme de formation professionnelle en ligne partout en France",
+    description: "Formations certifiantes en ligne et en présentiel, partout en France.",
+  },
 };
 
 export default async function RootLayout({
