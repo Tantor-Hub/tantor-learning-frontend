@@ -188,13 +188,8 @@ export function CategoryFormation() {
               <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
                 Annuler
               </Button>
-              <Button
-                type="submit"
-                onClick={handleCreateCategory}
-                disabled={isCreatingCategory}
-                className="bg-destructive text-white"
-              >
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Button type="submit" onClick={handleCreateCategory} disabled={isCreatingCategory}>
+                {isCreatingCategory && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Créer
               </Button>
             </DialogFooter>
