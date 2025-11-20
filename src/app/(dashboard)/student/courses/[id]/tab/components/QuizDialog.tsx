@@ -95,9 +95,8 @@ export function QuizDialog({ showQuizDialog, onClose, evaluation }: QuizDialogPr
               questionsError.status === 403 &&
               questionsError.data &&
               typeof questionsError.data === "object" &&
-              "message" in questionsError.data &&
-              questionsError.data.message === "This evaluation has expired"
-                ? "Vous ne pouvez pas faire le quiz car les détails ont expiré"
+              "message" in questionsError.data
+                ? (questionsError.data.message as string)
                 : "Erreur lors du chargement des questions"}
             </p>
             <button

@@ -218,7 +218,7 @@ export default function StudentsByEvaluation() {
               <TableHead>Réponses totales</TableHead>
               <TableHead>Réponses corrigées</TableHead>
               <TableHead>Pourcentage corrigé</TableHead>
-              <TableHead>Actions</TableHead>
+              {!evaluation?.isImmediateResult && <TableHead>Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -231,20 +231,22 @@ export default function StudentsByEvaluation() {
                 <TableCell>{student.totalAnswers}</TableCell>
                 <TableCell>{student.markedAnswers}</TableCell>
                 <TableCell>{student.markedPercentage}%</TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      router.push(
-                        `/instructor/courses/${courseId}/evaluations/${evaluationId}/students/${student.id}/answers`
-                      )
-                    }
-                  >
-                    <Eye className="mr-2 h-4 w-4" />
-                    Voir réponses
-                  </Button>
-                </TableCell>
+                {!evaluation?.isImmediateResult && (
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        router.push(
+                          `/instructor/courses/${courseId}/evaluations/${evaluationId}/students/${student.id}/answers`
+                        )
+                      }
+                    >
+                      <Eye className="mr-2 h-4 w-4" />
+                      Voir réponses
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>

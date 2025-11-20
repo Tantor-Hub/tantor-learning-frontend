@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetStudentEvaluationsBySessionQuery } from "@/lib/apis/student-evaluations";
+import { useGetStudentEvaluationsBySessionCourseStudentQuery } from "@/lib/apis/student-evaluations";
 import { IStudentEvaluation } from "@/types/student-evaluations";
 import { LottieSuccessView } from "@/components/payment/lottie-success-view";
 import { useQuizState } from "./quiz-logic";
@@ -18,13 +17,12 @@ export function EvaluationsTab() {
   const quizState = useQuizState();
 
   // API queries
-  const { data, isLoading, error } = useGetStudentEvaluationsBySessionQuery({
+  const { data, isLoading, error } = useGetStudentEvaluationsBySessionCourseStudentQuery({
     sessionCoursId: sessionCoursId as string,
   });
 
   // Derived state
   const evaluations = data?.data.evaluations || [];
-  const sessionCours = data?.data.sessionCours;
 
   // Handlers using the quiz state
   const handleStartQuizClick = (evaluation: IStudentEvaluation) => {
@@ -63,16 +61,7 @@ export function EvaluationsTab() {
   return (
     <div className="space-y-6">
       {/* Session Course Info */}
-      {sessionCours && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">{sessionCours.title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">{sessionCours.description}</p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Removed sessionCours display as it's no longer in the response */}
 
       {/* Evaluations List */}
       <div>

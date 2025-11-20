@@ -100,7 +100,7 @@ export function UpdateEvaluationModal({
       setEndingTime(evalData.endingTime?.slice(0, 5) || "");
       setIspublish(evalData.ispublish || false);
       setIsImmediateResult(evalData.isImmediateResult || false);
-      setSelectedLessons(evalData.lessonId || []);
+      setSelectedLessons(evalData.lessons?.map((lesson) => lesson.id) || []);
     }
   }, [evaluationData]);
 

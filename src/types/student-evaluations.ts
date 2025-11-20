@@ -19,8 +19,8 @@ export interface IStudentEvaluation {
   description: string;
   type: StudentevaluationType;
   points: number;
-  sessionCoursId: string;
-  lessonId: string[];
+  sessionCoursId?: string;
+  lessons?: ILesson[];
   submittiondate: string;
   beginningTime?: string;
   endingTime?: string;
@@ -53,7 +53,6 @@ export interface ILesson {
 export interface IStudentEvaluationsResponse {
   evaluations: IStudentEvaluation[];
   total: number;
-  sessionCours: ISessionCours;
 }
 
 export interface IStudentEvaluationsApiResponse {
@@ -75,6 +74,7 @@ export interface IStudentsByEvaluationIdApiResponse {
       ispublish: boolean;
       markingStatus: string;
       sessionCoursId: string;
+      isImmediateResult: boolean;
       sessionCours: {
         id: string;
         title: string;

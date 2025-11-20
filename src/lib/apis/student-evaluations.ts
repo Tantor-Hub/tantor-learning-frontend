@@ -28,6 +28,13 @@ export const studentEvaluationsApi = createApi({
       query: ({ sessionCoursId }) => `studentevaluation/sessioncours/${sessionCoursId}`,
       providesTags: ["StudentEvaluations"],
     }),
+    getStudentEvaluationsBySessionCourseStudent: builder.query<
+      IStudentEvaluationsApiResponse,
+      { sessionCoursId: string }
+    >({
+      query: ({ sessionCoursId }) => `studentevaluation/student/sessioncours/${sessionCoursId}`,
+      providesTags: ["StudentEvaluations"],
+    }),
     getStudentEvaluationById: builder.query<{ data: IStudentEvaluation }, { id: string }>({
       query: ({ id }) => `studentevaluation/${id}`,
       providesTags: ["StudentEvaluations"],
@@ -145,6 +152,7 @@ export const {
     ######################### STUDENT ACCESS ########################################
     #################################################################################*/
   useGetStudentEvaluationsBySessionQuery,
+  useGetStudentEvaluationsBySessionCourseStudentQuery,
   useGetStudentEvaluationByIdQuery,
   useGetStudentStatisticsQuery,
 
