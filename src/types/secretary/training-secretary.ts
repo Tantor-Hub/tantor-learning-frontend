@@ -226,3 +226,37 @@ export interface ICourseUpdateResponse {
   message: string;
   data: ICourseItem;
 }
+
+export interface ICourseByIdResponse {
+  status: number;
+  message: string;
+  data: {
+    id: string;
+    title: string;
+    description: string;
+    is_published: boolean;
+    formateurs: Array<{
+      id: string;
+      firstName: string;
+      lastName: string;
+    }>;
+    id_session: string;
+    ponderation: number;
+    createdBy: string;
+    createdAt: string;
+    updatedAt: string;
+    CreatedBy: {
+      id: number;
+      fs_name: string;
+      ls_name: string;
+    };
+    trainingSession: {
+      id: string;
+      title: string;
+      nb_places: number;
+      available_places: number;
+      begining_date: string;
+      ending_date: string;
+    };
+  };
+}

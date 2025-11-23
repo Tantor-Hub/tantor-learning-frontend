@@ -6,6 +6,7 @@ import {
   IListCourseBySessionIdResponse,
   ICourseBySessionIdResponse,
   ICourseUpdateResponse,
+  ICourseByIdResponse,
   ITrainingListResponse,
   ITrainingTypesResponse,
   IListTrainingByIdResponse,
@@ -216,6 +217,11 @@ export const trainingSecretaryApi = createApi({
       }),
       invalidatesTags: ["TrainingSecretary"],
     }),
+
+    courseById: builder.query<ICourseByIdResponse, { id: string }>({
+      query: (request) => `sessioncours/${request.id}`,
+      providesTags: ["TrainingSecretary"],
+    }),
   }),
 });
 
@@ -241,8 +247,10 @@ export const {
   useAddNewCourseInSessionByIdMutation,
   useListCourseBySessionIdQuery,
   useCourseByIdSessionQuery,
+  useLazyCourseByIdSessionQuery,
   useDeleteCourseByIdMutation,
   useUpdateCourseByIdMutation,
+  useCourseByIdQuery,
 
   // ########################################################
   // *********** SESSIONS ENDPOINTS EXPORT *************

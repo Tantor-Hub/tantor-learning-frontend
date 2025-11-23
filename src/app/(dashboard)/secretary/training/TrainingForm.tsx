@@ -354,7 +354,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
 
               <div>
                 <Label htmlFor="rnc" className="text-sm font-medium">
-                  Référence RNC
+                  Référence RNCP / RS
                 </Label>
                 <Input
                   id="rnc"

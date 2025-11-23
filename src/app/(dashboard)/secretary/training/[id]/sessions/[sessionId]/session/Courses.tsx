@@ -53,15 +53,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AddCourseModal } from "../components/add-course-modal";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
-  useCourseByIdSessionQuery,
+  useLazyCourseByIdSessionQuery,
   useDeleteCourseByIdMutation,
   useUpdateCourseByIdMutation,
+  useCourseByIdQuery,
 } from "@/lib/apis/secretary/training-secretary-api";
 import { UserRole } from "@/types/user";
 import { toast } from "react-hot-toast";
 
 export default function Courses({ sessionId }: { sessionId: string }) {
-  const { data, isLoading, error, refetch } = useCourseByIdSessionQuery({ sessionId });
+  const [trigger, { data, isLoading, error }] = useLazyCourseByIdSessionQuery();
+  const refetch = () => trigger({ sessionId });
+
+  React.useEffect(() => {
+    trigger({ sessionId });
+  }, [sessionId, trigger]);
   const [deleteCourse] = useDeleteCourseByIdMutation();
   const [updateCourse, { isLoading: isLoadingUpdateCourse }] = useUpdateCourseByIdMutation();
 
@@ -72,11 +78,33 @@ export default function Courses({ sessionId }: { sessionId: string }) {
   const [editForm, setEditForm] = React.useState({
     title: "",
     description: "",
-    ponderation: 1,
+    ponderation: 0,
     is_published: false,
   });
   const [selectedFormateurs, setSelectedFormateurs] = React.useState<string[]>([]);
   const [open, setOpen] = React.useState(false);
+
+  const { data: courseData, isLoading: isLoadingCourse } = useCourseByIdQuery(
+    {
+      id: selectedCourseId || "",
+    },
+    {
+      skip: !selectedCourseId,
+    }
+  );
+
+  // Initialize form when course data is loaded
+  React.useEffect(() => {
+    if (courseData?.data && selectedCourseId) {
+      setEditForm({
+        title: courseData.data.title,
+        description: courseData.data.description,
+        ponderation: courseData.data.ponderation,
+        is_published: courseData.data.is_published,
+      });
+      setSelectedFormateurs(courseData.data.formateurs?.map((f: any) => f.id) || []);
+    }
+  }, [courseData, selectedCourseId]);
 
   const { data: usersData, isLoading: isLoadingUsers } = useListUserByRoleQuery({
     role: UserRole.INSTRUCTOR,
@@ -96,16 +124,23 @@ export default function Courses({ sessionId }: { sessionId: string }) {
     try {
       await updateCourse({
         id,
-        title: editForm.title,
-        description: editForm.description,
-        ponderation: editForm.ponderation,
-        is_published: editForm.is_published,
-        id_formateur: selectedFormateurs,
+        title: editForm.title || courseData?.data.title || "",
+        description: editForm.description || courseData?.data.description || "",
+        ponderation: editForm.ponderation || courseData?.data.ponderation || 1,
+        is_published:
+          editForm.is_published !== undefined
+            ? editForm.is_published
+            : courseData?.data.is_published || false,
+        id_formateur:
+          selectedFormateurs.length > 0
+            ? selectedFormateurs
+            : courseData?.data.formateurs?.map((f: any) => f.id) || [],
       }).unwrap();
       toast.success("Matière modifier avec succès!");
       setOpenUpdateDialog(false);
-      setEditForm({ title: "", description: "", ponderation: 1, is_published: false });
+      setEditForm({ title: "", description: "", ponderation: 0, is_published: false });
       setSelectedFormateurs([]);
+      setSelectedCourseId(null);
       refetch();
     } catch (err) {
       toast.error("Échec de la modification du Matière.");
@@ -207,7 +242,12 @@ export default function Courses({ sessionId }: { sessionId: string }) {
                   </TableCell>
                   <TableCell>
                     {course.formateurs && course.formateurs.length > 0
-                      ? course.formateurs.map((f) => `${f.lastName} ${f.firstName}`).join(", ")
+                      ? course.formateurs
+                          .map(
+                            (f) =>
+                              `${f.lastName ? f.lastName : ""} ${f.firstName ? f.firstName : ""}`
+                          )
+                          .join(", ")
                       : "N/A"}
                   </TableCell>
                   <TableCell>
@@ -218,13 +258,6 @@ export default function Courses({ sessionId }: { sessionId: string }) {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={() => {
-                            setEditForm({
-                              title: course.title,
-                              description: course.description,
-                              ponderation: course.ponderation || 1,
-                              is_published: course.is_published,
-                            });
-                            setSelectedFormateurs(course.id_formateur || []);
                             setSelectedCourseId(course.id);
                             setOpenUpdateDialog(true);
                           }}
@@ -282,100 +315,129 @@ export default function Courses({ sessionId }: { sessionId: string }) {
             <DialogTitle>Modifier le Matière</DialogTitle>
             <DialogDescription>Modifiez les informations du Matière.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="title">Titre</Label>
-              <Input
-                id="title"
-                value={editForm.title}
-                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-              />
+          {isLoadingCourse ? (
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
             </div>
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-              />
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title">Titre</Label>
+                <Input
+                  id="title"
+                  value={editForm.title || courseData?.data.title || ""}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={editForm.description || courseData?.data.description || ""}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="ponderation">Pondération</Label>
+                <Input
+                  id="ponderation"
+                  type="number"
+                  value={editForm.ponderation || courseData?.data.ponderation || 1}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, ponderation: Number(e.target.value) })
+                  }
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="is_published"
+                  checked={
+                    editForm.is_published !== undefined
+                      ? editForm.is_published
+                      : courseData?.data.is_published || false
+                  }
+                  onCheckedChange={(checked) =>
+                    setEditForm({ ...editForm, is_published: !!checked })
+                  }
+                />
+                <Label htmlFor="is_published">Publié</Label>
+              </div>
+              <div className="flex flex-col space-y-1">
+                <Label htmlFor="formateurs">Formateurs</Label>
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={open}
+                      className="w-full justify-between"
+                    >
+                      {selectedFormateurs.length > 0
+                        ? `${selectedFormateurs.length} formateur(s) sélectionné(s)`
+                        : courseData?.data.formateurs && courseData.data.formateurs.length > 0
+                          ? `${courseData.data.formateurs.length} formateur(s) sélectionné(s)`
+                          : "Sélectionner des formateurs..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput placeholder="Rechercher des formateurs..." />
+                      <CommandEmpty>Aucun formateur trouvé.</CommandEmpty>
+                      <CommandGroup className="max-h-48 overflow-y-auto">
+                        {isLoadingUsers
+                          ? Array.from({ length: 5 }).map((_, index) => (
+                              <div key={index} className="flex items-center space-x-2 p-2">
+                                <Skeleton className="h-4 w-4" />
+                                <Skeleton className="h-4 w-24" />
+                              </div>
+                            ))
+                          : users?.map((user) => {
+                              const isSelected =
+                                selectedFormateurs.includes(user.id.toString()) ||
+                                (courseData?.data.formateurs?.some(
+                                  (f: any) => f.id === user.id.toString()
+                                ) &&
+                                  selectedFormateurs.length === 0);
+                              return (
+                                <CommandItem
+                                  key={user.id}
+                                  value={user.id.toString()}
+                                  onSelect={() => {
+                                    if (isSelected) {
+                                      setSelectedFormateurs((prev) =>
+                                        prev.filter((id) => id !== user.id.toString())
+                                      );
+                                    } else {
+                                      setSelectedFormateurs((prev) => [
+                                        ...prev,
+                                        user.id.toString(),
+                                      ]);
+                                    }
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      isSelected ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {user.firstName} {user.lastName}
+                                </CommandItem>
+                              );
+                            })}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="ponderation">Pondération</Label>
-              <Input
-                id="ponderation"
-                type="number"
-                value={editForm.ponderation}
-                onChange={(e) => setEditForm({ ...editForm, ponderation: Number(e.target.value) })}
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="is_published"
-                checked={editForm.is_published}
-                onCheckedChange={(checked) => setEditForm({ ...editForm, is_published: !!checked })}
-              />
-              <Label htmlFor="is_published">Publié</Label>
-            </div>
-            <div className="flex flex-col space-y-1">
-              <Label htmlFor="formateurs">Formateurs</Label>
-              <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={open}
-                    className="w-full justify-between"
-                  >
-                    {selectedFormateurs.length > 0
-                      ? `${selectedFormateurs.length} formateur(s) sélectionné(s)`
-                      : "Sélectionner des formateurs..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="Rechercher des formateurs..." />
-                    <CommandEmpty>Aucun formateur trouvé.</CommandEmpty>
-                    <CommandGroup className="max-h-48 overflow-y-auto">
-                      {isLoadingUsers
-                        ? Array.from({ length: 5 }).map((_, index) => (
-                            <div key={index} className="flex items-center space-x-2 p-2">
-                              <Skeleton className="h-4 w-4" />
-                              <Skeleton className="h-4 w-24" />
-                            </div>
-                          ))
-                        : users?.map((user) => {
-                            const isSelected = selectedFormateurs.includes(user.id.toString());
-                            return (
-                              <CommandItem
-                                key={user.id}
-                                value={user.id.toString()}
-                                onSelect={() => {
-                                  if (isSelected) {
-                                    setSelectedFormateurs((prev) =>
-                                      prev.filter((id) => id !== user.id.toString())
-                                    );
-                                  } else {
-                                    setSelectedFormateurs((prev) => [...prev, user.id.toString()]);
-                                  }
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    isSelected ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {user.firstName} {user.lastName}
-                              </CommandItem>
-                            );
-                          })}
-                    </CommandGroup>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
+          )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpenUpdateDialog(false)}>
               Annuler

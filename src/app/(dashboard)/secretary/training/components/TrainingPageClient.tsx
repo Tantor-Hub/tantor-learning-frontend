@@ -37,29 +37,32 @@ const TrainingCard = ({
 }) => {
   return (
     <Card
-      className="hover:shadow-lg transition-shadow cursor-pointer border"
+      className="hover:shadow-lg transition-shadow cursor-pointer border flex flex-col"
       onClick={() => onViewSessions(training)}
     >
       <CardHeader>
-        <CardTitle className="text-xl">{training.title}</CardTitle>
-        <CardDescription>{training.subtitle}</CardDescription>
+        {/* Fixed height title */}
+        <CardTitle className="text-xl h-12 overflow-hidden line-clamp-1">
+          {training.title}
+        </CardTitle>
+
+        {/* Subtitle with limited lines */}
+        <CardDescription className="line-clamp-2">{training.subtitle}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <p className="text-gray-600 mb-4">
+
+      <CardContent className="flex flex-col flex-1">
+        {/* Description with max lines */}
+        <p className="text-gray-600 mb-4 line-clamp-3">
           {training.description || "Aucune description disponible"}
         </p>
 
-        <div className="flex flex-col gap-2 text-sm text-gray-500 mb-4">
-          {/* <div className="flex items-center gap-1">
-            <Calendar className="h-4 w-4" />
-            <span>0 sessions</span>
-          </div> */}
+        <div className="flex flex-col gap-2 text-sm text-gray-500 mb-4 mt-auto">
           <div className="flex items-center gap-1">
             <BadgeEuro className="h-4 w-4" />
             <span>{training.prix}€</span>
           </div>
+
           <div className="flex items-center gap-1">
-            {/* <Users className="h-4 w-4" /> */}
             <Badge variant="outline">
               <span>{training.trainingCategory?.title || "Non catégorisé"}</span>
             </Badge>
@@ -92,8 +95,8 @@ export default function TrainingPageClient() {
   const trainings = formationsData?.data || [];
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+    <div>
+      <div>
         <Tabs defaultValue="formations" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="formations">Formations</TabsTrigger>
@@ -101,7 +104,7 @@ export default function TrainingPageClient() {
           </TabsList>
 
           <TabsContent value="formations">
-            <div className="mb-8 flex justify-between items-start">
+            <div className="mb-4 flex justify-between items-start">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Formations</h1>
                 <p className="text-gray-600">Découvrez toutes nos formations disponibles</p>
@@ -115,7 +118,7 @@ export default function TrainingPageClient() {
               </TrainingForm>
             </div>
 
-            <div className="w-full max-w-7xl mx-auto p-4">
+            <div className="w-full">
               {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {Array.from({ length: 6 }, (_, index) => (
@@ -136,7 +139,7 @@ export default function TrainingPageClient() {
                   <p className="text-gray-500">Aucune formation disponible pour le moment.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {trainings.map((training) => (
                     <TrainingCard
                       key={training.id}

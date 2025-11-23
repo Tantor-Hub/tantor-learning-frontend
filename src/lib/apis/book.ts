@@ -108,6 +108,14 @@ export const bookApi = createApi({
       providesTags: ["Book"],
       transformResponse: (response: ApiResponse<Book>) => response.data,
     }),
+    getBookByIdForSecretary: builder.query<Book, { id: string }>({
+      query: (request) => ({
+        url: `book/secretary/${request.id}`,
+        method: "GET",
+      }),
+      providesTags: ["Book"],
+      transformResponse: (response: ApiResponse<Book>) => response.data,
+    }),
     updateBook: builder.mutation<Book, { id: string; body: FormData }>({
       query: ({ id, body }) => ({
         url: `book/${id}`,
@@ -171,4 +179,5 @@ export const {
   useIncrementBookDownloadCountMutation,
   useIncrementBookViewCountMutation,
   useLazyGetBookByIdQuery,
+  useLazyGetBookByIdForSecretaryQuery,
 } = bookApi;

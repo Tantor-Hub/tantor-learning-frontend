@@ -12,13 +12,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -29,14 +22,13 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
-import { useUpdateBookMutation, useLazyGetBookByIdQuery } from "@/lib/apis/book";
+import { useUpdateBookMutation, useLazyGetBookByIdForSecretaryQuery } from "@/lib/apis/book";
 import { useLazyGetBookCategoriesQuery } from "@/lib/apis/bookcategory";
 import { useLazyGetAllTrainingSessionsSimplifiedQuery } from "@/lib/apis/training-sessions";
 import { Book, UpdateBookRequest } from "@/types/book";
 import { BookCategory } from "@/types/bookcategory";
 import { SimplifiedTrainingSession } from "@/types/training-sessions";
 import toast from "react-hot-toast";
-import { X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface UpdateBookModalProps {
@@ -48,7 +40,8 @@ interface UpdateBookModalProps {
 
 export function UpdateBookModal({ open, onOpenChange, bookId, onSuccess }: UpdateBookModalProps) {
   const [updateBook, { isLoading: isUpdating }] = useUpdateBookMutation();
-  const [getBookById, { data: bookData, isLoading: isFetchingBook }] = useLazyGetBookByIdQuery();
+  const [getBookById, { data: bookData, isLoading: isFetchingBook }] =
+    useLazyGetBookByIdForSecretaryQuery();
 
   // Categories lazy query
   const [getBookCategories, { data: categoriesData, isLoading: categoriesLoading }] =
@@ -76,7 +69,7 @@ export function UpdateBookModal({ open, onOpenChange, bookId, onSuccess }: Updat
   // Fetch book data when modal opens
   useEffect(() => {
     if (open && bookId) {
-      getBookById(bookId);
+      getBookById({ id: bookId });
     }
   }, [open, bookId, getBookById]);
 
@@ -90,7 +83,6 @@ export function UpdateBookModal({ open, onOpenChange, bookId, onSuccess }: Updat
         description: bookData.description,
         session: bookData.session,
         author: bookData.author,
-        status: bookData.status,
         category: bookData.category,
         public: bookData.public ?? true,
         downloadable: bookData.downloadable,
@@ -119,11 +111,6 @@ export function UpdateBookModal({ open, onOpenChange, bookId, onSuccess }: Updat
       return;
     }
 
-    if (!bookForm.status || (bookForm.status !== "premium" && bookForm.status !== "free")) {
-      toast.error("Le statut est requis et doit être soit 'premium' soit 'free'.");
-      return;
-    }
-
     if (!bookForm.category?.length) {
       toast.error("Au moins une catégorie est requise.");
       return;
@@ -132,34 +119,17 @@ export function UpdateBookModal({ open, onOpenChange, bookId, onSuccess }: Updat
     const loadingToastId = toast.loading("Mise à jour du livre...");
 
     try {
-      // Create FormData with only changed fields
+      // Create FormData with all current form fields
       const bookFormData = new FormData();
 
-      // Only append fields that have changed
-      if (bookForm.title !== originalBookData?.title) {
-        bookFormData.append("title", bookForm.title!.trim());
-      }
-      if (bookForm.description !== originalBookData?.description) {
-        bookFormData.append("description", bookForm.description || "");
-      }
-      if (JSON.stringify(bookForm.session) !== JSON.stringify(originalBookData?.session)) {
-        bookFormData.append("session", JSON.stringify(bookForm.session || []));
-      }
-      if (bookForm.author !== originalBookData?.author) {
-        bookFormData.append("author", bookForm.author || "");
-      }
-      if (bookForm.status !== originalBookData?.status) {
-        bookFormData.append("status", bookForm.status!);
-      }
-      if (JSON.stringify(bookForm.category) !== JSON.stringify(originalBookData?.category)) {
-        bookFormData.append("category", JSON.stringify(bookForm.category!));
-      }
-      if (bookForm.public !== originalBookData?.public) {
-        bookFormData.append("public", (bookForm.public ?? true).toString());
-      }
-      if (bookForm.downloadable !== originalBookData?.downloadable) {
-        bookFormData.append("downloadable", (bookForm.downloadable ?? false).toString());
-      }
+      // Always append all non-file fields
+      bookFormData.append("title", bookForm.title!.trim());
+      bookFormData.append("description", bookForm.description || "");
+      bookFormData.append("session", JSON.stringify(bookForm.session || []));
+      bookFormData.append("author", bookForm.author || "");
+      bookFormData.append("category", JSON.stringify(bookForm.category!));
+      bookFormData.append("public", (bookForm.public ?? true).toString());
+      bookFormData.append("downloadable", (bookForm.downloadable ?? false).toString());
 
       // For update, only append files if new ones are selected
       // Backend will keep existing files if no new files are provided
@@ -207,57 +177,6 @@ export function UpdateBookModal({ open, onOpenChange, bookId, onSuccess }: Updat
             />
           );
         })}
-      </div>
-    </div>
-  );
-
-  const renderStatusAndVisibilityFields = () => (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="status">
-          Statut <span className="text-red-500">*</span>
-        </Label>
-        <Select
-          value={bookForm.status || "free"}
-          onValueChange={(value) =>
-            setBookForm({ ...bookForm, status: value as "premium" | "free" })
-          }
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="free">Gratuit</SelectItem>
-            <SelectItem value="premium">Premium</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="public"
-            checked={bookForm.public ?? true}
-            onCheckedChange={(checked) => setBookForm({ ...bookForm, public: checked as boolean })}
-            disabled={isUpdating}
-          />
-          <Label htmlFor="public" className="cursor-pointer">
-            Public
-          </Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="downloadable"
-            checked={bookForm.downloadable ?? false}
-            onCheckedChange={(checked) =>
-              setBookForm({ ...bookForm, downloadable: checked as boolean })
-            }
-            disabled={isUpdating}
-          />
-          <Label htmlFor="downloadable" className="cursor-pointer">
-            Téléchargeable
-          </Label>
-        </div>
       </div>
     </div>
   );
@@ -326,7 +245,6 @@ export function UpdateBookModal({ open, onOpenChange, bookId, onSuccess }: Updat
 
   const renderStepTwoContent = () => (
     <div className="space-y-6">
-      {renderStatusAndVisibilityFields()}
       <div className="grid gap-4 md:grid-cols-2">
         {renderIconField()}
         {renderPieceJointField()}
@@ -367,7 +285,7 @@ export function UpdateBookModal({ open, onOpenChange, bookId, onSuccess }: Updat
               size="icon"
               className="text-muted-foreground hover:text-foreground"
             >
-              <X className="h-4 w-4" />
+              ×
             </Button>
           </DialogClose>
         </DialogHeader>
@@ -602,14 +520,6 @@ export function UpdateBookModal({ open, onOpenChange, bookId, onSuccess }: Updat
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => onOpenChange(false)}
-                disabled={isUpdating}
-              >
-                Quitter
-              </Button>
               {currentStep > 1 && (
                 <Button
                   type="button"

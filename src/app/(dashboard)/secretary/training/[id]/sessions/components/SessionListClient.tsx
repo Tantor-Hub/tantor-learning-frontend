@@ -224,7 +224,7 @@ const UpdateTrainingForm = ({
       </div>
 
       <div>
-        <Label htmlFor="rnc">RNC</Label>
+        <Label htmlFor="rnc">Référence RNCP / RS</Label>
         <Input
           id="rnc"
           value={formData.rnc}
@@ -638,7 +638,7 @@ export default function SessionListClient() {
                     <Edit /> Modifier la formation
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Modifier la formation</DialogTitle>
                   </DialogHeader>

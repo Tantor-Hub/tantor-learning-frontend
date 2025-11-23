@@ -109,11 +109,6 @@ export function CreateBookModal() {
       return;
     }
 
-    if (!bookForm.status || (bookForm.status !== "premium" && bookForm.status !== "free")) {
-      toast.error("Le statut est requis et doit être soit 'premium' soit 'free'.");
-      return;
-    }
-
     if (!bookForm.category?.length) {
       toast.error("Au moins une catégorie est requise.");
       return;
@@ -135,7 +130,6 @@ export function CreateBookModal() {
       bookFormData.append("description", bookForm.description || "");
       bookFormData.append("session", JSON.stringify(bookForm.session || []));
       bookFormData.append("author", bookForm.author || "");
-      bookFormData.append("status", bookForm.status);
       bookFormData.append("category", JSON.stringify(bookForm.category));
       bookFormData.append("public", bookForm.public.toString());
       bookFormData.append("downloadable", bookForm.downloadable.toString());
@@ -171,57 +165,6 @@ export function CreateBookModal() {
             />
           );
         })}
-      </div>
-    </div>
-  );
-
-  const renderStatusAndVisibilityFields = () => (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="status">
-          Statut <span className="text-red-500">*</span>
-        </Label>
-        <Select
-          value={bookForm.status}
-          onValueChange={(value) =>
-            setBookForm({ ...bookForm, status: value as "premium" | "free" })
-          }
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="free">Gratuit</SelectItem>
-            <SelectItem value="premium">Premium</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="public"
-            checked={bookForm.public}
-            onCheckedChange={(checked) => setBookForm({ ...bookForm, public: checked as boolean })}
-            disabled={isCreating}
-          />
-          <Label htmlFor="public" className="cursor-pointer">
-            Public
-          </Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="downloadable"
-            checked={bookForm.downloadable}
-            onCheckedChange={(checked) =>
-              setBookForm({ ...bookForm, downloadable: checked as boolean })
-            }
-            disabled={isCreating}
-          />
-          <Label htmlFor="downloadable" className="cursor-pointer">
-            Téléchargeable
-          </Label>
-        </div>
       </div>
     </div>
   );
@@ -280,7 +223,6 @@ export function CreateBookModal() {
 
   const renderStepTwoContent = () => (
     <div className="space-y-6">
-      {renderStatusAndVisibilityFields()}
       <div className="grid gap-4 md:grid-cols-2">
         {renderIconField()}
         {renderPieceJointField()}
@@ -386,24 +328,63 @@ export function CreateBookModal() {
                                   <Skeleton className="h-4 w-full" />
                                 </CommandItem>
                               ))
-                            : sessions.map((session) => {
-                                const selectedSessions = bookForm.session || [];
-                                const isSelected = selectedSessions.includes(session.sessionId);
-                                return (
-                                  <CommandItem
-                                    key={session.sessionId}
-                                    onSelect={() => {
-                                      const newSelected = isSelected
-                                        ? selectedSessions.filter((id) => id !== session.sessionId)
-                                        : [...selectedSessions, session.sessionId];
-                                      setBookForm({ ...bookForm, session: newSelected });
+                            : [
+                                <CommandItem
+                                  key="select-all"
+                                  onSelect={() => {
+                                    const allSelected = bookForm.session.length === sessions.length;
+                                    setBookForm({
+                                      ...bookForm,
+                                      session: allSelected ? [] : sessions.map((s) => s.sessionId),
+                                    });
+                                  }}
+                                >
+                                  <Checkbox
+                                    checked={bookForm.session.length === sessions.length}
+                                    onCheckedChange={(checked) => {
+                                      setBookForm({
+                                        ...bookForm,
+                                        session: checked ? sessions.map((s) => s.sessionId) : [],
+                                      });
                                     }}
-                                  >
-                                    <Checkbox checked={isSelected} className="mr-2" />
-                                    {session.sessionTitle} - {session.trainingTitle}
-                                  </CommandItem>
-                                );
-                              })}
+                                    className="mr-2"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  Tout sélectionner
+                                </CommandItem>,
+                                ...sessions.map((session) => {
+                                  const selectedSessions = bookForm.session || [];
+                                  const isSelected = selectedSessions.includes(session.sessionId);
+                                  return (
+                                    <CommandItem
+                                      key={session.sessionId}
+                                      onSelect={() => {
+                                        const newSelected = isSelected
+                                          ? selectedSessions.filter(
+                                              (id) => id !== session.sessionId
+                                            )
+                                          : [...selectedSessions, session.sessionId];
+                                        setBookForm({ ...bookForm, session: newSelected });
+                                      }}
+                                    >
+                                      <Checkbox
+                                        checked={isSelected}
+                                        onCheckedChange={(checked) => {
+                                          const newSelected = checked
+                                            ? [...selectedSessions, session.sessionId]
+                                            : selectedSessions.filter(
+                                                (id) => id !== session.sessionId
+                                              );
+                                          setBookForm({ ...bookForm, session: newSelected });
+                                        }}
+                                        className="mr-2"
+                                        onClick={(e) => e.stopPropagation()}
+                                      />
+                                      {session.sessionTitle} - {session.trainingTitle}
+                                    </CommandItem>
+                                  );
+                                }),
+                              ]}
                         </CommandGroup>
                       </Command>
                     </PopoverContent>
@@ -498,7 +479,17 @@ export function CreateBookModal() {
                                       setBookForm({ ...bookForm, category: newSelected });
                                     }}
                                   >
-                                    <Checkbox checked={isSelected} className="mr-2" />
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={(checked) => {
+                                        const newSelected = checked
+                                          ? [...selectedCategories, category.id]
+                                          : selectedCategories.filter((id) => id !== category.id);
+                                        setBookForm({ ...bookForm, category: newSelected });
+                                      }}
+                                      className="mr-2"
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
                                     {category.title}
                                   </CommandItem>
                                 );
