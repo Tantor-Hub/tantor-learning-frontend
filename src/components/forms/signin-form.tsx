@@ -27,6 +27,7 @@ export function SignInForm() {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const [loadingGoogle, setLoadingGoogle] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [signin, { isLoading: isSignInLoading }] = useLoginPasswordLessMutation();
 
   const form = useForm<SignInFormValues>({
@@ -65,7 +66,7 @@ export function SignInForm() {
           window.history.replaceState({}, document.title, newUrl);
 
           // Redirect to home page
-          router.replace("/");
+          router.replace(`/${response.data.user.role}`);
         } else {
           toast.error("Échec de la connexion avec Google");
           setLoadingGoogle(false);
@@ -99,6 +100,7 @@ export function SignInForm() {
 
   const handleSubmit = async (values: SignInFormValues) => {
     try {
+      setIsLoading(true);
       const response = await signin({
         email: values.email.toLowerCase(),
       }).unwrap();
@@ -115,6 +117,8 @@ export function SignInForm() {
         const errorMessage = error.message || "Échec de la connexion. Veuillez réessayer.";
         toast.error(errorMessage);
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -166,9 +170,9 @@ export function SignInForm() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isSignInLoading || !form.formState.isValid}
+              disabled={isSignInLoading || isLoading || !form.formState.isValid}
             >
-              {isSignInLoading ? (
+              {isSignInLoading || isLoading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <>

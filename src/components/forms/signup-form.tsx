@@ -44,36 +44,57 @@ export function SignUpForm() {
   // Handle Google authentication response
   useEffect(() => {
     const successParam = searchParams.get("success");
+    const errorParam = searchParams.get("error");
 
     if (successParam) {
       setLoadingGoogle(true);
-
       try {
         // Decode base64 and parse JSON
         const decodedData = atob(successParam);
         const response = JSON.parse(decodedData);
 
-        if (response.status === 200) {
+        if (response.status === 200 && response.data) {
           dispatch(
             setCredentials({
-              token: response.auth_token,
-              refreshToken: response.refresh_token,
-              expiresIn: response.expires_in,
-              user: response.user,
+              token: response.data.auth_token,
+              refreshToken: response.data.refresh_token,
+              expiresIn: 3600,
+              user: response.data.user,
             })
           );
-          toast.success("Connexion avec Google réussie!");
-          router.push("/");
+          toast.success("Inscription avec Google réussie!");
+
+          // Clean up the URL before redirecting
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
+
+          // Redirect to home page
+          router.replace(`/${response.data.user.role}`);
         } else {
           toast.error("Échec de la connexion avec Google");
+          setLoadingGoogle(false);
         }
       } catch (error) {
         console.error("Error parsing Google auth response:", error);
         toast.error("Erreur lors du traitement de la réponse Google");
-      } finally {
         setLoadingGoogle(false);
 
-        // Clean up the URL by removing the success parameter
+        // Clean up the URL
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    }
+
+    if (errorParam) {
+      try {
+        const decodedData = atob(errorParam);
+        const errorResponse = JSON.parse(decodedData);
+        toast.error(errorResponse.message || "Échec de l'authentification Google");
+      } catch (error) {
+        console.error("Error parsing Google auth error:", error);
+        toast.error("Erreur lors de l'authentification Google");
+      } finally {
+        // Clean up the URL
         const newUrl = window.location.pathname;
         window.history.replaceState({}, document.title, newUrl);
       }

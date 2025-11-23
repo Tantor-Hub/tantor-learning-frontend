@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Button } from "@/components/ui/button";
@@ -13,26 +14,24 @@ import { useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/features/auth/auth-slice";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
-import { useSelector } from "react-redux";
-import { selectCurrentUser } from "@/features/auth/auth-slice";
 
 const RESEND_COOLDOWN = 60; // 60 secondes
 
 export function VerifyAccountForm() {
   const router = useRouter();
+  const [isLoadingPending, setIsLoadingPending] = useState(false);
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const email = searchParams.get("email") as string;
-  const currentUser = useSelector(selectCurrentUser);
   const [resendCode, { isLoading: isResending }] = useResendCodeMutation();
   const [verifyAccount, { isLoading }] = useVerifyPasswordLessMutation();
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
   const [canResend, setCanResend] = useState(false);
+  const [verifyError, setVerifyError] = useState<string>("");
+  const [resendError, setResendError] = useState<string>("");
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const toastRef = useRef<string | null>(null);
 
   const form = useForm<verifyAccountCodeValues>({
     resolver: zodResolver(verifyAccountCodeSchema),
@@ -66,9 +65,6 @@ export function VerifyAccountForm() {
 
   // Nettoyage et initialisation du timer au chargement
   useEffect(() => {
-    // Nettoyer les toasts existants
-    toast.dismiss();
-
     // Réinitialiser le formulaire
     form.reset({ pin: "" });
 
@@ -80,9 +76,6 @@ export function VerifyAccountForm() {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
-      if (toastRef.current) {
-        toast.dismiss(toastRef.current);
-      }
     };
   }, [form, startCountdown]);
 
@@ -90,17 +83,14 @@ export function VerifyAccountForm() {
 
   const handleVerify = async (pin: string) => {
     try {
-      // Nettoyer les toasts précédents
-      if (toastRef.current) {
-        toast.dismiss(toastRef.current);
-      }
-
-      toastRef.current = toast.loading("Vérification en cours...");
+      setIsLoadingPending(true);
+      setVerifyError("");
 
       const response = await verifyAccount({
         email: email,
         otp: String(pin),
       }).unwrap();
+
       dispatch(
         setCredentials({
           token: response.data.auth_token,
@@ -110,20 +100,9 @@ export function VerifyAccountForm() {
         })
       );
 
-      toast.dismiss(toastRef.current);
-      toastRef.current = null;
-
-      // router.replace(`/${currentUser?.role}`);
-      router.replace("/");
       toast.success(response.message);
-
-      // Navigation vers la page d'accueil
+      router.replace(`/${response.data.user.role}`);
     } catch (error: any) {
-      if (toastRef.current) {
-        toast.dismiss(toastRef.current);
-        toastRef.current = null;
-      }
-
       // Gestion d'erreur plus spécifique
       let errorMessage = "Erreur lors de la vérification";
 
@@ -139,7 +118,9 @@ export function VerifyAccountForm() {
         errorMessage = error.data.message;
       }
 
-      toast.error(errorMessage);
+      setVerifyError(errorMessage);
+    } finally {
+      setIsLoadingPending(false);
     }
   };
 
@@ -147,17 +128,10 @@ export function VerifyAccountForm() {
     if (!canResend || isResending) return;
 
     try {
-      // Nettoyer les toasts précédents
-      if (toastRef.current) {
-        toast.dismiss(toastRef.current);
-      }
-
-      toastRef.current = toast.loading("Envoi en cours...");
+      setResendError("");
+      setVerifyError("");
 
       await resendCode({ user_email: email }).unwrap();
-
-      toast.dismiss(toastRef.current);
-      toastRef.current = null;
 
       toast.success(`Un nouveau code a été envoyé à ${email}`);
 
@@ -167,11 +141,6 @@ export function VerifyAccountForm() {
       // Nettoyer le champ PIN
       form.setValue("pin", "");
     } catch (error: any) {
-      if (toastRef.current) {
-        toast.dismiss(toastRef.current);
-        toastRef.current = null;
-      }
-
       let errorMessage = "Erreur lors de l'envoi du code";
 
       if (error?.status === 404) {
@@ -184,7 +153,7 @@ export function VerifyAccountForm() {
         errorMessage = error.data.message;
       }
 
-      toast.error(errorMessage);
+      setResendError(errorMessage);
     }
   };
 
@@ -224,7 +193,16 @@ export function VerifyAccountForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <InputOTP maxLength={6} {...field} className="w-full" disabled={isLoading}>
+                    <InputOTP
+                      maxLength={6}
+                      {...field}
+                      className="w-full"
+                      disabled={isLoading}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        setVerifyError("");
+                      }}
+                    >
                       <InputOTPGroup className="flex gap-2 w-full">
                         {Array.from({ length: 6 }).map((_, i) => (
                           <InputOTPSlot
@@ -232,9 +210,11 @@ export function VerifyAccountForm() {
                             index={i}
                             className={cn(
                               "flex-1 border border-border h-12 text-lg",
+                              verifyError && "border-red-500",
                               !isFormValid &&
                                 field.value &&
                                 field.value.length === 6 &&
+                                !verifyError &&
                                 "border-red-400"
                             )}
                           />
@@ -242,6 +222,7 @@ export function VerifyAccountForm() {
                       </InputOTPGroup>
                     </InputOTP>
                   </FormControl>
+                  {verifyError && <p className="text-sm font-medium text-red-500">{verifyError}</p>}
                   <FormMessage />
                 </FormItem>
               )}
@@ -253,7 +234,11 @@ export function VerifyAccountForm() {
             disabled={!isFormValid || isLoading}
             className="w-full bg-blue-500 hover:bg-blue-600"
           >
-            {isLoading ? <Loader2 className="animate-spin text-white" /> : "Continuer"}
+            {isLoading || isLoadingPending ? (
+              <Loader2 className="animate-spin text-white" />
+            ) : (
+              "Continuer"
+            )}
           </Button>
         </form>
         <Button
@@ -269,13 +254,16 @@ export function VerifyAccountForm() {
         <p className="text-muted-foreground mb-2">Vous n&apos;avez pas reçu de code ?</p>
 
         {canResend ? (
-          <button
-            onClick={handleResend}
-            disabled={isResending}
-            className="text-primary hover:text-ring hover:underline disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-          >
-            {isResending ? "Envoi..." : "Renvoyer le code"}
-          </button>
+          <>
+            <button
+              onClick={handleResend}
+              disabled={isResending}
+              className="text-primary hover:text-ring hover:underline disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            >
+              {isResending ? "Envoi..." : "Renvoyer le code"}
+            </button>
+            {resendError && <p className="text-sm font-medium text-red-500 mt-2">{resendError}</p>}
+          </>
         ) : (
           <p className="text-muted-foreground">
             Renvoyer le code dans{" "}
@@ -290,7 +278,7 @@ export function VerifyAccountForm() {
           <Link href="/legales?tab=cgu" target="_blank" className="text-primary hover:underline">
             conditions d&apos;utilisation
           </Link>{" "}
-          et notre
+          et notre{" "}
           <Link href="/legales?tab=donnees" className="text-primary hover:underline">
             politique de confidentialité
           </Link>

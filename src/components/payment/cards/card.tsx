@@ -10,6 +10,7 @@ import { useCreatePaymentIntentMutation } from "@/lib/apis/payment-method-card";
 
 export function CardPayment({ sessionId, amount }: { sessionId: string; amount: number }) {
   const stripe = useStripe();
+  const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
   const elements = useElements();
   const token = useSelector(selectToken);
   const [createPayment] = useCreatePaymentIntentMutation();
@@ -86,7 +87,7 @@ export function CardPayment({ sessionId, amount }: { sessionId: string; amount: 
       elements,
       clientSecret,
       confirmParams: {
-        return_url: `http://www.localhost:3000/trainings/id/payment/success-payment?amount=${amount}`,
+        return_url: `${APP_URL}/trainings/id/payment/success-payment?amount=${amount}`,
       },
       // payment_method_types: ["card"],
       redirect: "if_required",
