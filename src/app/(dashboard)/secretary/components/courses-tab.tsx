@@ -80,7 +80,7 @@ export function InstructorCourseTab() {
                 coursesByFilter[filter].map((course) => (
                   <Link
                     key={course.id}
-                    href={`/student/courses/${course.id}`}
+                    href={`/instructor/courses/${course.id}`}
                     className="mb-4 block"
                   >
                     <CourseCard course={course} />
@@ -115,7 +115,7 @@ const CourseCard = ({ course }: { course: Cours }) => {
 
       <div className="flex justify-between items-center text-sm text-gray-500">
         <span>Pondération: {course.ponderation || "N/A"}</span>
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-gray-200 rounded-md" />
           <div className="text-sm text-gray-800 flex flex-col">
             <span className="text-[#0466C8]">
@@ -123,7 +123,7 @@ const CourseCard = ({ course }: { course: Cours }) => {
             </span>
             <span className="text-[10px] text-gray-500">Professeur</span>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {course.is_published && (

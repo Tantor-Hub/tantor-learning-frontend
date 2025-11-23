@@ -62,10 +62,10 @@ export function CourseList() {
                 >
                   {course.is_published ? "Publié" : "Brouillon"}
                 </span>
-                <div className="flex items-center gap-1 text-xs text-gray-500">
+                {/* <div className="flex items-center gap-1 text-xs text-gray-500">
                   <Image src="/icons/users.svg" alt="Participants" width={14} height={14} />
                   <span>0 inscrits</span>
-                </div>
+                </div> */}
               </div>
             </div>
             <div className="px-4 py-3 space-y-2">
@@ -76,13 +76,13 @@ export function CourseList() {
                   Créé le {new Date(course.createdAt).toLocaleDateString()}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              {/* <div className="flex items-center gap-2">
                 <div className="w-7 h-7 bg-gray-200 rounded-md" />
                 <div className="text-sm text-gray-800 flex flex-col">
                   <span className="text-[#0466C8]">Formateur</span>
                   <span className="text-[10px] text-gray-500">Professeur</span>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </Link>

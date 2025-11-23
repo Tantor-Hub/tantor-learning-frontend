@@ -54,7 +54,7 @@ export function AddEvaluationQuestion({
     await toast.promise(createQuestion(payload).unwrap(), {
       loading: "Création de la question…",
       success: "Question créée",
-      error: "Échec de la création",
+      error: (err: any) => err?.data?.message || "Échec de la création",
     });
     reset();
     setOpen(false);
