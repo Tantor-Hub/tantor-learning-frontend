@@ -1,8 +1,6 @@
 "use client";
-
 import React from "react";
 import { useParams } from "next/navigation";
-import { LessonList } from "@/app/(dashboard)/instructor/courses/[courseId]/components/lesson-tab/lesson-list";
 import { CourseHeader } from "@/app/(dashboard)/instructor/courses/[courseId]/components/course-header";
 import { LesssonContainer } from "./components/lesson-tab/lesson-container";
 

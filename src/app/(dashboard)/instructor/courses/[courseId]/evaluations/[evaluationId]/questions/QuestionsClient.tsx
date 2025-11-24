@@ -119,7 +119,7 @@ export default function QuestionsClient() {
   return (
     <div>
       <div className="space-y-4">
-        <Button onClick={() => router.push(`/instructor/courses/${courseId}`)}>
+        <Button onClick={() => router.back()}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Retour aux évaluations
         </Button>
         <div className="flex items-center justify-between mb-4">

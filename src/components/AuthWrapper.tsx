@@ -15,16 +15,16 @@ export const AuthWrapper = ({ children }: Props) => {
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   const { token } = getValidAuthTokens();
-
   useEffect(() => {
     // Simulate auth check delay for better UX
     const timer = setTimeout(() => {
       if (!token) {
-        router.push("/signin");
+        const currentUrl = encodeURIComponent(window.location.href);
+        router.push(`/signin?redirect=${currentUrl}`);
         dispatch({ type: "auth/clearCredentials" });
       }
       setCheckingAuth(false);
-    }, 500);
+    });
 
     return () => clearTimeout(timer);
   }, [token, router, dispatch]);

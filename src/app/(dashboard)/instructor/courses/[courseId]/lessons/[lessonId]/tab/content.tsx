@@ -80,15 +80,17 @@ export function ContentTab() {
       return;
     }
 
+    if (mode === "create" && !selectedFile) {
+      toast.error("Veuillez sélectionner un fichier");
+      return;
+    }
+
     // Check file size and warn user for very large files
     if (selectedFile && selectedFile.size > 10 * 1024 * 1024 * 1024) {
-      // 10GB warning
       const fileSizeGB = (selectedFile.size / (1024 * 1024 * 1024)).toFixed(2);
       toast.loading(
         `Fichier très volumineux (${fileSizeGB}GB). Cela peut prendre plusieurs minutes...`,
-        {
-          duration: 5000,
-        }
+        { duration: 5000 }
       );
     }
 
@@ -99,8 +101,9 @@ export function ContentTab() {
     );
 
     const formData = new FormData();
+
+    // ONLY these fields - ensure no duplicates
     if (selectedFile) {
-      // FIXED: Ensure the field name is exactly "piece_jointe"
       formData.append("piece_jointe", selectedFile);
     }
     formData.append("id_lesson", lessonId);
@@ -108,11 +111,22 @@ export function ContentTab() {
     formData.append("description", description);
     formData.append("ispublish", isPublish.toString());
 
+    /*
+    // DEBUG: Log what we're sending
+    // console.log("=== SENDING TO SERVER ===");
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ": " + (pair[1] instanceof File ? `File: ${pair[1].name}` : pair[1]));
+    }
+    console.log(
+      "URL:",
+      mode === "create"
+        ? `${process.env.NEXT_PUBLIC_BASE_URL}/lessondocument/create`
+        : `${process.env.NEXT_PUBLIC_BASE_URL}/lessondocument/update/${editingDocument.id}`
+    );
+    console.log("=== END DEBUG ===");
+*/
     const xhr = new XMLHttpRequest();
     setUploadXHR(xhr);
-
-    // CRITICAL: Set extended timeout for large files (15 minutes for 100GB files)
-    xhr.timeout = 900000; // 15 minutes in milliseconds
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && event.total > 0) {
@@ -122,9 +136,6 @@ export function ContentTab() {
           `${mode === "create" ? "Téléchargement" : "Mise à jour"} du document... ${percent}%`,
           { id: toastId }
         );
-
-        // Force UI update
-        setUploadProgress((prev) => (percent !== prev ? percent : prev));
       } else {
         // Fallback progress calculation
         if (selectedFile && event.loaded > 0) {
@@ -137,7 +148,7 @@ export function ContentTab() {
     xhr.onload = () => {
       try {
         const result = JSON.parse(xhr.responseText);
-        if (xhr.status >= 200 && xhr.status < 300) {
+        if (xhr.status === 200 || xhr.status === 201) {
           setUploadProgress(100);
           toast.success(
             mode === "create" ? "Document ajouté avec succès" : "Document mis à jour avec succès",
@@ -206,6 +217,8 @@ export function ContentTab() {
       setUploadProgress(0);
       setUploadXHR(null);
     };
+
+    xhr.timeout = 900000; // 15 minutes
 
     if (mode === "create") {
       xhr.open("POST", `${process.env.NEXT_PUBLIC_BASE_URL}/lessondocument/create`);
@@ -413,11 +426,10 @@ export function ContentTab() {
                   <Input
                     type="file"
                     onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                    // Remove accept attribute to allow any file type as per API
                     disabled={isUploading}
                     className="hidden"
                     id="file-upload"
-                    name="piece_jointe" // FIXED: Set the name attribute to match the expected field name
+                    name="piece_jointe"
                   />
                   <label htmlFor="file-upload" className="cursor-pointer">
                     <div className="flex flex-col items-center justify-center gap-2">
@@ -457,13 +469,13 @@ export function ContentTab() {
 
               <Button
                 onClick={handleFileUpload}
-                // disabled={
-                //   (mode === "create" && !selectedFile) ||
-                //   !title.trim() ||
-                //   !description.trim() ||
-                //   isUploading ||
-                //   (selectedFile && selectedFile.size > 100 * 1024 * 1024 * 1024) // 100GB limit
-                // }
+                disabled={
+                  isUploading ||
+                  !title.trim() ||
+                  !description.trim() ||
+                  (mode === "create" && !selectedFile) ||
+                  !!(selectedFile && selectedFile.size > 100 * 1024 * 1024 * 1024) // 100GB limit
+                }
                 className="w-full"
                 size="lg"
               >

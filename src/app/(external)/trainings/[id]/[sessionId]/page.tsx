@@ -11,11 +11,13 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { useGetStudentTrainingSessionByIdQuery } from "@/lib/apis/public/public-api";
 import { EmptyState } from "@/components/shared/empty-state";
 import toast from "react-hot-toast";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { PaymentCardUI } from "@/components/payment/payment-card-ui";
 import { calculateStripeTotal } from "@/lib/convert-to-subcurrency";
 import { useCreateFreeUserInSessionMutation } from "@/lib/apis/user-in-session";
+import { AuthWrapper } from "@/components/AuthWrapper";
+import { getValidAuthTokens } from "@/lib/cookies";
 
 // Simple inline skeleton component
 const Skeleton = ({ className = "", width = "100%", height = "1rem" }) => (
@@ -100,14 +102,20 @@ const PageSkeleton = () => (
 export default function Page() {
   const params = useParams();
   const router = useRouter();
+  const dispatch = useDispatch();
   const pathname = usePathname();
   const sessionId = params.sessionId as string;
 
   const pathSegments = pathname.split("/");
   const trainingId = pathSegments[2];
   const currentUser = useSelector(selectCurrentUser);
-  const { data: studentTrainingSession, isLoading: isLoadingSession } =
-    useGetStudentTrainingSessionByIdQuery({ id: sessionId });
+  const { token } = getValidAuthTokens();
+  const {
+    data: studentTrainingSession,
+    isLoading: isLoadingSession,
+    isError,
+    error,
+  } = useGetStudentTrainingSessionByIdQuery({ id: sessionId }, { skip: !token });
   const [createFreeUserInSession, { isLoading: isCreatingFreeSession }] =
     useCreateFreeUserInSessionMutation();
 
@@ -120,6 +128,14 @@ export default function Page() {
 
   const session = studentTrainingSession?.data;
 
+  useEffect(() => {
+    if (isError && (error as any)?.status === 401) {
+      dispatch({ type: "auth/clearCredentials" });
+      const currentUrl = encodeURIComponent(window.location.href);
+      router.push(`/signin?redirect=${currentUrl}`);
+    }
+  }, [isError, error, dispatch, router]);
+
   const stepConfig = useMemo(() => {
     if (!session) return { hasPayment: false, totalSteps: 1 };
 
@@ -129,11 +145,6 @@ export default function Page() {
 
     return { hasPayment, totalSteps };
   }, [session]);
-
-  const { stripeFee, totalAmount } = useMemo(() => {
-    const basePrice = parseFloat(session?.trainings?.prix || "0");
-    return calculateStripeTotal(basePrice);
-  }, [session?.trainings?.prix]);
 
   const { hasPayment, totalSteps } = stepConfig;
 
@@ -236,207 +247,213 @@ export default function Page() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12">
-      <Button
-        variant="outline"
-        className="mb-8 border-primary text-primary"
-        size="lg"
-        onClick={() => router.back()}
-      >
-        <ArrowLeft /> Retour à toutes les sessions
-      </Button>
+    <AuthWrapper>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12">
+        <Button
+          variant="outline"
+          className="mb-8 border-primary text-primary"
+          size="lg"
+          onClick={() => router.back()}
+        >
+          <ArrowLeft /> Retour à toutes les sessions
+        </Button>
 
-      {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
-            <div key={step} className="flex items-center">
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                  step <= currentStep ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
-                }`}
-              >
-                {step < currentStep ? <CheckCircle className="w-6 h-6" /> : step}
-              </div>
-              {step < totalSteps && (
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
+              <div key={step} className="flex items-center">
                 <div
-                  className={`flex-1 h-1 mx-4 ${
-                    step < currentStep ? "bg-blue-600" : "bg-gray-200"
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+                    step <= currentStep ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
                   }`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Étape {currentStep} sur {totalSteps}: {getStepTitle(currentStep)}
-          </h2>
-        </div>
-      </div>
-
-      {/* Step 1: Signature */}
-      {isCurrentStep("signature") && (
-        <Card className="border">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Signature du contrat de formation</CardTitle>
-            <p className="text-gray-600 mt-2">
-              Finalisez votre inscription en signant électroniquement votre contrat
-            </p>
-          </CardHeader>
-          <Separator />
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Conditions générales</h2>
-              <p className="text-sm text-muted-foreground">
-                Veuillez lire attentivement les conditions générales avant de continuer :
-              </p>
-
-              <ScrollArea className="h-64 rounded-md border p-4">
-                <div className="space-y-4">
-                  <h3 className="font-medium">Règlement de la formation</h3>
-                  <div className="text-sm whitespace-pre-line">
-                    {session.regulation_text || "Conditions générales de la formation..."}
-                  </div>
+                >
+                  {step < currentStep ? <CheckCircle className="w-6 h-6" /> : step}
                 </div>
-              </ScrollArea>
-
-              <div className="flex items-start space-x-2 pt-4">
-                <Checkbox
-                  id="conditions"
-                  checked={termsAccepted}
-                  onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
-                />
-                <label htmlFor="conditions" className="font-normal leading-snug">
-                  Je reconnais avoir lu et accepté les conditions générales de participation et
-                  m'engage à poursuivre la formation dans les règles établies.
-                </label>
+                {step < totalSteps && (
+                  <div
+                    className={`flex-1 h-1 mx-4 ${
+                      step < currentStep ? "bg-blue-600" : "bg-gray-200"
+                    }`}
+                  />
+                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            ))}
+          </div>
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Étape {currentStep} sur {totalSteps}: {getStepTitle(currentStep)}
+            </h2>
+          </div>
+        </div>
 
-      {/* Step 3: Payment */}
-      {hasPayment && isCurrentStep("payment") && (
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Left - Course Info */}
-          <div>
-            <Card className="border">
-              <div className="h-2 bg-gradient-to-r from-blue-400 to-blue-600"></div>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold text-blue-600">
-                      {session.trainings?.title || "Formation"}
-                    </h2>
-                    <p className="text-sm font-medium mt-1 text-blue-600/70">
-                      {session.trainings?.subtitle || session.title}
+        {/* Step 1: Signature */}
+        {isCurrentStep("signature") && (
+          <Card className="border">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold">
+                Signature du contrat de formation
+              </CardTitle>
+              <p className="text-gray-600 mt-2">
+                Finalisez votre inscription en signant électroniquement votre contrat
+              </p>
+            </CardHeader>
+            <Separator />
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold">Conditions générales</h2>
+                <p className="text-sm text-muted-foreground">
+                  Veuillez lire attentivement les conditions générales avant de continuer :
+                </p>
+
+                <ScrollArea className="h-64 rounded-md border p-4">
+                  <div className="space-y-4">
+                    <h3 className="font-medium">Règlement de la formation</h3>
+                    <div className="text-sm whitespace-pre-line">
+                      {session.regulation_text || "Conditions générales de la formation..."}
+                    </div>
+                  </div>
+                </ScrollArea>
+
+                <div className="flex items-start space-x-2 pt-4">
+                  <Checkbox
+                    id="conditions"
+                    checked={termsAccepted}
+                    onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                  />
+                  <label htmlFor="conditions" className="font-normal leading-snug">
+                    Je reconnais avoir lu et accepté les conditions générales de participation et
+                    m'engage à poursuivre la formation dans les règles établies.
+                  </label>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step 3: Payment */}
+        {hasPayment && isCurrentStep("payment") && (
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Left - Course Info */}
+            <div>
+              <Card className="border">
+                <div className="h-2 bg-gradient-to-r from-blue-400 to-blue-600"></div>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h2 className="text-lg font-bold text-blue-600">
+                        {session.trainings?.title || "Formation"}
+                      </h2>
+                      <p className="text-sm font-medium mt-1 text-blue-600/70">
+                        {session.trainings?.subtitle || session.title}
+                      </p>
+                    </div>
+                    <Badge variant="outline">{session.trainings?.trainingtype}</Badge>
+                  </div>
+
+                  <div className="mt-4 text-sm text-gray-600">
+                    <p>
+                      {session.trainings?.description ||
+                        session.regulation_text?.slice(0, 200) + "..."}
                     </p>
                   </div>
-                  <Badge variant="outline">{session.trainings?.trainingtype}</Badge>
-                </div>
 
-                <div className="mt-4 text-sm text-gray-600">
-                  <p>
-                    {session.trainings?.description ||
-                      session.regulation_text?.slice(0, 200) + "..."}
-                  </p>
-                </div>
-
-                <div className="mt-6 pt-6 border-t border-blue-200">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-600">Prix de la formation</span>
-                    <span className="text-lg text-gray-700">
-                      {Number(session.trainings?.prix || 0).toFixed(2)} €
-                    </span>
-                  </div>
-                </div>
-
-                {/* Afficher la méthode de paiement sélectionnée */}
-                {paymentData && (
-                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-800">
-                        Paiement {paymentData.method} configuré
+                  <div className="mt-6 pt-6 border-t border-blue-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-600">
+                        Prix de la formation
+                      </span>
+                      <span className="text-lg text-gray-700">
+                        {Number(session.trainings?.prix || 0).toFixed(2)} €
                       </span>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+
+                  {/* Afficher la méthode de paiement sélectionnée */}
+                  {paymentData && (
+                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">
+                          Paiement {paymentData.method} configuré
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right - Payment Form */}
+            <div>
+              <Card className="border">
+                <CardHeader>
+                  <CardTitle className="text-xl font-semibold text-primary">
+                    Méthode de paiement
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    Choisissez votre méthode de paiement préférée
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PaymentCardUI
+                    amount={session.trainings.prix}
+                    sessionId={sessionId}
+                    trainingId={trainingId}
+                    availableMethods={
+                      session.payment_method?.map((m: string) => m.toUpperCase()) || []
+                    }
+                    cpfLink={session.cpf_link}
+                  />
+                </CardContent>
+              </Card>
+            </div>
           </div>
+        )}
 
-          {/* Right - Payment Form */}
-          <div>
-            <Card className="border">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-primary">
-                  Méthode de paiement
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Choisissez votre méthode de paiement préférée
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <PaymentCardUI
-                  amount={session.trainings.prix}
-                  sessionId={sessionId}
-                  trainingId={trainingId}
-                  availableMethods={
-                    session.payment_method?.map((m: string) => m.toUpperCase()) || []
-                  }
-                  cpfLink={session.cpf_link}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {/* Navigation Buttons */}
-      <div className="flex justify-between items-center mt-8">
-        <Button
-          variant="outline"
-          onClick={handlePrevious}
-          disabled={currentStep === 1 || isProcessingPayment}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Précédent
-        </Button>
-
-        <div className="text-sm text-gray-500">
-          Étape {currentStep} sur {totalSteps}
-        </div>
-
-        {/* Only show Next button for non-payment steps */}
-        {(!hasPayment || !isCurrentStep("payment")) && (
+        {/* Navigation Buttons */}
+        <div className="flex justify-between items-center mt-8">
           <Button
-            onClick={handleNext}
-            disabled={!canProceedToNext() || isProcessingPayment || isCreatingFreeSession}
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={currentStep === 1 || isProcessingPayment}
             className="flex items-center gap-2"
           >
-            {isProcessingPayment || isCreatingFreeSession ? (
-              <>
-                <Loader2 className="animate-spin" />
-                {isCreatingFreeSession ? "Inscription..." : "Traitement..."}
-              </>
-            ) : (
-              <>
-                {hasPayment ? "Continuer" : "S'inscrire à la session"}
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
+            <ArrowLeft className="w-4 h-4" />
+            Précédent
           </Button>
-        )}
 
-        {/* For payment step, the CheckoutPage component should handle submission */}
-        {hasPayment && isCurrentStep("payment") && (
-          <div className="text-sm text-gray-500">Complétez le paiement ci-dessus</div>
-        )}
+          <div className="text-sm text-gray-500">
+            Étape {currentStep} sur {totalSteps}
+          </div>
+
+          {/* Only show Next button for non-payment steps */}
+          {(!hasPayment || !isCurrentStep("payment")) && (
+            <Button
+              onClick={handleNext}
+              disabled={!canProceedToNext() || isProcessingPayment || isCreatingFreeSession}
+              className="flex items-center gap-2"
+            >
+              {isProcessingPayment || isCreatingFreeSession ? (
+                <>
+                  <Loader2 className="animate-spin" />
+                  {isCreatingFreeSession ? "Inscription..." : "Traitement..."}
+                </>
+              ) : (
+                <>
+                  {hasPayment ? "Continuer" : "S'inscrire à la session"}
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </Button>
+          )}
+
+          {/* For payment step, the CheckoutPage component should handle submission */}
+          {hasPayment && isCurrentStep("payment") && (
+            <div className="text-sm text-gray-500">Complétez le paiement ci-dessus</div>
+          )}
+        </div>
       </div>
-    </div>
+    </AuthWrapper>
   );
 }
