@@ -21,6 +21,16 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Save, X, Loader2, Download } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Extension, Node } from "@tiptap/core";
 import {
   useCreateDocumentInstanceMutation,
@@ -139,12 +149,14 @@ const EditableVariable = Node.create({
             transition: all 0.2s;
             white-space: pre-wrap;
             word-break: break-word;
-            cursor: ${isEditable ? "text" : "default"};
+            cursor: ${isEditable ? "text" : "not-allowed"};
             -webkit-user-select: ${isEditable ? "text" : "none"};
             -moz-user-select: ${isEditable ? "text" : "none"};
             -ms-user-select: ${isEditable ? "text" : "none"};
             user-select: ${isEditable ? "text" : "none"};
             position: relative;
+            opacity: ${isEditable ? "1" : "0.6"};
+            pointer-events: ${isEditable ? "auto" : "none"};
           `,
         },
         value || "",
@@ -174,10 +186,12 @@ export default function StudentTemplate({
   const [isClient, setIsClient] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [signatureAccepted, setSignatureAccepted] = useState(false);
+  const [showSignatureWarning, setShowSignatureWarning] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [commentTop, setCommentTop] = useState<number | null>(null);
   const currentUser = useAppSelector(selectCurrentUser);
+  const activeFieldRef = useRef<HTMLElement | null>(null);
 
   // PDF Crop settings (used for PDF generation)
   const [cropSettings, setCropSettings] = useState({
@@ -203,8 +217,9 @@ export default function StudentTemplate({
 
   // Determine if the document should be readonly
   const isReadonly =
-    existingInstance?.is_published &&
-    (existingInstance?.status === "pending" || existingInstance?.status === "validated");
+    existingInstance?.signature === true ||
+    (existingInstance?.is_published &&
+      (existingInstance?.status === "pending" || existingInstance?.status === "validated"));
 
   // Initialize editor only on client side
   const editor = useEditor({
@@ -337,6 +352,45 @@ export default function StudentTemplate({
     setIsClient(true);
   }, []);
 
+  // Update editor editable state when isReadonly changes
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(!isReadonly);
+    }
+  }, [editor, isReadonly]);
+
+  // Disable all variable fields when document is readonly (signed)
+  useEffect(() => {
+    if (!editor || !isContentLoaded || !isClient) return;
+
+    const variableFields = editor.view.dom.querySelectorAll(".variable-field");
+    variableFields.forEach((field) => {
+      const fieldEl = field as HTMLElement;
+      if (isReadonly) {
+        // Disable the field
+        fieldEl.setAttribute("contenteditable", "false");
+        fieldEl.style.pointerEvents = "none";
+        fieldEl.style.cursor = "not-allowed";
+        fieldEl.style.opacity = "0.6";
+        // Prevent any interaction
+        fieldEl.style.userSelect = "none";
+        fieldEl.style.setProperty("-webkit-user-select", "none");
+        fieldEl.style.setProperty("-moz-user-select", "none");
+        fieldEl.style.setProperty("-ms-user-select", "none");
+      } else {
+        // Re-enable the field
+        fieldEl.setAttribute("contenteditable", "true");
+        fieldEl.style.pointerEvents = "auto";
+        fieldEl.style.cursor = "text";
+        fieldEl.style.opacity = "1";
+        fieldEl.style.userSelect = "text";
+        fieldEl.style.setProperty("-webkit-user-select", "text");
+        fieldEl.style.setProperty("-moz-user-select", "text");
+        fieldEl.style.setProperty("-ms-user-select", "text");
+      }
+    });
+  }, [editor, isContentLoaded, isClient, isReadonly]);
+
   // Load template when component opens
   useEffect(() => {
     if (open && templateId && isClient) {
@@ -345,6 +399,7 @@ export default function StudentTemplate({
       setExistingInstance(null); // Reset existing instance
       setIsPublished(false); // Reset published state
       setSignatureAccepted(false); // Reset signature acceptance
+      setShowSignatureWarning(false); // Reset warning dialog
       getDocumentTemplate({ id: templateId });
     } else if (!open) {
       // Reset state when modal closes
@@ -353,6 +408,7 @@ export default function StudentTemplate({
       setExistingInstance(null);
       setIsPublished(false);
       setSignatureAccepted(false);
+      setShowSignatureWarning(false);
     }
   }, [open, templateId, getDocumentTemplate, isClient]);
 
@@ -368,6 +424,7 @@ export default function StudentTemplate({
 
           setVariableValues(savedValues);
           setIsPublished(userInstance.is_published || false);
+          setSignatureAccepted(userInstance.signature === true);
 
           // Force a small delay to ensure state update is processed
           setTimeout(() => {}, 100);
@@ -375,6 +432,7 @@ export default function StudentTemplate({
           setExistingInstance(null);
           setVariableValues({});
           setIsPublished(false);
+          setSignatureAccepted(false);
         }
       } else if (instancesData === undefined || instancesData.data === undefined) {
         // Instances query completed but no data found (empty array or undefined)
@@ -382,6 +440,7 @@ export default function StudentTemplate({
         setExistingInstance(null);
         setVariableValues({});
         setIsPublished(false);
+        setSignatureAccepted(false);
       }
     } else if (instancesLoading) {
     }
@@ -568,11 +627,18 @@ export default function StudentTemplate({
   ]);
 
   // Event handlers for variable fields
+  // Use a callback to prevent unnecessary re-renders and cursor jumps
   const updateVariableField = useCallback((variableName: string, value: string) => {
-    setVariableValues((prev) => ({
-      ...prev,
-      [variableName]: value,
-    }));
+    setVariableValues((prev) => {
+      // Only update if the value actually changed to prevent unnecessary re-renders
+      if (prev[variableName] === value) {
+        return prev; // Return same object reference to prevent re-render
+      }
+      return {
+        ...prev,
+        [variableName]: value,
+      };
+    });
   }, []);
 
   // Add CSS styles for signature and apply styling after content loads
@@ -677,6 +743,9 @@ export default function StudentTemplate({
     const handleInput = (event: Event) => {
       const target = event.target as HTMLElement;
       if (target && target.classList.contains("variable-field") && !isReadonly) {
+        // Mark this field as actively being edited to prevent other effects from updating it
+        activeFieldRef.current = target;
+
         // Save scroll position and current selection before any updates
         const scrollContainer = editor.view.dom.closest(".overflow-auto") || window;
         const scrollTop =
@@ -684,12 +753,28 @@ export default function StudentTemplate({
         const scrollLeft =
           scrollContainer === window ? window.scrollX : (scrollContainer as HTMLElement).scrollLeft;
 
-        // Save cursor position
+        // Save cursor position more accurately
         const selection = window.getSelection();
         let savedRange: Range | null = null;
+        let cursorOffset = 0;
         if (selection && selection.rangeCount !== undefined && selection.rangeCount > 0) {
           const range = selection.getRangeAt(0);
           savedRange = range.cloneRange();
+          // Calculate cursor offset within the field
+          if (range.startContainer === target || target.contains(range.startContainer)) {
+            const textNode =
+              range.startContainer.nodeType === 3 // Node.TEXT_NODE
+                ? range.startContainer
+                : target.childNodes[0] || target;
+            if (textNode && textNode.nodeType === 3) {
+              // Node.TEXT_NODE
+              cursorOffset = range.startOffset;
+            } else {
+              // Fallback: count characters before cursor
+              const textBefore = range.toString().length;
+              cursorOffset = textBefore;
+            }
+          }
         }
 
         const wrapper = target.closest("[data-variable]");
@@ -698,54 +783,85 @@ export default function StudentTemplate({
         if (variableName) {
           const newValue = target.textContent || "";
 
-          // Use requestAnimationFrame to batch the state update and avoid scroll jumps
-          requestAnimationFrame(() => {
-            updateVariableField(variableName, newValue);
-          });
-
-          // Clean up empty content to ensure placeholder shows
-          // Remove any <br> tags if content is empty
-          if (!newValue.trim()) {
-            target.innerHTML = "";
-            target.setAttribute("data-empty", "true");
-          } else {
-            target.removeAttribute("data-empty");
-          }
-
-          // Update styling based on whether field has value
+          // Update styling based on whether field has value (don't wait for state update)
           const hasValue = newValue.trim().length > 0;
           target.style.backgroundColor = hasValue ? "#fef3c7" : "#fef9e7";
           target.style.borderBottomColor = hasValue ? "#d97706" : "#f59e0b";
           target.style.color = hasValue ? "#78716c" : "#a8a29e";
           target.style.fontStyle = hasValue ? "normal" : "italic";
 
+          // Clean up empty content to ensure placeholder shows
+          if (!newValue.trim()) {
+            // Don't clear innerHTML if user is typing - preserve cursor
+            if (target.innerHTML.trim() === "") {
+              target.setAttribute("data-empty", "true");
+            }
+          } else {
+            target.removeAttribute("data-empty");
+          }
+
           updatePlaceholder(target);
 
-          // Restore scroll position and focus after a brief delay
+          // Use requestAnimationFrame to batch the state update and avoid scroll jumps
+          // This ensures the state update happens after the DOM has settled
           requestAnimationFrame(() => {
-            // Restore scroll
-            if (scrollContainer === window) {
-              window.scrollTo(scrollLeft, scrollTop);
-            } else {
-              (scrollContainer as HTMLElement).scrollTop = scrollTop;
-              (scrollContainer as HTMLElement).scrollLeft = scrollLeft;
-            }
+            updateVariableField(variableName, newValue);
 
-            // Restore focus and cursor position
-            target.focus();
-            if (savedRange && selection) {
-              try {
-                selection.removeAllRanges();
-                selection.addRange(savedRange);
-              } catch (e) {
-                // If range is invalid, just focus the element
-                const range = document.createRange();
-                range.selectNodeContents(target);
-                range.collapse(false); // Move to end
-                selection.removeAllRanges();
-                selection.addRange(range);
+            // Restore cursor position immediately after state update
+            requestAnimationFrame(() => {
+              // Restore scroll
+              if (scrollContainer === window) {
+                window.scrollTo(scrollLeft, scrollTop);
+              } else {
+                (scrollContainer as HTMLElement).scrollTop = scrollTop;
+                (scrollContainer as HTMLElement).scrollLeft = scrollLeft;
               }
-            }
+
+              // Restore focus and cursor position
+              if (document.activeElement !== target) {
+                target.focus();
+              }
+
+              // Restore cursor position
+              if (selection) {
+                try {
+                  // Try to restore the saved range first
+                  if (
+                    savedRange &&
+                    savedRange.startContainer &&
+                    savedRange.startContainer.parentNode
+                  ) {
+                    selection.removeAllRanges();
+                    selection.addRange(savedRange);
+                  } else {
+                    // Fallback: restore cursor to saved offset
+                    const range = document.createRange();
+                    const textNode = target.childNodes[0] || target;
+                    if (textNode && textNode.nodeType === 3) {
+                      // Node.TEXT_NODE
+                      const maxOffset = Math.min(cursorOffset, textNode.textContent?.length || 0);
+                      range.setStart(textNode, maxOffset);
+                      range.setEnd(textNode, maxOffset);
+                      selection.removeAllRanges();
+                      selection.addRange(range);
+                    } else {
+                      // Last resort: move to end
+                      range.selectNodeContents(target);
+                      range.collapse(false);
+                      selection.removeAllRanges();
+                      selection.addRange(range);
+                    }
+                  }
+                } catch (e) {
+                  // If range is invalid, just focus the element and move to end
+                  const range = document.createRange();
+                  range.selectNodeContents(target);
+                  range.collapse(false);
+                  selection.removeAllRanges();
+                  selection.addRange(range);
+                }
+              }
+            });
           });
         }
       }
@@ -800,6 +916,11 @@ export default function StudentTemplate({
     const handleBlur = (event: Event) => {
       const target = event.target as HTMLElement;
       if (target && target.classList.contains("variable-field") && !isReadonly) {
+        // Clear the active field ref when user leaves the field
+        if (activeFieldRef.current === target) {
+          activeFieldRef.current = null;
+        }
+
         const hasValue = (target.textContent || "").trim().length > 0;
         target.style.borderBottomColor = hasValue ? "#d97706" : "#f59e0b";
         target.style.boxShadow = "none";
@@ -862,8 +983,13 @@ export default function StudentTemplate({
   }, [editor, updateVariableField, isContentLoaded, isClient, isReadonly]);
 
   // Update variable fields in DOM when variableValues change (for existing instances)
+  // IMPORTANT: Skip updating fields that are currently focused to prevent cursor jumping
   useEffect(() => {
     if (!editor || !isContentLoaded || !isClient || isReadonly) return;
+
+    // Get the currently focused element
+    const activeElement = document.activeElement as HTMLElement;
+    const isFieldFocused = activeElement?.classList?.contains("variable-field");
 
     // Use a small delay to ensure DOM is fully ready
     const timeoutId = setTimeout(() => {
@@ -886,6 +1012,17 @@ export default function StudentTemplate({
 
       variableFields.forEach((field) => {
         const fieldEl = field as HTMLElement;
+
+        // CRITICAL: Skip updating if this field is currently focused/being edited
+        // This prevents cursor jumping while the user is typing
+        if (
+          document.activeElement === fieldEl ||
+          fieldEl.contains(document.activeElement) ||
+          activeFieldRef.current === fieldEl
+        ) {
+          return; // Skip this field - user is actively editing it
+        }
+
         const wrapper = fieldEl.closest("[data-variable]") as HTMLElement;
         if (wrapper) {
           const variableName = wrapper.getAttribute("data-variable");
@@ -896,6 +1033,9 @@ export default function StudentTemplate({
 
             // Update if the value is different (including empty string case)
             if (savedValue !== currentValue) {
+              // Save and restore selection if needed
+              const wasFocused = document.activeElement === fieldEl;
+
               fieldEl.textContent = savedValue;
               hasUpdates = true;
 
@@ -994,7 +1134,11 @@ export default function StudentTemplate({
 
         const result = await updateDocumentInstance({
           id: instanceToUse.id,
-          data: { variableValues, is_published: isPublished },
+          data: {
+            variableValues,
+            is_published: isPublished,
+            signature: signatureAccepted ? true : undefined,
+          },
         }).unwrap();
 
         setExistingInstance(result.data);
@@ -1011,7 +1155,21 @@ export default function StudentTemplate({
           is_published: isPublished,
         }).unwrap();
 
-        setExistingInstance(result.data);
+        // If signature is accepted, update the instance with signature
+        if (signatureAccepted && result.data) {
+          const updatedResult = await updateDocumentInstance({
+            id: result.data.id,
+            data: {
+              variableValues,
+              is_published: isPublished,
+              signature: true,
+            },
+          }).unwrap();
+          setExistingInstance(updatedResult.data);
+        } else {
+          setExistingInstance(result.data);
+        }
+
         if (result.data?.is_published !== undefined) {
           setIsPublished(result.data.is_published);
         }
@@ -1041,6 +1199,7 @@ export default function StudentTemplate({
     instancesData,
     userId,
     isPublished,
+    signatureAccepted,
   ]);
 
   // Helper function to convert modern CSS colors to rgb/hex for html2canvas compatibility
@@ -2008,6 +2167,30 @@ export default function StudentTemplate({
               </div>
             ) : editor ? (
               <>
+                {isReadonly && existingInstance?.signature === true && (
+                  <div className="absolute top-4 left-4 right-4 z-10 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md shadow-sm">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-5 w-5 text-yellow-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-yellow-700 font-medium">
+                          Document signé - Ce document ne peut plus être modifié
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <EditorContent editor={editor} ref={editorRef} />
                 {existingInstance &&
                   existingInstance.comment &&
@@ -2083,7 +2266,14 @@ export default function StudentTemplate({
                 <Checkbox
                   id="signature-acceptance"
                   checked={signatureAccepted}
-                  onCheckedChange={(checked) => setSignatureAccepted(!!checked)}
+                  disabled={isReadonly}
+                  onCheckedChange={(checked) => {
+                    if (checked && !isReadonly) {
+                      setShowSignatureWarning(true);
+                    } else if (!isReadonly) {
+                      setSignatureAccepted(false);
+                    }
+                  }}
                 />
                 <label
                   htmlFor="signature-acceptance"
@@ -2104,7 +2294,9 @@ export default function StudentTemplate({
             ></div>
             {existingInstance
               ? isReadonly
-                ? "Document validé. Lecture seule."
+                ? existingInstance.signature === true
+                  ? "Document signé. Lecture seule."
+                  : "Document validé. Lecture seule."
                 : "Document existant trouvé. Vous pouvez modifier les valeurs."
               : "Cliquez sur les champs surlignés pour les remplir"}
             {existingInstance && (
@@ -2171,6 +2363,62 @@ export default function StudentTemplate({
           </div>
         </div>
       </div>
+
+      {/* Signature Warning Dialog */}
+      <AlertDialog open={showSignatureWarning} onOpenChange={setShowSignatureWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmation de signature</AlertDialogTitle>
+            <AlertDialogDescription>
+              Attention : Après avoir confirmé, vous ne pourrez plus modifier ce document. Êtes-vous
+              sûr de vouloir signer ce document ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setShowSignatureWarning(false);
+                setSignatureAccepted(false);
+              }}
+            >
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setShowSignatureWarning(false);
+                setSignatureAccepted(true);
+
+                // Update the document instance with signature: true
+                if (existingInstance) {
+                  try {
+                    const result = await updateDocumentInstance({
+                      id: existingInstance.id,
+                      data: {
+                        variableValues,
+                        is_published: isPublished,
+                        signature: true,
+                      },
+                    }).unwrap();
+
+                    // Update the existing instance state with the signature
+                    setExistingInstance(result.data);
+                    toast.success("Document signé avec succès");
+                  } catch (error: any) {
+                    console.error("❌ Error updating signature:", error);
+                    toast.error("Erreur lors de la signature du document");
+                    setSignatureAccepted(false);
+                  }
+                } else {
+                  // If no instance exists yet, we'll save it when the user clicks save
+                  // The signature will be saved when handleSave is called
+                }
+              }}
+            >
+              Confirmer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

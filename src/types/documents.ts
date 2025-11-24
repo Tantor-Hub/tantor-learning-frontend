@@ -54,6 +54,7 @@ export interface DocumentInstance {
   is_published: boolean;
   status: "pending" | "validated" | "rejected";
   comment?: string;
+  signature?: boolean;
   createdAt: string;
   updatedAt: string;
   template: DocumentTemplate;
@@ -79,6 +80,7 @@ export interface GetDocumentInstancesByTemplateResponse {
 export interface UpdateDocumentInstanceRequest {
   variableValues: Record<string, string>;
   is_published?: boolean;
+  signature?: boolean;
 }
 
 export interface UpdateDocumentInstanceResponse {
