@@ -1,10 +1,14 @@
 import { createApi, enhancedBaseQuery } from "./base-api";
 import {
   OPCOSPaymentResponse,
-  UpdateOPCOSStatusRequest,
-  UpdateOPCOSStatusResponse,
+  UpdateOPCOStatusRequest,
+  UpdateOPCOStatusResponse,
   CreateOPCOSPaymentRequest,
   CreateOPCOSPaymentResponse,
+  UpdateOPCOPaymentRequest,
+  UpdateOPCOPaymentResponse,
+  GetOPCOPaymentResponse,
+  GetOPCOPaymentByIdResponse,
   OPCOSPaymentStatus,
 } from "@/types/payment-method-OPCO";
 
@@ -23,7 +27,7 @@ export const paymentMethodOPCOApi = createApi({
     }),
 
     // Update OPCO payment status for secretary management
-    updateOPCOStatus: builder.mutation<UpdateOPCOSStatusResponse, UpdateOPCOSStatusRequest>({
+    updateOPCOStatus: builder.mutation<void, UpdateOPCOStatusRequest>({
       query: (body) => ({
         url: "paymentmethodopco/secretary/update-status",
         method: "PATCH",
@@ -41,6 +45,28 @@ export const paymentMethodOPCOApi = createApi({
       }),
       invalidatesTags: ["PaymentMethod"],
     }),
+
+    // Update a payment method OPCO (Secretary access)
+    updateOPCOPayment: builder.mutation<UpdateOPCOPaymentResponse, UpdateOPCOPaymentRequest>({
+      query: (body) => {
+        const { id, ...updateFields } = body;
+        return {
+          url: `paymentmethodopco/secretary/update/${id}`,
+          method: "PATCH",
+          body: updateFields,
+        };
+      },
+      invalidatesTags: ["PaymentMethod"],
+    }),
+
+    // Get a single OPCO payment by ID
+    getOPCOPaymentById: builder.query<GetOPCOPaymentByIdResponse, string>({
+      query: (id) => ({
+        url: `paymentmethodopco/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["PaymentMethod"],
+    }),
   }),
 });
 
@@ -48,4 +74,7 @@ export const {
   useGetSecretaryOPCOPaymentsQuery,
   useUpdateOPCOStatusMutation,
   useCreateOPCOPaymentMutation,
+  useUpdateOPCOPaymentMutation,
+  useGetOPCOPaymentByIdQuery,
+  useLazyGetOPCOPaymentByIdQuery,
 } = paymentMethodOPCOApi;

@@ -5,13 +5,13 @@ import {
   useGetSecretaryOPCOPaymentsQuery,
   useUpdateOPCOStatusMutation,
 } from "@/lib/apis/payment-method-OPCO";
-import { PaymentTable } from "./payment-table";
+import { OpcoPaymentTable } from "./opco-payment-table";
 import toast from "react-hot-toast";
 
 const statusMap = {
-  pending: "En attente",
-  rejected: "Rejeté",
-  validated: "Validé",
+  pending: "Pending",
+  rejected: "Rejected",
+  validated: "Validated",
 };
 
 export function OpcoTab() {
@@ -54,10 +54,10 @@ export function OpcoTab() {
 
   const mappedMethods =
     opcoData?.data.map((item) => ({
-      id: item.userId + item.sessionId, // Unique id
+      id: item.id, // Payment id from server
       id_user: item.userId,
       id_session: item.sessionId,
-      status: item.status,
+      status: item.paymentStatus,
       createdAt: new Date().toISOString(), // Assuming no createdAt in OPCOSPayment
       nom_opco: item.nomOpco,
       user: { firstName: "", lastName: "", email: item.userEmail },
@@ -65,7 +65,7 @@ export function OpcoTab() {
     })) || [];
 
   return mappedMethods.length ? (
-    <PaymentTable methods={mappedMethods} type="opco" onUpdateStatus={handleUpdateStatus} />
+    <OpcoPaymentTable methods={mappedMethods} onUpdateStatus={handleUpdateStatus} />
   ) : (
     <p>Aucune méthode de paiement OPCO.</p>
   );

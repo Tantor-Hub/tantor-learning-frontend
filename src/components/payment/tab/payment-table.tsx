@@ -16,7 +16,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useState } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { UpdateOpcoPaymentModal } from "../update-opco-payment-modal";
 
 interface PaymentMethod {
   id: string;
@@ -42,86 +44,108 @@ interface PaymentTableProps {
 }
 
 export function PaymentTable({ methods, type, onUpdateStatus }: PaymentTableProps) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Utilisateur</TableHead>
-          <TableHead>Session</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>Statut</TableHead>
-          <TableHead>Créé</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {methods.map((method) => (
-          <TableRow key={method.id}>
-            <TableCell>
-              {method.user
-                ? `${method.user.firstName} ${method.user.lastName} (${method.user.email})`
-                : method.id_user}
-            </TableCell>
-            <TableCell>
-              {method.trainingSession ? method.trainingSession.title : method.id_session}
-            </TableCell>
-            <TableCell>
-              <Badge variant="outline">{method.nom_opco ? "OPCO" : "CPF"}</Badge>
-            </TableCell>
-            <TableCell>
-              <Badge
-                variant={
-                  method.status === "validated"
-                    ? "default"
-                    : method.status === "rejected"
-                      ? "destructive"
-                      : "secondary"
-                }
-              >
-                {method.status === "pending"
-                  ? "En attente"
-                  : method.status === "validated"
-                    ? "Validé"
-                    : method.status === "rejected"
-                      ? "Rejeté"
-                      : "Inconnu"}
-              </Badge>
-            </TableCell>
-            <TableCell>{new Date(method.createdAt).toLocaleDateString()}</TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Ouvrir le menu</span>
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => onUpdateStatus(method.id_user, method.id_session, "validated")}
-                    disabled={method.status === "validated"}
-                  >
-                    Valider
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onUpdateStatus(method.id_user, method.id_session, "rejected")}
-                    className="text-destructive"
-                    disabled={method.status === "rejected"}
-                  >
-                    Rejeter
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onUpdateStatus(method.id_user, method.id_session, "pending")}
-                    disabled={method.status === "pending"}
-                  >
-                    Mettre en attente
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Utilisateur</TableHead>
+            <TableHead>Session</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Statut</TableHead>
+            <TableHead>Créé</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {methods.map((method) => (
+            <TableRow key={method.id}>
+              <TableCell>
+                {method.user
+                  ? `${method.user.firstName} ${method.user.lastName} (${method.user.email})`
+                  : method.id_user}
+              </TableCell>
+              <TableCell>
+                {method.trainingSession ? method.trainingSession.title : method.id_session}
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline">{method.nom_opco ? "OPCO" : "CPF"}</Badge>
+              </TableCell>
+              <TableCell>
+                <Badge
+                  variant={
+                    method.status === "validated"
+                      ? "default"
+                      : method.status === "rejected"
+                        ? "destructive"
+                        : "secondary"
+                  }
+                >
+                  {method.status === "pending"
+                    ? "En attente"
+                    : method.status === "validated"
+                      ? "Validé"
+                      : method.status === "rejected"
+                        ? "Rejeté"
+                        : "Inconnu"}
+                </Badge>
+              </TableCell>
+              <TableCell>{new Date(method.createdAt).toLocaleDateString()}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  {method.nom_opco && (
+                    <Button variant="outline" size="sm" onClick={() => setSelectedId(method.id)}>
+                      Modifier
+                    </Button>
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Ouvrir le menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() =>
+                          onUpdateStatus(method.id_user, method.id_session, "validated")
+                        }
+                        disabled={method.status === "validated"}
+                      >
+                        Valider
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          onUpdateStatus(method.id_user, method.id_session, "rejected")
+                        }
+                        className="text-destructive"
+                        disabled={method.status === "rejected"}
+                      >
+                        Rejeter
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onUpdateStatus(method.id_user, method.id_session, "pending")}
+                        disabled={method.status === "pending"}
+                      >
+                        Mettre en attente
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      {selectedId && (
+        <UpdateOpcoPaymentModal
+          id={selectedId}
+          open={!!selectedId}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
+    </>
   );
 }
