@@ -14,10 +14,8 @@ import toast from "react-hot-toast";
 import { useSelector, useDispatch } from "react-redux";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { PaymentCardUI } from "@/components/payment/payment-card-ui";
-import { calculateStripeTotal } from "@/lib/convert-to-subcurrency";
 import { useCreateFreeUserInSessionMutation } from "@/lib/apis/user-in-session";
 import { AuthWrapper } from "@/components/AuthWrapper";
-import { getValidAuthTokens } from "@/lib/cookies";
 
 // Simple inline skeleton component
 const Skeleton = ({ className = "", width = "100%", height = "1rem" }) => (
@@ -109,13 +107,12 @@ export default function Page() {
   const pathSegments = pathname.split("/");
   const trainingId = pathSegments[2];
   const currentUser = useSelector(selectCurrentUser);
-  const { token } = getValidAuthTokens();
   const {
     data: studentTrainingSession,
     isLoading: isLoadingSession,
     isError,
     error,
-  } = useGetStudentTrainingSessionByIdQuery({ id: sessionId }, { skip: !token });
+  } = useGetStudentTrainingSessionByIdQuery({ id: sessionId });
   const [createFreeUserInSession, { isLoading: isCreatingFreeSession }] =
     useCreateFreeUserInSessionMutation();
 
@@ -128,11 +125,15 @@ export default function Page() {
 
   const session = studentTrainingSession?.data;
 
+  // Check for 401 errors and redirect immediately
   useEffect(() => {
-    if (isError && (error as any)?.status === 401) {
-      dispatch({ type: "auth/clearCredentials" });
-      const currentUrl = encodeURIComponent(window.location.href);
-      router.push(`/signin?redirect=${currentUrl}`);
+    if (isError && error) {
+      const errorStatus = (error as any)?.status || (error as any)?.data?.status;
+      if (errorStatus === 401) {
+        dispatch({ type: "auth/clearCredentials" });
+        const currentUrl = encodeURIComponent(window.location.href);
+        router.push(`/signin?redirect=${currentUrl}`);
+      }
     }
   }, [isError, error, dispatch, router]);
 
@@ -153,6 +154,13 @@ export default function Page() {
       setCurrentStep(totalSteps);
     }
   }, [currentStep, totalSteps]);
+
+  // Check for 401 error before rendering - return null while redirecting
+  const errorStatus =
+    isError && error ? (error as any)?.status || (error as any)?.data?.status : null;
+  if (errorStatus === 401) {
+    return null; // Don't render anything while redirecting
+  }
 
   const isSignatureValid = (): boolean => {
     return termsAccepted;
@@ -227,11 +235,14 @@ export default function Page() {
     }
   };
 
+  // Show loading while query is in progress
   if (isLoadingSession) {
     return <PageSkeleton />;
   }
 
-  if (!session) {
+  // Don't show "Session introuvable" for 401 errors - redirect should handle it
+  // Only show it if query completed successfully but returned no data
+  if (!session && !isError && !isLoadingSession) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12">
         <Button className="mb-8" size="lg" onClick={() => router.back()}>
@@ -241,6 +252,22 @@ export default function Page() {
           title="Session introuvable"
           description="Cette session n'existe pas ou a été supprimée"
           icon="Calendar"
+        />
+      </div>
+    );
+  }
+
+  // If there's an error (but not 401 which is handled above), show error state
+  if (isError && errorStatus !== 401) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12">
+        <Button className="mb-8" size="lg" onClick={() => router.back()}>
+          <ArrowLeft /> Retour à toutes les sessions
+        </Button>
+        <EmptyState
+          title="Erreur"
+          description="Une erreur est survenue lors du chargement de la session"
+          icon="AlertCircle"
         />
       </div>
     );

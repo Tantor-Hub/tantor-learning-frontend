@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, Home, MapPin, Calendar, QrCode } from "lucide-react";
 import { useGetUserProfileQuery, UserProfile } from "@/lib/apis/users-api";
-import { Loading } from "../shared/loading";
+import { ProfileSkeleton } from "../skeletons/profile-skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { UpdateProfile } from "./update-profile";
 import { QrScanner } from "./qr-scanner";
@@ -34,7 +34,7 @@ export function ProfilePage() {
     }
   }, [data]);
 
-  if (isLoading) return <Loading />;
+  if (isLoading) return <ProfileSkeleton />;
   if (isError) return <div>Erreur lors du chargement du profil</div>;
   if (!userData) return <div>Aucune donnée de profil trouvée</div>;
   return (

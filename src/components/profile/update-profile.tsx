@@ -225,6 +225,19 @@ export function UpdateProfile({
 
   const watchedFields = form.watch();
 
+  // Reset form values when dialog opens or props change
+  useEffect(() => {
+    if (isDialogOpen) {
+      form.reset({
+        address: address || "",
+        country: country || "",
+        phone: phone || "",
+        city: city || "",
+      });
+      setHasChanges(false);
+    }
+  }, [isDialogOpen, address, country, phone, city, form]);
+
   // Check for changes whenever form values change
   useEffect(() => {
     const currentValues = form.getValues();

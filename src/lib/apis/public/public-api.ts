@@ -1,4 +1,4 @@
-import { baseQuery, createApi } from "../base-api";
+import { enhancedBaseQuery, createApi } from "../base-api";
 import {
   IContactFormRequest,
   IContactFormResponse,
@@ -15,7 +15,7 @@ import {
 
 export const publicApi = createApi({
   reducerPath: "publicApi",
-  baseQuery,
+  baseQuery: enhancedBaseQuery,
   tagTypes: ["Public"],
   endpoints: (builder) => ({
     subscribeNewsLetter: builder.mutation<

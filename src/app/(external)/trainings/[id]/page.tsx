@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, use } from "react";
 import { ArrowLeft, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SessionList from "./session-list";
 import SessionListSkeleton from "./session-list-skeleton";
 import { useGetCatalogueFormationsByTrainingIdPublicQuery } from "@/lib/apis/catalogue-formation";
 
-export default function Page(props: any) {
-  const trainingId = (props?.params as { id: string }).id;
+export default function Page(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
+  const trainingId = params.id;
   const { data: catalogueData } = useGetCatalogueFormationsByTrainingIdPublicQuery(trainingId);
   const catalogue = catalogueData?.data?.[0]; // Assuming single student catalogue per training
 
