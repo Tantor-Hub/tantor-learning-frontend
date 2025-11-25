@@ -19,12 +19,52 @@ import { Loader2 } from "lucide-react";
 
 const RESEND_COOLDOWN = 60; // 60 secondes
 
+function decodeRedirectParam(value: string | null) {
+  if (!value) return null;
+  try {
+    return decodeURIComponent(value);
+  } catch (error) {
+    console.error("Failed to decode redirect param:", error);
+    return null;
+  }
+}
+
+/**
+ * Determines the correct redirect destination based on user role and redirect URL.
+ * If redirect URL points to a dashboard that doesn't match user's role, redirect to user's dashboard instead.
+ */
+function getRedirectDestination(redirectUrl: string | null, userRole: string): string {
+  // If no redirect URL, go to user's dashboard
+  if (!redirectUrl) {
+    return `/${userRole}`;
+  }
+
+  // Check if redirect URL is a dashboard path
+  const dashboardRoutes = ["/admin", "/student", "/instructor", "/secretary"];
+  const isDashboardPath = dashboardRoutes.some((route) => redirectUrl.startsWith(route));
+
+  if (isDashboardPath) {
+    // Extract role from the redirect URL
+    const redirectRole = redirectUrl.split("/")[1]; // e.g., "/admin/users" -> "admin"
+
+    // If the redirect role doesn't match user's role, redirect to user's dashboard
+    if (redirectRole !== userRole) {
+      return `/${userRole}`;
+    }
+  }
+
+  // Return original redirect URL if it matches user's role or is not a dashboard path
+  return redirectUrl;
+}
+
 export function VerifyAccountForm() {
   const router = useRouter();
   const [isLoadingPending, setIsLoadingPending] = useState(false);
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const email = searchParams.get("email") as string;
+  const redirectParam = searchParams.get("redirect");
+  const redirectUrl = decodeRedirectParam(redirectParam);
   const [resendCode, { isLoading: isResending }] = useLoginPasswordLessMutation();
   const [verifyAccount, { isLoading }] = useVerifyPasswordLessMutation();
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
@@ -101,7 +141,8 @@ export function VerifyAccountForm() {
       );
 
       toast.success(response.message);
-      router.replace(`/${response.data.user.role}`);
+      const destination = getRedirectDestination(redirectUrl, response.data.user.role);
+      router.replace(destination);
     } catch (error: any) {
       // Gestion d'erreur plus spécifique
       let errorMessage = "Erreur lors de la vérification";
@@ -244,7 +285,14 @@ export function VerifyAccountForm() {
         <Button
           variant="outline"
           className="border-primary text-primary"
-          onClick={() => router.push("/signin")}
+          onClick={() => {
+            if (redirectParam) {
+              const params = new URLSearchParams({ redirect: redirectParam });
+              router.push(`/signin?${params.toString()}`);
+            } else {
+              router.push("/signin");
+            }
+          }}
         >
           Utiliser une autre méthode
         </Button>

@@ -131,11 +131,12 @@ export default function Page() {
       const errorStatus = (error as any)?.status || (error as any)?.data?.status;
       if (errorStatus === 401) {
         dispatch({ type: "auth/clearCredentials" });
-        const currentUrl = encodeURIComponent(window.location.href);
-        router.push(`/signin?redirect=${currentUrl}`);
+        // Use pathname + search instead of full URL to avoid encoding issues
+        const redirectPath = pathname + (window.location.search || "");
+        router.push(`/signin?redirect=${encodeURIComponent(redirectPath)}`);
       }
     }
-  }, [isError, error, dispatch, router]);
+  }, [isError, error, dispatch, router, pathname]);
 
   const stepConfig = useMemo(() => {
     if (!session) return { hasPayment: false, totalSteps: 1 };

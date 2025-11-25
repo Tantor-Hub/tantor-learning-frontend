@@ -19,8 +19,9 @@ export const AuthWrapper = ({ children }: Props) => {
     // Simulate auth check delay for better UX
     const timer = setTimeout(() => {
       if (!token) {
-        const currentUrl = encodeURIComponent(window.location.href);
-        router.push(`/signin?redirect=${currentUrl}`);
+        // Use pathname + search instead of full URL to avoid encoding issues
+        const redirectPath = window.location.pathname + (window.location.search || "");
+        router.push(`/signin?redirect=${encodeURIComponent(redirectPath)}`);
         dispatch({ type: "auth/clearCredentials" });
       }
       setCheckingAuth(false);

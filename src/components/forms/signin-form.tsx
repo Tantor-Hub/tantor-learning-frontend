@@ -22,6 +22,44 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { signInSchema, SignInFormValues } from "@/lib/validators/auth-schema";
 
+function decodeRedirectParam(value: string | null) {
+  if (!value) return null;
+  try {
+    return decodeURIComponent(value);
+  } catch (error) {
+    console.error("Failed to decode redirect param:", error);
+    return null;
+  }
+}
+
+/**
+ * Determines the correct redirect destination based on user role and redirect URL.
+ * If redirect URL points to a dashboard that doesn't match user's role, redirect to user's dashboard instead.
+ */
+function getRedirectDestination(redirectUrl: string | null, userRole: string): string {
+  // If no redirect URL, go to user's dashboard
+  if (!redirectUrl) {
+    return `/${userRole}`;
+  }
+
+  // Check if redirect URL is a dashboard path
+  const dashboardRoutes = ["/admin", "/student", "/instructor", "/secretary"];
+  const isDashboardPath = dashboardRoutes.some((route) => redirectUrl.startsWith(route));
+
+  if (isDashboardPath) {
+    // Extract role from the redirect URL
+    const redirectRole = redirectUrl.split("/")[1]; // e.g., "/admin/users" -> "admin"
+
+    // If the redirect role doesn't match user's role, redirect to user's dashboard
+    if (redirectRole !== userRole) {
+      return `/${userRole}`;
+    }
+  }
+
+  // Return original redirect URL if it matches user's role or is not a dashboard path
+  return redirectUrl;
+}
+
 export function SignInForm() {
   const router = useRouter();
   const dispatch = useDispatch();
@@ -29,6 +67,8 @@ export function SignInForm() {
   const [loadingGoogle, setLoadingGoogle] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [signin, { isLoading: isSignInLoading }] = useLoginPasswordLessMutation();
+  const redirectParam = searchParams.get("redirect");
+  const redirectUrl = decodeRedirectParam(redirectParam);
 
   const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
@@ -65,8 +105,9 @@ export function SignInForm() {
           const newUrl = window.location.pathname;
           window.history.replaceState({}, document.title, newUrl);
 
-          // Redirect to home page
-          router.replace(`/${response.data.user.role}`);
+          // Redirect to correct destination based on user role and redirect URL
+          const destination = getRedirectDestination(redirectUrl, response.data.user.role);
+          router.replace(destination);
         } else {
           toast.error("Échec de la connexion avec Google");
           setLoadingGoogle(false);
@@ -105,7 +146,14 @@ export function SignInForm() {
         email: values.email.toLowerCase(),
       }).unwrap();
       toast.success(response.message);
-      router.push(`/verify?email=${encodeURIComponent(values.email)}`);
+      const params = new URLSearchParams({
+        email: values.email,
+      });
+      // Preserve redirect parameter if it exists
+      if (redirectParam) {
+        params.set("redirect", redirectParam);
+      }
+      router.push(`/verify?${params.toString()}`);
     } catch (error: any) {
       // Check if it's a 404 error (email not found)
       if (error.status === 404 || error.statusCode === 404) {
