@@ -522,8 +522,12 @@ export default function StudentTemplate({
               };
             }
 
-            // If signature is required and accepted, append signature to the last empty paragraph
-            if (templateData.data?.signature && signatureAccepted && currentUser) {
+            // If signature is required and document is validated, append signature to the last empty paragraph
+            if (
+              templateData.data?.signature &&
+              existingInstance?.status === "validated" &&
+              currentUser
+            ) {
               const signatureContent = [
                 {
                   type: "paragraph",
@@ -666,7 +670,7 @@ export default function StudentTemplate({
     }
 
     // Apply signature styling dynamically after content loads
-    if (editor && isContentLoaded && signatureAccepted && currentUser) {
+    if (editor && isContentLoaded && existingInstance?.status === "validated" && currentUser) {
       const timeoutId = setTimeout(() => {
         const editorElement = editor.view.dom;
         const paragraphs = editorElement.querySelectorAll("p");
@@ -1686,8 +1690,12 @@ export default function StudentTemplate({
         elem.removeAttribute("data-show-placeholder");
       });
 
-      // Ensure signature is included in PDF if signature is required and accepted
-      if (templateData?.data?.signature && signatureAccepted && currentUser) {
+      // Ensure signature is included in PDF if signature is required and document is validated
+      if (
+        templateData?.data?.signature &&
+        existingInstance?.status === "validated" &&
+        currentUser
+      ) {
         // Check if signature already exists in the content
         const paragraphs = tempDiv.querySelectorAll("p");
         let hasSignature = false;

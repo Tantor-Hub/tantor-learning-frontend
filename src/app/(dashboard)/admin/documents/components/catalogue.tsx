@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { useGetModulesQuery } from "@/lib/apis/module-de-formation-api";
 import { Download, Edit, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -196,7 +197,13 @@ function UploadDialog() {
   );
 }
 
-function GuideUploadDialog({ onSuccess }: { onSuccess: () => void }) {
+function GuideUploadDialog({
+  onSuccess,
+  catalogues,
+}: {
+  onSuccess: () => void;
+  catalogues: any[];
+}) {
   const { token } = getValidAuthTokens();
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -204,6 +211,19 @@ function GuideUploadDialog({ onSuccess }: { onSuccess: () => void }) {
   const [type, setType] = useState<UserRole>(UserRole.ADMIN);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [existingCatalogue, setExistingCatalogue] = useState<any>(null);
+
+  React.useEffect(() => {
+    const existing = catalogues.find((c) => c.type === type);
+    setExistingCatalogue(existing);
+    if (existing) {
+      setTitle(existing.title);
+      setDescription(existing.description);
+    } else {
+      setTitle("");
+      setDescription("");
+    }
+  }, [type, catalogues]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -212,7 +232,12 @@ function GuideUploadDialog({ onSuccess }: { onSuccess: () => void }) {
   };
 
   const handleUpload = async () => {
-    if (!file || !title.trim() || !description.trim()) return;
+    if ((!file && !existingCatalogue) || !title.trim() || !description.trim()) return;
+
+    if (!token) {
+      toast.error("Session expirée, veuillez vous reconnecter");
+      return;
+    }
 
     setIsUploading(true);
     setUploadProgress(0);
@@ -235,7 +260,11 @@ function GuideUploadDialog({ onSuccess }: { onSuccess: () => void }) {
 
       xhr.addEventListener("load", () => {
         if (xhr.status === 200 || xhr.status === 201) {
-          toast.success("Guide de formation ajouté avec succès");
+          toast.success(
+            existingCatalogue
+              ? "Guide de formation mis à jour avec succès"
+              : "Guide de formation ajouté avec succès"
+          );
           setFile(null);
           setTitle("");
           setDescription("");
@@ -244,21 +273,40 @@ function GuideUploadDialog({ onSuccess }: { onSuccess: () => void }) {
           // Refetch the catalogue data to show the new item
           onSuccess();
         } else {
-          toast.error("Erreur lors de l'ajout du guide");
+          toast.error(
+            existingCatalogue
+              ? "Erreur lors de la mise à jour du guide"
+              : "Erreur lors de l'ajout du guide"
+          );
         }
         setIsUploading(false);
       });
 
       xhr.addEventListener("error", () => {
-        toast.error("Erreur lors de l'ajout du guide");
+        toast.error(
+          existingCatalogue
+            ? "Erreur lors de la mise à jour du guide"
+            : "Erreur lors de l'ajout du guide"
+        );
         setIsUploading(false);
       });
       // console.log(token);
-      xhr.open("POST", `${process.env.NEXT_PUBLIC_BASE_URL}/catalogueformation`);
+      if (existingCatalogue) {
+        xhr.open(
+          "PATCH",
+          `${process.env.NEXT_PUBLIC_BASE_URL}/catalogueformation/${existingCatalogue.id}`
+        );
+      } else {
+        xhr.open("POST", `${process.env.NEXT_PUBLIC_BASE_URL}/catalogueformation`);
+      }
       xhr.setRequestHeader("x-connexion-tantor", `Bearer ${token}`);
       xhr.send(formData);
     } catch (error) {
-      toast.error("Erreur lors de l'ajout du guide");
+      toast.error(
+        existingCatalogue
+          ? "Erreur lors de la mise à jour du guide"
+          : "Erreur lors de l'ajout du guide"
+      );
       setIsUploading(false);
     }
   };
@@ -272,7 +320,9 @@ function GuideUploadDialog({ onSuccess }: { onSuccess: () => void }) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Ajouter un guide de formation</DialogTitle>
+          <DialogTitle>
+            {existingCatalogue ? "Modifier le guide de formation" : "Ajouter un guide de formation"}
+          </DialogTitle>
           <DialogDescription>Les formats supportés: PDF, DOCX, PPTX</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -356,9 +406,15 @@ function GuideUploadDialog({ onSuccess }: { onSuccess: () => void }) {
           <Button
             type="submit"
             onClick={handleUpload}
-            disabled={!file || !title.trim() || !description.trim() || isUploading}
+            disabled={
+              (!file && !existingCatalogue) || !title.trim() || !description.trim() || isUploading
+            }
           >
-            {isUploading ? "Téléchargement..." : "Télécharger"}
+            {isUploading
+              ? "Téléchargement..."
+              : existingCatalogue
+                ? "Mettre à jour"
+                : "Télécharger"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -664,7 +720,7 @@ export function Catalogue() {
       {/* Action Buttons */}
       <div className="flex gap-4">
         <UploadDialog />
-        <GuideUploadDialog onSuccess={() => refetchCatalogues()} />
+        <GuideUploadDialog onSuccess={() => refetchCatalogues()} catalogues={catalogues} />
       </div>
 
       {/* Modules de Formation Section */}
