@@ -1,5 +1,4 @@
 "use client";
-
 import {
   useGetBookByIdQuery,
   useIncrementBookViewsMutation,
@@ -14,10 +13,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/features/auth/auth-slice";
 
 export default function BookDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const currentUser = useSelector(selectCurrentUser);
   const bookId = params.id as string;
   const hasIncrementedView = useRef(false);
 
@@ -78,16 +80,12 @@ export default function BookDetailPage() {
                     : "Une erreur s'est produite lors du chargement du livre. Veuillez réessayer plus tard."}
                 </CardDescription>
                 <div className="flex flex-col gap-2">
-                  <Button
-                    onClick={() => router.push("/library")}
-                    variant="outline"
-                    className="w-full"
-                  >
+                  <Button onClick={() => router.back()} variant="outline" className="w-full">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Retour à la bibliothèque
                   </Button>
                   {isPaymentRequired && (
-                    <Button onClick={() => router.push("/dashboard")} className="w-full">
+                    <Button onClick={() => router.push(`/${currentUser?.role}`)} className="w-full">
                       Aller au tableau de bord
                     </Button>
                   )}

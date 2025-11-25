@@ -41,7 +41,6 @@ import { useCreateModuleMutation } from "@/lib/apis/module-de-formation-api";
 import { ModuleFormationSkeleton } from "@/components/skeletons/module-formation-skeleton";
 import { CatalogueSkeleton } from "@/components/skeletons/catalogue-skeleton";
 import { UserRole } from "@/types/user";
-import { CatalogueFormation } from "@/types/catalogue-formation";
 import {
   useGetCatalogueFormationsQuery,
   useUpdateCatalogueFormationMutation,
@@ -224,7 +223,7 @@ function GuideUploadDialog({ onSuccess }: { onSuccess: () => void }) {
         toast.error("Erreur lors de l'ajout du guide");
         setIsUploading(false);
       });
-
+      // console.log(token);
       xhr.open("POST", `${process.env.NEXT_PUBLIC_BASE_URL}/catalogueformation`);
       xhr.setRequestHeader("x-connexion-tantor", `Bearer ${token}`);
       xhr.send(formData);
