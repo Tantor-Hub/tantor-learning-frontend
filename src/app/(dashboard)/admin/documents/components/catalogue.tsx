@@ -62,11 +62,14 @@ import {
 import toast from "react-hot-toast";
 
 function UploadDialog() {
+  const { token } = getValidAuthTokens();
   const [file, setFile] = useState<File | null>(null);
   const [description, setDescription] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [createModule, { isLoading }] = useCreateModuleMutation();
+  // Remove createModule mutation, we implement xhr upload for token header support
+  // const [createModule, { isLoading }] = useCreateModuleMutation();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -79,21 +82,48 @@ function UploadDialog() {
 
     setIsUploading(true);
     setUploadProgress(0);
+    setIsLoading(true);
 
     try {
-      await createModule({
-        description: description.trim(),
-        piece_jointe: file,
-      }).unwrap();
+      const formData = new FormData();
+      formData.append("description", description.trim());
+      formData.append("piece_jointe", file);
 
-      toast.success("Module de formation ajouté avec succès");
-      setFile(null);
-      setDescription("");
-      setUploadProgress(0);
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          setUploadProgress(percentComplete);
+        }
+      });
+
+      xhr.addEventListener("load", () => {
+        if (xhr.status === 200 || xhr.status === 201) {
+          toast.success("Module de formation ajouté avec succès");
+          setFile(null);
+          setDescription("");
+          setUploadProgress(0);
+        } else {
+          toast.error("Erreur lors de l'ajout du module");
+        }
+        setIsUploading(false);
+        setIsLoading(false);
+      });
+
+      xhr.addEventListener("error", () => {
+        toast.error("Erreur lors de l'ajout du module");
+        setIsUploading(false);
+        setIsLoading(false);
+      });
+
+      xhr.open("POST", `${process.env.NEXT_PUBLIC_BASE_URL}/moduledeformation`);
+      xhr.setRequestHeader("x-connexion-tantor", `Bearer ${token}`);
+      xhr.send(formData);
     } catch (error) {
       toast.error("Erreur lors de l'ajout du module");
-    } finally {
       setIsUploading(false);
+      setIsLoading(false);
     }
   };
 
