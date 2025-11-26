@@ -2267,31 +2267,34 @@ export default function StudentTemplate({
             )}
           </div>
 
-          {/* Signature Acceptance Checkbox */}
-          {templateData?.data?.signature && (
-            <div className="mt-6 flex items-center justify-center">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="signature-acceptance"
-                  checked={signatureAccepted}
-                  disabled={isReadonly}
-                  onCheckedChange={(checked) => {
-                    if (checked && !isReadonly) {
-                      setShowSignatureWarning(true);
-                    } else if (!isReadonly) {
-                      setSignatureAccepted(false);
-                    }
-                  }}
-                />
-                <label
-                  htmlFor="signature-acceptance"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  J'accepte de signer ce document avec mon nom et prénom
-                </label>
+          {/* Signature Acceptance Checkbox - FIXED CONDITION */}
+          {templateData?.data?.signature &&
+            existingInstance &&
+            existingInstance.status === "validated" &&
+            !existingInstance.signature && (
+              <div className="mt-6 flex items-center justify-center">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="signature-acceptance"
+                    checked={signatureAccepted}
+                    disabled={isReadonly}
+                    onCheckedChange={(checked) => {
+                      if (checked && !isReadonly) {
+                        setShowSignatureWarning(true);
+                      } else if (!isReadonly) {
+                        setSignatureAccepted(false);
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor="signature-acceptance"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    J'accepte de signer ce document avec mon nom et prénom
+                  </label>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         {/* Footer */}
@@ -2345,18 +2348,19 @@ export default function StudentTemplate({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Fermer
             </Button>
-            {/* Only show download button if signature is not required, or if signature is required and accepted */}
-            {(!templateData?.data?.signature ||
-              (templateData?.data?.signature && signatureAccepted)) && (
-              <Button
-                variant="outline"
-                onClick={() => handleDownloadPDF()}
-                disabled={!isContentLoaded || !editor}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Télécharger PDF
-              </Button>
-            )}
+            {/* Download Button - FIXED CONDITION */}
+            {existingInstance &&
+              existingInstance.status === "validated" &&
+              existingInstance.signature && (
+                <Button
+                  variant="outline"
+                  onClick={() => handleDownloadPDF()}
+                  disabled={!isContentLoaded || !editor}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Télécharger PDF
+                </Button>
+              )}
             <Button
               onClick={handleSave}
               disabled={isSaving || !isContentLoaded || !editor || isReadonly}
