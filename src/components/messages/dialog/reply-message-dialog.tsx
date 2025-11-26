@@ -26,6 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "react-hot-toast";
+import { useSearchParams } from "next/navigation";
 
 const replyFormSchema = z.object({
   content: z
@@ -36,11 +37,35 @@ const replyFormSchema = z.object({
 
 interface ReplyMessageDialogProps {
   messageId: string;
+  isTransferred?: boolean;
+  transferId?: string;
 }
 
-export function ReplyMessageDialog({ messageId }: ReplyMessageDialogProps) {
+export function ReplyMessageDialog({
+  messageId,
+  isTransferred = false,
+  transferId,
+}: ReplyMessageDialogProps) {
   const [open, setOpen] = useState(false);
   const [createReply, { isLoading }] = useCreateReplyMutation();
+  const searchParams = useSearchParams();
+
+  // Check URL params as fallback to ensure we use transfer reply when URL indicates transfer
+  const isTransferredParam = searchParams.get("istransfered");
+  const transferIdParam = searchParams.get("transferId");
+
+  // Filter out "null" strings and ensure we only use valid transferIds
+  const validTransferId = transferId && transferId !== "null" ? transferId : undefined;
+  const validTransferIdParam =
+    transferIdParam && transferIdParam !== "null" ? transferIdParam : undefined;
+
+  // Determine if we should use transfer reply (check both props and URL params)
+  const shouldUseTransferReply =
+    (isTransferred && validTransferId) || (Boolean(isTransferredParam) && validTransferIdParam);
+
+  // Use transferId from props first, then fall back to URL param
+  // If finalTransferId is null/undefined, we'll use messageId with id_chat instead
+  const finalTransferId = validTransferId || validTransferIdParam || undefined;
 
   const form = useForm<z.infer<typeof replyFormSchema>>({
     resolver: zodResolver(replyFormSchema),
@@ -52,9 +77,13 @@ export function ReplyMessageDialog({ messageId }: ReplyMessageDialogProps) {
 
   const onSubmit = async (values: z.infer<typeof replyFormSchema>) => {
     try {
+      // Use id_transferechat if we have a valid transferId, otherwise use id_chat with messageId
+      // If finalTransferId is null/undefined, fall back to using messageId with id_chat
       const payload = {
         content: values.content,
-        id_chat: messageId,
+        ...(shouldUseTransferReply && finalTransferId
+          ? { id_transferechat: finalTransferId }
+          : { id_chat: messageId }),
         is_public: false,
       };
 

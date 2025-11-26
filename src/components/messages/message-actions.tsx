@@ -14,6 +14,8 @@ interface MessageActionsProps {
   isDeleted?: boolean;
   content?: string;
   hideTransfer?: boolean;
+  isTransferred?: boolean;
+  transferId?: string;
 }
 
 export function MessageActions({
@@ -23,10 +25,15 @@ export function MessageActions({
   isDeleted = false,
   content,
   hideTransfer = false,
+  isTransferred = false,
+  transferId,
 }: MessageActionsProps) {
   const router = useRouter();
   const [deleteChat] = useDeleteChatMutation();
   const [restoreChat] = useRestoreChatMutation();
+
+  // Filter out "null" strings and ensure we only pass valid transferIds
+  const validTransferId = transferId && transferId !== "null" ? transferId : undefined;
 
   const handleDelete = async () => {
     try {
@@ -54,7 +61,11 @@ export function MessageActions({
         Retour
       </Button>
       <div className="flex items-center gap-4">
-        <ReplyMessageDialog messageId={messageId} />
+        <ReplyMessageDialog
+          messageId={messageId}
+          isTransferred={isTransferred}
+          transferId={validTransferId}
+        />
         {/* Transfer button - hidden when hideTransfer prop is true */}
         <TransferMessageDialog messageId={messageId} />
         {isDeleted ? (
