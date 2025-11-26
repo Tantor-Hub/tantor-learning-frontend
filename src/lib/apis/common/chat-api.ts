@@ -35,22 +35,6 @@ export const chatApi = createApi({
       invalidatesTags: ["Chat"],
     }),
 
-    archivedChat: builder.mutation<void, { id: string }>({
-      query: ({ id }) => ({
-        url: `cms/messages/message/archive/${id}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ["Chat"],
-    }),
-
-    listChatByCategory: builder.query<IGetAllMessagesResponse, { group: string }>({
-      query: ({ group }) => ({
-        url: `cms/messages/list/${group}`,
-        method: "GET",
-      }),
-      providesTags: ["Chat"],
-    }),
-
     getChatById: builder.query<IGetMessageByIdResponse, { id: string }>({
       query: ({ id }) => ({
         url: `chat/${id}`,
@@ -76,12 +60,9 @@ export const chatApi = createApi({
       invalidatesTags: ["Chat"],
     }),
 
-    getTransferChatReplies: builder.query<
-      IGetTransferChatRepliesResponse,
-      { transferChatId: string }
-    >({
-      query: ({ transferChatId }) => ({
-        url: `replieschat/transfer/${transferChatId}`,
+    getTransferRepliesById: builder.query<IGetTransferChatRepliesResponse, { id: string }>({
+      query: ({ id }) => ({
+        url: `replieschat/transfer/${id}`,
         method: "GET",
       }),
       providesTags: ["Chat"],
@@ -183,8 +164,6 @@ export const chatApi = createApi({
 
 export const {
   useDeleteChatMutation,
-  useArchivedChatMutation,
-  useListChatByCategoryQuery,
   useCreateMessageMutation,
   useListMessageByUserIdQuery,
   useUpdateChatMutation,
@@ -192,7 +171,7 @@ export const {
   useGetChatByIdQuery,
   useGetRepliesByChatIdQuery,
   useCreateReplyMutation,
-  useGetTransferChatRepliesQuery,
+  useGetTransferRepliesByIdQuery,
   useListDeletedMessagesQuery,
   useListReceivedMessagesQuery,
   useListSentMessagesQuery,

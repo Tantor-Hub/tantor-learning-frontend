@@ -4,12 +4,13 @@ import { MessageActions } from "@/components/messages/message-actions";
 import {
   useGetChatByIdQuery,
   useGetRepliesByChatIdQuery,
-  useGetTransferChatRepliesQuery,
+  useGetTransferRepliesByIdQuery,
 } from "@/lib/apis/common/chat-api";
 import { useRouter } from "next/navigation";
 import { RepliesSkeleton } from "./replies-skeleton";
 import { MessageDetailSkeleton } from "@/components/skeletons/message-detail-skeleton";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 
 interface MessageDetailProps {
   messageId: string;
@@ -17,6 +18,12 @@ interface MessageDetailProps {
 
 export function MessageDetail({ messageId }: MessageDetailProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isTransferredParam = searchParams.get("istransfered");
+  const transferIdParam = searchParams.get("transferId");
+
+  // console.log("Query params - istransfered:", isTransferredParam);
+  // console.log("Query params - transferId:", transferIdParam);
 
   const { data, error, isLoading } = useGetChatByIdQuery({ id: messageId });
 
@@ -25,13 +32,16 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
     data: repliesData,
     isLoading: repliesLoading,
     isError: repliesError,
-  } = useGetRepliesByChatIdQuery({ chatId: messageId });
+  } = useGetRepliesByChatIdQuery({ chatId: messageId }, { skip: Boolean(isTransferredParam) });
 
   const {
     data: transferRepliesData,
     isLoading: transferRepliesLoading,
     isError: transferRepliesError,
-  } = useGetTransferChatRepliesQuery({ transferChatId: data?.data?.transferId || "" });
+  } = useGetTransferRepliesByIdQuery(
+    { id: transferIdParam || "" },
+    { skip: !Boolean(isTransferredParam) }
+  );
 
   // Check if the message is transferred to decide which replies data to use
   const isTransferred = data?.data?.isTransferred;

@@ -4,12 +4,14 @@ import { MessageActions } from "@/components/messages/message-actions";
 import {
   useGetChatByIdQuery,
   useGetRepliesByChatIdQuery,
-  useGetTransferChatRepliesQuery,
+  useGetTransferRepliesByIdQuery,
+  useGetTransferQuery,
 } from "@/lib/apis/common/chat-api";
 import { useRouter } from "next/navigation";
 import { RepliesSkeleton } from "./replies-skeleton";
 import { MessageDetailSkeleton } from "@/components/skeletons/message-detail-skeleton";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 
 interface MessageDetailProps {
   messageId: string;
@@ -17,29 +19,29 @@ interface MessageDetailProps {
 
 export function MessageDetail({ messageId }: MessageDetailProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isTransferredParam = searchParams.get("istransfered");
+  const transferIdParam = searchParams.get("transferId");
 
   const { data, error, isLoading } = useGetChatByIdQuery({ id: messageId });
 
-  // Always call both hooks to avoid conditional hook calls
+  // Use the appropriate query based on isTransferredParam
   const {
     data: repliesData,
     isLoading: repliesLoading,
     isError: repliesError,
-  } = useGetRepliesByChatIdQuery({ chatId: messageId });
+  } = useGetRepliesByChatIdQuery({ chatId: messageId }, { skip: Boolean(isTransferredParam) });
 
   const {
     data: transferRepliesData,
     isLoading: transferRepliesLoading,
     isError: transferRepliesError,
-  } = useGetTransferChatRepliesQuery({ transferChatId: data?.data?.transferId || "" });
+  } = useGetTransferRepliesByIdQuery({ id: transferIdParam || "" }, { skip: !isTransferredParam });
 
-  // Check if the message is transferred to decide which replies data to use
-  const isTransferred = data?.data?.isTransferred;
-  const transferId = data?.data?.transferId;
-
-  const finalRepliesData = isTransferred && transferId ? transferRepliesData : repliesData;
-  const finalRepliesLoading = isTransferred && transferId ? transferRepliesLoading : repliesLoading;
-  const finalRepliesError = isTransferred && transferId ? transferRepliesError : repliesError;
+  // Determine which data to use based on the parameter
+  const finalRepliesData = isTransferredParam ? transferRepliesData : repliesData;
+  const finalRepliesLoading = isTransferredParam ? transferRepliesLoading : repliesLoading;
+  const finalRepliesError = isTransferredParam ? transferRepliesError : repliesError;
 
   if (finalRepliesError) {
     console.error("Error getting replies:", finalRepliesError);
@@ -68,6 +70,83 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
 
   const message = data.data;
   const replies = finalRepliesData?.data.rows || [];
+
+  const renderAttachments = () => {
+    if (!message.piece_joint || message.piece_joint.length === 0) return null;
+
+    return (
+      <div className="mt-4">
+        <p className="font-semibold mb-2">Pièces jointes:</p>
+        <div className="flex flex-wrap gap-2">
+          {message.piece_joint.map((url: string, index: number) => {
+            const extension = url.split(".").pop()?.toLowerCase();
+            const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(extension || "");
+            const isPdf = extension === "pdf";
+
+            return (
+              <div key={index} className="flex items-center gap-2 p-2 border rounded">
+                {isImage ? (
+                  <Image
+                    src={url}
+                    alt={`Attachment ${index + 1}`}
+                    width={64}
+                    height={64}
+                    className="w-16 h-16 object-cover cursor-pointer"
+                    onClick={() => window.open(url, "_blank")}
+                  />
+                ) : isPdf ? (
+                  <div
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => window.open(url, "_blank")}
+                  >
+                    <span className="text-red-500">📄</span>
+                    <span>PDF Document</span>
+                  </div>
+                ) : (
+                  <div
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => window.open(url, "_blank")}
+                  >
+                    <span>📎</span>
+                    <span>{extension?.toUpperCase()} File</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderReplies = () => {
+    if (finalRepliesLoading) {
+      return <RepliesSkeleton />;
+    }
+
+    if (replies.length === 0) {
+      return <p className="text-muted-foreground">Aucune réponse pour le moment.</p>;
+    }
+
+    return replies.map((reply) => (
+      <div key={reply.id} className="border border-border rounded-lg p-4 mb-4">
+        <div className="mb-2">
+          <p className="text-primary font-medium">
+            {reply.sender.firstName} {reply.sender.lastName}
+          </p>
+          <p className="text-[#979DAC] text-sm">
+            {new Date(reply.createdAt).toLocaleDateString("fr-FR", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+        </div>
+        <p>{reply.content}</p>
+      </div>
+    ));
+  };
 
   return (
     <div>
@@ -98,78 +177,13 @@ export function MessageDetail({ messageId }: MessageDetailProps) {
           </p>
         </div>
         <p>{message.content}</p>
-        {message.piece_joint && message.piece_joint.length > 0 && (
-          <div className="mt-4">
-            <p className="font-semibold mb-2">Pièces jointes:</p>
-            <div className="flex flex-wrap gap-2">
-              {message.piece_joint.map((url: string, index: number) => {
-                const extension = url.split(".").pop()?.toLowerCase();
-                const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(extension || "");
-                const isPdf = extension === "pdf";
-
-                return (
-                  <div key={index} className="flex items-center gap-2 p-2 border rounded">
-                    {isImage ? (
-                      <Image
-                        src={url}
-                        alt={`Attachment ${index + 1}`}
-                        width={64}
-                        height={64}
-                        className="w-16 h-16 object-cover cursor-pointer"
-                        onClick={() => window.open(url, "_blank")}
-                      />
-                    ) : isPdf ? (
-                      <div
-                        className="flex items-center gap-2 cursor-pointer"
-                        onClick={() => window.open(url, "_blank")}
-                      >
-                        <span className="text-red-500">📄</span>
-                        <span>PDF Document</span>
-                      </div>
-                    ) : (
-                      <div
-                        className="flex items-center gap-2 cursor-pointer"
-                        onClick={() => window.open(url, "_blank")}
-                      >
-                        <span>📎</span>
-                        <span>{extension?.toUpperCase()} File</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {renderAttachments()}
       </div>
 
       {/* Replies */}
       <div className="mt-6">
         <h3 className="text-lg font-semibold mb-4">Réponses</h3>
-        {finalRepliesLoading ? (
-          <RepliesSkeleton />
-        ) : replies.length > 0 ? (
-          replies.map((reply) => (
-            <div key={reply.id} className="border border-border rounded-lg p-4 mb-4">
-              <div className="mb-2">
-                <p className="text-primary font-medium">
-                  {reply.sender.firstName} {reply.sender.lastName}
-                </p>
-                <p className="text-[#979DAC] text-sm">
-                  {new Date(reply.createdAt).toLocaleDateString("fr-FR", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-              <p>{reply.content}</p>
-            </div>
-          ))
-        ) : (
-          <p className="text-muted-foreground">Aucune réponse pour le moment.</p>
-        )}
+        {renderReplies()}
       </div>
     </div>
   );

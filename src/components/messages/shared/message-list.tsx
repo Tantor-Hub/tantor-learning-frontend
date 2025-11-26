@@ -1,13 +1,10 @@
 import Link from "next/link";
-import { IGetAllMessagesResponse, IMessage } from "@/types/common/message-api";
+import { IMessage } from "@/types/common/message-api";
 import { EmptyState } from "./empty-state";
 import { MessageCard } from "./message-card";
-import { usePathname } from "next/navigation";
 import { MessageListSkeleton } from "@/components/skeletons/message-list-skeleton";
 import { selectCurrentUser } from "@/features/auth/auth-slice";
 import { useSelector } from "react-redux";
-import { useListMessageByUserIdQuery } from "@/lib/apis/common/chat-api";
-import { useRouter } from "next/navigation";
 
 interface MessageListProps {
   messages: IMessage[] | undefined;
@@ -22,8 +19,7 @@ export const MessageList = ({
   isSuccess,
   renderActions,
 }: MessageListProps) => {
-  const currentUser = useSelector(selectCurrentUser);
-  const router = useRouter();
+  const currentUser: any = useSelector(selectCurrentUser);
 
   if (isLoading) {
     return <MessageListSkeleton />;
@@ -39,16 +35,16 @@ export const MessageList = ({
     return null;
   }
 
-  const handleClick = (msg: IMessage) => {
-    router.push(`/${currentUser?.role}/messages/${msg.id}?threadId=${msg.id}`);
-  };
-
   return (
     <div className="my-4 grid grid-cols-1 gap-4">
-      {messages?.map((msg, index) => (
-        <div key={`${msg.id}-${index}`} onClick={() => handleClick(msg)} className="cursor-pointer">
+      {messages?.map((msg: IMessage) => (
+        <Link
+          href={`/${currentUser?.role}/messages/${msg.id}?istransfered=${msg.isTransferred ? "true" : "false"}&transferId=${msg.transferId ? msg.transferId : "null"}`}
+          key={msg.id}
+          className="cursor-pointer"
+        >
           <MessageCard message={msg} actions={renderActions ? renderActions(msg) : undefined} />
-        </div>
+        </Link>
       ))}
     </div>
   );
