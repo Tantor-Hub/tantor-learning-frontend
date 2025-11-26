@@ -244,7 +244,9 @@ function GuideUploadDialog({
 
     try {
       const formData = new FormData();
-      formData.append("document", file);
+      if (file) {
+        formData.append("document", file);
+      }
       formData.append("type", type);
       formData.append("title", title.trim());
       formData.append("description", description.trim());
