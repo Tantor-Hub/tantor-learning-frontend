@@ -20,7 +20,11 @@ export default function StudentAnswers() {
 
   const [points, setPoints] = useState<{ [key: string]: number }>({});
 
-  const { data: answersData, isLoading } = useGetStudentAnswersByEvaluationAndStudentQuery(
+  const {
+    data: answersData,
+    isLoading,
+    refetch,
+  } = useGetStudentAnswersByEvaluationAndStudentQuery(
     { evaluationId, studentId },
     { skip: !evaluationId || !studentId }
   );
@@ -30,7 +34,7 @@ export default function StudentAnswers() {
   const answers = useMemo(() => answersData?.data?.answers || [], [answersData?.data?.answers]);
   const evaluation = answersData?.data?.evaluation;
 
-  // Initialize points state when answers load
+  // Initialize points state when answers load and keep it updated
   React.useEffect(() => {
     const initialPoints: { [key: string]: number } = {};
     answers.forEach((answer: any) => {
@@ -59,11 +63,36 @@ export default function StudentAnswers() {
       return;
     }
 
-    await toast.promise(updatePoints({ answerId, points: newPoints }).unwrap(), {
-      loading: "Mise à jour des points...",
-      success: "Points mis à jour avec succès",
-      error: "Erreur lors de la mise à jour des points",
-    });
+    try {
+      await toast.promise(updatePoints({ answerId, points: newPoints }).unwrap(), {
+        loading: "Mise à jour des points...",
+        success: "Points mis à jour avec succès",
+        error: (error) => {
+          // Handle 400 error with custom message
+          if (error?.status === 400 && error?.data?.message) {
+            return error.data.message;
+          }
+          return "Erreur lors de la mise à jour des points";
+        },
+      });
+
+      // Refetch the data to get the updated points from the server
+      refetch();
+    } catch (error: any) {
+      // Additional error handling if needed
+      console.error("Failed to update points:", error);
+
+      // If the toast.promise didn't catch it, show the error here
+      if (error?.status === 400 && error?.data?.message) {
+        toast.error(error.data.message);
+      }
+    }
+  };
+
+  // Helper function to check if points have changed for a specific answer
+  const hasPointsChanged = (answerId: string) => {
+    const answer = answers.find((a: any) => a.id === answerId);
+    return answer && points[answerId] !== answer.points;
   };
 
   if (isLoading) {
@@ -140,7 +169,7 @@ export default function StudentAnswers() {
                     <Button
                       size="sm"
                       onClick={() => handleSavePoints(answer.id)}
-                      disabled={points[answer.id] === answer.points}
+                      disabled={!hasPointsChanged(answer.id)}
                     >
                       <Save className="h-4 w-4" />
                     </Button>
