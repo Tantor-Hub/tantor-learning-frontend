@@ -20,6 +20,15 @@ import {
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -36,15 +45,20 @@ import toast from "react-hot-toast";
 export default function NotesPage() {
   const [filters, setFilters] = useState<ISecretaryStatisticsFilters>({});
   const [appliedFilters, setAppliedFilters] = useState<ISecretaryStatisticsFilters>({});
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false);
+  const [appreciationGlobale, setAppreciationGlobale] = useState<string>("");
+  const [showAppreciationDialog, setShowAppreciationDialog] = useState(false);
+  const [pendingStudentId, setPendingStudentId] = useState<string | undefined>(undefined);
 
   // Fetch trainings
   const { data: trainingsData, isLoading: trainingsLoading } = useListTrainingQuery();
   const trainings = trainingsData?.data || [];
 
-  // Fetch sessions when training is selected
+  // Fetch sessions when training is selected (check both filters and appliedFilters)
+  const activeTrainingId = filters.trainingId || appliedFilters.trainingId;
   const { data: sessionsData, isLoading: sessionsLoading } = useListSessionByTrainingIdQuery(
-    { trainingId: filters.trainingId! },
-    { skip: !filters.trainingId }
+    { trainingId: activeTrainingId! },
+    { skip: !activeTrainingId }
   );
   const sessions = sessionsData?.data || [];
 
@@ -79,6 +93,13 @@ export default function NotesPage() {
   const students = data?.data?.students || [];
   const statistics = data?.data;
 
+  // Clear applying state when data is loaded
+  useEffect(() => {
+    if (!isLoading && data) {
+      setIsApplyingFilters(false);
+    }
+  }, [isLoading, data]);
+
   const handleFilterChange = (key: keyof ISecretaryStatisticsFilters, value: string) => {
     setFilters((prev) => {
       const newFilters: ISecretaryStatisticsFilters = {
@@ -103,6 +124,7 @@ export default function NotesPage() {
   };
 
   const handleApplyFilters = () => {
+    setIsApplyingFilters(true);
     setAppliedFilters({ ...filters });
   };
 
@@ -150,6 +172,21 @@ export default function NotesPage() {
       toast.error("Veuillez sélectionner un étudiant");
       return;
     }
+
+    // Check if appreciation globale is filled
+    if (!appreciationGlobale || appreciationGlobale.trim() === "") {
+      setPendingStudentId(targetStudentId);
+      setShowAppreciationDialog(true);
+      return;
+    }
+
+    // Proceed with generation
+    await generateTranscriptPDF(targetStudentId);
+  };
+
+  const generateTranscriptPDF = async (studentId?: string) => {
+    // Use provided studentId or fall back to applied filter
+    const targetStudentId = studentId || appliedFilters.studentId;
 
     // Apply filters automatically: training and student
     const filtersToApply: ISecretaryStatisticsFilters = {
@@ -234,46 +271,151 @@ export default function NotesPage() {
       const studentEmail = selectedStudent.studentEmail || studentInfo?.email || "";
       const studentRegistrationNumber = studentInfo?.id || "";
 
-      // Get evaluation details - always populate with student statistics
-      const evaluationDetails: Array<{
+      // Get evaluation details from releveTable if available, otherwise calculate
+      let evaluationDetails: Array<{
         subject: string;
+        evaluationTitle?: string;
         evaluationType: string;
         grade: number;
         maxGrade: number;
         coefficient: number;
         classAverage: number;
         comment: string;
+        pointsEarned?: number;
+        totalPossiblePoints?: number;
       }> = [];
 
-      // Calculate average grade per evaluation (convert to 20-point scale)
-      const avgGradePerEvaluation =
-        selectedStudent.evaluationCount > 0 && selectedStudent.totalPossiblePoints > 0
-          ? (selectedStudent.totalPointsEarned / selectedStudent.totalPossiblePoints) * 20
-          : 0;
-      const avgMaxPerEvaluation = 20; // Always 20 for display
+      let sessionAveragesData: Array<{
+        sessionTitle: string;
+        studentAverage: number;
+        classAverage: number;
+        studentPoints?: number;
+        totalMaxPoints?: number;
+        sessionAverage?: number;
+        coefficient: number;
+      }> = [];
 
-      // Calculate raw points for display
-      const avgPointsPerEvaluation =
-        selectedStudent.evaluationCount > 0
-          ? selectedStudent.totalPointsEarned / selectedStudent.evaluationCount
-          : 0;
-      const avgMaxPointsPerEvaluation =
-        selectedStudent.evaluationCount > 0
-          ? selectedStudent.totalPossiblePoints / selectedStudent.evaluationCount
-          : 20;
+      let weightedGeneralAverage = 0;
+      let weightedClassAverage = 0;
 
-      // If we have courses, create entries for each course
-      if (coursesToUse.length > 0) {
-        coursesToUse.forEach((course) => {
-          // Calculate how many evaluations might be in this course
-          // Distribute evaluations across courses
-          const evaluationsPerCourse = Math.max(
-            1,
-            Math.floor(selectedStudent.evaluationCount / coursesToUse.length)
-          );
+      // Use releveTable data if available (new structure - array of evaluation details)
+      // The releveTable should have the same number of elements as evaluationCount
+      if (selectedStudent.releveTable && selectedStudent.releveTable.length > 0) {
+        // Map releveTable to evaluationDetails format for the PDF table
+        evaluationDetails = selectedStudent.releveTable.map((item) => ({
+          subject: item.matiereTitle,
+          evaluationTitle: item.evaluationTitle,
+          evaluationType: item.evaluationType,
+          grade: item.pointsEarned, // Use raw pointsEarned
+          maxGrade: item.totalPossiblePoints, // Use raw totalPossiblePoints
+          coefficient: 1, // Default coefficient
+          classAverage: item.scoreOver20 * 0.95, // Placeholder - 5% below student score (for calculations)
+          comment: item.comment,
+          pointsEarned: item.pointsEarned,
+          totalPossiblePoints: item.totalPossiblePoints,
+        }));
+
+        // Calculate session averages from releveTable by grouping by matiereTitle
+        const matiereGroups = selectedStudent.releveTable.reduce(
+          (acc, item) => {
+            const existing = acc.find((g) => g.matiereTitle === item.matiereTitle);
+            if (existing) {
+              existing.totalScore += item.scoreOver20;
+              existing.totalMax += 20;
+              existing.count += 1;
+              existing.totalPoints += item.pointsEarned;
+              existing.totalPossible += item.totalPossiblePoints;
+            } else {
+              acc.push({
+                matiereTitle: item.matiereTitle,
+                totalScore: item.scoreOver20,
+                totalMax: 20,
+                count: 1,
+                totalPoints: item.pointsEarned,
+                totalPossible: item.totalPossiblePoints,
+              });
+            }
+            return acc;
+          },
+          [] as Array<{
+            matiereTitle: string;
+            totalScore: number;
+            totalMax: number;
+            count: number;
+            totalPoints: number;
+            totalPossible: number;
+          }>
+        );
+
+        sessionAveragesData = matiereGroups.map((group) => ({
+          sessionTitle: group.matiereTitle,
+          studentAverage: group.count > 0 ? group.totalScore / group.count : 0,
+          classAverage: group.count > 0 ? (group.totalScore / group.count) * 0.95 : 0, // Placeholder
+          studentPoints: group.totalPoints,
+          totalMaxPoints: group.totalPossible,
+          sessionAverage: group.count > 0 ? (group.totalScore / group.count) * 0.95 : 0,
+          coefficient: group.count, // Count of evaluations for this matiere
+        }));
+
+        // Calculate weighted averages
+        const totalCoeff = sessionAveragesData.reduce((sum, s) => sum + s.coefficient, 0);
+        weightedGeneralAverage =
+          totalCoeff > 0
+            ? sessionAveragesData.reduce((sum, s) => sum + s.studentAverage * s.coefficient, 0) /
+              totalCoeff
+            : 0;
+        weightedClassAverage =
+          totalCoeff > 0
+            ? sessionAveragesData.reduce((sum, s) => sum + s.classAverage * s.coefficient, 0) /
+              totalCoeff
+            : 0;
+      } else if (selectedStudent.relevetable && selectedStudent.relevetable.evaluationDetails) {
+        // Fallback to old relevetable structure if available
+        // The old structure uses IReleveEvaluationDetail which has matiereTitle, not subject
+        evaluationDetails = selectedStudent.relevetable.evaluationDetails.map((detail) => ({
+          subject: detail.matiereTitle,
+          evaluationTitle: detail.evaluationTitle,
+          evaluationType: detail.evaluationType,
+          grade: detail.pointsEarned,
+          maxGrade: detail.totalPossiblePoints,
+          coefficient: 1,
+          classAverage: detail.scoreOver20 * 0.95,
+          comment: detail.comment,
+          pointsEarned: detail.pointsEarned,
+          totalPossiblePoints: detail.totalPossiblePoints,
+        }));
+        sessionAveragesData = selectedStudent.relevetable.sessionAverages.map((session) => ({
+          sessionTitle: session.sessionTitle,
+          studentAverage: session.studentAverage,
+          classAverage: session.classAverage,
+          studentPoints: session.studentPoints,
+          totalMaxPoints: session.totalMaxPoints,
+          sessionAverage: session.classAverage,
+          coefficient: session.coefficient,
+        }));
+        weightedGeneralAverage = selectedStudent.relevetable.weightedGeneralAverage;
+        weightedClassAverage = selectedStudent.relevetable.weightedClassAverage;
+      } else {
+        // Fallback: Create one row per evaluation to match evaluationCount
+        // Calculate average grade per evaluation (convert to 20-point scale)
+        const avgGradePerEvaluation =
+          selectedStudent.evaluationCount > 0 && selectedStudent.totalPossiblePoints > 0
+            ? (selectedStudent.totalPointsEarned / selectedStudent.totalPossiblePoints) * 20
+            : 0;
+        const avgMaxPerEvaluation = 20; // Always 20 for display
+
+        // Create one row for each evaluation
+        const numEvaluations = selectedStudent.evaluationCount || 1;
+        for (let i = 0; i < numEvaluations; i++) {
+          // Use course title if available, otherwise use training name
+          const subjectName =
+            coursesToUse.length > 0 && coursesToUse[i % coursesToUse.length]
+              ? coursesToUse[i % coursesToUse.length].title
+              : trainingName || "Formation générale";
 
           evaluationDetails.push({
-            subject: course.title || "Matière",
+            subject: subjectName,
+            evaluationTitle: undefined,
             evaluationType: "Évaluation",
             grade: avgGradePerEvaluation, // Already on 20-point scale
             maxGrade: avgMaxPerEvaluation, // 20
@@ -286,100 +428,102 @@ export default function NotesPage() {
                   ? "Bon"
                   : "Correct",
           });
-        });
-      } else {
-        // If no courses, create a single entry with overall statistics
-        evaluationDetails.push({
-          subject: trainingName || "Formation générale",
-          evaluationType: "Évaluation",
-          grade: avgGradePerEvaluation, // Already on 20-point scale
-          maxGrade: avgMaxPerEvaluation, // 20
-          coefficient: 1,
-          classAverage: avgGradePerEvaluation * 0.95,
-          comment:
-            selectedStudent.percentage >= 80
-              ? "Très bon"
-              : selectedStudent.percentage >= 60
-                ? "Bon"
-                : "Correct",
-        });
+        }
+
+        // Calculate subject averages
+        // Use sessionStats if available, otherwise fall back to calculated averages
+        if (selectedStudent.sessionStats && selectedStudent.sessionStats.length > 0) {
+          // Count how many times each session appears in evaluationDetails
+          const sessionCounts = evaluationDetails.reduce(
+            (acc, evalDetail) => {
+              acc[evalDetail.subject] = (acc[evalDetail.subject] || 0) + 1;
+              return acc;
+            },
+            {} as Record<string, number>
+          );
+
+          // Use sessionStats from API response - convert to 20-point scale
+          sessionAveragesData = selectedStudent.sessionStats.map((sessionStat) => {
+            // Convert studentAverage to 20-point scale
+            const studentAverageOver20 =
+              sessionStat.totalMaxPoints > 0
+                ? (sessionStat.studentPoints / sessionStat.totalMaxPoints) * 20
+                : 0;
+            const classAverageOver20 =
+              sessionStat.totalMaxPoints > 0
+                ? (sessionStat.sessionAverage / sessionStat.totalMaxPoints) * 20
+                : 0;
+
+            return {
+              sessionTitle: sessionStat.sessionTitle,
+              studentAverage: studentAverageOver20, // Converted to 20-point scale
+              classAverage: classAverageOver20, // Converted to 20-point scale
+              studentPoints: sessionStat.studentPoints,
+              totalMaxPoints: sessionStat.totalMaxPoints,
+              sessionAverage: classAverageOver20,
+              coefficient: sessionCounts[sessionStat.sessionTitle] || 1, // Count of evaluations for this session
+            };
+          });
+        } else {
+          // Fallback: calculate from evaluation details (old method)
+          const subjectAverages = evaluationDetails.reduce(
+            (acc, evalDetail) => {
+              const existing = acc.find((s) => s.subject === evalDetail.subject);
+              if (existing) {
+                existing.totalGrade += evalDetail.grade * evalDetail.coefficient;
+                existing.totalMax += evalDetail.maxGrade * evalDetail.coefficient;
+                existing.totalCoeff += evalDetail.coefficient;
+                existing.totalClassAvg += evalDetail.classAverage * evalDetail.coefficient;
+              } else {
+                acc.push({
+                  subject: evalDetail.subject,
+                  totalGrade: evalDetail.grade * evalDetail.coefficient,
+                  totalMax: evalDetail.maxGrade * evalDetail.coefficient,
+                  totalCoeff: evalDetail.coefficient,
+                  totalClassAvg: evalDetail.classAverage * evalDetail.coefficient,
+                  coeff: evalDetail.coefficient,
+                });
+              }
+              return acc;
+            },
+            [] as Array<{
+              subject: string;
+              totalGrade: number;
+              totalMax: number;
+              totalCoeff: number;
+              totalClassAvg: number;
+              coeff: number;
+            }>
+          );
+
+          // Count how many times each subject appears in evaluationDetails
+          const subjectCounts = evaluationDetails.reduce(
+            (acc, evalDetail) => {
+              acc[evalDetail.subject] = (acc[evalDetail.subject] || 0) + 1;
+              return acc;
+            },
+            {} as Record<string, number>
+          );
+
+          sessionAveragesData = subjectAverages.map((subj) => ({
+            sessionTitle: subj.subject,
+            studentAverage: subj.totalCoeff > 0 ? subj.totalGrade / subj.totalCoeff : 0,
+            classAverage: subj.totalCoeff > 0 ? subj.totalClassAvg / subj.totalCoeff : 0,
+            studentPoints: 0, // Not available in fallback
+            totalMaxPoints: 0, // Not available in fallback
+            sessionAverage: subj.totalCoeff > 0 ? subj.totalClassAvg / subj.totalCoeff : 0,
+            coefficient: subjectCounts[subj.subject] || 1, // Count of evaluations for this subject
+          }));
+        }
+
+        // Calculate weighted averages using raw values from sessionStats
+        weightedGeneralAverage =
+          sessionAveragesData.reduce((sum, s) => sum + s.studentAverage * s.coefficient, 0) /
+            sessionAveragesData.reduce((sum, s) => sum + s.coefficient, 0) || 0;
+        weightedClassAverage =
+          sessionAveragesData.reduce((sum, s) => sum + s.classAverage * s.coefficient, 0) /
+            sessionAveragesData.reduce((sum, s) => sum + s.coefficient, 0) || 0;
       }
-
-      // Calculate subject averages
-      // Use sessionStats if available, otherwise fall back to calculated averages
-      let sessionAveragesData: Array<{
-        sessionTitle: string;
-        studentAverage: number;
-        classAverage: number;
-        studentPoints?: number;
-        totalMaxPoints?: number;
-        sessionAverage?: number;
-        coefficient: number;
-      }> = [];
-
-      if (selectedStudent.sessionStats && selectedStudent.sessionStats.length > 0) {
-        // Use sessionStats from API response with all details (raw values, no conversion)
-        sessionAveragesData = selectedStudent.sessionStats.map((sessionStat) => {
-          return {
-            sessionTitle: sessionStat.sessionTitle,
-            studentAverage: sessionStat.studentPoints, // Use raw studentPoints
-            classAverage: sessionStat.sessionAverage, // Use raw sessionAverage
-            studentPoints: sessionStat.studentPoints,
-            totalMaxPoints: sessionStat.totalMaxPoints,
-            sessionAverage: sessionStat.sessionAverage,
-            coefficient: 1, // Default coefficient, adjust if needed
-          };
-        });
-      } else {
-        // Fallback: calculate from evaluation details (old method)
-        const subjectAverages = evaluationDetails.reduce(
-          (acc, evalDetail) => {
-            const existing = acc.find((s) => s.subject === evalDetail.subject);
-            if (existing) {
-              existing.totalGrade += evalDetail.grade * evalDetail.coefficient;
-              existing.totalMax += evalDetail.maxGrade * evalDetail.coefficient;
-              existing.totalCoeff += evalDetail.coefficient;
-              existing.totalClassAvg += evalDetail.classAverage * evalDetail.coefficient;
-            } else {
-              acc.push({
-                subject: evalDetail.subject,
-                totalGrade: evalDetail.grade * evalDetail.coefficient,
-                totalMax: evalDetail.maxGrade * evalDetail.coefficient,
-                totalCoeff: evalDetail.coefficient,
-                totalClassAvg: evalDetail.classAverage * evalDetail.coefficient,
-                coeff: evalDetail.coefficient,
-              });
-            }
-            return acc;
-          },
-          [] as Array<{
-            subject: string;
-            totalGrade: number;
-            totalMax: number;
-            totalCoeff: number;
-            totalClassAvg: number;
-            coeff: number;
-          }>
-        );
-
-        sessionAveragesData = subjectAverages.map((subj) => ({
-          sessionTitle: subj.subject,
-          studentAverage: subj.totalCoeff > 0 ? subj.totalGrade / subj.totalCoeff : 0,
-          classAverage: subj.totalCoeff > 0 ? subj.totalClassAvg / subj.totalCoeff : 0,
-          studentPoints: 0, // Not available in fallback
-          totalMaxPoints: 0, // Not available in fallback
-          sessionAverage: subj.totalCoeff > 0 ? subj.totalClassAvg / subj.totalCoeff : 0,
-          coefficient: subj.coeff,
-        }));
-      }
-
-      // Calculate weighted averages using raw values from sessionStats
-      const weightedGeneralAverage =
-        sessionAveragesData.reduce((sum, s) => sum + s.studentAverage * s.coefficient, 0) /
-          sessionAveragesData.reduce((sum, s) => sum + s.coefficient, 0) || 0;
-      const weightedClassAverage =
-        sessionAveragesData.reduce((sum, s) => sum + s.classAverage * s.coefficient, 0) /
-          sessionAveragesData.reduce((sum, s) => sum + s.coefficient, 0) || 0;
 
       // Create HTML content for transcript PDF
       const bodyContent = `
@@ -470,6 +614,26 @@ export default function NotesPage() {
             width: 200px;
             margin-top: 40px;
           }
+          .footer-image-container {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            page-break-before: auto;
+            page-break-after: auto;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            width: 100%;
+            display: block;
+            clear: both;
+          }
+          .footer-image {
+            width: 100%;
+            max-width: 100%;
+            display: block;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            object-fit: contain;
+            height: auto;
+          }
         </style>
         <div class="transcript-container">
           <div class="header">
@@ -505,7 +669,6 @@ export default function NotesPage() {
                   <th>Note</th>
                   <th>Max</th>
                   <th>Coeff Ev</th>
-                  <th>Moyenne Classe</th>
                   <th>Commentaire</th>
                 </tr>
               </thead>
@@ -515,11 +678,10 @@ export default function NotesPage() {
                     (evaluationDetail) => `
                   <tr>
                     <td>${evaluationDetail.subject}</td>
-                    <td>${evaluationDetail.evaluationType}</td>
+                    <td>${evaluationDetail.evaluationTitle || evaluationDetail.evaluationType}</td>
                     <td>${evaluationDetail.grade.toFixed(1)}</td>
-                    <td>${evaluationDetail.maxGrade}</td>
+                    <td>${evaluationDetail.maxGrade.toFixed(1)}</td>
                     <td>${evaluationDetail.coefficient}</td>
-                    <td>${evaluationDetail.classAverage.toFixed(1)}</td>
                     <td>${evaluationDetail.comment}</td>
                   </tr>
                 `
@@ -537,34 +699,57 @@ export default function NotesPage() {
                   <th>Session</th>
                   <th>Points obtenus</th>
                   <th>Points maximum</th>
-                  <th>Moyenne stagiaire</th>
-                  <th>Moyenne classe</th>
                   <th>Coeff session</th>
                 </tr>
               </thead>
               <tbody>
-                ${sessionAveragesData
-                  .map(
-                    (session) => `
+                ${(() => {
+                  // Calculate points obtenus for each session and collect them for average calculation
+                  const pointsObtenusValues: number[] = [];
+                  const rowsHtml = sessionAveragesData
+                    .map((session) => {
+                      // Convert sum of pointsEarned and totalPossiblePoints to 20-point scale
+                      const pointsObtenusOver20 =
+                        session.studentPoints !== undefined &&
+                        session.totalMaxPoints !== undefined &&
+                        session.totalMaxPoints > 0
+                          ? (session.studentPoints / session.totalMaxPoints) * 20
+                          : session.studentAverage; // Fallback to studentAverage if raw points not available
+                      const pointsMaximumOver20 = 20; // Always 20 when converted
+
+                      // Collect the value for average calculation
+                      pointsObtenusValues.push(pointsObtenusOver20);
+
+                      return `
                   <tr>
                     <td>${session.sessionTitle}</td>
-                    <td>${session.studentPoints !== undefined ? session.studentPoints.toFixed(1) : "-"}</td>
-                    <td>${session.totalMaxPoints !== undefined ? session.totalMaxPoints.toFixed(1) : "-"}</td>
-                    <td>${session.studentAverage.toFixed(1)}</td>
-                    <td>${session.classAverage.toFixed(1)}</td>
+                    <td>${pointsObtenusOver20.toFixed(1)}</td>
+                    <td>${pointsMaximumOver20.toFixed(1)}</td>
                     <td>${session.coefficient}</td>
                   </tr>
-                `
-                  )
-                  .join("")}
+                `;
+                    })
+                    .join("");
+
+                  // Calculate average of all points obtenus values
+                  const averagePointsObtenus =
+                    pointsObtenusValues.length > 0
+                      ? pointsObtenusValues.reduce((sum, val) => sum + val, 0) /
+                        pointsObtenusValues.length
+                      : 0;
+
+                  return (
+                    rowsHtml +
+                    `
                 <tr>
                   <td><strong>Moyenne générale pondérée</strong></td>
+                  <td><strong>${averagePointsObtenus.toFixed(1)}</strong></td>
                   <td>-</td>
-                  <td>-</td>
-                  <td><strong>${weightedGeneralAverage.toFixed(1)}</strong></td>
-                  <td><strong>${weightedClassAverage.toFixed(1)}</strong></td>
                   <td>-</td>
                 </tr>
+              `
+                  );
+                })()}
               </tbody>
             </table>
           </div>
@@ -572,19 +757,27 @@ export default function NotesPage() {
           <div class="section">
             <div class="section-title">Appréciation globale de la formation</div>
             <div class="section-content">
-              <p style="min-height: 40px; border-bottom: 1px solid #ccc; margin-bottom: 10px;"></p>
-              <p style="min-height: 40px; border-bottom: 1px solid #ccc;"></p>
+              ${
+                appreciationGlobale
+                  ? appreciationGlobale
+                      .split("\n")
+                      .map((line) => {
+                        const escapedLine = line
+                          .replace(/&/g, "&amp;")
+                          .replace(/</g, "&lt;")
+                          .replace(/>/g, "&gt;")
+                          .replace(/"/g, "&quot;")
+                          .replace(/'/g, "&#039;");
+                        return `<p>${escapedLine || "&nbsp;"}</p>`;
+                      })
+                      .join("")
+                  : '<p style="min-height: 40px; border-bottom: 1px solid #ccc; margin-bottom: 10px;"></p><p style="min-height: 40px; border-bottom: 1px solid #ccc;"></p>'
+              }
             </div>
           </div>
 
-          <div class="signature-section">
-            <div class="section-title">Signature du formateur / responsable pédagogique</div>
-            <div class="section-content">
-              <p><strong>Nom :</strong> _________________________</p>
-              <p><strong>Date:</strong> ___/___/___</p>
-              <p><strong>Signature :</strong></p>
-              <div class="signature-line"></div>
-            </div>
+          <div class="section footer-image-container">
+            <img src="${window.location.origin}/relevefooter.jpg" alt="Footer" class="footer-image" />
           </div>
         </div>
       `;
@@ -1262,31 +1455,9 @@ export default function NotesPage() {
         </div>
       )}
 
-      {/* Generate Transcript Button - Show when students are available */}
-      {students.length > 0 && (
-        <div className="bg-white border rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold">Relevé de notes</h3>
-              <p className="text-sm text-muted-foreground">
-                {appliedFilters.studentId
-                  ? "Générez le relevé de notes officiel pour l'étudiant sélectionné"
-                  : "Générez le relevé de notes pour chaque étudiant depuis le tableau ci-dessous"}
-              </p>
-            </div>
-            {appliedFilters.studentId && (
-              <Button onClick={() => handleGenerateTranscript()}>
-                <FileText className="h-4 w-4 mr-2" />
-                Générer le relevé de notes
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Students Table */}
       <div className="bg-white border rounded-lg">
-        {isLoading ? (
+        {isLoading || isApplyingFilters ? (
           <div className="p-4">
             <Table>
               <TableHeader>
@@ -1408,16 +1579,18 @@ export default function NotesPage() {
                     <span className="font-medium">{student.evaluationCount}</span>
                   </TableCell>
                   <TableCell>
-                    {(filters.trainingId || appliedFilters.trainingId) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleGenerateTranscript(student.studentId)}
-                      >
-                        <FileText className="h-3 w-3 mr-1" />
-                        Relevé
-                      </Button>
-                    )}
+                    {appliedFilters.trainingId &&
+                      appliedFilters.trainingsessionId &&
+                      !sessionsLoading && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleGenerateTranscript(student.studentId)}
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          Relevé
+                        </Button>
+                      )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -1425,6 +1598,56 @@ export default function NotesPage() {
           </Table>
         )}
       </div>
+
+      {/* Appreciation Dialog */}
+      <Dialog open={showAppreciationDialog} onOpenChange={setShowAppreciationDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Appréciation globale de la formation</DialogTitle>
+            <DialogDescription>
+              Veuillez saisir l'appréciation globale de la formation avant de générer le relevé de
+              notes.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="dialog-appreciation">Appréciation</Label>
+              <Textarea
+                id="dialog-appreciation"
+                placeholder="Entrez l'appréciation globale de la formation..."
+                value={appreciationGlobale}
+                onChange={(e) => setAppreciationGlobale(e.target.value)}
+                rows={6}
+                className="resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAppreciationDialog(false);
+                setPendingStudentId(undefined);
+              }}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!appreciationGlobale || appreciationGlobale.trim() === "") {
+                  toast.error("Veuillez saisir l'appréciation globale");
+                  return;
+                }
+                setShowAppreciationDialog(false);
+                await generateTranscriptPDF(pendingStudentId);
+                setPendingStudentId(undefined);
+              }}
+            >
+              Générer le relevé
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

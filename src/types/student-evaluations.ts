@@ -206,12 +206,42 @@ export interface ISessionStat {
   totalMaxPoints: number;
 }
 
+export interface IReleveEvaluationDetail {
+  matiereTitle: string;
+  evaluationTitle: string;
+  evaluationType: string;
+  pointsEarned: number;
+  totalPossiblePoints: number;
+  scoreOver20: number;
+  comment: string;
+  modality: string;
+  percentage: number;
+  didEvaluation: boolean;
+}
+
+export interface IReleveSessionAverage {
+  sessionTitle: string;
+  studentPoints: number;
+  totalMaxPoints: number;
+  studentAverage: number;
+  classAverage: number;
+  coefficient: number;
+}
+
+export interface IReleveTable {
+  evaluationDetails: IReleveEvaluationDetail[];
+  sessionAverages: IReleveSessionAverage[];
+  weightedGeneralAverage: number;
+  weightedClassAverage: number;
+}
+
 export interface ISecretaryStudentStatistics {
   studentId: string;
   studentName: string;
   studentEmail: string;
   studentAvatar: string;
   averagePoints: number;
+  averageDid?: number;
   percentage: number;
   totalPointsEarned: number;
   totalPossiblePoints: number;
@@ -219,6 +249,8 @@ export interface ISecretaryStudentStatistics {
   sessionTitles?: string[];
   totalHours?: number;
   sessionStats?: ISessionStat[];
+  relevetable?: IReleveTable;
+  releveTable?: IReleveEvaluationDetail[];
 }
 
 export interface ISecretaryStatisticsFilters {
