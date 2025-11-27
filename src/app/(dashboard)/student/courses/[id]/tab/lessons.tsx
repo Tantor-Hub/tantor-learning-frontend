@@ -34,7 +34,7 @@ export function LessonsTab() {
   if (lessons.length === 0) {
     return (
       <div className="text-center py-8">
-        <p>No lessons available for this course.</p>
+        <p>Aucune leçon n'est disponible pour cette matière.</p>
       </div>
     );
   }

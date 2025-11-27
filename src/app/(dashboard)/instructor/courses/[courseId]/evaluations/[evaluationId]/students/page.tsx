@@ -52,21 +52,6 @@ export default function StudentsByEvaluation() {
     evaluation?.markingStatus) as MarkingStatus;
 
   const handleStatusUpdate = async (newStatus: MarkingStatus) => {
-    // Validate status progression
-    const statusOrder = [
-      MarkingStatus.PENDING,
-      MarkingStatus.IN_PROGRESS,
-      MarkingStatus.COMPLETED,
-      MarkingStatus.PUBLISHED,
-    ];
-    const currentIndex = statusOrder.indexOf(currentStatus);
-    const newIndex = statusOrder.indexOf(newStatus);
-
-    if (newIndex <= currentIndex) {
-      toast.error("Impossible de revenir à un statut précédent");
-      return;
-    }
-
     await toast.promise(updateMarkingStatus({ evaluationId, markingStatus: newStatus }).unwrap(), {
       loading: "Mise à jour du statut...",
       success: "Statut mis à jour avec succès",
@@ -80,8 +65,6 @@ export default function StudentsByEvaluation() {
         return "bg-gray-100 text-gray-800";
       case MarkingStatus.IN_PROGRESS:
         return "bg-blue-100 text-blue-800";
-      case MarkingStatus.COMPLETED:
-        return "bg-green-100 text-green-800";
       case MarkingStatus.PUBLISHED:
         return "bg-purple-100 text-purple-800";
       default:
@@ -95,10 +78,21 @@ export default function StudentsByEvaluation() {
         return "En attente";
       case MarkingStatus.IN_PROGRESS:
         return "En cours";
-      case MarkingStatus.COMPLETED:
-        return "Terminé";
       case MarkingStatus.PUBLISHED:
         return "Publié";
+      default:
+        return status;
+    }
+  };
+
+  const getStatusActionLabel = (status: MarkingStatus) => {
+    switch (status) {
+      case MarkingStatus.PENDING:
+        return "Marquer comme en attente";
+      case MarkingStatus.IN_PROGRESS:
+        return "Commencer la correction";
+      case MarkingStatus.PUBLISHED:
+        return "Publier les résultats";
       default:
         return status;
     }
@@ -164,16 +158,6 @@ export default function StudentsByEvaluation() {
         </div>
 
         <div className="flex gap-2">
-          {currentStatus === MarkingStatus.COMPLETED && (
-            <Button
-              onClick={() => handleStatusUpdate(MarkingStatus.PUBLISHED)}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              Publier les résultats
-            </Button>
-          )}
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
@@ -181,21 +165,15 @@ export default function StudentsByEvaluation() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              {currentStatus !== MarkingStatus.IN_PROGRESS && (
-                <DropdownMenuItem onClick={() => handleStatusUpdate(MarkingStatus.IN_PROGRESS)}>
-                  Commencer la correction
+              {Object.values(MarkingStatus).map((status) => (
+                <DropdownMenuItem
+                  key={status}
+                  onClick={() => handleStatusUpdate(status)}
+                  disabled={status === currentStatus}
+                >
+                  {getStatusActionLabel(status)}
                 </DropdownMenuItem>
-              )}
-              {currentStatus !== MarkingStatus.COMPLETED && (
-                <DropdownMenuItem onClick={() => handleStatusUpdate(MarkingStatus.COMPLETED)}>
-                  Marquer comme terminé
-                </DropdownMenuItem>
-              )}
-              {currentStatus !== MarkingStatus.PUBLISHED && (
-                <DropdownMenuItem onClick={() => handleStatusUpdate(MarkingStatus.PUBLISHED)}>
-                  Publier les résultats
-                </DropdownMenuItem>
-              )}
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
 

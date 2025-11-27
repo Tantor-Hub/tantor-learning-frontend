@@ -128,13 +128,13 @@ const CourseCard = ({ course }: { course: Cours }) => {
 
       {course.is_published && (
         <div className="mt-3">
-          <p className="text-sm font-medium text-gray-800 mb-1">Progression</p>
+          {/* <p className="text-sm font-medium text-gray-800 mb-1">Progression</p>
           <div className="h-2 w-full bg-gray-200 rounded-full">
             <div
               className="h-full bg-blue-600 rounded-full"
               style={{ width: `${Math.min(100, Math.floor(Math.random() * 100))}%` }}
             />
-          </div>
+          </div> */}
         </div>
       )}
     </div>

@@ -874,7 +874,7 @@ export default function NotesPage() {
               ? `
           <div class="statistics">
             <div class="stat-card">
-              <p class="stat-label">Total des évaluations</p>
+              <p class="stat-label">Nombre de sujets d'évaluations/p>
               <p class="stat-value">${statistics.totalEvaluations}</p>
             </div>
             <div class="stat-card">
@@ -1248,7 +1248,7 @@ export default function NotesPage() {
       {statistics && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white border rounded-lg p-4">
-            <p className="text-sm text-muted-foreground">Total des évaluations</p>
+            <p className="text-sm text-muted-foreground">Nombre de sujets d'évaluations</p>
             <p className="text-2xl font-semibold">{statistics.totalEvaluations}</p>
           </div>
           <div className="bg-white border rounded-lg p-4">
