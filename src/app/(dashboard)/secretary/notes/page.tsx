@@ -614,6 +614,25 @@ export default function NotesPage() {
             width: 200px;
             margin-top: 40px;
           }
+          .header-image-container {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            page-break-before: auto;
+            page-break-after: auto;
+            margin-bottom: 20px;
+            width: 100%;
+            display: block;
+            clear: both;
+          }
+          .header-image {
+            width: 100%;
+            max-width: 100%;
+            display: block;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            object-fit: contain;
+            height: auto;
+          }
           .footer-image-container {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
@@ -636,13 +655,12 @@ export default function NotesPage() {
           }
         </style>
         <div class="transcript-container">
-          <div class="header">
-            <h1>Centre de Formation Tantor Learning</h1>
-            <h2>Relevé de Notes - Attestation de Formation</h2>
+          <div class="header-image-container">
+            <img src="${window.location.origin}/releveheader.png" alt="Header" class="header-image" />
           </div>
 
           <div class="section">
-            <div class="section-title">Informations sur le stagiaire</div>
+            <div class="section-title">Informations sur l'apprenant</div>
             <div class="section-content">
               <p><strong>Nom et prénom :</strong> ${studentFullName}</p>
               <p><strong>Email :</strong> ${studentEmail || "___"}</p>
@@ -674,32 +692,43 @@ export default function NotesPage() {
               </thead>
               <tbody>
                 ${evaluationDetails
-                  .map(
-                    (evaluationDetail) => `
+                  .map((evaluationDetail) => {
+                    // Determine comment color based on content
+                    const commentLower = (evaluationDetail.comment || "").toLowerCase();
+                    let commentColor = "#000"; // Default black
+                    if (commentLower.includes("ajourn") || commentLower.includes("ajournée")) {
+                      commentColor = "#dc2626"; // Red
+                    } else if (commentLower.includes("admis")) {
+                      commentColor = "#16a34a"; // Green
+                    } else if (commentLower.includes("admissible")) {
+                      commentColor = "#eab308"; // Yellow
+                    }
+
+                    return `
                   <tr>
                     <td>${evaluationDetail.subject}</td>
                     <td>${evaluationDetail.evaluationTitle || evaluationDetail.evaluationType}</td>
                     <td>${evaluationDetail.grade.toFixed(1)}</td>
                     <td>${evaluationDetail.maxGrade.toFixed(1)}</td>
                     <td>${evaluationDetail.coefficient}</td>
-                    <td>${evaluationDetail.comment}</td>
+                    <td style="color: ${commentColor};">${evaluationDetail.comment || ""}</td>
                   </tr>
-                `
-                  )
+                `;
+                  })
                   .join("")}
               </tbody>
             </table>
           </div>
 
           <div class="section">
-            <div class="section-title">Moyenne par session</div>
+            <div class="section-title">Moyenne par matière</div>
             <table>
               <thead>
                 <tr>
-                  <th>Session</th>
+                  <th>Matière</th>
                   <th>Points obtenus</th>
                   <th>Points maximum</th>
-                  <th>Coeff session</th>
+                  <th>Nombre d'évaluation</th>
                 </tr>
               </thead>
               <tbody>
