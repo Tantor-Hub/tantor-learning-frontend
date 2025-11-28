@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyle } from "@tiptap/extension-text-style";
@@ -27,8 +27,14 @@ interface TemplateViewerProps {
 }
 
 export default function TemplateView({ open, onOpenChange, instanceId }: TemplateViewerProps) {
+  const [mounted, setMounted] = useState(false);
   const [fetchInstance, { data, isFetching, isError }] =
     useLazyGetSecretaryDocumentInstanceByIdQuery();
+
+  // Handle client-side mounting to avoid SSR issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (open && instanceId) {
@@ -37,44 +43,112 @@ export default function TemplateView({ open, onOpenChange, instanceId }: Templat
   }, [open, instanceId, fetchInstance]);
 
   const content = useMemo(() => {
-    const instance = data?.data;
-    const base =
-      instance?.filledContent && Object.keys(instance.filledContent || {}).length > 0
-        ? instance.filledContent
-        : instance?.template?.content;
+    // Response structure: data is the template object directly with content at the top level
+    // Structure: { id, title, content: {...} }
+    if (!data) {
+      return {
+        type: "doc",
+        content: [{ type: "paragraph", content: [{ type: "text", text: "Chargement..." }] }],
+      };
+    }
 
+    // Try multiple paths to find the content
+    const base =
+      (data as any)?.content ||
+      (data as any)?.template?.content ||
+      (data as any)?.data?.template?.content;
+
+    if (!base) {
+      return {
+        type: "doc",
+        content: [
+          { type: "paragraph", content: [{ type: "text", text: "Aucun contenu disponible." }] },
+        ],
+      };
+    }
+
+    // Get variable values from the instance data if available
+    // The instance should have variableValues property
+    const instance = (data as any)?.data || data;
     const values: Record<string, string> = instance?.variableValues || {};
 
     const convert = (node: any): any => {
-      if (!node) return node;
-      if (Array.isArray(node)) return node.map(convert);
+      if (!node) return null;
+      if (Array.isArray(node)) {
+        const converted = node.map(convert).filter(Boolean);
+        return converted.length > 0 ? converted : null;
+      }
+
+      // Filter out empty text nodes
+      if (node.type === "text" && (!node.text || !node.text.trim())) {
+        return null;
+      }
 
       // Replace variable nodes with plain text using provided values
       if (node.type === "variable" && node.attrs?.name) {
         const name = node.attrs.name as string;
         const value = values[name] ?? "";
-        return { type: "text", text: value };
+        // Only create text node if value is not empty, otherwise skip it (return null)
+        if (value && value.trim()) {
+          return { type: "text", text: value };
+        }
+        // Skip empty variables entirely
+        return null;
       }
 
       if (node.content && Array.isArray(node.content)) {
-        return { ...node, content: node.content.map(convert) };
+        const convertedContent = node.content.map(convert).filter(Boolean);
+        // If all content was filtered out, return null to remove the node
+        if (convertedContent.length === 0) {
+          return null;
+        }
+        return { ...node, content: convertedContent };
       }
       return node;
     };
 
-    const processed = base
-      ? convert(base)
-      : {
-          type: "doc",
-          content: [
-            { type: "paragraph", content: [{ type: "text", text: "Aucun contenu disponible." }] },
-          ],
-        };
+    let processed = convert(base);
+
+    // Final cleanup: recursively remove any empty text nodes that might have slipped through
+    const finalCleanup = (node: any): any => {
+      if (!node) return null;
+      if (Array.isArray(node)) {
+        const cleaned = node.map(finalCleanup).filter(Boolean);
+        return cleaned.length > 0 ? cleaned : null;
+      }
+
+      // Remove empty text nodes
+      if (node.type === "text" && (!node.text || !node.text.trim())) {
+        return null;
+      }
+
+      if (node.content && Array.isArray(node.content)) {
+        const cleanedContent = node.content.map(finalCleanup).filter(Boolean);
+        if (cleanedContent.length === 0) {
+          return null;
+        }
+        return { ...node, content: cleanedContent };
+      }
+      return node;
+    };
+
+    processed = finalCleanup(processed);
+
+    // Ensure the processed content has the correct structure
+    if (!processed || !processed.type) {
+      return {
+        type: "doc",
+        content: [
+          { type: "paragraph", content: [{ type: "text", text: "Aucun contenu disponible." }] },
+        ],
+      };
+    }
 
     return processed;
-  }, [data?.data]);
+  }, [data]);
 
-  const title = data?.data?.template?.title || "Document";
+  // Access title from the template object (handle both possible structures)
+  const title = (data as any)?.title || (data as any)?.data?.template?.title || "Document";
 
   const editor = useEditor({
     extensions: [
@@ -98,7 +172,10 @@ export default function TemplateView({ open, onOpenChange, instanceId }: Templat
       }),
       TableCell.configure({ HTMLAttributes: { class: "border border-gray-300 p-3" } }),
     ],
-    content,
+    content: content || {
+      type: "doc",
+      content: [{ type: "paragraph", content: [{ type: "text", text: "Chargement..." }] }],
+    },
     editable: false,
     immediatelyRender: false,
     editorProps: {
@@ -111,10 +188,26 @@ export default function TemplateView({ open, onOpenChange, instanceId }: Templat
 
   // Update editor content when fetched data changes
   useEffect(() => {
-    if (editor && content) {
-      editor.commands.setContent(content as any);
+    if (editor && mounted && data && content) {
+      // Small delay to ensure editor is fully initialized after hydration
+      const timer = setTimeout(() => {
+        try {
+          // Check if content is different from current editor content
+          const currentContent = editor.getJSON();
+          const contentStr = JSON.stringify(content);
+          const currentContentStr = JSON.stringify(currentContent);
+
+          if (contentStr !== currentContentStr) {
+            editor.commands.setContent(content as any);
+          }
+        } catch (error) {
+          console.error("Error setting editor content:", error);
+        }
+      }, 50);
+
+      return () => clearTimeout(timer);
     }
-  }, [editor, content]);
+  }, [editor, content, data, mounted]);
 
   if (!open) return null;
 
@@ -150,8 +243,12 @@ export default function TemplateView({ open, onOpenChange, instanceId }: Templat
                   Erreur lors du chargement du document
                 </div>
               </div>
-            ) : (
+            ) : mounted && editor ? (
               <EditorContent editor={editor} />
+            ) : (
+              <div className="min-h-[600px] flex items-center justify-center">
+                <div className="text-center text-gray-500">Chargement du contenu...</div>
+              </div>
             )}
           </div>
         </div>
