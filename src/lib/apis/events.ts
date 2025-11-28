@@ -7,6 +7,7 @@ import {
   EventResponse,
   CreateEventForLessonsRequest,
   StudentsAttendanceResponse,
+  EventDetailsResponse,
 } from "@/types/events";
 import { ICourseBySessionIdResponse } from "@/types/secretary/training-secretary";
 
@@ -96,6 +97,12 @@ export const eventsApi = createApi({
       query: () => `event/instructor/past-events`,
       providesTags: ["Event"],
     }),
+
+    // Get event by ID (Secretary access)
+    getEventByIdSecretary: builder.query<EventDetailsResponse, { id: string }>({
+      query: ({ id }) => `event/secretary/${id}`,
+      providesTags: (result, error, { id }) => [{ type: "Event", id }, "Event"],
+    }),
   }),
 });
 
@@ -108,6 +115,7 @@ export const {
   useCreateEventForLessonsMutation,
   // secretary Access
   useGetStudentsAttendanceQuery,
+  useGetEventByIdSecretaryQuery,
   // student Access
   useJoinEventMutation,
   useGetPastEventsForInstructorQuery,

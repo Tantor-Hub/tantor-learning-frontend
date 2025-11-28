@@ -88,3 +88,33 @@ export interface StudentsAttendanceResponse {
   };
   message: string;
 }
+
+export interface ParticipationStudent {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  avatar: string;
+  userInSessionId: string;
+  status: string;
+  participated: boolean;
+}
+
+export interface ParticipationInfo {
+  students: ParticipationStudent[];
+  totalInSession: number;
+  participantsCount: number;
+}
+
+export interface EventDetailsResponse {
+  status: number;
+  message: string;
+  data: {
+    id: string;
+    title: string;
+    description: string;
+    sessionId: string;
+    participationInfo: ParticipationInfo;
+  };
+}
