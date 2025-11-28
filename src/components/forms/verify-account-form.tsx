@@ -127,7 +127,7 @@ export function VerifyAccountForm() {
       setVerifyError("");
 
       const response = await verifyAccount({
-        email: email,
+        email: email.toLowerCase(),
         otp: String(pin),
       }).unwrap();
 
@@ -172,7 +172,7 @@ export function VerifyAccountForm() {
       setResendError("");
       setVerifyError("");
 
-      await resendCode({ email: email }).unwrap();
+      await resendCode({ email: email.toLowerCase() }).unwrap();
 
       toast.success(`Un nouveau code a été envoyé à ${email}`);
 

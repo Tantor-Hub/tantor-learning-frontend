@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { EventViewer } from "./event-viewer";
 import { NewEvent } from "./new-event";
-import { useListEventsQuery } from "@/lib/apis/common/planning";
+import { useListAllEventsQuery } from "@/lib/apis/common/planning";
 import { Loading } from "@/components/shared/loading";
 import { CalendarEvent } from "@/components/ui/calendar-event";
 import { Card } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { PlanningSkeleton } from "./planning-skeleton";
 
 export function PlanningClient() {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const { data, isLoading } = useListEventsQuery();
+  const { data, isLoading } = useListAllEventsQuery();
 
   if (isLoading) {
     return <PlanningSkeleton />;
