@@ -124,7 +124,7 @@ export function EventViewer({
       return (
         <Badge variant="outline" className="text-orange-600 border-orange-300">
           <Clock className="w-3 h-3 mr-1" />
-          Inscrit
+          Absent
         </Badge>
       );
     } else {
