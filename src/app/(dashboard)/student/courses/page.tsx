@@ -89,7 +89,7 @@ export default function Page() {
                   <Input
                     type="search"
                     className="text-muted-foreground border-none focus-visible:outline-none focus-visible:ring-0 rounded-none shadow-none"
-                    placeholder="Rechercher Un cours ..."
+                    placeholder="Rechercher une matière ..."
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
@@ -165,9 +165,9 @@ export default function Page() {
           {filteredCourses.length > 0 ? (
             <div className="py-5 grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-5">
               {filteredCourses.map((course) => (
-                <Link key={course.id} href={`/student/courses/${course.id}`}>
-                  <div className="border border-blue-200 rounded shadow-sm bg-white hover:shadow-md transition-shadow">
-                    <div className="p-2.5">
+                <Link key={course.id} href={`/student/courses/${course.id}`} className="h-full">
+                  <div className="border border-blue-200 rounded shadow-sm bg-white hover:shadow-md transition-shadow h-full flex flex-col">
+                    <div className="p-2.5 flex-shrink-0">
                       <Image
                         src="/icons/video-placeholder.svg"
                         width={200}
@@ -191,12 +191,12 @@ export default function Page() {
                         </div>
                       </div>
                     </div>
-                    <div className="px-4 py-3 space-y-2">
-                      <p className="text-sm text-[#0466C8] font-medium leading-tight">
+                    <div className="px-4 py-3 space-y-2 flex-grow flex flex-col">
+                      <p className="text-sm text-[#0466C8] font-medium leading-tight line-clamp-2">
                         {course.title}
                       </p>
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-gray-200 rounded-md" />
+                      <div className="flex items-center gap-2 mt-auto">
+                        <div className="w-7 h-7 bg-gray-200 rounded-md flex-shrink-0" />
                         <div className="text-sm text-gray-800 flex flex-col">
                           <span className="text-[#0466C8]">
                             {course.formateurs[0]?.firstName} {course.formateurs[0]?.lastName}

@@ -45,17 +45,20 @@ export function LessonsTab() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Course Lessons ({lessons.length})</h2>
+      <h2 className="text-2xl font-bold">Tous les chapitres ({lessons.length})</h2>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {lessons.map((lesson) => (
-          <Card key={lesson.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardHeader>
+          <Card
+            key={lesson.id}
+            className="cursor-pointer hover:shadow-lg transition-shadow h-full flex flex-col"
+          >
+            <CardHeader className="flex-shrink-0">
               <CardTitle>{lesson.title}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">{lesson.description}</p>
-              <Button onClick={() => handleLessonClick(lesson.id)} className="w-full">
-                Voir les matériaux
+            <CardContent className="flex-grow flex flex-col">
+              <p className="text-sm text-muted-foreground mb-4 flex-grow">{lesson.description}</p>
+              <Button onClick={() => handleLessonClick(lesson.id)} className="w-full mt-auto">
+                voir le contenu
               </Button>
             </CardContent>
           </Card>
