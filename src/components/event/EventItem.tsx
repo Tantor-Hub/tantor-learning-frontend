@@ -102,14 +102,7 @@ export function EventItem({ event, onEdit, onDelete, isDeleting = false }: Event
       >
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex-1">
-            <CardTitle className="text-base flex items-center gap-2">
-              {event.title}
-              {isPast && (
-                <Badge variant="secondary" className="text-xs">
-                  Terminé
-                </Badge>
-              )}
-            </CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">{event.title}</CardTitle>
           </div>
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <Button
