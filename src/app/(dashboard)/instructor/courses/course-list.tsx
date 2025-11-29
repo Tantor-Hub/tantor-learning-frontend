@@ -42,9 +42,9 @@ export function CourseList() {
   return (
     <div className="py-5 grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-5">
       {courses.data.rows.map((course) => (
-        <Link key={course.id} href={`/instructor/courses/${course.id}`}>
-          <div className="border border-blue-200 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow">
-            <div className="p-2.5">
+        <Link key={course.id} href={`/instructor/courses/${course.id}`} className="h-full">
+          <div className="border border-blue-200 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow h-full flex flex-col">
+            <div className="p-2.5 flex-shrink-0">
               <Image
                 src="/icons/video-placeholder.svg"
                 width={200}
@@ -68,14 +68,14 @@ export function CourseList() {
                 </div> */}
               </div>
             </div>
-            <div className="px-4 py-3 space-y-2">
-              <p className="text-sm text-[#0466C8] font-medium leading-tight">{course.title}</p>
-              <div className="text-xs text-gray-600 mb-2">
-                <p className="truncate">{course.description}</p>
-                <p className="text-gray-500">
-                  Créé le {new Date(course.createdAt).toLocaleDateString()}
-                </p>
-              </div>
+            <div className="px-4 py-3 space-y-2 flex-grow flex flex-col">
+              <p className="text-sm text-[#0466C8] font-medium leading-tight line-clamp-2">
+                {course.title}
+              </p>
+              <p className="text-xs text-gray-600 line-clamp-2 flex-grow">{course.description}</p>
+              <p className="text-xs text-gray-500 mt-auto">
+                Créé le {new Date(course.createdAt).toLocaleDateString()}
+              </p>
               {/* <div className="flex items-center gap-2">
                 <div className="w-7 h-7 bg-gray-200 rounded-md" />
                 <div className="text-sm text-gray-800 flex flex-col">
