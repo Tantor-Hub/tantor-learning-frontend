@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Forward, Trash2, RotateCcw } from "lucide-react";
+import { Forward, Trash2, RotateCcw, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ReplyMessageDialog } from "./dialog/reply-message-dialog";
 import { TransferMessageDialog } from "./dialog/transfer-message-dialog";
@@ -57,7 +57,12 @@ export function MessageActions({
 
   return (
     <div className="flex items-center justify-between gap-4">
-      <Button variant={"outline"} onClick={() => router.back()}>
+      <Button
+        variant={"outline"}
+        className="border-primary text-primary"
+        onClick={() => router.back()}
+      >
+        <ChevronLeft />
         Retour
       </Button>
       <div className="flex items-center gap-4">
@@ -74,7 +79,11 @@ export function MessageActions({
             Restaurer
           </Button>
         ) : (
-          <Button variant={"outline"} onClick={handleDelete} className="flex items-center gap-2">
+          <Button
+            variant={"destructive"}
+            onClick={handleDelete}
+            className="flex items-center gap-2"
+          >
             <Trash2 />
             Supprimer
           </Button>

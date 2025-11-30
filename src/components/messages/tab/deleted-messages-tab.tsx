@@ -61,6 +61,7 @@ export const DeletedMessagesTab = ({ refreshKey }: { refreshKey: number }) => {
             variant="outline"
             size="sm"
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               handleRestore(msg);
             }}
