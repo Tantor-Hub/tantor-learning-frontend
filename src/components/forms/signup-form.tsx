@@ -111,8 +111,18 @@ export function SignUpForm() {
       toast.success(response.message);
       router.push(`/verify?email=${encodeURIComponent(values.email)}`);
     } catch (error: any) {
-      const errorMessage = error?.message || "Erreur lors de l'inscription";
-      toast.error(errorMessage);
+      // Check if it's a 409 error (email already exists)
+      if (error.status === 409 || error.statusCode === 409) {
+        form.setError("email", {
+          type: "manual",
+          message:
+            error?.message ||
+            "Cet email est déjà utilisé. Veuillez utiliser un autre email ou vous connecter.",
+        });
+      } else {
+        const errorMessage = error?.message || "Erreur lors de l'inscription";
+        toast.error(errorMessage);
+      }
     }
   }
 
