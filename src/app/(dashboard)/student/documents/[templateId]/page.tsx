@@ -33,7 +33,6 @@ import {
   useGetDocumentInstancesByTemplateIdQuery,
   useUpdateDocumentInstanceMutation,
 } from "@/lib/apis/documents";
-import html2pdf from "html2pdf.js";
 import { toast } from "react-hot-toast";
 import { DocumentInstance } from "@/types/documents";
 
@@ -1146,6 +1145,9 @@ export default function DocumentTemplatePage() {
       };
 
       toast.loading("Génération du PDF en cours...", { id: "pdf-generation" });
+
+      // Dynamically import html2pdf only on client side
+      const html2pdf = (await import("html2pdf.js")).default;
 
       // Generate PDF - tempDiv is still in DOM
       await html2pdf().set(options).from(tempDiv).save();

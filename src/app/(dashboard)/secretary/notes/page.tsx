@@ -39,7 +39,6 @@ import {
 import Image from "next/image";
 import { Search, Filter, X, Download, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import html2pdf from "html2pdf.js";
 import toast from "react-hot-toast";
 
 export default function NotesPage() {
@@ -863,6 +862,9 @@ export default function NotesPage() {
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
+      // Dynamically import html2pdf only on client side
+      const html2pdf = (await import("html2pdf.js")).default;
+
       // Generate PDF
       const options = {
         margin: [10, 10, 10, 10] as [number, number, number, number],
@@ -901,7 +903,8 @@ export default function NotesPage() {
         tempDiv.style.left = "0";
         tempDiv.style.top = "0";
         await new Promise((resolve) => setTimeout(resolve, 500));
-        await html2pdf().set(options).from(tempDiv).save();
+        const html2pdfRetry = (await import("html2pdf.js")).default;
+        await html2pdfRetry().set(options).from(tempDiv).save();
         tempDiv.style.position = originalPosition;
       }
 
@@ -1183,6 +1186,9 @@ export default function NotesPage() {
 
       // Force a reflow to ensure rendering
       tempDiv.offsetHeight;
+
+      // Dynamically import html2pdf only on client side
+      const html2pdf = (await import("html2pdf.js")).default;
 
       // Generate PDF
       const options = {

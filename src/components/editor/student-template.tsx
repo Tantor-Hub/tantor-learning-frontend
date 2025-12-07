@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import html2pdf from "html2pdf.js";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyle } from "@tiptap/extension-text-style";
@@ -255,6 +254,8 @@ export default function StudentTemplate({
         jsPDF: { unit: "in", format: "letter", orientation: "portrait" as const },
       };
 
+      // Dynamically import html2pdf only on client side
+      const html2pdf = (await import("html2pdf.js")).default;
       html2pdf().set(opt).from(tempDiv).save();
       toast.success("PDF téléchargé avec succès");
     } catch (error) {

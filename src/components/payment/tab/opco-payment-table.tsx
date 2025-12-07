@@ -89,7 +89,7 @@ export function OpcoPaymentTable({
                   {method.trainingSession ? method.trainingSession.title : method.id_session}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline">{method.nom_opco ? "OPCO" : "CPF"}</Badge>
+                  <Badge variant="outline">{method.nom_opco ? "OPCO" : ""}</Badge>
                 </TableCell>
                 <TableCell>
                   <Badge variant={getBadgeVariant(method.status)}>{paymentStatus}</Badge>

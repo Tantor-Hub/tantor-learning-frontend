@@ -137,7 +137,7 @@ export function SignInForm() {
         window.history.replaceState({}, document.title, newUrl);
       }
     }
-  }, [searchParams, dispatch, router]);
+  }, [searchParams, dispatch, router, redirectUrl]);
 
   const handleSubmit = async (values: SignInFormValues) => {
     try {
